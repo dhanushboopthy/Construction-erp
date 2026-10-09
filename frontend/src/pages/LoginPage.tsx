@@ -26,7 +26,9 @@ export function LoginPage() {
       await signIn(username, password);
       void navigate(from, { replace: true });
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Cannot reach the server. Check the network.");
+      setError(
+        err instanceof ApiError ? err.message : "Cannot reach the server. Check the network.",
+      );
     } finally {
       setBusy(false);
     }
@@ -34,7 +36,11 @@ export function LoginPage() {
 
   return (
     <main className={styles.page}>
-      <form className={styles.card} onSubmit={(e) => void onSubmit(e)} aria-describedby="login-error">
+      <form
+        className={styles.card}
+        onSubmit={(e) => void onSubmit(e)}
+        aria-describedby="login-error"
+      >
         <h1 className={styles.title}>Sign in to the shop</h1>
         <label className={styles.field}>
           Username

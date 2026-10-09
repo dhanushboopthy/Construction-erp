@@ -6,14 +6,14 @@
 
 .sidebar {
   background: var(--color-ink);
-  color: #e7ebe8;
+  color: var(--color-sidebar-text);
   padding: var(--space-4) 0;
 }
 
 .brand {
   font-weight: 600;
   padding: 0 var(--space-4) var(--space-4);
-  border-bottom: 1px solid #39433f;
+  border-bottom: 1px solid var(--color-sidebar-rule);
   margin-bottom: var(--space-2);
 }
 
@@ -36,19 +36,20 @@
 }
 
 .nav a:hover {
-  background: #28322f;
+  background: var(--color-sidebar-hover);
 }
 
 .nav a.active {
   border-left-color: var(--color-tag);
-  background: #28322f;
+  background: var(--color-sidebar-hover);
   font-weight: 600;
 }
 
 .kbd {
   font: inherit;
   font-size: var(--text-xs);
-  color: #9aa6a1;
+  color: var(--color-sidebar-muted);
+  white-space: nowrap;
 }
 
 .main {
@@ -95,11 +96,36 @@
   padding: var(--space-5);
 }
 
+/* Phone (the owner checks figures on the move): the sidebar becomes a scrolling strip. */
 @media (max-width: 768px) {
   .shell {
     grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
   }
   .sidebar {
+    padding: 0;
+    overflow-x: auto;
+  }
+  .brand,
+  .kbd {
     display: none;
+  }
+  .nav {
+    display: flex;
+  }
+  .nav a {
+    white-space: nowrap;
+    border-left: 0;
+    border-bottom: 4px solid transparent;
+  }
+  .nav a.active {
+    border-bottom-color: var(--color-tag);
+  }
+  .topbar {
+    flex-wrap: wrap;
+    padding: var(--space-2) var(--space-4);
+  }
+  .content {
+    padding: var(--space-4);
   }
 }

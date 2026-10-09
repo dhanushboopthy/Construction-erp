@@ -29,16 +29,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     try {
-      await api<void>("/auth/logout", { method: "POST" });
+      await api<undefined>("/auth/logout", { method: "POST" });
     } finally {
       setAccessToken(null);
       setUser(null);
     }
   }, []);
 
+  const reloadUser = useCallback(async () => {
+    setUser(await api<User>("/auth/me"));
+  }, []);
+
   const value = useMemo<AuthState>(
-    () => ({ user, ready, signIn, signOut }),
-    [user, ready, signIn, signOut],
+    () => ({ user, ready, signIn, signOut, reloadUser }),
+    [user, ready, signIn, signOut, reloadUser],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

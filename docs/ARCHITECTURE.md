@@ -48,8 +48,9 @@ clock (pass `today` in). Anything that touches money is in `domain/` and unit-te
 React 19 + TypeScript (strict) + Vite. React Router for pages, TanStack Query for server state,
 CSS Modules with design tokens (`src/styles/tokens.css`, see DESIGN.md). The API client keeps
 the access token in memory and refreshes once on 401. Navigation and role visibility come from
-`src/modules.ts`; Alt+1–9 switches modules. Types are hand-written for Milestone 1; generate
-them from OpenAPI with `make gen-api` as the API grows.
+`src/modules.ts`; Alt+1–9 switches modules. API types are generated from the backend's
+OpenAPI spec into `src/api/schema.d.ts` (`make gen-api`, or `npm run gen:api` with the API on
+:8000); `src/api/types.ts` only gives them short names. Regenerate after every API change.
 
 ## Decisions
 

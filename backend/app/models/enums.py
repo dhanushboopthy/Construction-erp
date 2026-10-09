@@ -16,6 +16,71 @@ class LocationKind(StrEnum):
     GODOWN = "godown"
 
 
+class ItemCategory(StrEnum):
+    TMT = "tmt"
+    PIPE = "pipe"
+    CEMENT = "cement"
+    WIRE = "wire"
+    ANGLE = "angle"
+    CHANNEL = "channel"
+    OTHER = "other"
+
+
+class PartyType(StrEnum):
+    CUSTOMER = "customer"
+    SUPPLIER = "supplier"
+    BOTH = "both"
+
+
+class CustomerSegment(StrEnum):
+    RETAIL = "retail"
+    CONTRACTOR = "contractor"
+    BULK = "bulk"
+
+
+class LedgerAccount(StrEnum):
+    RECEIVABLE = "receivable"  # customers owe us
+    PAYABLE = "payable"  # we owe suppliers
+
+
+class StockRef(StrEnum):
+    """What created a stock ledger row."""
+
+    OPENING = "opening"
+    PURCHASE = "purchase"
+    PURCHASE_RETURN = "purchase_return"
+    SALE = "sale"
+    SALE_RETURN = "sale_return"
+    TRANSFER = "transfer"
+    ADJUSTMENT = "adjustment"
+
+
+class PartyRef(StrEnum):
+    """What created a party ledger row."""
+
+    OPENING = "opening"
+    SALE = "sale"
+    PURCHASE = "purchase"
+    PAYMENT = "payment"
+    CREDIT_NOTE = "credit_note"
+    DEBIT_NOTE = "debit_note"
+    REBATE = "rebate"
+    FREIGHT = "freight"
+
+
+class OpeningKind(StrEnum):
+    STOCK = "stock"
+    RECEIVABLE = "receivable"  # a customer owes us at go-live
+    CUSTOMER_ADVANCE = "customer_advance"  # we hold a customer's advance
+    PAYABLE = "payable"  # we owe a supplier at go-live
+    SUPPLIER_ADVANCE = "supplier_advance"  # a supplier holds our advance
+
+
+class OpeningStatus(StrEnum):
+    DRAFT = "draft"
+    POSTED = "posted"
+
+
 class AuditAction(StrEnum):
     INSERT = "insert"
     UPDATE = "update"

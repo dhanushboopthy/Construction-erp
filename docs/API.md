@@ -41,6 +41,28 @@ Endpoints that return cost, margin or profit use separate response models for ow
 staff (for example `ItemOwnerOut` and `ItemOut`). Choose the model with `principal.sees_cost`;
 never rely on the UI to hide fields. Test each such endpoint as a counter user.
 
+## Endpoints (Milestone 3)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| GET/POST | `/opening` · PATCH/DELETE `/opening/{id}` (drafts only) | owner |
+| POST | `/opening/post` `{kinds: [...]}` | owner |
+| GET | `/stock` (`location_id`, `q`, `include_zero`) | signed in; `avg_cost` and `value` for the owner only |
+| GET | `/parties/{id}/statement?site_id=` | signed in; supplier payable side hidden from counter staff |
+| GET | `/reports/dues?account=receivable\|payable` | receivable: all roles; payable: owner and accountant |
+
+## Endpoints (Milestone 2)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| GET | `/items` (`q`, `category`, `include_inactive`) · `/items/{id}` | signed in; owner gets `min_margin` |
+| POST/PATCH | `/items`, `/items/{id}` | owner |
+| GET | `/items/{id}/convert?quantity=&from_unit=&to_unit=` | signed in |
+| GET | `/items/import/template` · POST `/items/import?dry_run=true` (multipart `file`) | owner |
+| GET | `/parties` (`q`, `kind=customer\|supplier`) · `/parties/{id}` | signed in |
+| POST/PATCH | `/parties`, `/parties/{id}` | owner, counter (credit fields: owner only) |
+| POST | `/parties/{id}/sites` · PATCH `/sites/{id}` | owner, counter |
+
 ## Endpoints (Milestone 1)
 
 | Method | Path | Who |

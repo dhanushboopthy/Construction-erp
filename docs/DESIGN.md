@@ -30,7 +30,7 @@ all-caps labels.
 
 ## Principles
 
-1. **Keyboard first.** Every flow works without a mouse: Alt+1–9 modules, Enter to add a line,
+1. **Keyboard first.** Every flow works without a mouse: Alt+1–9 and Alt+0 modules, Enter to add a line,
    F-keys documented on screen. Visible focus rings always.
 2. **Figures are the hero.** Totals large and tabular; the bill total sits on the tag-yellow band.
 3. **Structure carries meaning.** Ledgers and dividers, not decorative cards and shadows.

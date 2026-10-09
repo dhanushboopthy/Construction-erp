@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.4.0 (Milestone 3)
+
+- Append-only stock ledger and party ledger (database triggers refuse UPDATE and DELETE).
+- Opening balances wizard (Settings, Opening balances): stock, what customers owe, what we owe
+  suppliers; drafts first, then one confirmed post.
+- Stock screen (Alt+4): quantity per place from the ledger; average cost and value for the owner
+  only. Statement panel on each party with aging, per site.
+- `GET /reports/dues` for receivables and payables with aging.
+
+## 0.3.0 (Milestone 2)
+
+- Item master: category, brand, HSN, GST rate, base unit, size, grade, theoretical weight per
+  piece, unit conversions (bag ↔ ton, piece ↔ kg), owner-only warning margin.
+- Customers, suppliers and customer delivery sites; credit terms are owner-only.
+- Excel import with a check-first step and per-row errors; downloadable template.
+- Screens: Items (Alt+0) and Customers and suppliers (Alt+5), with search, unit converter and
+  site management. Counter staff see items without any margin figure.
+
 ## 0.2.0 (2026-10-09)
 
 - Milestone 0 closed: frontend installed, lint and format fixed, `package-lock.json` committed,

@@ -616,27 +616,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/payments": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List Payments */
-        get: operations["list_payments_api_v1_payments_get"];
-        put?: never;
-        /**
-         * Create Payment
-         * @description Pay a supplier or give an advance. A repeated Idempotency-Key returns the first payment.
-         */
-        post: operations["create_payment_api_v1_payments_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/transfers": {
         parameters: {
             query?: never;
@@ -933,6 +912,89 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Payments */
+        get: operations["list_payments_api_v1_payments_get"];
+        put?: never;
+        /**
+         * Create Payment
+         * @description Record money received from a customer (owner, counter at own shop) or paid to a supplier
+         *     (owner). Bills you pick are paid first; the rest goes oldest first. A repeated
+         *     Idempotency-Key returns the first payment.
+         */
+        post: operations["create_payment_api_v1_payments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/parties/{party_id}/open-bills": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Open Bills
+         * @description Unpaid bills to choose from when recording a payment.
+         */
+        get: operations["open_bills_api_v1_parties__party_id__open_bills_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/approvals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request Approval
+         * @description The owner types their PIN at the counter. The approval is good for one bill, ten minutes.
+         */
+        post: operations["request_approval_api_v1_approvals_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/pin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Set Pin
+         * @description The owner sets or changes their approval PIN (needs their password).
+         */
+        post: operations["set_pin_api_v1_auth_pin_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -956,6 +1018,52 @@ export interface components {
             days_31_60: string;
             /** Over 60 */
             over_60: string;
+        };
+        /**
+         * AllocationIn
+         * @description Aim part of a payment at one bill (its number). Blank allocations mean oldest first.
+         */
+        AllocationIn: {
+            /** Bill No */
+            bill_no: string;
+            /** Amount */
+            amount: number | string;
+        };
+        /** AllocationOut */
+        AllocationOut: {
+            /** Bill No */
+            bill_no: string;
+            /** Amount */
+            amount: string;
+        };
+        /**
+         * ApprovalAction
+         * @description What an owner PIN can approve at the counter (G18).
+         * @enum {string}
+         */
+        ApprovalAction: "credit_override" | "below_cost" | "discount" | "backdate";
+        /** ApprovalOut */
+        ApprovalOut: {
+            /** Id */
+            id: number;
+            action: components["schemas"]["ApprovalAction"];
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Approved By Name */
+            approved_by_name: string;
+        };
+        /** ApprovalRequest */
+        ApprovalRequest: {
+            /** Pin */
+            pin: string;
+            action: components["schemas"]["ApprovalAction"];
+            /** Reason */
+            reason: string;
+            /** Party Id */
+            party_id?: number | null;
         };
         /**
          * AuditAction
@@ -986,6 +1094,17 @@ export interface components {
             request_id: string | null;
             /** Ip */
             ip: string | null;
+        };
+        /**
+         * BillPaymentIn
+         * @description Money taken at the counter with the bill (cash, UPI or bank; no cheques, B7).
+         */
+        BillPaymentIn: {
+            mode: components["schemas"]["PaymentMode"];
+            /** Amount */
+            amount: number | string;
+            /** Reference */
+            reference?: string | null;
         };
         /** Body_import_items_api_v1_items_import_post */
         Body_import_items_api_v1_items_import_post: {
@@ -1325,6 +1444,10 @@ export interface components {
             remark?: string | null;
             /** Lines */
             lines: components["schemas"]["InvoiceLineIn"][];
+            /** Payments */
+            payments?: components["schemas"]["BillPaymentIn"][];
+            /** Approval Ids */
+            approval_ids?: number[];
         };
         /** InvoiceLineIn */
         InvoiceLineIn: {
@@ -1495,6 +1618,8 @@ export interface components {
             round_off: string;
             /** Pending Balance At Billing */
             pending_balance_at_billing: string;
+            /** Paid At Billing */
+            paid_at_billing: string;
             /** Vehicle No */
             vehicle_no: string | null;
             /** Remark */
@@ -1558,6 +1683,8 @@ export interface components {
             round_off: string;
             /** Pending Balance At Billing */
             pending_balance_at_billing: string;
+            /** Paid At Billing */
+            paid_at_billing: string;
             /** Vehicle No */
             vehicle_no: string | null;
             /** Remark */
@@ -1587,6 +1714,16 @@ export interface components {
             round_off: string;
             /** Grand Total */
             grand_total: string;
+            /** Paid Now */
+            paid_now: string;
+            /** Balance Due */
+            balance_due: string;
+            /** Invoice Problems */
+            invoice_problems: string[];
+            /** Needs Owner */
+            needs_owner: boolean;
+            /** Approvals Needed */
+            approvals_needed: components["schemas"]["ApprovalAction"][];
             /** Lines */
             lines: components["schemas"]["PreviewLineOut"][];
             /** Can Save */
@@ -1936,6 +2073,34 @@ export interface components {
             /** Warnings */
             warnings: components["schemas"]["RateWarning"][];
         };
+        /** OpenBillOut */
+        OpenBillOut: {
+            /** Bill No */
+            bill_no: string;
+            /**
+             * Bill Date
+             * Format: date
+             */
+            bill_date: string;
+            /** Due Date */
+            due_date: string | null;
+            /** Original */
+            original: string;
+            /** Remaining */
+            remaining: string;
+            /** Overdue */
+            overdue: boolean;
+        };
+        /** OpenBillsOut */
+        OpenBillsOut: {
+            /** Party Id */
+            party_id: number;
+            account: components["schemas"]["LedgerAccount"];
+            /** Bills */
+            bills: components["schemas"]["OpenBillOut"][];
+            /** Advance */
+            advance: string;
+        };
         /** OpeningCreate */
         OpeningCreate: {
             kind: components["schemas"]["OpeningKind"];
@@ -2220,6 +2385,8 @@ export interface components {
             direction: components["schemas"]["PaymentDirection"];
             /** Party Id */
             party_id: number;
+            /** Site Id */
+            site_id?: number | null;
             /** Location Id */
             location_id: number;
             /** Amount */
@@ -2234,6 +2401,8 @@ export interface components {
             payment_date: string;
             /** Note */
             note?: string | null;
+            /** Allocations */
+            allocations?: components["schemas"]["AllocationIn"][];
         };
         /**
          * PaymentDirection
@@ -2270,6 +2439,22 @@ export interface components {
             payment_date: string;
             /** Note */
             note: string | null;
+            /** Site Id */
+            site_id?: number | null;
+            /** Applied */
+            applied?: components["schemas"]["AllocationOut"][];
+            /**
+             * Advance
+             * @default 0
+             */
+            advance: string;
+        };
+        /** PinSet */
+        PinSet: {
+            /** Current Password */
+            current_password: string;
+            /** Pin */
+            pin: string;
         };
         /** PostRequest */
         PostRequest: {
@@ -6618,162 +6803,6 @@ export interface operations {
             };
         };
     };
-    list_payments_api_v1_payments_get: {
-        parameters: {
-            query?: {
-                party_id?: number | null;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PaymentOut"][];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_payment_api_v1_payments_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "idempotency-key"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PaymentCreate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PaymentOut"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     list_transfers_api_v1_transfers_get: {
         parameters: {
             query?: never;
@@ -8384,6 +8413,394 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_payments_api_v1_payments_get: {
+        parameters: {
+            query?: {
+                party_id?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentOut"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_payment_api_v1_payments_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "idempotency-key"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaymentCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    open_bills_api_v1_parties__party_id__open_bills_get: {
+        parameters: {
+            query: {
+                account: components["schemas"]["LedgerAccount"];
+            };
+            header?: never;
+            path: {
+                party_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpenBillsOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_approval_api_v1_approvals_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApprovalRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovalOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_pin_api_v1_auth_pin_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PinSet"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -1,8 +1,8 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Header, Query, Response, status
+from fastapi import APIRouter, Query, status
 
-from app.api.deps import CurrentPrincipal, DbSession, OwnerOnly, OwnerOrAccountant, OwnerOrCounter
+from app.api.deps import CurrentPrincipal, DbSession, OwnerOnly, OwnerOrCounter
 from app.core.errors import NotFoundError, PermissionDeniedError
 from app.models.enums import Role
 from app.schemas.common import Page
@@ -10,14 +10,11 @@ from app.schemas.purchases import (
     CostComponentIn,
     CostComponentOut,
     CostComponentUpdate,
-    PaymentCreate,
-    PaymentOut,
     PurchaseCreate,
     PurchaseOut,
     PurchaseOwnerOut,
     PurchasePreview,
 )
-from app.services import payments as payment_service
 from app.services import purchases as purchase_service
 from app.services.shop_settings import get_settings_row
 
@@ -113,30 +110,3 @@ def get_purchase(
     if not principal.can_access_location(purchase.location_id):
         raise NotFoundError("Purchase not found")
     return purchase_service.purchase_view(db, purchase, principal.sees_cost)
-
-
-# ---------------------------------------------------------------- supplier payments
-
-
-@router.post("/payments", response_model=PaymentOut, status_code=status.HTTP_201_CREATED)
-def create_payment(
-    body: PaymentCreate,
-    owner: OwnerOnly,
-    db: DbSession,
-    response: Response,
-    idempotency_key: Annotated[str | None, Header(max_length=80)] = None,
-) -> PaymentOut:
-    """Pay a supplier or give an advance. A repeated Idempotency-Key returns the first payment."""
-    payment, created = payment_service.create_supplier_payment(
-        db, body, actor_id=owner.user_id, idempotency_key=idempotency_key
-    )
-    if not created:
-        response.status_code = status.HTTP_200_OK
-    return payment
-
-
-@router.get("/payments", response_model=list[PaymentOut])
-def list_payments(
-    _: OwnerOrAccountant, db: DbSession, party_id: int | None = None
-) -> list[PaymentOut]:
-    return payment_service.list_payments(db, party_id)

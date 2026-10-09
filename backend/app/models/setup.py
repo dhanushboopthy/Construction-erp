@@ -98,6 +98,8 @@ class AppUser(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
     full_name: Mapped[str] = mapped_column(String(100))
     role: Mapped[Role] = mapped_column(str_enum(Role, "role"))
     password_hash: Mapped[str] = mapped_column(String(255))
+    # The owner approves counter requests by typing this PIN (G18). Hashed like a password.
+    pin_hash: Mapped[str | None] = mapped_column(String(255))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     failed_login_count: Mapped[int] = mapped_column(Integer, default=0)
     locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -110,7 +112,7 @@ class AppUser(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
     __audit_exclude__ = frozenset(
         {"updated_at", "failed_login_count", "locked_until", "last_login_at"}
     )
-    __audit_redact__ = frozenset({"password_hash"})
+    __audit_redact__ = frozenset({"password_hash", "pin_hash"})
 
 
 class UserLocation(Base, TenantMixin):

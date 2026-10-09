@@ -109,6 +109,8 @@ class A4HtmlRenderer:
             eway_no=eway_no,
             words=amount_in_words(invoice.grand_total),
             pending_text=inr(invoice.pending_balance_at_billing),
+            paid_text=inr(invoice.paid_at_billing),
+            due_text=inr(invoice.grand_total - invoice.paid_at_billing),
             totals={
                 "taxable": inr(invoice.taxable_value),
                 "cgst": inr(invoice.cgst),

@@ -20,6 +20,7 @@ from app.core.errors import (
     PermissionDeniedError,
 )
 from app.core.tenancy import TENANT_ID
+from app.domain import credit as credit_rules
 from app.domain import gst, pricing
 from app.domain import ledger as ledger_rules
 from app.domain.fiscal import fy_label
@@ -28,12 +29,15 @@ from app.domain.money import ZERO, money
 from app.domain.stock_valuation import NegativeStockError, ensure_available
 from app.domain.units import to_base
 from app.models.enums import (
+    ApprovalAction,
+    AuditAction,
     DocType,
     FulfilmentSource,
     InvoiceStatus,
     LedgerAccount,
     PartyRef,
     PartyType,
+    PaymentMode,
     StockRef,
     SupplyType,
 )
@@ -52,11 +56,25 @@ from app.schemas.sales import (
     InvoiceSummary,
     PreviewLineOut,
 )
+from app.services import approvals as approval_service
+from app.services import credit as credit_service
 from app.services import items as item_service
 from app.services import ledgers
+from app.services import payments as payment_service
 from app.services import rates as rate_service
+from app.services.audit import record_event
 from app.services.numbering import allocate_number
 from app.services.shop_settings import get_settings_row
+
+# Which owner approval clears which problem (G18).
+APPROVAL_FOR = {
+    "DISCOUNT_NEEDS_OWNER": ApprovalAction.DISCOUNT,
+    "BELOW_COST": ApprovalAction.BELOW_COST,
+    "BACKDATE_NEEDS_OWNER": ApprovalAction.BACKDATE,
+    "CREDIT_NOT_ALLOWED": ApprovalAction.CREDIT_OVERRIDE,
+    "CREDIT_LIMIT_EXCEEDED": ApprovalAction.CREDIT_OVERRIDE,
+    "OVERDUE_INVOICES": ApprovalAction.CREDIT_OVERRIDE,
+}
 
 
 @dataclass
@@ -99,6 +117,8 @@ class PricedInvoice:
     lines: list[PricedLine]
     totals: gst.InvoiceTotals
     problems: list[Problem]
+    paid: Decimal = ZERO
+    overrides: list[str] = field(default_factory=list)  # credit rules the owner waived
 
 
 def _balance(db: Session, party_id: int) -> Decimal:
@@ -111,12 +131,19 @@ def _balance(db: Session, party_id: int) -> Decimal:
         )
         .order_by(PartyLedger.entry_date, PartyLedger.id)
     ).scalars()
-    entries = [LedgerEntry(r.entry_date, r.debit, r.credit) for r in rows]
+    entries = [
+        LedgerEntry(r.entry_date, r.debit, r.credit, r.doc_no or "", r.applies_to) for r in rows
+    ]
     return ledger_rules.balance(entries, Account.RECEIVABLE)
 
 
 def price_invoice(
-    db: Session, data: InvoiceCreate, *, is_owner: bool, can_access: bool
+    db: Session,
+    data: InvoiceCreate,
+    *,
+    is_owner: bool,
+    can_access: bool,
+    approved: frozenset[ApprovalAction] = frozenset(),
 ) -> PricedInvoice:
     """Work out every figure on the bill. Hard errors raise; fixable ones are collected in
     `problems` so the screen can show them while the bill is being keyed."""
@@ -147,11 +174,19 @@ def price_invoice(
         raise BusinessRuleError(
             "A bill cannot be dated in the future", code="FUTURE_DATE", field="invoice_date"
         )
-    if on != today and not is_owner:
-        raise BusinessRuleError(
-            "Only the owner can back-date a bill",
-            code="BACKDATE_NEEDS_OWNER",
-            field="invoice_date",
+    # What the owner's PIN can clear: the same rights the owner has, for this one bill (G18).
+    may_discount = is_owner or ApprovalAction.DISCOUNT in approved
+    may_sell_below_cost = is_owner or ApprovalAction.BELOW_COST in approved
+    problems: list[Problem] = []
+    if on != today and not (is_owner or ApprovalAction.BACKDATE in approved):
+        problems.append(
+            Problem(
+                None,
+                "BACKDATE_NEEDS_OWNER",
+                "Only the owner can back-date a bill.",
+                True,
+                "invoice_date",
+            )
         )
 
     place = gst.place_of_supply(location.state_code, site.state_code if site else None)
@@ -178,7 +213,7 @@ def price_invoice(
         priced.append(row)
 
         # Price (B3): staff never choose it. Only the owner may override or discount.
-        if (line.discount or line.rate_override is not None) and not is_owner:
+        if (line.discount or line.rate_override is not None) and not may_discount:
             row.problems.append(
                 Problem(
                     index,
@@ -192,7 +227,7 @@ def price_invoice(
             row.rate, row.source = resolved.rate, resolved.source
         except BusinessRuleError as exc:
             row.problems.append(Problem(index, exc.code, exc.message, False, "item_id"))
-        if line.rate_override is not None and is_owner:
+        if line.rate_override is not None and may_discount:
             _, factor = conversion.unit, conversion.factor_to_base
             exclusive = pricing.exclusive_rate(
                 line.rate_override, item.gst_rate, includes_gst=settings.rates_include_gst
@@ -200,7 +235,7 @@ def price_invoice(
             row.rate = pricing.rate_per_base_unit(exclusive, factor)
             row.source = pricing.RateSource.MARKET
             row.problems = [p for p in row.problems if p.code != "PRICE_NOT_SET"]
-        if line.discount and is_owner:
+        if line.discount and may_discount:
             if not line.discount_reason:
                 row.problems.append(
                     Problem(
@@ -277,14 +312,52 @@ def price_invoice(
                 base_qty > ZERO
                 and row.cost > ZERO
                 and taxable / base_qty < row.cost
-                and not is_owner
+                and not may_sell_below_cost
             ):
                 row.problems.append(
                     Problem(index, "BELOW_COST", "This price needs the owner to approve it.", True)
                 )
 
-    all_problems = [p for row in priced for p in row.problems]
     totals = gst.invoice_totals([row.tax for row in priced if row.tax is not None])
+
+    # Money taken now, the cash limit (G14) and the credit check on what stays unpaid (B8).
+    paid = money(sum((x.amount for x in data.payments), ZERO))
+    overrides: list[str] = []
+    if paid > totals.grand_total:
+        problems.append(
+            Problem(
+                None, "OVERPAID", "More money was entered than the bill total.", False, "payments"
+            )
+        )
+    cash = money(sum((x.amount for x in data.payments if x.mode is PaymentMode.CASH), ZERO))
+    if cash > ZERO:
+        message = payment_service.check_cash_limit(db, party.id, on, cash)
+        if message:
+            problems.append(Problem(None, "CASH_LIMIT_REACHED", message, False, "payments"))
+    unpaid = totals.grand_total - paid
+    if unpaid > ZERO and totals.grand_total > ZERO:
+        decision = credit_service.decide(db, party, settings, unpaid, on)
+        messages = {
+            credit_rules.CreditViolation.CREDIT_NOT_ALLOWED: (
+                "This customer is not approved for credit. Take payment, or ask the owner."
+            ),
+            credit_rules.CreditViolation.CREDIT_LIMIT_EXCEEDED: (
+                f"This would take the customer past their credit limit "
+                f"(they owe ₹{decision.outstanding:,.2f}, ₹{decision.available:,.2f} is left)."
+            ),
+            credit_rules.CreditViolation.OVERDUE_INVOICES: (
+                "This customer has overdue bills: " + ", ".join(decision.overdue) + "."
+            ),
+        }
+        for violation in decision.violations:
+            if is_owner or ApprovalAction.CREDIT_OVERRIDE in approved:
+                overrides.append(violation.value)
+            else:
+                problems.append(
+                    Problem(None, violation.value, messages[violation], True, "payments")
+                )
+
+    all_problems = problems + [p for row in priced for p in row.problems]
     return PricedInvoice(
         location=location,
         party=party,
@@ -298,13 +371,22 @@ def price_invoice(
         lines=priced,
         totals=totals,
         problems=all_problems,
+        paid=paid,
+        overrides=overrides,
     )
 
 
 def preview(
-    db: Session, data: InvoiceCreate, *, is_owner: bool, can_access: bool
+    db: Session, data: InvoiceCreate, *, is_owner: bool, can_access: bool, actor_id: int
 ) -> InvoicePreview:
-    p = price_invoice(db, data, is_owner=is_owner, can_access=can_access)
+    approvals = approval_service.load_valid(db, data.approval_ids, actor_id, data.party_id)
+    p = price_invoice(
+        db,
+        data,
+        is_owner=is_owner,
+        can_access=can_access,
+        approved=frozenset(a.action for a in approvals),
+    )
     lines = [
         PreviewLineOut(
             item_id=r.item.id,
@@ -339,6 +421,11 @@ def preview(
         igst=t.igst,
         round_off=t.round_off,
         grand_total=t.grand_total,
+        paid_now=p.paid,
+        balance_due=t.grand_total - p.paid,
+        invoice_problems=[x.message for x in p.problems if x.line is None],
+        needs_owner=any(x.approval for x in p.problems),
+        approvals_needed=sorted({APPROVAL_FOR[x.code] for x in p.problems if x.approval}),
         lines=lines,
         can_save=not p.problems,
     )
@@ -373,7 +460,17 @@ def create(
             return found, False
 
     ledgers.lock_items(db, {line.item_id for line in data.lines})
-    p = price_invoice(db, data, is_owner=is_owner, can_access=can_access)
+    ledgers.lock_party(
+        db, data.party_id
+    )  # two counters cannot both spend the last of a credit limit
+    approvals = approval_service.load_valid(db, data.approval_ids, actor_id, data.party_id)
+    p = price_invoice(
+        db,
+        data,
+        is_owner=is_owner,
+        can_access=can_access,
+        approved=frozenset(a.action for a in approvals),
+    )
     if p.problems:
         first = p.problems[0]
         raise BusinessRuleError(
@@ -420,6 +517,7 @@ def create(
         round_off=t.round_off,
         grand_total=t.grand_total,
         pending_balance_at_billing=p.pending,
+        paid_at_billing=p.paid,
         vehicle_no=data.vehicle_no,
         remark=data.remark,
         idempotency_key=idempotency_key,
@@ -482,6 +580,28 @@ def create(
         narration=f"Invoice {number}",
         actor_id=actor_id,
     )
+    if data.payments:
+        payment_service.receive_at_billing(
+            db,
+            party=p.party,
+            site_id=p.site.id if p.site else None,
+            location_id=p.location.id,
+            invoice_number=number,
+            on=p.invoice_date,
+            parts=[(x.mode, x.amount, x.reference) for x in data.payments],
+            actor_id=actor_id,
+        )
+    approval_service.mark_used(approvals, number)
+    if p.overrides:
+        # The owner waived a credit rule: leave a trail of who, which rule and for which bill.
+        record_event(
+            db,
+            AuditAction.OVERRIDE,
+            "sales_invoice",
+            invoice.id,
+            {"waived": p.overrides, "number": number, "party_id": p.party.id},
+            user_id=actor_id,
+        )
     db.commit()
     return invoice, True
 
@@ -567,6 +687,7 @@ def invoice_view(db: Session, inv: SalesInvoice, with_cost: bool) -> InvoiceOut 
         "igst": inv.igst,
         "round_off": inv.round_off,
         "pending_balance_at_billing": inv.pending_balance_at_billing,
+        "paid_at_billing": inv.paid_at_billing,
         "vehicle_no": inv.vehicle_no,
         "remark": inv.remark,
     }

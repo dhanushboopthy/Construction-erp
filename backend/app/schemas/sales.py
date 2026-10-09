@@ -6,7 +6,13 @@ from pydantic import Field
 
 from app.domain.gst import SupplyKind
 from app.domain.pricing import RateSource
-from app.models.enums import FulfilmentSource, InvoiceStatus, SupplyType
+from app.models.enums import (
+    ApprovalAction,
+    FulfilmentSource,
+    InvoiceStatus,
+    PaymentMode,
+    SupplyType,
+)
 from app.schemas.common import Schema
 
 Qty = Annotated[Decimal, Field(gt=0, max_digits=14, decimal_places=3)]
@@ -26,6 +32,14 @@ class InvoiceLineIn(Schema):
     rate_override: Rate | None = None  # per `unit`
 
 
+class BillPaymentIn(Schema):
+    """Money taken at the counter with the bill (cash, UPI or bank; no cheques, B7)."""
+
+    mode: PaymentMode
+    amount: Annotated[Decimal, Field(gt=0, max_digits=14, decimal_places=2)]
+    reference: str | None = Field(default=None, max_length=60)
+
+
 class InvoiceCreate(Schema):
     location_id: int
     party_id: int
@@ -34,6 +48,9 @@ class InvoiceCreate(Schema):
     vehicle_no: str | None = Field(default=None, max_length=20)
     remark: str | None = Field(default=None, max_length=300)
     lines: list[InvoiceLineIn] = Field(min_length=1, max_length=100)
+    payments: list[BillPaymentIn] = Field(default_factory=list)
+    # Owner PIN approvals obtained for this bill (POST /approvals, G18).
+    approval_ids: list[int] = Field(default_factory=list, max_length=10)
 
 
 # ------------------------------------------------------------------ preview
@@ -70,6 +87,11 @@ class InvoicePreview(Schema):
     igst: Decimal
     round_off: Decimal
     grand_total: Decimal
+    paid_now: Decimal
+    balance_due: Decimal
+    invoice_problems: list[str]
+    needs_owner: bool  # a problem the owner's PIN can clear
+    approvals_needed: list[ApprovalAction]  # which approvals to ask the owner for
     lines: list[PreviewLineOut]
     can_save: bool
 
@@ -138,6 +160,7 @@ class InvoiceOut(InvoiceSummary):
     igst: Decimal
     round_off: Decimal
     pending_balance_at_billing: Decimal
+    paid_at_billing: Decimal
     vehicle_no: str | None
     remark: str | None
     lines: list[InvoiceLineOut]

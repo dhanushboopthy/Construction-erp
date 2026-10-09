@@ -1,5 +1,6 @@
 """Import every model here so Alembic autogenerate sees the full metadata."""
 
+from app.models.approvals import Approval
 from app.models.audit import AuditLog
 from app.models.auth import AuthSession
 from app.models.base import Base
@@ -15,6 +16,7 @@ from app.models.stock_ops import StockCount, StockCountLine, StockTransfer, Stoc
 
 __all__ = [
     "AppUser",
+    "Approval",
     "AuditLog",
     "AuthSession",
     "Base",

@@ -506,7 +506,8 @@ def test_payment_rules_and_roles(client, world):
     for who in (COUNTER, ACCOUNTANT):
         headers = login(client, *who)
         assert client.post("/api/v1/payments", headers=headers, json=base).status_code == 403
-    assert client.get("/api/v1/payments", headers=login(client, *COUNTER)).status_code == 403
+    # Counter staff may list receipts of their own shop, but never what is paid to suppliers.
+    assert client.get("/api/v1/payments", headers=login(client, *COUNTER)).json() == []
     customer = client.post(
         "/api/v1/parties",
         headers=owner,
@@ -537,7 +538,8 @@ def test_payment_rules_and_roles(client, world):
         == 422
     )
     received = client.post("/api/v1/payments", headers=owner, json=base | {"direction": "received"})
-    assert received.status_code == 409 and received.json()["code"] == "NOT_AVAILABLE"
+    # Receipts are from customers: a supplier cannot pay us through this.
+    assert received.status_code == 409 and received.json()["code"] == "WRONG_PARTY_TYPE"
 
 
 # ---------------------------------------------------------------- transfers

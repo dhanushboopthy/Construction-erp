@@ -65,6 +65,8 @@ class PartyLedger(Base, TenantMixin):
     ref_type: Mapped[PartyRef] = mapped_column(str_enum(PartyRef, "party_ref"))
     ref_id: Mapped[int | None] = mapped_column(Integer)
     doc_no: Mapped[str | None] = mapped_column(String(20))
+    # A payment aimed at one bill (its number); blank means oldest bill first.
+    applies_to: Mapped[str | None] = mapped_column(String(20))
     debit: Mapped[Money] = mapped_column(default=Decimal("0"))
     credit: Mapped[Money] = mapped_column(default=Decimal("0"))
     narration: Mapped[str | None] = mapped_column(String(200))

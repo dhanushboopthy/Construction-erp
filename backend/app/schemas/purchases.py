@@ -166,15 +166,29 @@ class PurchasePreview(Schema):
 # ------------------------------------------------------------------ payments
 
 
+class AllocationIn(Schema):
+    """Aim part of a payment at one bill (its number). Blank allocations mean oldest first."""
+
+    bill_no: str = Field(min_length=1, max_length=20)
+    amount: Annotated[Decimal, Field(gt=0, max_digits=14, decimal_places=2)]
+
+
+class AllocationOut(Schema):
+    bill_no: str
+    amount: Decimal
+
+
 class PaymentCreate(Schema):
     direction: PaymentDirection = PaymentDirection.PAID
     party_id: int
+    site_id: int | None = None
     location_id: int
     amount: Annotated[Decimal, Field(gt=0, max_digits=14, decimal_places=2)]
     mode: PaymentMode
     reference: str | None = Field(default=None, max_length=60)
     payment_date: date
     note: str | None = Field(default=None, max_length=200)
+    allocations: list[AllocationIn] = Field(default_factory=list)
 
 
 class PaymentOut(Schema):
@@ -189,3 +203,6 @@ class PaymentOut(Schema):
     reference: str | None
     payment_date: date
     note: str | None
+    site_id: int | None = None
+    applied: list[AllocationOut] = Field(default_factory=list)
+    advance: Decimal = Decimal("0")

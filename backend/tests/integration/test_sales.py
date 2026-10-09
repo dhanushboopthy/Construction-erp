@@ -118,6 +118,12 @@ def world(client):
         headers=owner,
         json={"name": "Walk-in", "type": "customer", "state_code": "33"},
     ).json()
+    for party in (ravi, walkin):  # approved for credit, so M6 bills need no payment
+        client.patch(
+            f"/api/v1/parties/{party['id']}",
+            headers=owner,
+            json={"credit_allowed": True, "credit_limit": "10000000", "credit_days": 30},
+        )
     supplier = client.post(
         "/api/v1/parties",
         headers=owner,
@@ -220,7 +226,10 @@ def test_walk_in_sale_is_a_normal_b2c_tax_invoice(client, world):
         "532.63",
         "4870.00",
     )
-    assert inv["bill_to_gstin"] is None and inv["due_date"] == day(0)
+    assert (
+        inv["bill_to_gstin"] is None
+        and inv["due_date"] == (today_ist() + timedelta(days=30)).isoformat()
+    )
 
 
 def test_saving_moves_stock_and_adds_to_what_the_customer_owes(client, world):

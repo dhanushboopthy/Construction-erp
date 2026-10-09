@@ -18,6 +18,8 @@ import { RateBoardPage } from "@/pages/rates/RateBoardPage";
 import { RatesLayout } from "@/pages/rates/RatesLayout";
 import { BillEntryPage } from "@/pages/sales/BillEntryPage";
 import { SalesPage } from "@/pages/sales/SalesPage";
+import { PaymentsPage } from "@/pages/payments/PaymentsPage";
+import { PinPage } from "@/pages/settings/PinPage";
 import { OpeningPage } from "@/pages/opening/OpeningPage";
 import { ChargeTypesPage } from "@/pages/settings/ChargeTypesPage";
 import { LocationsPage } from "@/pages/settings/LocationsPage";
@@ -70,6 +72,7 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
                 <Route path="users" element={<UsersPage />} />
                 <Route path="locations" element={<LocationsPage />} />
                 <Route path="charges" element={<ChargeTypesPage />} />
+                <Route path="pin" element={<PinPage />} />
                 <Route path="opening" element={<OpeningPage />} />
               </Route>
               <Route
@@ -109,6 +112,14 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
                 element={
                   <RequireRole roles={["owner", "counter"]}>
                     <PurchaseEntryPage />
+                  </RequireRole>
+                }
+              />
+              <Route
+                path="/payments"
+                element={
+                  <RequireRole roles={["owner", "counter", "accountant"]}>
+                    <PaymentsPage />
                   </RequireRole>
                 }
               />

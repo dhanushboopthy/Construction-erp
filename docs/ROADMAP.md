@@ -14,7 +14,7 @@ if time runs short. In Claude Code: `/milestone <n>`.
 | 4 | Purchase and stock | Purchase entry, cost components, supplier advance, stock ledger, transfers | Sample purchase gives the hand-calculated landed and average cost | **Done** (`feat/m4-purchase-stock`; ADR 0007) |
 | 5 | Rates | Daily market rate screen, customer rates, margins (owner only) | Price resolves in order; staff API never returns cost | **Done** (`feat/m5-rates`) |
 | 6 | Sales invoice | Billing screen, GST maths, sites, numbering, A4 PDF, B2C, idempotency | Totals match a manual calculation; numbers gapless under concurrent saves | **Done** (`feat/m6-sales-invoice`; concurrent test: 40 racing bills, 30 stock, numbers 1-30) |
-| 7 | Credit and payments | Credit checks, owner PIN approvals, payments, allocation, ledgers, statements | Over-limit and overdue blocked; statement per site balances | |
+| 7 | Credit and payments | Credit checks, owner PIN approvals, payments, allocation, ledgers, statements | Over-limit and overdue blocked; statement per site balances | **Done** (`feat/m7-credit-payments`; ADR 0008) |
 | 8 | Returns and notes | 2-day returns, credit notes, purchase returns, debit notes | Return after 2 days needs owner approval | |
 | 9 | Drop-ship and transport | Direct fulfilment, purchase link, vehicles, trips, freight | Drop-ship writes no stock rows and shows correct profit | |
 | 10 | E-way bill (and IRN) | GSP integration, Part B update, cancel, manual fallback | 50 bills in a sandbox batch succeed | |

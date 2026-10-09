@@ -64,7 +64,7 @@ export const MODULES: ModuleLink[] = [
     path: "/payments",
     label: "Payments",
     shortcut: "6",
-    roles: ["owner", "counter"],
+    roles: ALL,
     milestone: 7,
     purpose: "Cash, UPI and bank receipts, allocated to bills.",
   },

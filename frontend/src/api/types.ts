@@ -35,6 +35,16 @@ export type SiteCreate = Schemas["SiteCreate"];
 export type SiteUpdate = Schemas["SiteUpdate"];
 export type CustomerSegment = Schemas["CustomerSegment"];
 export type Page<T> = { items: T[]; total: number; limit: number; offset: number };
+export type OpeningRow = Schemas["OpeningOut"];
+export type OpeningCreate = Schemas["OpeningCreate"];
+export type OpeningKind = Schemas["OpeningKind"];
+export type PostResult = Schemas["PostResult"];
+export type StockItem = Schemas["StockItemOut"];
+export type StockItemOwner = Schemas["StockItemOwnerOut"];
+export type Statement = Schemas["StatementOut"];
+export type AccountView = Schemas["AccountOut"];
+export type Dues = Schemas["DuesOut"];
+export type LedgerAccount = Schemas["LedgerAccount"];
 export type AuditLogEntry = Schemas["AuditLogOut"];
 
 /** Error body returned by the API for every failure (core/errors.py adds the extras). */

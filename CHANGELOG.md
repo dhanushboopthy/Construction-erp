@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.13.0 (Milestone 12)
+
+- Daily closing per shop: figures, cash drawer count, PDF saved date-wise to a folder or an
+  S3-compatible bucket, and a lock on that shop-day until the owner reopens it.
+- Today strip with real figures and stock; profit by item, customer or site (owner); dues with
+  ageing; monthly sales by customer segment chart.
+- Screens: Reports (Alt+8) with Daily closing, Profit, Dues, Sales by segment; Today.
+
 ## 0.12.0 (Milestone 11)
 
 - Weight checks on purchases (billed vs received) and sales (billed vs slip): a difference above

@@ -41,6 +41,21 @@ Endpoints that return cost, margin or profit use separate response models for ow
 staff (for example `ItemOwnerOut` and `ItemOut`). Choose the model with `principal.sees_cost`;
 never rely on the UI to hide fields. Test each such endpoint as a counter user.
 
+## Endpoints (Milestone 12)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| GET | `/reports/today` | all roles; payables not for counter, profit owner only |
+| GET | `/closings/preview?location_id=&closing_date=` | owner, accountant; counter: own shop. `profit` for the owner only |
+| POST | `/closings` `{location_id, closing_date, counted_cash, opening_cash?, note?}` | owner, counter (own shop) |
+| POST | `/closings/{id}/reopen` `{reason}` | owner |
+| GET | `/closings` · `/closings/{id}/pdf` | owner, accountant; counter: own shop |
+| GET | `/reports/profit?group=item\|customer\|site&date_from=&date_to=` | owner |
+| GET | `/reports/sales-by-segment?start_year=` | owner, accountant |
+
+New codes: `DAY_CLOSED`, `ALREADY_CLOSED`, `NOT_CLOSED`, `CASH_NOTE_REQUIRED`, `STORAGE_FAILED`,
+`BAD_RANGE`, `RANGE_TOO_LONG`.
+
 ## Endpoints (Milestone 11)
 
 | Method | Path | Who |

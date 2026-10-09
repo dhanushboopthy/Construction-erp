@@ -37,6 +37,7 @@ from app.schemas.transport import (
     VehicleCreate,
     VehicleUpdate,
 )
+from app.services import closing as closing_service
 from app.services import ledgers
 from app.services.shop_settings import get_settings_row
 
@@ -185,6 +186,7 @@ def create_trip(db: Session, data: TripCreate, *, actor_id: int) -> Trip:
             field="freight_amount",
         )
     on = data.trip_date or today_ist()
+    closing_service.ensure_day_open(db, location.id, on)
     trip = Trip(
         tenant_id=TENANT_ID,
         trip_date=on,

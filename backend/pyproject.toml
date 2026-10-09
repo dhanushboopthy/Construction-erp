@@ -20,6 +20,7 @@ dependencies = [
     "jinja2>=3.1.6",
     "httpx>=0.28",
     "segno>=1.6",
+    "boto3>=1.43.110",
 ]
 
 [dependency-groups]
@@ -63,7 +64,7 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "S105", "S106", "PT018", "N817", "E501"]
 # The sales `world` fixture is imported into the later milestone test files.
-"tests/integration/test_{returns,transport,compliance,weight_schemes}.py" = ["F811", "E731"]
+"tests/integration/test_{returns,transport,compliance,weight_schemes,closing_reports}.py" = ["F811", "E731"]
 "app/scripts/**" = ["T20"]
 
 [tool.ruff.lint.isort]
@@ -78,7 +79,7 @@ plugins = ["pydantic.mypy"]
 exclude = ["alembic/versions/"]
 
 [[tool.mypy.overrides]]
-module = ["openpyxl", "openpyxl.*", "weasyprint", "weasyprint.*"]
+module = ["openpyxl", "openpyxl.*", "weasyprint", "weasyprint.*", "boto3", "boto3.*", "botocore", "botocore.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]

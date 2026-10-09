@@ -19,6 +19,11 @@ class GspProvider(StrEnum):
     LIVE = "live"
 
 
+class StorageProvider(StrEnum):
+    LOCAL = "local"  # a folder on the server (development, or a volume that is backed up)
+    S3 = "s3"  # any S3-compatible bucket: AWS S3, Cloudflare R2, Backblaze B2, MinIO, Wasabi
+
+
 _DEV_SECRET = "dev-only-secret-change-me-dev-only-secret"  # noqa: S105 - rejected in production
 
 
@@ -58,7 +63,14 @@ class Settings(BaseSettings):
     gsp_timeout_seconds: float = 20.0
 
     # Where uploaded files (weighbridge slips, delivery proof) are kept; back this folder up.
+    storage_provider: StorageProvider = StorageProvider.LOCAL
     storage_dir: str = "./data/files"
+    s3_bucket: str = ""
+    s3_endpoint_url: str = ""  # blank for AWS S3
+    s3_region: str = "ap-south-1"
+    s3_access_key_id: str = ""
+    s3_secret_access_key: SecretStr = SecretStr("")
+    s3_prefix: str = ""
     max_upload_mb: int = 8
 
     log_level: str = "INFO"

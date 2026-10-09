@@ -88,9 +88,9 @@ export const MODULES: ModuleLink[] = [
     path: "/reports",
     label: "Reports",
     shortcut: "8",
-    roles: ["owner", "accountant"],
+    roles: ["owner", "counter", "accountant"],
     milestone: 12,
-    purpose: "Daily closing, dues, GSTR-1 and 3B data.",
+    purpose: "Daily closing, profit, dues and sales by customer segment.",
   },
   {
     path: "/settings",

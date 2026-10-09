@@ -1467,6 +1467,142 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/closings/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Preview
+         * @description The day's figures and the cash that should be in the drawer. Profit for the owner only.
+         */
+        get: operations["preview_api_v1_closings_preview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/closings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Closings */
+        get: operations["list_closings_api_v1_closings_get"];
+        put?: never;
+        /**
+         * Close Day
+         * @description Count the drawer and close the shop-day. Later documents for that day are refused.
+         */
+        post: operations["close_day_api_v1_closings_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/closings/{closing_id}/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reopen */
+        post: operations["reopen_api_v1_closings__closing_id__reopen_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/closings/{closing_id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Closing Pdf */
+        get: operations["closing_pdf_api_v1_closings__closing_id__pdf_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/today": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Today
+         * @description The home-screen figures. Counter staff see their own shop's sales; payables and profit
+         *     are for the owner (payables also for the accountant).
+         */
+        get: operations["today_api_v1_reports_today_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/profit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Profit
+         * @description Profit by item, customer or site: sales less returns, less cost, less freight.
+         */
+        get: operations["profit_api_v1_reports_profit_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/sales-by-segment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Sales By Segment
+         * @description Monthly sales (excluding GST, less returns) by customer segment for a financial year.
+         */
+        get: operations["sales_by_segment_api_v1_reports_sales_by_segment_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1659,6 +1795,131 @@ export interface components {
              */
             on_supplier_bill: boolean;
         };
+        /** ClosingCreate */
+        ClosingCreate: {
+            /** Location Id */
+            location_id: number;
+            /**
+             * Closing Date
+             * Format: date
+             */
+            closing_date: string;
+            /** Counted Cash */
+            counted_cash: number | string;
+            /** Opening Cash */
+            opening_cash?: number | string | null;
+            /** Note */
+            note?: string | null;
+        };
+        /**
+         * ClosingFigures
+         * @description The day's numbers for one shop. No cost, margin or profit: staff close their own day.
+         */
+        ClosingFigures: {
+            /** Location Id */
+            location_id: number;
+            /** Location Code */
+            location_code: string;
+            /**
+             * Closing Date
+             * Format: date
+             */
+            closing_date: string;
+            /** Invoices Count */
+            invoices_count: number;
+            /** First Invoice */
+            first_invoice: string | null;
+            /** Last Invoice */
+            last_invoice: string | null;
+            /** Taxable */
+            taxable: string;
+            /** Cgst */
+            cgst: string;
+            /** Sgst */
+            sgst: string;
+            /** Igst */
+            igst: string;
+            /** Round Off */
+            round_off: string;
+            /** Sales Total */
+            sales_total: string;
+            /** Credit Given */
+            credit_given: string;
+            /** Returns Count */
+            returns_count: number;
+            /** Returns Total */
+            returns_total: string;
+            receipts: components["schemas"]["ModeTotals"];
+            /** Cash Out */
+            cash_out: string;
+            /** Purchases Count */
+            purchases_count: number;
+            /** Top Items */
+            top_items: components["schemas"]["TopItem"][];
+        };
+        /** ClosingOut */
+        ClosingOut: {
+            /** Id */
+            id: number;
+            /** Location Id */
+            location_id: number;
+            /** Location Code */
+            location_code: string;
+            /**
+             * Closing Date
+             * Format: date
+             */
+            closing_date: string;
+            status: components["schemas"]["ClosingStatus"];
+            /** Invoices Count */
+            invoices_count: number;
+            /** Sales Total */
+            sales_total: string;
+            /** Returns Total */
+            returns_total: string;
+            /** Opening Cash */
+            opening_cash: string;
+            /** Cash In */
+            cash_in: string;
+            /** Cash Out */
+            cash_out: string;
+            /** Expected Cash */
+            expected_cash: string;
+            /** Counted Cash */
+            counted_cash: string;
+            /** Difference */
+            difference: string;
+            /** Note */
+            note: string | null;
+            /** Closed At */
+            closed_at: string | null;
+            /** Reopened At */
+            reopened_at: string | null;
+            /** Reopen Reason */
+            reopen_reason: string | null;
+            /** Times Closed */
+            times_closed: number;
+            /** Has Pdf */
+            has_pdf: boolean;
+        };
+        /** ClosingPreview */
+        ClosingPreview: {
+            figures: components["schemas"]["ClosingFigures"];
+            /** Opening Cash */
+            opening_cash: string;
+            /** Expected Cash */
+            expected_cash: string;
+            existing: components["schemas"]["ClosingOut"] | null;
+            /** Locked */
+            locked: boolean;
+            /** Profit */
+            profit?: string | null;
+        };
+        /**
+         * ClosingStatus
+         * @enum {string}
+         */
+        ClosingStatus: "closed" | "reopened";
         /**
          * ComplianceStatus
          * @description State of an e-way bill or an e-invoice (IRN) at the government portal.
@@ -3116,6 +3377,17 @@ export interface components {
             /** Warnings */
             warnings: components["schemas"]["RateWarning"][];
         };
+        /** ModeTotals */
+        ModeTotals: {
+            /** Cash */
+            cash: string;
+            /** Upi */
+            upi: string;
+            /** Bank */
+            bank: string;
+            /** Total */
+            total: string;
+        };
         /** OpenBillOut */
         OpenBillOut: {
             /** Bill No */
@@ -3267,6 +3539,17 @@ export interface components {
         Page_AuditLogOut_: {
             /** Items */
             items: components["schemas"]["AuditLogOut"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+        };
+        /** Page[ClosingOut] */
+        Page_ClosingOut_: {
+            /** Items */
+            items: components["schemas"]["ClosingOut"][];
             /** Total */
             total: number;
             /** Limit */
@@ -3675,6 +3958,50 @@ export interface components {
             /** Problems */
             problems: string[];
         };
+        /**
+         * ProfitGroup
+         * @enum {string}
+         */
+        ProfitGroup: "item" | "customer" | "site";
+        /** ProfitReport */
+        ProfitReport: {
+            group: components["schemas"]["ProfitGroup"];
+            /**
+             * Date From
+             * Format: date
+             */
+            date_from: string;
+            /**
+             * Date To
+             * Format: date
+             */
+            date_to: string;
+            /** Rows */
+            rows: components["schemas"]["ProfitRow"][];
+            /** Taxable */
+            taxable: string;
+            /** Cost */
+            cost: string;
+            /** Freight */
+            freight: string;
+            /** Profit */
+            profit: string;
+        };
+        /** ProfitRow */
+        ProfitRow: {
+            /** Key */
+            key: string;
+            /** Taxable */
+            taxable: string;
+            /** Cost */
+            cost: string;
+            /** Freight */
+            freight: string;
+            /** Profit */
+            profit: string;
+            /** Margin Pct */
+            margin_pct: string | null;
+        };
         /** PurchaseCostOut */
         PurchaseCostOut: {
             /** Id */
@@ -4018,6 +4345,11 @@ export interface components {
          * @enum {string}
          */
         RebateRule: "percent" | "per_unit" | "flat";
+        /** ReopenIn */
+        ReopenIn: {
+            /** Reason */
+            reason: string;
+        };
         /** ResolvedPriceOut */
         ResolvedPriceOut: {
             /** Item Id */
@@ -4131,6 +4463,32 @@ export interface components {
             name?: string | null;
             /** Is Active */
             is_active?: boolean | null;
+        };
+        /** SegmentMonth */
+        SegmentMonth: {
+            /** Month */
+            month: string;
+            /** Retail */
+            retail: string;
+            /** Contractor */
+            contractor: string;
+            /** Bulk */
+            bulk: string;
+            /** Unassigned */
+            unassigned: string;
+            /** Total */
+            total: string;
+        };
+        /** SegmentReport */
+        SegmentReport: {
+            /** Financial Year */
+            financial_year: string;
+            /** Start Year */
+            start_year: number;
+            /** Months */
+            months: components["schemas"]["SegmentMonth"][];
+            /** Total */
+            total: string;
         };
         /** ShopSettingsOut */
         ShopSettingsOut: {
@@ -4449,6 +4807,26 @@ export interface components {
          * @enum {string}
          */
         SupplyType: "B2B" | "B2C";
+        /** TodayOut */
+        TodayOut: {
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** Items In Stock */
+            items_in_stock: number;
+            /** Customers Owe */
+            customers_owe: string;
+            /** We Owe */
+            we_owe: string | null;
+            /** Sales Today */
+            sales_today: string;
+            /** Returns Today */
+            returns_today: string;
+            /** Profit Today */
+            profit_today: string | null;
+        };
         /** TokenResponse */
         TokenResponse: {
             /** Access Token */
@@ -4461,6 +4839,17 @@ export interface components {
             /** Expires In */
             expires_in: number;
             user: components["schemas"]["UserOut"];
+        };
+        /** TopItem */
+        TopItem: {
+            /** Description */
+            description: string;
+            /** Base Unit */
+            base_unit: string;
+            /** Quantity */
+            quantity: string;
+            /** Taxable */
+            taxable: string;
         };
         /** TransferCreate */
         TransferCreate: {
@@ -12715,6 +13104,611 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SchemeOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_api_v1_closings_preview_get: {
+        parameters: {
+            query: {
+                location_id: number;
+                closing_date: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClosingPreview"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_closings_api_v1_closings_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_ClosingOut_"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    close_day_api_v1_closings_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClosingCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClosingOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reopen_api_v1_closings__closing_id__reopen_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                closing_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReopenIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClosingOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    closing_pdf_api_v1_closings__closing_id__pdf_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                closing_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    today_api_v1_reports_today_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TodayOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    profit_api_v1_reports_profit_get: {
+        parameters: {
+            query: {
+                group: components["schemas"]["ProfitGroup"];
+                date_from: string;
+                date_to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfitReport"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sales_by_segment_api_v1_reports_sales_by_segment_get: {
+        parameters: {
+            query?: {
+                start_year?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SegmentReport"];
                 };
             };
             /** @description Bad Request */

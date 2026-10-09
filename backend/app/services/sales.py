@@ -59,6 +59,7 @@ from app.schemas.sales import (
     PreviewLineOut,
 )
 from app.services import approvals as approval_service
+from app.services import closing as closing_service
 from app.services import credit as credit_service
 from app.services import items as item_service
 from app.services import ledgers
@@ -179,6 +180,7 @@ def price_invoice(
         raise BusinessRuleError(
             "A bill cannot be dated in the future", code="FUTURE_DATE", field="invoice_date"
         )
+    closing_service.ensure_day_open(db, location.id, on)  # G17: a closed shop-day takes no bills
     # What the owner's PIN can clear: the same rights the owner has, for this one bill (G18).
     may_discount = is_owner or ApprovalAction.DISCOUNT in approved
     may_sell_below_cost = is_owner or ApprovalAction.BELOW_COST in approved

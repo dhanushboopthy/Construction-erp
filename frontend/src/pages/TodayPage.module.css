@@ -39,3 +39,9 @@
   color: var(--color-steel);
   font-size: var(--text-sm);
 }
+
+.stockTitle {
+  margin: var(--space-5) 0 var(--space-3);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}

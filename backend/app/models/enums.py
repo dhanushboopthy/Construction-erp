@@ -157,6 +157,11 @@ class AttachmentKind(StrEnum):
     OTHER = "other"
 
 
+class ClosingStatus(StrEnum):
+    CLOSED = "closed"  # the shop-day is locked
+    REOPENED = "reopened"  # the owner unlocked it; it can be closed again
+
+
 class AuditAction(StrEnum):
     INSERT = "insert"
     UPDATE = "update"

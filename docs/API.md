@@ -41,6 +41,23 @@ Endpoints that return cost, margin or profit use separate response models for ow
 staff (for example `ItemOwnerOut` and `ItemOut`). Choose the model with `principal.sees_cost`;
 never rely on the UI to hide fields. Test each such endpoint as a counter user.
 
+## Endpoints (Milestone 10)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| GET | `/invoices/{id}/eway-bill` · `/invoices/{id}/einvoice` | owner, accountant; counter: own shop |
+| POST | `/invoices/{id}/eway-bill` `{distance_km, from_pincode, to_pincode, vehicle_no?}` | owner, counter (own shop) |
+| POST | `/invoices/{id}/eway-bill/manual` `{number, vehicle_no?, valid_until?}` · `/eway-bill/vehicle` | owner, counter (own shop) |
+| POST | `/invoices/{id}/eway-bill/cancel` `{reason}` · `/invoices/{id}/einvoice/cancel` | owner |
+| POST | `/invoices/{id}/einvoice` `{from_pincode, to_pincode}` | owner, counter (own shop) |
+| GET | `/eway-bills/pending` | owner, accountant, counter (own shop) |
+| POST | `/eway-bills/batch` `{items:[{invoice_id, ...}]}` | owner, counter (own shop) |
+
+The invoice PDF prints the live e-way bill number, and the IRN with its QR. Codes:
+`EWAY_EXISTS`, `EWAY_NUMBER_USED`, `EWAY_CANCEL_WINDOW_CLOSED`, `EINVOICE_NOT_REQUIRED`,
+`EINVOICE_EXISTS`, `EINVOICE_CANCEL_WINDOW_CLOSED`, `SELLER_GSTIN_MISSING`, `VEHICLE_INVALID`.
+A provider failure is 502 (`GSP_TIMEOUT`, `GSP_DOWN`, `GSP_REFUSED`, `GSP_NOT_CONFIGURED`...).
+
 ## Endpoints (Milestone 9)
 
 | Method | Path | Who |

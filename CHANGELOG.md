@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.11.0 (Milestone 10)
+
+- E-way bills from a saved bill through a GSP (fake in development, sandbox or live by
+  configuration), vehicle update, 24-hour cancel, manual-number fallback, pending list and batch.
+- E-invoice (IRN and QR) for B2B bills once switched on; printed on the A4 bill.
+- Screens: E-way bill and e-invoice panel on the bill view, "still without an e-way bill" notice.
+
 ## 0.10.0 (Milestone 9)
 
 - Direct-from-supplier sales linked to their purchase line: no stock moves, profit is the sale

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 
+import { usePendingEway } from "@/api/compliance";
 import { toFormError } from "@/api/errors";
 import { openFile } from "@/api/client";
 import { useInvoice, useInvoices, type InvoiceFull } from "@/api/sales";
@@ -13,6 +14,7 @@ import { useAltKey } from "@/hooks/useKeys";
 import { formatMoney, plural, trimDecimal } from "@/lib/format";
 
 import { DirectLink } from "./DirectLink";
+import { EwayPanel } from "./EwayPanel";
 import { InvoiceReturn } from "./InvoiceReturn";
 
 const isOwnerInvoice = (i: InvoiceFull): i is InvoiceOwner => "profit" in i;
@@ -25,6 +27,7 @@ export function SalesPage() {
   const [q, setQ] = useState("");
   const list = useInvoices(q);
   const detail = useInvoice(openId);
+  const pending = usePendingEway();
   const [pdfError, setPdfError] = useState<string | null>(null);
   const canBill = user?.role === "owner" || user?.role === "counter";
   useAltKey("n", () => canBill && void navigate("/sales/new"));
@@ -57,6 +60,24 @@ export function SalesPage() {
         ) : null}
         <p className={styles.keys}>Alt+N new bill</p>
       </div>
+      {canBill && pending.data && pending.data.length > 0 ? (
+        <p role="status" className={styles.callout}>
+          {plural(pending.data.length, "delivered bill")} still without an e-way bill:{" "}
+          {pending.data.slice(0, 5).map((p, i) => (
+            <span key={p.invoice_id}>
+              {i > 0 ? ", " : ""}
+              <button
+                type="button"
+                className={styles.rowButton}
+                onClick={() => setParams({ open: String(p.invoice_id) })}
+              >
+                {p.number}
+              </button>
+            </span>
+          ))}
+          {pending.data.length > 5 ? " and more" : ""}
+        </p>
+      ) : null}
       <div className={styles.filters}>
         <div className={styles.search}>
           <TextField
@@ -199,6 +220,9 @@ export function SalesPage() {
                 Profit on this bill: ₹{formatMoney(inv.profit)}
                 {Number(inv.freight) > 0 ? ` (after freight ₹${formatMoney(inv.freight)})` : ""}
               </p>
+            ) : null}
+            {canBill && inv.ship_to_name ? (
+              <EwayPanel key={`e${inv.id}`} invoiceId={inv.id} owner={user?.role === "owner"} />
             ) : null}
             {canBill ? <InvoiceReturn key={inv.id} inv={inv} /> : null}
           </aside>

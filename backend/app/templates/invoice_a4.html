@@ -40,6 +40,7 @@
   <div class="right">
     <h1>TAX INVOICE</h1>
     <div><span class="copy">{{ copy_label }}</span></div>
+    {% if irn %}<img src="{{ irn.qr_uri }}" alt="E-invoice QR" style="width: 24mm; height: 24mm; margin-top: 1mm">{% endif %}
   </div>
 </div>
 
@@ -50,6 +51,7 @@
     <div><strong>Place of supply</strong> {{ inv.place_of_supply }} {{ place_name }} ({{ "Intra-state: CGST + SGST" if intra else "Inter-state: IGST" }})</div>
     {% if inv.vehicle_no %}<div><strong>Vehicle</strong> {{ inv.vehicle_no }}</div>{% endif %}
     {% if eway_no %}<div><strong>E-way bill</strong> {{ eway_no }}</div>{% endif %}
+    {% if irn %}<div class="small"><strong>IRN</strong> <span style="word-break: break-all">{{ irn.irn }}</span><br><strong>Ack no.</strong> {{ irn.ack_no }} · {{ irn.ack_date }}</div>{% endif %}
   </div>
   <div class="box grow">
     <div class="muted">Bill to</div>

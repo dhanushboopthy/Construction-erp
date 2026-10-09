@@ -4,6 +4,7 @@ from app.models.approvals import Approval
 from app.models.audit import AuditLog
 from app.models.auth import AuthSession
 from app.models.base import Base
+from app.models.compliance import EInvoice, EwayBill
 from app.models.ledgers import PartyLedger, StockLedger
 from app.models.masters import Item, ItemUnit, Party, Site
 from app.models.numbering import DocumentSequence
@@ -30,6 +31,8 @@ __all__ = [
     "DebitNoteLine",
     "DocumentSequence",
     "DropShipLink",
+    "EInvoice",
+    "EwayBill",
     "Item",
     "ItemMargin",
     "ItemUnit",

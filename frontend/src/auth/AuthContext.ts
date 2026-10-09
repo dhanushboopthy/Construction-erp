@@ -7,6 +7,8 @@ export interface AuthState {
   ready: boolean;
   signIn: (username: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  /** Re-read the signed-in user, e.g. after the owner edits their own name. */
+  reloadUser: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthState | null>(null);

@@ -1,41 +1,27 @@
-// Hand-written for Milestone 1. Once the API grows, run `npm run gen:api` (backend running)
-// to generate src/api/schema.d.ts from the OpenAPI spec and import types from there.
+// API types are generated from the backend's OpenAPI spec into schema.d.ts. Regenerate with
+// `make gen-api` (Docker) or `npm run gen:api` (backend running on :8000); never edit by hand.
+// This file only gives the generated shapes short names.
 
-export type Role = "owner" | "counter" | "accountant";
+import type { components } from "./schema";
 
-export interface Location {
-  id: number;
-  code: string;
-  name: string;
-  kind: "shop" | "godown";
-  address: string;
-  state_code: string;
-  phone: string | null;
-  is_active: boolean;
-}
+type Schemas = components["schemas"];
 
-export interface User {
-  id: number;
-  username: string;
-  full_name: string;
-  role: Role;
-  is_active: boolean;
-  last_login_at: string | null;
-  locations: Location[];
-}
+export type Role = Schemas["Role"];
+export type LocationKind = Schemas["LocationKind"];
+export type Location = Schemas["LocationOut"];
+export type LocationCreate = Schemas["LocationCreate"];
+export type LocationUpdate = Schemas["LocationUpdate"];
+export type User = Schemas["UserOut"];
+export type UserCreate = Schemas["UserCreate"];
+export type UserUpdate = Schemas["UserUpdate"];
+export type PasswordReset = Schemas["PasswordReset"];
+export type ShopSettings = Schemas["ShopSettingsOut"];
+export type ShopSettingsUpdate = Schemas["ShopSettingsUpdate"];
+export type TokenResponse = Schemas["TokenResponse"];
+export type AuditLogEntry = Schemas["AuditLogOut"];
 
-export interface TokenResponse {
-  access_token: string;
-  token_type: "bearer";
-  expires_in: number;
-  user: User;
-}
-
-/** Error body returned by the API for every failure. */
-export interface ApiErrorBody {
-  code: string;
-  message: string;
-  field: string | null;
-  request_id: string | null;
+/** Error body returned by the API for every failure (core/errors.py adds the extras). */
+export type ApiErrorBody = Schemas["ErrorResponse"] & {
   requires_owner_approval?: boolean;
-}
+  errors?: { field: string; message: string }[];
+};

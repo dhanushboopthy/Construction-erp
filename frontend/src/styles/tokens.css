@@ -12,6 +12,8 @@
   --color-ink: #1c2321;
   --color-steel: #5b6661;
   --color-rule: #d5d9d6;
+  /* Input and control borders: 3.7:1 on white, the non-text contrast floor is 3:1. */
+  --color-rule-strong: #7d8783;
   --color-oxide: #2f5d50;
   --color-oxide-strong: #24493f;
   --color-on-oxide: #ffffff;
@@ -21,6 +23,12 @@
   --color-warn: #a16207;
   --color-critical: #b42318;
   --color-focus: #1f6feb;
+
+  /* Sidebar (ink background). */
+  --color-sidebar-text: #e7ebe8;
+  --color-sidebar-muted: #9aa6a1;
+  --color-sidebar-rule: #39433f;
+  --color-sidebar-hover: #28322f;
 
   --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", "Noto Sans Tamil", sans-serif;
   --text-xs: 0.75rem;
@@ -41,5 +49,6 @@
   --radius-sm: 4px;
   --radius-md: 6px;
   --sidebar-width: 224px;
+  --panel-width: 400px;
   --duration-fast: 120ms;
 }

@@ -1,0 +1,45 @@
+/*
+ * Design tokens. Source of truth: docs/DESIGN.md. Components use these variables only,
+ * never raw hex values.
+ *
+ * Palette is taken from the trade itself: concrete slab grey for the page, graphite ink,
+ * oxide green (painted structural steel) for actions, and bundle-tag yellow (the tags on
+ * steel bundles) used in one place only: the bill total and the active row.
+ */
+:root {
+  --color-slab: #f3f4f2;
+  --color-surface: #ffffff;
+  --color-ink: #1c2321;
+  --color-steel: #5b6661;
+  --color-rule: #d5d9d6;
+  --color-oxide: #2f5d50;
+  --color-oxide-strong: #24493f;
+  --color-on-oxide: #ffffff;
+  --color-tag: #f2c230;
+  --color-on-tag: #1c2321;
+  --color-good: #2e7d4f;
+  --color-warn: #a16207;
+  --color-critical: #b42318;
+  --color-focus: #1f6feb;
+
+  --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", "Noto Sans Tamil", sans-serif;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.75rem;
+  --text-figure: 2.25rem;
+
+  /* Dense spacing scale for a data-heavy counter screen. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --sidebar-width: 224px;
+  --duration-fast: 120ms;
+}

@@ -122,6 +122,7 @@ class InvoiceLineOut(Schema):
     fulfilment_source: FulfilmentSource
     source_location_id: int | None
     stock_after: Decimal | None
+    returned_qty: Decimal = Decimal("0")  # taken back by credit notes so far
 
 
 class InvoiceLineOwnerOut(InvoiceLineOut):

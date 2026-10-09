@@ -197,6 +197,25 @@ allocation is its ledger rows (ADR 0008).
   "Paid at billing" and "Balance due".
 - Statements per customer site balance with the combined statement (B9).
 
+**Built (Milestone 8):** `credit_note`, `credit_note_line`, `debit_note`, `debit_note_line`. There is
+no separate "return" table: the note is the return document (B16), and what has come back on a
+line is the sum of its note lines.
+
+- Credit note (B11): taken for part of one invoice, by counter staff at their own shop or the
+  owner. Inside `return_window_days` (default 2) it needs no approval; later it needs the owner
+  or a `late_return` PIN approval (409 `RETURN_WINDOW_CLOSED` with `requires_owner_approval`).
+  Quantities are in the line's own unit and cannot exceed what is left (422 `RETURN_TOO_MUCH`).
+- Value is pro rata to quantity on the line's taxable value (a whole-line return reverses it
+  exactly); GST is worked out again per line with the invoice's supply kind; round-off per note.
+  Stock goes back to the location it left at the cost it left at; lines delivered direct from a
+  supplier restock nothing. The customer's receivable is credited against that invoice number.
+- Debit note: owner only. Taxable value is pro rata to the billed quantity on the supplier line,
+  GST by supplier state against shop state. Stock leaves at the line's landed cost and cannot
+  exceed what is held (B13, 409 `INSUFFICIENT_STOCK`; direct purchases touch no stock). The
+  supplier payable is debited against the purchase number. Accountant may read debit notes.
+- Numbers: `<location>C/<fy>/<seq>` for credit notes and `<location>D/<fy>/<seq>` for debit
+  notes. Notes print as A4 PDFs with the TEST watermark outside production.
+
 **To build** (milestone in brackets):
 
 | Group | Table | Key columns |
@@ -212,12 +231,10 @@ allocation is its ledger rows (ADR 0008).
 | Parties [11] | `supplier_scheme` | party_id, item_or_category, target_qty, period_start, period_end, rebate_rule |
 | Purchase [4] | `purchase`, `purchase_line` | supplier_id, location_id, bill_no, bill_date, mode (stock/direct), status; line: item_id, qty, unit, rate, gst_rate, weight_billed, weight_received, unit_cost |
 | Purchase [4] | `cost_component`, `purchase_cost` | name, basis (per_ton/per_base_unit/per_trip/flat), default_amount; line_id, component_id, amount |
-| Purchase [8] | `purchase_return`, `debit_note` | purchase_id, lines, reason (G9) |
 | Stock [4] | `stock_ledger` | item_id, location_id, qty_in, qty_out, unit_cost, ref_type, ref_id, entry_date — **append-only** |
 | Stock [4] | `stock_transfer`, `stock_count`, `stock_count_line` | from/to location, item, qty; count sessions and variances |
 | Sales [6] | `sales_invoice`, `sales_line` | number, financial_year, location_id, party_id, site_id, bill_to, ship_to, place_of_supply, supply_kind, supply_type (B2B/B2C), invoice_date, due_date, totals, round_off, pending_balance_at_billing, idempotency_key (G19); line: item, qty, unit, rate, rate_source, discount, taxable, cgst/sgst/igst, fulfilment_source |
 | Sales [9] | `drop_ship_link` | sales_line_id, purchase_line_id, freight_amount |
-| Sales [8] | `sales_return`, `credit_note` | invoice_id, date, lines, reason, approved_by |
 | Money [7] | `payment`, `payment_allocation` | party, site, location, amount, mode, reference, date, idempotency_key; allocation to invoice or purchase |
 | Money [7] | `approval` | action, document, reason, requested_by, approved_by (G18) |
 | Money [12] | `daily_closing`, `cash_drawer` | location_id, date, totals by mode, pdf_path, closed_by, reopened_by (G17) |

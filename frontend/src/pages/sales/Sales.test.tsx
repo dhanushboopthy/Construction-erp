@@ -170,6 +170,7 @@ describe("Billing", () => {
     mockApi({
       ...session(OWNER),
       "GET /invoices": () => ({ body: page([SAVED]) }),
+      "GET /credit-notes": () => ({ body: page([]) }),
       "GET /invoices/7": () => ({
         body: {
           ...SAVED,
@@ -217,6 +218,7 @@ describe("Billing", () => {
               fulfilment_source: "shop",
               source_location_id: 1,
               stock_after: "4000.000",
+              returned_qty: "0.000",
               cost_per_unit: "55.0000",
               profit: "1000.00",
             },

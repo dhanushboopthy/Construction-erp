@@ -131,3 +131,61 @@ describe("Purchases", () => {
     expect(screen.queryByText("Landed cost")).toBeNull();
   });
 });
+
+describe("Returns to the supplier", () => {
+  const OWNER_PURCHASE = {
+    ...STAFF_PURCHASE,
+    goods_value: "550000.00",
+    gst_amount: "99000.00",
+    charges_total: "0.00",
+    supplier_payable: "649000.00",
+    lines: [
+      {
+        ...STAFF_PURCHASE.lines[0],
+        rate: "55000.0000",
+        gst_rate: "18.00",
+        goods_value: "550000.00",
+        gst_amount: "99000.00",
+        charges_total: "0.00",
+        total_cost: "550000.00",
+        unit_cost: "55.0000",
+        costs: [],
+      },
+    ],
+  };
+
+  it("lets only the owner send goods back, with a debit note", async () => {
+    const user = userEvent.setup();
+    const { calls } = mockApi({
+      ...session(OWNER),
+      "GET /purchases": () => ({ body: page([OWNER_PURCHASE]) }),
+      "GET /debit-notes": () => ({ body: page([]) }),
+      "POST /debit-notes": () => ({
+        status: 201,
+        body: { id: 2, number: "S1D/26-27/00001", grand_total: "129800.00", lines: [] },
+      }),
+    });
+    renderAt("/purchases");
+    await user.click(await screen.findByRole("button", { name: "S1P/26-27/00001" }));
+    const panel = await screen.findByRole("complementary", { name: "S1P/26-27/00001" });
+    await user.click(within(panel).getByRole("button", { name: "Return to supplier" }));
+    await user.type(within(panel).getByLabelText(/quantity back \(ton\)/), "2");
+    await user.type(within(panel).getByLabelText("Reason"), "Rusted bars");
+    await user.click(within(panel).getByRole("button", { name: "Save debit note" }));
+    expect(await screen.findByText(/Debit note S1D\/26-27\/00001 for ₹1,29,800.00/)).toBeVisible();
+    expect(calls.find((c) => c.method === "POST" && c.path === "/debit-notes")?.body).toEqual({
+      purchase_id: 1,
+      reason: "Rusted bars",
+      lines: [{ line_id: 1, quantity: "2" }],
+    });
+  });
+
+  it("does not offer returns to counter staff", async () => {
+    const user = userEvent.setup();
+    mockApi({ ...session(COUNTER), "GET /purchases": () => ({ body: page([STAFF_PURCHASE]) }) });
+    renderAt("/purchases");
+    await user.click(await screen.findByRole("button", { name: "S1P/26-27/00001" }));
+    const panel = await screen.findByRole("complementary", { name: "S1P/26-27/00001" });
+    expect(within(panel).queryByRole("button", { name: "Return to supplier" })).toBeNull();
+  });
+});

@@ -30,6 +30,7 @@ from app.models.purchasing import Payment
 from app.models.setup import Location
 from app.schemas.ledger import OpenBillOut, OpenBillsOut
 from app.schemas.purchases import AllocationIn, AllocationOut, PaymentCreate, PaymentOut
+from app.services import closing as closing_service
 from app.services import ledgers
 from app.services import transport as transport_service
 from app.services.numbering import allocate_number
@@ -197,6 +198,7 @@ def create_payment(
     location = db.get(Location, data.location_id)
     if location is None or location.tenant_id != TENANT_ID or not location.is_active:
         raise NotFoundError("Location not found or inactive", field="location_id")
+    closing_service.ensure_day_open(db, location.id, data.payment_date)
     if data.site_id is not None:
         site = db.get(Site, data.site_id)
         if not received or site is None or site.party_id != party.id:

@@ -27,6 +27,11 @@ import { SettingsLayout } from "@/pages/settings/SettingsLayout";
 import { ShopSettingsPage } from "@/pages/settings/ShopSettingsPage";
 import { UsersPage } from "@/pages/settings/UsersPage";
 import { CountsPage } from "@/pages/stock/CountsPage";
+import { ClosingPage } from "@/pages/reports/ClosingPage";
+import { DuesPage } from "@/pages/reports/DuesPage";
+import { ProfitPage } from "@/pages/reports/ProfitPage";
+import { ReportsLayout } from "@/pages/reports/ReportsLayout";
+import { SegmentsPage } from "@/pages/reports/SegmentsPage";
 import { SchemesPage } from "@/pages/purchases/SchemesPage";
 import { DirectSalesPage } from "@/pages/transport/DirectSalesPage";
 import { TransportLayout } from "@/pages/transport/TransportLayout";
@@ -49,6 +54,7 @@ const BUILT = new Set([
   "/rates",
   "/sales",
   "/transport",
+  "/reports",
 ]);
 
 export function App({ client = queryClient }: { client?: QueryClient }) {
@@ -168,6 +174,40 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
                   </RequireRole>
                 }
               />
+              <Route
+                path="/reports"
+                element={
+                  <RequireRole roles={["owner", "counter", "accountant"]}>
+                    <ReportsLayout />
+                  </RequireRole>
+                }
+              >
+                <Route index element={<ClosingPage />} />
+                <Route
+                  path="profit"
+                  element={
+                    <RequireRole roles={["owner"]}>
+                      <ProfitPage />
+                    </RequireRole>
+                  }
+                />
+                <Route
+                  path="dues"
+                  element={
+                    <RequireRole roles={["owner", "accountant"]}>
+                      <DuesPage />
+                    </RequireRole>
+                  }
+                />
+                <Route
+                  path="segments"
+                  element={
+                    <RequireRole roles={["owner", "accountant"]}>
+                      <SegmentsPage />
+                    </RequireRole>
+                  }
+                />
+              </Route>
               <Route
                 path="/transport"
                 element={

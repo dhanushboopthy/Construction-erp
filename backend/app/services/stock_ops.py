@@ -28,6 +28,7 @@ from app.schemas.stock_ops import (
     TransferLineOut,
     TransferOut,
 )
+from app.services import closing as closing_service
 from app.services import items as item_service
 from app.services import ledgers
 from app.services.numbering import allocate_number
@@ -81,6 +82,8 @@ def create_transfer(
     origin = _location(db, data.from_location_id, "from_location_id")
     target = _location(db, data.to_location_id, "to_location_id")
     on = data.transfer_date or today_ist()
+    closing_service.ensure_day_open(db, origin.id, on)
+    closing_service.ensure_day_open(db, target.id, on)
 
     wanted: dict[int, Decimal] = {}
     for line in data.lines:
@@ -309,6 +312,7 @@ def post_count(db: Session, count_id: int, actor_id: int) -> StockCount:
     row = _count_row(db, count_id)
     if row.status is CountStatus.POSTED:
         raise BusinessRuleError("This count is already posted", code="COUNT_POSTED")
+    closing_service.ensure_day_open(db, row.location_id, row.count_date)
     counted = [line for line in row.lines if line.counted_qty is not None]
     if not counted:
         raise BusinessRuleError("Enter at least one counted quantity first", code="NOTHING_COUNTED")

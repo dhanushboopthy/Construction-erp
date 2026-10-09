@@ -5,6 +5,7 @@ from app.api.v1 import (
     attachments,
     audit,
     auth,
+    closing,
     compliance,
     dues,
     health,
@@ -16,6 +17,7 @@ from app.api.v1 import (
     payments,
     purchases,
     rates,
+    reports,
     returns,
     schemes,
     settings,
@@ -49,3 +51,5 @@ api_router.include_router(transport.router)
 api_router.include_router(compliance.router)
 api_router.include_router(attachments.router)
 api_router.include_router(schemes.router)
+api_router.include_router(closing.router)
+api_router.include_router(reports.router)

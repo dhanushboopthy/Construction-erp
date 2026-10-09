@@ -45,6 +45,7 @@ from app.schemas.purchases import (
     PurchaseOwnerOut,
     PurchasePreview,
 )
+from app.services import closing as closing_service
 from app.services import items as item_service
 from app.services import ledgers
 from app.services.numbering import allocate_number
@@ -294,6 +295,7 @@ def create(db: Session, data: PurchaseCreate, *, actor_id: int, can_access: bool
     if not can_access:
         raise PermissionDeniedError("You can only enter purchases for your own shop")
     supplier, location, items = _load_context(db, data)
+    closing_service.ensure_day_open(db, location.id, data.bill_date)
     duplicate = db.execute(
         select(Purchase.number).where(
             Purchase.tenant_id == TENANT_ID,

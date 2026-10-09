@@ -57,3 +57,10 @@ Weighbridge slips and delivery proof are kept in `STORAGE_DIR` (the `files` volu
 `docker-compose.prod.yml`, `/data/files`). Include this volume in the off-machine backup together
 with the database dump: the database only holds a record of each file. Milestone 14 adds the
 restore drill for both.
+
+## Cloud storage for closing PDFs and slips
+
+Set `STORAGE_PROVIDER=s3` with `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` and, for
+anything other than AWS, `S3_ENDPOINT_URL` (Cloudflare R2, Backblaze B2, Wasabi and MinIO all
+work). Slips and closing PDFs then go to the bucket instead of the `files` volume; keep bucket
+versioning on. The owner has not chosen a provider yet (GAP_ANALYSIS open question).

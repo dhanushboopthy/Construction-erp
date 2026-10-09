@@ -264,6 +264,27 @@ line is the sum of its note lines.
   in the period less debit-note returns (never stored); alert at 80% to the owner. When the target
   is met the owner books the rebate once as a debit on the supplier's payable (G29).
 
+**Built (Milestone 12):** `daily_closing` (the cash drawer is part of it, so there is no separate
+`cash_drawer` table).
+
+- Daily closing per shop and day (B12, G17): figures from the day's bills, credit notes and
+  receipts (cash, UPI, bank), cash paid out, items sold and the first and last bill numbers.
+  The drawer is opening cash (the last count; entered by hand for a shop's first closing) plus
+  cash received less cash paid out; the counted cash is typed in and any difference needs a note
+  (409 `CASH_NOTE_REQUIRED`). The PDF carries no cost or profit, so staff can close their own shop.
+- The PDF is saved date-wise (`closing/<shop>/<yyyy>/<mm>/<date>.pdf`) to storage: a local folder
+  or an S3-compatible bucket (`STORAGE_PROVIDER`). If saving fails the day is not closed.
+- Day lock: once closed, bills, purchases, payments, credit and debit notes, transfers, stock
+  count posting and trips dated on that shop-day are refused (409 `DAY_CLOSED`); other shops and
+  days are untouched. Only the owner reopens a day, with a reason (audit `override` event); it can
+  then be closed again (the PDF is replaced and `times_closed` counts).
+- Today: items in stock, what customers owe, what we owe (not for counter staff), sales today,
+  profit today (owner only); counter staff see their own shop's sales.
+- Profit (owner): sales less returns, less average cost (or the linked supplier cost for direct
+  sales), less freight shared over a bill's lines by value; by item, customer or site, up to a year.
+- Sales by customer segment (owner, accountant): monthly bars for a financial year, net of returns;
+  customers without a segment fall under "No segment".
+
 **To build** (milestone in brackets):
 
 | Group | Table | Key columns |
@@ -283,7 +304,6 @@ line is the sum of its note lines.
 | Sales [6] | `sales_invoice`, `sales_line` | number, financial_year, location_id, party_id, site_id, bill_to, ship_to, place_of_supply, supply_kind, supply_type (B2B/B2C), invoice_date, due_date, totals, round_off, pending_balance_at_billing, idempotency_key (G19); line: item, qty, unit, rate, rate_source, discount, taxable, cgst/sgst/igst, fulfilment_source |
 | Money [7] | `payment`, `payment_allocation` | party, site, location, amount, mode, reference, date, idempotency_key; allocation to invoice or purchase |
 | Money [7] | `approval` | action, document, reason, requested_by, approved_by (G18) |
-| Money [12] | `daily_closing`, `cash_drawer` | location_id, date, totals by mode, pdf_path, closed_by, reopened_by (G17) |
 
 Derived views: `v_stock` (qty per item per location, company-wide average cost),
 `v_party_ledger` (receivable/payable per party and site, aging 0–30/31–60/60+),

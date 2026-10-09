@@ -42,6 +42,7 @@ from app.schemas.returns import (
     ReturnLineIn,
 )
 from app.services import approvals as approval_service
+from app.services import closing as closing_service
 from app.services import ledgers
 from app.services.numbering import allocate_number
 from app.services.shop_settings import get_settings_row
@@ -99,6 +100,7 @@ def create_credit_note(
         raise NotFoundError("Invoice not found", field="invoice_id")
     _no_repeats(data.lines)
     today = today_ist()
+    closing_service.ensure_day_open(db, invoice.location_id, today)
     settings = get_settings_row(db)
 
     approvals = approval_service.load_valid(db, data.approval_ids, actor_id, invoice.party_id)
@@ -315,6 +317,7 @@ def create_debit_note(db: Session, data: DebitNoteCreate, *, actor_id: int) -> D
         raise NotFoundError("Supplier not found", field="purchase_id")
     _no_repeats(data.lines)
     today = today_ist()
+    closing_service.ensure_day_open(db, purchase.location_id, today)
     settings = get_settings_row(db)
     kind = gst.supply_kind(supplier.state_code, settings.state_code)
 

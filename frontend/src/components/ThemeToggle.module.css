@@ -1,0 +1,24 @@
+.toggle {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-fill);
+  color: var(--color-label);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease),
+    transform var(--duration-fast) var(--ease);
+}
+
+.toggle:hover {
+  background: var(--color-fill-hover);
+}
+
+.toggle:active {
+  transform: scale(0.94);
+}

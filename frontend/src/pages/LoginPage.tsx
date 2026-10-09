@@ -4,6 +4,7 @@ import { Navigate, useLocation, useNavigate } from "react-router";
 
 import { ApiError } from "@/api/client";
 import { useAuth } from "@/auth/AuthContext";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 import styles from "./LoginPage.module.css";
 
@@ -37,6 +38,7 @@ export function LoginPage() {
 
   return (
     <main className={styles.page}>
+      <ThemeToggle className={styles.themeCorner} />
       <form
         className={styles.card}
         onSubmit={(e) => void onSubmit(e)}

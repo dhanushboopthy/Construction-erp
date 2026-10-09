@@ -21,6 +21,7 @@ import { useModuleShortcuts } from "@/hooks/useModuleShortcuts";
 import { modulesFor } from "@/modules";
 
 import styles from "./AppShell.module.css";
+import { ThemeToggle } from "./ThemeToggle";
 
 const ROLE_LABEL = { owner: "Owner", counter: "Counter", accountant: "Accountant" } as const;
 
@@ -95,6 +96,7 @@ export function AppShell() {
             <span className={styles.name}>{user.full_name}</span>
             <span className={styles.role}>{ROLE_LABEL[user.role]}</span>
           </span>
+          <ThemeToggle />
           <button type="button" className={styles.signOut} onClick={() => void signOut()}>
             <LogOut size={15} strokeWidth={2} aria-hidden="true" />
             Sign out

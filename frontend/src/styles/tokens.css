@@ -3,10 +3,11 @@
  * never raw hex values.
  *
  * Apple-style system: light grey grouped background, white rounded cards, one blue accent,
- * system semantic colours for status. Dark mode follows the operating system.
+ * system semantic colours for status. Dark mode: `data-theme="dark"` on <html>, set before
+ * paint by public/theme-init.js (saved choice, else the operating system) and by the toggle.
  */
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
 
   --color-bg: #f5f5f7;
   --color-surface: #ffffff;
@@ -80,37 +81,36 @@
   --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #000000;
-    --color-surface: #1c1c1e;
-    --color-surface-raised: #2c2c2e;
-    --color-fill: #2c2c2e;
-    --color-fill-hover: #3a3a3c;
-    --color-label: #f5f5f7;
-    --color-secondary: #98989d;
-    --color-separator: #38383a;
-    --color-control-border: #7c7c80;
-    --color-accent: #0a84ff;
-    --color-accent-strong: #409cff;
-    --color-accent-soft: rgb(10 132 255 / 18%);
-    --color-hero: #2c2c2e;
-    --color-good: #30d158;
-    --color-good-soft: rgb(48 209 88 / 16%);
-    --color-warn: #ff9f0a;
-    --color-warn-soft: rgb(255 159 10 / 16%);
-    --color-critical: #ff453a;
-    --color-critical-soft: rgb(255 69 58 / 16%);
-    --color-focus: rgb(10 132 255 / 50%);
-    --color-chart-1: #0a84ff;
-    --color-chart-2: #ff9f0a;
-    --color-chart-3: #bf5af2;
-    --color-chart-4: #636366;
-    --color-sidebar: rgb(28 28 30 / 78%);
-    --color-sidebar-hover: rgb(255 255 255 / 7%);
-    --color-bar: rgb(0 0 0 / 65%);
-    --shadow-card: 0 0 0 0.5px rgb(255 255 255 / 8%);
-    --shadow-raised: 0 4px 16px rgb(0 0 0 / 40%), 0 0 0 0.5px rgb(255 255 255 / 10%);
-    --shadow-thumb: 0 1px 3px rgb(0 0 0 / 40%);
-  }
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #000000;
+  --color-surface: #1c1c1e;
+  --color-surface-raised: #2c2c2e;
+  --color-fill: #2c2c2e;
+  --color-fill-hover: #3a3a3c;
+  --color-label: #f5f5f7;
+  --color-secondary: #98989d;
+  --color-separator: #38383a;
+  --color-control-border: #7c7c80;
+  --color-accent: #0a84ff;
+  --color-accent-strong: #409cff;
+  --color-accent-soft: rgb(10 132 255 / 18%);
+  --color-hero: #2c2c2e;
+  --color-good: #30d158;
+  --color-good-soft: rgb(48 209 88 / 16%);
+  --color-warn: #ff9f0a;
+  --color-warn-soft: rgb(255 159 10 / 16%);
+  --color-critical: #ff453a;
+  --color-critical-soft: rgb(255 69 58 / 16%);
+  --color-focus: rgb(10 132 255 / 50%);
+  --color-chart-1: #0a84ff;
+  --color-chart-2: #ff9f0a;
+  --color-chart-3: #bf5af2;
+  --color-chart-4: #636366;
+  --color-sidebar: rgb(28 28 30 / 78%);
+  --color-sidebar-hover: rgb(255 255 255 / 7%);
+  --color-bar: rgb(0 0 0 / 65%);
+  --shadow-card: 0 0 0 0.5px rgb(255 255 255 / 8%);
+  --shadow-raised: 0 4px 16px rgb(0 0 0 / 40%), 0 0 0 0.5px rgb(255 255 255 / 10%);
+  --shadow-thumb: 0 1px 3px rgb(0 0 0 / 40%);
 }

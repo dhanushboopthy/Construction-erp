@@ -11,7 +11,9 @@ search results.
 
 Apple-style (macOS / iOS): light grey grouped background, white rounded cards with soft shadows,
 one blue accent, a frosted sidebar with icons, large bold page titles, segmented-control tabs,
-pill buttons and rounded fields with a blue focus glow. Dark mode follows the operating system.
+pill buttons and rounded fields with a blue focus glow. Light and dark: a sun/moon button in the
+top bar (and on the sign-in screen) switches and remembers the choice per computer; until someone
+picks, it follows the operating system (`public/theme-init.js` applies it before paint).
 
 ## Tokens (`frontend/src/styles/tokens.css`)
 

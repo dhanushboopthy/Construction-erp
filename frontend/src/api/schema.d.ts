@@ -413,13 +413,13 @@ export interface components {
             legal_name: string;
             /** Trade Name */
             trade_name?: string | null;
-            /** Gstin */
-            gstin?: string | null;
             /**
              * State Code
              * @description GST state code, e.g. 33
              */
             state_code: string;
+            /** Gstin */
+            gstin?: string | null;
             /**
              * Address
              * @default
@@ -509,13 +509,13 @@ export interface components {
             legal_name: string;
             /** Trade Name */
             trade_name?: string | null;
-            /** Gstin */
-            gstin?: string | null;
             /**
              * State Code
              * @description GST state code, e.g. 33
              */
             state_code: string;
+            /** Gstin */
+            gstin?: string | null;
             /**
              * Address
              * @default

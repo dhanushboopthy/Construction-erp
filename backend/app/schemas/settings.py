@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from pydantic import Field
+from pydantic import Field, ValidationInfo, field_validator
 
 from app.schemas.common import Gstin, Schema, StateCode
 
@@ -8,8 +8,8 @@ from app.schemas.common import Gstin, Schema, StateCode
 class ShopSettingsBase(Schema):
     legal_name: str = Field(min_length=1, max_length=200)
     trade_name: str | None = Field(default=None, max_length=200)
-    gstin: Gstin = None
     state_code: StateCode
+    gstin: Gstin = None
     address: str = ""
     phone: str | None = Field(default=None, max_length=20)
     email: str | None = Field(default=None, max_length=200)
@@ -30,6 +30,15 @@ class ShopSettingsBase(Schema):
     eway_threshold_intrastate: Decimal = Field(default=Decimal("100000"), ge=0)
     einvoice_enabled: bool = False
     timezone: str = "Asia/Kolkata"
+
+    @field_validator("gstin")
+    @classmethod
+    def _gstin_matches_state(cls, value: str | None, info: ValidationInfo) -> str | None:
+        # The first two digits of a GSTIN are the state it was issued in.
+        state = info.data.get("state_code")
+        if value and state and value[:2] != state:
+            raise ValueError("The first two digits of the GSTIN must match the state code")
+        return value
 
 
 class ShopSettingsOut(ShopSettingsBase):

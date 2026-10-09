@@ -1,4 +1,4 @@
-import { formatDateTime, formatMoney, isAmount } from "./format";
+import { formatDateTime, formatMoney, isAmount, plural, trimDecimal } from "./format";
 
 describe("formatMoney", () => {
   it("groups in lakhs and crores", () => {
@@ -23,5 +23,16 @@ describe("formatDateTime", () => {
   it("shows shop time and a dash for never", () => {
     expect(formatDateTime(null)).toBe("—");
     expect(formatDateTime("2026-10-09T11:00:00Z")).toMatch(/9 Oct 2026/);
+  });
+});
+
+describe("trimDecimal and plural", () => {
+  it("drops trailing zeros and pluralises counts", () => {
+    expect(trimDecimal("20.000000")).toBe("20");
+    expect(trimDecimal("1.2500")).toBe("1.25");
+    expect(trimDecimal("1000")).toBe("1000");
+    expect(trimDecimal("0.0000")).toBe("0");
+    expect(plural(1, "item")).toBe("1 item");
+    expect(plural(50, "item")).toBe("50 items");
   });
 });

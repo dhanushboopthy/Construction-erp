@@ -1,6 +1,6 @@
 import { NavLink, Outlet } from "react-router";
 
-import styles from "./Settings.module.css";
+import styles from "@/components/Ledger.module.css";
 
 const TABS = [
   { to: "/settings", label: "Shop details", end: true },

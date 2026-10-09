@@ -34,3 +34,11 @@ const DECIMAL = /^\d+(\.\d{1,2})?$/;
 export function isAmount(value: string): boolean {
   return DECIMAL.test(value.trim());
 }
+
+/** "20.000000" -> "20", "1.2500" -> "1.25": decimals from the API without trailing zeros. */
+export function trimDecimal(value: string): string {
+  return value.includes(".") ? value.replace(/\.?0+$/, "") : value;
+}
+
+export const plural = (n: number, one: string, many: string = `${one}s`) =>
+  `${n} ${n === 1 ? one : many}`;

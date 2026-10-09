@@ -8,7 +8,7 @@ import { CheckField, SelectField, TextAreaField, TextField } from "@/components/
 import { moveRowFocus, useAltKey } from "@/hooks/useKeys";
 import { GST_STATES, stateName } from "@/lib/gstStates";
 
-import styles from "./Settings.module.css";
+import styles from "@/components/Ledger.module.css";
 
 const KIND_LABEL: Record<LocationKind, string> = { shop: "Shop", godown: "Godown" };
 

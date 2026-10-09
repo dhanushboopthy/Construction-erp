@@ -81,7 +81,6 @@ export const MODULES: ModuleLink[] = [
     label: "Settings",
     shortcut: "9",
     roles: ["owner"],
-    milestone: 1,
     purpose: "Shop details, users, shops and godown.",
   },
 ];

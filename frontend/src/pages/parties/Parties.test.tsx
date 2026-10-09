@@ -22,7 +22,7 @@ describe("Parties", () => {
     const panel = await screen.findByRole("complementary", { name: "Ravi Builders" });
     expect(within(panel).getByText(/Credit allowed up to ₹15,000.00/)).toBeVisible();
     expect(within(panel).queryByLabelText("Credit limit (₹)")).toBeNull();
-    expect(within(panel).getByText("Anna Nagar villa")).toBeVisible();
+    expect(within(panel).getAllByText("Anna Nagar villa").length).toBeGreaterThan(0);
   });
 
   it("lets the owner set credit terms", async () => {

@@ -285,6 +285,26 @@ line is the sum of its note lines.
 - Sales by customer segment (owner, accountant): monthly bars for a financial year, net of returns;
   customers without a segment fall under "No segment".
 
+**Built (Milestone 13):** `gstr2b_import`. All return figures are rebuilt from issued documents on
+each request, so they always agree with the books.
+
+- GSTR-1 for a month: B2B (buyer GSTIN), B2CL (unregistered, between states, over ₹1,00,000),
+  B2CS (all other B2C, by supply type, place of supply and rate, net of returns on those bills),
+  CDNR (credit notes to registered buyers), CDNUR (credit notes on B2CL bills), HSN summary (net
+  of returns, GST quantity code from the unit), document series summary with any missing numbers
+  (there should never be any). Download as the portal's offline-tool JSON or as an Excel workbook
+  with one sheet per table. `gt` and `cur_gt` (turnover) are left 0 for the accountant to fill.
+- GSTR-3B figures: 3.1(a) sales at a rate net of credit notes, 3.1(c) sales at 0%, 4(A) input tax
+  on the month's purchases (heads from supplier state against the shop's), 4(B) input tax taken
+  back on debit notes, the input tax the uploaded 2B shows, and tax to pay per head. Reverse
+  charge, imports, interest and late fees are not modelled.
+- GSTR-2B: upload the portal's JSON or a simple CSV (`gstin, supplier, invoice_no, invoice_date,
+  taxable, igst, cgst, sgst`). The newest upload for a month is kept (older ones stay for the
+  record). Our purchase bills (from suppliers with a GSTIN, the month and the two before it) are
+  matched by GSTIN and bill number (case, spaces and punctuation ignored); amounts within ₹1 count as
+  equal. Results: matched, amounts differ, in books not in 2B, in 2B not in books.
+- Owner and accountant only; the accountant can upload 2B files.
+
 **To build** (milestone in brackets):
 
 | Group | Table | Key columns |

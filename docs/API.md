@@ -41,6 +41,18 @@ Endpoints that return cost, margin or profit use separate response models for ow
 staff (for example `ItemOwnerOut` and `ItemOut`). Choose the model with `principal.sees_cost`;
 never rely on the UI to hide fields. Test each such endpoint as a counter user.
 
+## Endpoints (Milestone 13)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| GET | `/gst/gstr1?period=2026-10` | owner, accountant |
+| GET | `/gst/gstr1/export?period=&format=json\|xlsx` | owner, accountant |
+| GET | `/gst/gstr3b?period=` | owner, accountant |
+| POST | `/gst/gstr2b` (multipart: `period`, `file`) | owner, accountant |
+| GET | `/gst/gstr2b?period=` | owner, accountant |
+
+Codes: `BAD_PERIOD`, `GSTR2B_UNREADABLE`, `GSTR2B_EMPTY`.
+
 ## Endpoints (Milestone 12)
 
 | Method | Path | Who |

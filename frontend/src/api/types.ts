@@ -118,3 +118,6 @@ export type Closing = Schemas["ClosingOut"];
 export type ProfitReport = Schemas["ProfitReport"];
 export type ProfitGroup = Schemas["ProfitGroup"];
 export type SegmentReport = Schemas["SegmentReport"];
+export type Gstr1 = Schemas["Gstr1"];
+export type Gstr3b = Schemas["Gstr3b"];
+export type Gstr2bResult = Schemas["Gstr2bResult"];

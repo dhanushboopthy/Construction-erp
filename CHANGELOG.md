@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.14.0 (Milestone 13)
+
+- GSTR-1 tables (B2B, B2CL, B2CS, credit notes, HSN, document series) as portal JSON and Excel.
+- GSTR-3B figures with input tax from purchases and debit notes.
+- GSTR-2B upload and matching against purchase bills.
+- Screen: Reports, GST returns (owner and accountant).
+
 ## 0.13.0 (Milestone 12)
 
 - Daily closing per shop: figures, cash drawer count, PDF saved date-wise to a folder or an

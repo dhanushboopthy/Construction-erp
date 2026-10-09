@@ -1,16 +1,31 @@
 from fastapi import APIRouter
 
 from app.api.v1 import (
+    approvals,
+    attachments,
     audit,
     auth,
+    closing,
+    compliance,
     dues,
+    gst,
     health,
+    invoices,
     items,
     locations,
     opening,
     parties,
+    payments,
+    purchases,
+    rates,
+    reports,
+    returns,
+    schemes,
     settings,
     stock,
+    stock_ops,
+    system,
+    transport,
     users,
 )
 
@@ -26,3 +41,19 @@ api_router.include_router(parties.router)
 api_router.include_router(opening.router)
 api_router.include_router(stock.router)
 api_router.include_router(dues.router)
+api_router.include_router(purchases.router)
+api_router.include_router(stock_ops.router)
+api_router.include_router(rates.router)
+api_router.include_router(invoices.router)
+api_router.include_router(payments.router)
+api_router.include_router(approvals.router)
+api_router.include_router(returns.credit_router)
+api_router.include_router(returns.debit_router)
+api_router.include_router(transport.router)
+api_router.include_router(compliance.router)
+api_router.include_router(attachments.router)
+api_router.include_router(schemes.router)
+api_router.include_router(closing.router)
+api_router.include_router(reports.router)
+api_router.include_router(gst.router)
+api_router.include_router(system.router)

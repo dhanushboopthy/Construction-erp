@@ -66,7 +66,12 @@ const AMOUNT_KEYS = [
   "eway_threshold_interstate",
   "eway_threshold_intrastate",
 ] as const;
-const FLAG_KEYS = ["include_gst_in_cost", "rates_include_gst", "einvoice_enabled"] as const;
+const FLAG_KEYS = [
+  "include_gst_in_cost",
+  "rates_include_gst",
+  "einvoice_enabled",
+  "counter_can_enter_purchases",
+] as const;
 const OPTIONAL = new Set([
   "trade_name",
   "gstin",
@@ -279,7 +284,10 @@ function ShopSettingsForm({ settings }: { settings: ShopSettings }) {
         />
       </Group>
 
-      <Group title="Costing and rates" note="How purchase cost and daily rates treat GST.">
+      <Group
+        title="Purchases and costing"
+        note="Who enters purchases, and how cost and daily rates treat GST."
+      >
         <TextField
           label="Weight variance allowed (%)"
           rule="G20"
@@ -302,6 +310,14 @@ function ShopSettingsForm({ settings }: { settings: ShopSettings }) {
             rule="G2"
             hint="Turn on if you quote rates with tax included; the bill backs the tax out."
             {...flag("rates_include_gst")}
+          />
+        </div>
+        <div className={styles.wide}>
+          <CheckField
+            label="Counter staff may enter purchases"
+            rule="G28"
+            hint="They key in the supplier's bill for their own shop but never see costs. Turn off to keep purchase entry with the owner."
+            {...flag("counter_can_enter_purchases")}
           />
         </div>
       </Group>

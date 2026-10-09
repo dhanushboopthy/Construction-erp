@@ -6,7 +6,10 @@ const TABS = [
   { to: "/settings", label: "Shop details", end: true },
   { to: "/settings/users", label: "Users", end: false },
   { to: "/settings/locations", label: "Shops and godown", end: false },
+  { to: "/settings/charges", label: "Charge types", end: false },
+  { to: "/settings/pin", label: "Approval PIN", end: false },
   { to: "/settings/opening", label: "Opening balances", end: false },
+  { to: "/settings/system", label: "System", end: false },
 ];
 
 export function SettingsLayout() {

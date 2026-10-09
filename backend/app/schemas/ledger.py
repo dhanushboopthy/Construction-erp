@@ -53,3 +53,19 @@ class DuesOut(Schema):
     as_of: date
     total: Decimal
     rows: list[DuesRowOut]
+
+
+class OpenBillOut(Schema):
+    bill_no: str
+    bill_date: date
+    due_date: date | None
+    original: Decimal
+    remaining: Decimal
+    overdue: bool
+
+
+class OpenBillsOut(Schema):
+    party_id: int
+    account: LedgerAccount
+    bills: list[OpenBillOut]
+    advance: Decimal

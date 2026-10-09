@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Daily closing {{ f.location_code }} {{ f.closing_date }}</title>
+<style>
+  @page { size: A4; margin: 12mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 9pt; color: #1c2321; margin: 0; }
+  h1 { font-size: 15pt; margin: 0 0 1mm; }
+  h2 { font-size: 10.5pt; margin: 5mm 0 1.5mm; }
+  .muted { color: #5b6661; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { border: 0.25mm solid #1c2321; padding: 1mm 1.5mm; text-align: left; }
+  th { background: #eceeec; }
+  th.num { text-align: right; }
+  .band { border: 0.5mm solid #1c2321; background: #f2c230; padding: 2mm 3mm; display: flex;
+          justify-content: space-between; font-weight: 700; margin-top: 3mm; }
+  .mark { position: fixed; top: 38%; left: 8%; font-size: 90pt; color: rgba(180, 35, 24, 0.13);
+          transform: rotate(-30deg); letter-spacing: 8mm; z-index: -1; }
+  .two { display: flex; gap: 6mm; }
+  .two > div { flex: 1; }
+</style>
+</head>
+<body>
+{% if test_mark %}<div class="mark">TEST</div>{% endif %}
+<h1>{{ seller.trade_name or seller.legal_name }}: daily closing</h1>
+<div class="muted">{{ f.location_code }} · {{ location_name }} · {{ f.closing_date.strftime("%d-%m-%Y") }}
+ · closed {{ closed_at }} by {{ closed_by }}{% if times_closed > 1 %} (closed {{ times_closed }} times){% endif %}</div>
+
+<h2>Sales</h2>
+<table>
+  <tr><td>Bills</td><td class="num">{{ f.invoices_count }}{% if f.first_invoice %} ({{ f.first_invoice }} to {{ f.last_invoice }}){% endif %}</td></tr>
+  <tr><td>Taxable value</td><td class="num">{{ m.taxable }}</td></tr>
+  <tr><td>CGST</td><td class="num">{{ m.cgst }}</td></tr>
+  <tr><td>SGST</td><td class="num">{{ m.sgst }}</td></tr>
+  <tr><td>IGST</td><td class="num">{{ m.igst }}</td></tr>
+  <tr><td>Round off</td><td class="num">{{ m.round_off }}</td></tr>
+  <tr><th>Sales total</th><th class="num">{{ m.sales_total }}</th></tr>
+  <tr><td>Billed on credit (unpaid at billing)</td><td class="num">{{ m.credit_given }}</td></tr>
+  <tr><td>Returns ({{ f.returns_count }} credit notes)</td><td class="num">{{ m.returns_total }}</td></tr>
+</table>
+
+<div class="two">
+  <div>
+    <h2>Money received</h2>
+    <table>
+      <tr><td>Cash</td><td class="num">{{ m.receipts_cash }}</td></tr>
+      <tr><td>UPI</td><td class="num">{{ m.receipts_upi }}</td></tr>
+      <tr><td>Bank transfer</td><td class="num">{{ m.receipts_bank }}</td></tr>
+      <tr><th>Total</th><th class="num">{{ m.receipts_total }}</th></tr>
+    </table>
+  </div>
+  <div>
+    <h2>Cash drawer</h2>
+    <table>
+      <tr><td>Opening</td><td class="num">{{ m.opening_cash }}</td></tr>
+      <tr><td>Cash received</td><td class="num">{{ m.cash_in }}</td></tr>
+      <tr><td>Cash paid out</td><td class="num">{{ m.cash_out }}</td></tr>
+      <tr><td>Should be</td><td class="num">{{ m.expected_cash }}</td></tr>
+      <tr><td>Counted</td><td class="num">{{ m.counted_cash }}</td></tr>
+      <tr><th>Difference</th><th class="num">{{ m.difference }}</th></tr>
+    </table>
+  </div>
+</div>
+{% if note %}<p><strong>Note:</strong> {{ note }}</p>{% endif %}
+
+<h2>Items sold</h2>
+<table>
+  <thead><tr><th>Item</th><th class="num">Quantity</th><th class="num">Taxable (₹)</th></tr></thead>
+  <tbody>
+  {% for i in items %}
+    <tr><td>{{ i.description }}</td><td class="num">{{ i.qty }} {{ i.base_unit }}</td><td class="num">{{ i.taxable }}</td></tr>
+  {% else %}
+    <tr><td colspan="3" class="muted">No sales.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+<p class="muted">Supplier bills entered today: {{ f.purchases_count }}.</p>
+<div class="band"><span>Cash difference</span><span>₹ {{ m.difference }}</span></div>
+</body>
+</html>

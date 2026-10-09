@@ -1,22 +1,26 @@
+import { useToday } from "@/api/reports";
 import { useAuth } from "@/auth/AuthContext";
+import { formatMoney } from "@/lib/format";
+import { StockPage } from "@/pages/stock/StockPage";
 
 import styles from "./TodayPage.module.css";
 
 /**
- * The owner's "10-second questions" (interview Q25): items and stock, outstanding bills,
- * payables, today's sales, and today's profit (owner only). Figures arrive with Milestones
- * 4-7 and 12; until then the strip shows dashes, never made-up numbers.
+ * The owner's "10-second questions" (interview Q25): items and stock, what customers owe, what
+ * we owe, today's sales, and today's profit (owner only). Counter staff see their own shop's sales.
  */
 export function TodayPage() {
   const { user } = useAuth();
-  const isOwner = user?.role === "owner";
+  const today = useToday();
+  const t = today.data;
+  const rupee = (value: string | null | undefined) => (value == null ? "—" : formatMoney(value));
 
   const figures = [
-    { label: "Items in stock", value: "—" },
-    { label: "Customers owe", value: "—" },
-    { label: "We owe suppliers", value: "—" },
-    { label: "Sales today", value: "—" },
-    ...(isOwner ? [{ label: "Profit today", value: "—" }] : []),
+    { label: "Items in stock", value: t ? String(t.items_in_stock) : "—" },
+    { label: "Customers owe", value: rupee(t?.customers_owe) },
+    ...(user?.role !== "counter" ? [{ label: "We owe suppliers", value: rupee(t?.we_owe) }] : []),
+    { label: "Sales today", value: rupee(t?.sales_today) },
+    ...(user?.role === "owner" ? [{ label: "Profit today", value: rupee(t?.profit_today) }] : []),
   ];
 
   return (
@@ -24,6 +28,11 @@ export function TodayPage() {
       <h1 id="today-title" className={styles.title}>
         Today
       </h1>
+      {today.isError ? (
+        <p role="alert" className={styles.note}>
+          Today&apos;s figures could not be loaded.
+        </p>
+      ) : null}
       <dl className={styles.strip}>
         {figures.map((f) => (
           <div key={f.label} className={styles.figure}>
@@ -32,10 +41,11 @@ export function TodayPage() {
           </div>
         ))}
       </dl>
-      <p className={styles.note}>
-        Figures appear once purchases, billing and payments are built. Stock per item will be listed
-        here.
-      </p>
+      {t && Number(t.returns_today) > 0 ? (
+        <p className={styles.note}>Returns taken today: ₹{formatMoney(t.returns_today)}.</p>
+      ) : null}
+      <h2 className={styles.stockTitle}>Stock</h2>
+      <StockPage />
     </section>
   );
 }

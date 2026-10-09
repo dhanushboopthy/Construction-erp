@@ -40,3 +40,23 @@ def round_off(total: Numberish) -> tuple[Decimal, Decimal]:
     exact = money(total)
     rounded = exact.quantize(RUPEE, rounding=ROUND_HALF_UP)
     return money(rounded), money(rounded - exact)
+
+
+def split_pro_rata(total: Numberish, weights: list[Decimal]) -> list[Decimal]:
+    """Split `total` over `weights` to paise so the parts add up to the total exactly.
+
+    Each part is rounded down to paise, then the paise left over go one each to the parts with
+    the largest fractional remainders (earlier part first when tied)."""
+    if not weights or any(w < ZERO for w in weights) or sum(weights, ZERO) <= ZERO:
+        raise ValueError("weights must be positive and add up to more than zero")
+    amount = money(total)
+    paise = int(amount * 100)
+    whole = sum(weights, ZERO)
+    shares = [Decimal(paise) * w / whole for w in weights]
+    base = [int(s.to_integral_value(rounding="ROUND_FLOOR")) for s in shares]
+    # Rounding down always leaves 0 or more paise over, for negative totals too.
+    left = paise - sum(base)
+    order = sorted(range(len(weights)), key=lambda i: (-(shares[i] - base[i]), i))
+    for i in order[:left]:
+        base[i] += 1
+    return [Decimal(b) / 100 for b in base]

@@ -14,6 +14,7 @@ from app.models.returns import CreditNote, CreditNoteLine, DebitNote, DebitNoteL
 from app.models.sales import SalesInvoice, SalesLine
 from app.models.setup import AppUser, Location, ShopSettings, UserLocation
 from app.models.stock_ops import StockCount, StockCountLine, StockTransfer, StockTransferLine
+from app.models.transport import DropShipLink, Trip, Vehicle
 
 __all__ = [
     "AppUser",
@@ -28,6 +29,7 @@ __all__ = [
     "DebitNote",
     "DebitNoteLine",
     "DocumentSequence",
+    "DropShipLink",
     "Item",
     "ItemMargin",
     "ItemUnit",
@@ -49,5 +51,7 @@ __all__ = [
     "StockLedger",
     "StockTransfer",
     "StockTransferLine",
+    "Trip",
     "UserLocation",
+    "Vehicle",
 ]

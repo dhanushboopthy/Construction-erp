@@ -30,6 +30,8 @@ class InvoiceLineIn(Schema):
     discount: Amount | None = None
     discount_reason: str | None = Field(default=None, max_length=200)
     rate_override: Rate | None = None  # per `unit`
+    # A direct line may name the supplier purchase line that supplies it (B10, Milestone 9).
+    purchase_line_id: int | None = None
 
 
 class BillPaymentIn(Schema):
@@ -128,6 +130,7 @@ class InvoiceLineOut(Schema):
 class InvoiceLineOwnerOut(InvoiceLineOut):
     cost_per_unit: Decimal
     profit: Decimal
+    drop_ship_purchase: str | None = None  # supplier purchase behind a direct line
 
 
 class InvoiceSummary(Schema):
@@ -168,5 +171,6 @@ class InvoiceOut(InvoiceSummary):
 
 
 class InvoiceOwnerOut(InvoiceOut):
-    profit: Decimal
+    profit: Decimal  # after freight
+    freight: Decimal = Decimal("0")
     lines: list[InvoiceLineOwnerOut]  # type: ignore[assignment]

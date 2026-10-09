@@ -1105,6 +1105,119 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/vehicles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Vehicles */
+        get: operations["list_vehicles_api_v1_vehicles_get"];
+        put?: never;
+        /** Create Vehicle */
+        post: operations["create_vehicle_api_v1_vehicles_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vehicles/{vehicle_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Vehicle */
+        patch: operations["update_vehicle_api_v1_vehicles__vehicle_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/trips": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Trips */
+        get: operations["list_trips_api_v1_trips_get"];
+        put?: never;
+        /**
+         * Create Trip
+         * @description Record a run. Freight becomes payable to the vehicle's owner (pay it in /payments).
+         */
+        post: operations["create_trip_api_v1_trips_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/drop-ship/open-purchases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Open Direct Lines
+         * @description Direct supplier purchases not yet claimed by a sale. Quantities only, never cost.
+         */
+        get: operations["open_direct_lines_api_v1_drop_ship_open_purchases_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/drop-ship/links": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Link Sale To Purchase */
+        post: operations["link_sale_to_purchase_api_v1_drop_ship_links_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/drop-ship": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Drop Ship Report
+         * @description Direct sales with purchase cost, freight and profit; unlinked sales are flagged.
+         */
+        get: operations["drop_ship_report_api_v1_reports_drop_ship_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1697,6 +1810,49 @@ export interface components {
             /** Supplier Bill No */
             supplier_bill_no: string;
         };
+        /** DropShipReport */
+        DropShipReport: {
+            /** Rows */
+            rows: components["schemas"]["DropShipRow"][];
+            /** Unlinked */
+            unlinked: number;
+            /** Profit Total */
+            profit_total: string;
+        };
+        /** DropShipRow */
+        DropShipRow: {
+            /** Invoice Id */
+            invoice_id: number;
+            /** Invoice Number */
+            invoice_number: string;
+            /**
+             * Invoice Date
+             * Format: date
+             */
+            invoice_date: string;
+            /** Customer */
+            customer: string;
+            /** Sales Line Id */
+            sales_line_id: number;
+            /** Item Name */
+            item_name: string;
+            /** Base Qty */
+            base_qty: string;
+            /** Base Unit */
+            base_unit: string;
+            /** Taxable */
+            taxable: string;
+            /** Purchase Number */
+            purchase_number: string | null;
+            /** Supplier Name */
+            supplier_name: string | null;
+            /** Goods Cost */
+            goods_cost: string | null;
+            /** Freight */
+            freight: string;
+            /** Profit */
+            profit: string | null;
+        };
         /** DuesOut */
         DuesOut: {
             account: components["schemas"]["LedgerAccount"];
@@ -1818,6 +1974,8 @@ export interface components {
             discount_reason?: string | null;
             /** Rate Override */
             rate_override?: number | string | null;
+            /** Purchase Line Id */
+            purchase_line_id?: number | null;
         };
         /** InvoiceLineOut */
         InvoiceLineOut: {
@@ -1922,6 +2080,8 @@ export interface components {
             cost_per_unit: string;
             /** Profit */
             profit: string;
+            /** Drop Ship Purchase */
+            drop_ship_purchase?: string | null;
         };
         /** InvoiceOut */
         InvoiceOut: {
@@ -2054,6 +2214,11 @@ export interface components {
             lines: components["schemas"]["InvoiceLineOwnerOut"][];
             /** Profit */
             profit: string;
+            /**
+             * Freight
+             * @default 0
+             */
+            freight: string;
         };
         /** InvoicePreview */
         InvoicePreview: {
@@ -2318,6 +2483,26 @@ export interface components {
             /** Narration */
             narration: string | null;
         };
+        /** LinkCreate */
+        LinkCreate: {
+            /** Sales Line Id */
+            sales_line_id: number;
+            /** Purchase Line Id */
+            purchase_line_id: number;
+        };
+        /** LinkOut */
+        LinkOut: {
+            /** Id */
+            id: number;
+            /** Sales Line Id */
+            sales_line_id: number;
+            /** Purchase Line Id */
+            purchase_line_id: number;
+            /** Base Qty */
+            base_qty: string;
+            /** Unit Cost */
+            unit_cost: string;
+        };
         /** LocationCreate */
         LocationCreate: {
             /** Name */
@@ -2461,6 +2646,33 @@ export interface components {
             bills: components["schemas"]["OpenBillOut"][];
             /** Advance */
             advance: string;
+        };
+        /**
+         * OpenDirectLineOut
+         * @description A direct supplier purchase line that no sale has fully claimed. No cost is shown.
+         */
+        OpenDirectLineOut: {
+            /** Purchase Line Id */
+            purchase_line_id: number;
+            /** Purchase Number */
+            purchase_number: string;
+            /** Supplier Name */
+            supplier_name: string;
+            /** Bill No */
+            bill_no: string;
+            /**
+             * Bill Date
+             * Format: date
+             */
+            bill_date: string;
+            /** Item Id */
+            item_id: number;
+            /** Item Name */
+            item_name: string;
+            /** Free Qty */
+            free_qty: string;
+            /** Base Unit */
+            base_unit: string;
         };
         /** OpeningCreate */
         OpeningCreate: {
@@ -2653,6 +2865,17 @@ export interface components {
             /** Offset */
             offset: number;
         };
+        /** Page[TripOut] */
+        Page_TripOut_: {
+            /** Items */
+            items: components["schemas"]["TripOut"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+        };
         /** PartyCreate */
         PartyCreate: {
             /** Name */
@@ -2831,6 +3054,8 @@ export interface components {
              * @default 0
              */
             advance: string;
+            /** Warnings */
+            warnings?: string[];
         };
         /** PinSet */
         PinSet: {
@@ -3636,6 +3861,65 @@ export interface components {
             /** Lines */
             lines: components["schemas"]["TransferLineOut"][];
         };
+        /** TripCreate */
+        TripCreate: {
+            /** Vehicle Id */
+            vehicle_id: number;
+            /** Location Id */
+            location_id: number;
+            /** Trip Date */
+            trip_date?: string | null;
+            /** Invoice Id */
+            invoice_id?: number | null;
+            /** Purchase Id */
+            purchase_id?: number | null;
+            /** From Place */
+            from_place: string;
+            /** To Place */
+            to_place: string;
+            /** Freight Amount */
+            freight_amount: number | string;
+            /** Note */
+            note?: string | null;
+        };
+        /** TripOut */
+        TripOut: {
+            /** Id */
+            id: number;
+            /**
+             * Trip Date
+             * Format: date
+             */
+            trip_date: string;
+            /** Vehicle Id */
+            vehicle_id: number;
+            /** Vehicle Number */
+            vehicle_number: string;
+            /** Owner Name */
+            owner_name: string;
+            /** Location Id */
+            location_id: number;
+            /** Invoice Id */
+            invoice_id: number | null;
+            /** Invoice Number */
+            invoice_number: string | null;
+            /** Purchase Id */
+            purchase_id: number | null;
+            /** Purchase Number */
+            purchase_number: string | null;
+            /** From Place */
+            from_place: string;
+            /** To Place */
+            to_place: string;
+            /** Freight Amount */
+            freight_amount: string;
+            /** Paid Amount */
+            paid_amount: string;
+            /** Pay Ref */
+            pay_ref: string | null;
+            /** Note */
+            note: string | null;
+        };
         /** UserCreate */
         UserCreate: {
             /**
@@ -3689,6 +3973,46 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /** VehicleCreate */
+        VehicleCreate: {
+            /** Number */
+            number: string;
+            /** Owner Name */
+            owner_name: string;
+            /** Phone */
+            phone?: string | null;
+            /**
+             * Is Own
+             * @default false
+             */
+            is_own: boolean;
+        };
+        /** VehicleOut */
+        VehicleOut: {
+            /** Id */
+            id: number;
+            /** Number */
+            number: string;
+            /** Owner Name */
+            owner_name: string;
+            /** Phone */
+            phone: string | null;
+            /** Is Own */
+            is_own: boolean;
+            /** Party Id */
+            party_id: number | null;
+            /** Is Active */
+            is_active: boolean;
+        };
+        /** VehicleUpdate */
+        VehicleUpdate: {
+            /** Owner Name */
+            owner_name?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Is Active */
+            is_active?: boolean | null;
         };
     };
     responses: never;
@@ -9862,6 +10186,616 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_vehicles_api_v1_vehicles_get: {
+        parameters: {
+            query?: {
+                include_inactive?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehicleOut"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_vehicle_api_v1_vehicles_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VehicleCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehicleOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_vehicle_api_v1_vehicles__vehicle_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vehicle_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VehicleUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehicleOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_trips_api_v1_trips_get: {
+        parameters: {
+            query?: {
+                invoice_id?: number | null;
+                vehicle_id?: number | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_TripOut_"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_trip_api_v1_trips_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TripCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TripOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    open_direct_lines_api_v1_drop_ship_open_purchases_get: {
+        parameters: {
+            query?: {
+                item_id?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpenDirectLineOut"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    link_sale_to_purchase_api_v1_drop_ship_links_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinkOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    drop_ship_report_api_v1_reports_drop_ship_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DropShipReport"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };

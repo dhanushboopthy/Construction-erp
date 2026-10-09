@@ -16,7 +16,7 @@ if time runs short. In Claude Code: `/milestone <n>`.
 | 6 | Sales invoice | Billing screen, GST maths, sites, numbering, A4 PDF, B2C, idempotency | Totals match a manual calculation; numbers gapless under concurrent saves | **Done** (`feat/m6-sales-invoice`; concurrent test: 40 racing bills, 30 stock, numbers 1-30) |
 | 7 | Credit and payments | Credit checks, owner PIN approvals, payments, allocation, ledgers, statements | Over-limit and overdue blocked; statement per site balances | **Done** (`feat/m7-credit-payments`; ADR 0008) |
 | 8 | Returns and notes | 2-day returns, credit notes, purchase returns, debit notes | Return after 2 days needs owner approval | **Done** (`feat/m8-returns-notes`) |
-| 9 | Drop-ship and transport | Direct fulfilment, purchase link, vehicles, trips, freight | Drop-ship writes no stock rows and shows correct profit | |
+| 9 | Drop-ship and transport | Direct fulfilment, purchase link, vehicles, trips, freight | Drop-ship writes no stock rows and shows correct profit | **Done** (`feat/m9-dropship-transport`) |
 | 10 | E-way bill (and IRN) | GSP integration, Part B update, cancel, manual fallback | 50 bills in a sandbox batch succeed | |
 | 11 | Weight and schemes | Weight fail-check, attachments, supplier schemes | Variance above threshold is flagged and needs a note | |
 | 12 | Closing and reports | Daily closing PDF per shop, day lock, cloud save, Today figures, dues, segment chart | One PDF per shop per day lands in storage | |

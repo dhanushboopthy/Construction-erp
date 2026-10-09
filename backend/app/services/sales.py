@@ -21,7 +21,7 @@ from app.core.errors import (
 )
 from app.core.tenancy import TENANT_ID
 from app.domain import credit as credit_rules
-from app.domain import gst, pricing
+from app.domain import dropship, gst, pricing
 from app.domain import ledger as ledger_rules
 from app.domain.fiscal import fy_label
 from app.domain.ledger import Account, LedgerEntry
@@ -43,6 +43,7 @@ from app.models.enums import (
 )
 from app.models.ledgers import PartyLedger
 from app.models.masters import Item, Party, Site
+from app.models.purchasing import Purchase, PurchaseLine
 from app.models.sales import SalesInvoice, SalesLine
 from app.models.setup import Location, ShopSettings
 from app.schemas.sales import (
@@ -63,6 +64,7 @@ from app.services import ledgers
 from app.services import payments as payment_service
 from app.services import rates as rate_service
 from app.services import returns as returns_service
+from app.services import transport as transport_service
 from app.services.audit import record_event
 from app.services.numbering import allocate_number
 from app.services.shop_settings import get_settings_row
@@ -195,6 +197,7 @@ def price_invoice(
     supply_type = SupplyType.B2B if party.gstin else SupplyType.B2C
 
     used: dict[tuple[int, int], Decimal] = {}
+    direct_used: dict[int, Decimal] = {}
     priced: list[PricedLine] = []
     for index, line in enumerate(data.lines):
         item = db.get(Item, line.item_id)
@@ -252,8 +255,32 @@ def price_invoice(
         # Stock (B13, B10): shop or godown stock must cover the quantity; direct lines move none.
         position, _ = ledgers.stock_position(db, item.id)
         row.cost = position.avg_cost if position.quantity > ZERO else ZERO
+        if line.purchase_line_id is not None and line.source is not FulfilmentSource.DIRECT:
+            row.problems.append(
+                Problem(
+                    index,
+                    "LINK_NEEDS_DIRECT",
+                    "Only a line sent direct from the supplier can name a purchase.",
+                    False,
+                    "purchase_line_id",
+                )
+            )
         if line.source is FulfilmentSource.DIRECT:
             row.source_location_id = None
+            if line.purchase_line_id is not None:
+                taken = direct_used.get(line.purchase_line_id, ZERO)
+                try:
+                    supplier_line = transport_service.check_linkable(
+                        db, line.purchase_line_id, item.id, base_qty, also_taken=taken
+                    )
+                    row.cost = supplier_line.unit_cost  # the sale is costed at its own purchase
+                    direct_used[line.purchase_line_id] = taken + base_qty
+                except (BusinessRuleError, NotFoundError) as exc:
+                    row.problems.append(
+                        Problem(
+                            index, "DIRECT_LINK_INVALID", exc.message, False, "purchase_line_id"
+                        )
+                    )
         else:
             where = (
                 location.id
@@ -554,7 +581,11 @@ def create(
     )
     db.add(invoice)
     db.flush()
-    for line in invoice.lines:
+    for line, priced_line in zip(invoice.lines, p.lines, strict=True):
+        if priced_line.data.purchase_line_id is not None:
+            supplier_line = db.get(PurchaseLine, priced_line.data.purchase_line_id)
+            if supplier_line is not None:
+                transport_service.add_link(db, line, supplier_line, actor_id)
         if line.source_location_id is not None:
             ledgers.add_stock_move(
                 db,
@@ -701,13 +732,20 @@ def invoice_view(db: Session, inv: SalesInvoice, with_cost: bool) -> InvoiceOut 
 
     if not with_cost:
         return InvoiceOut(**base, lines=[line_out(x) for x in inv.lines])
-    lines = [
-        InvoiceLineOwnerOut(
-            **line_out(x).model_dump(),
-            cost_per_unit=x.cost_per_unit,
-            profit=money(x.taxable - x.base_qty * x.cost_per_unit),
+    lines = []
+    for x in inv.lines:
+        link = transport_service.link_for(db, x.id)
+        cost = link.unit_cost if link else x.cost_per_unit
+        supplier_line = db.get(PurchaseLine, link.purchase_line_id) if link else None
+        purchase = db.get(Purchase, supplier_line.purchase_id) if supplier_line else None
+        lines.append(
+            InvoiceLineOwnerOut(
+                **line_out(x).model_dump(),
+                cost_per_unit=cost,
+                profit=dropship.profit(x.taxable, x.base_qty, cost),
+                drop_ship_purchase=purchase.number if purchase else None,
+            )
         )
-        for x in inv.lines
-    ]
-    profit = money(sum((x.profit for x in lines), ZERO))
-    return InvoiceOwnerOut(**base, lines=lines, profit=profit)
+    freight = transport_service.invoice_freight(db, inv.id)
+    profit = money(sum((x.profit for x in lines), ZERO) - freight)
+    return InvoiceOwnerOut(**base, lines=lines, profit=profit, freight=freight)

@@ -31,6 +31,7 @@ from app.models.setup import Location
 from app.schemas.ledger import OpenBillOut, OpenBillsOut
 from app.schemas.purchases import AllocationIn, AllocationOut, PaymentCreate, PaymentOut
 from app.services import ledgers
+from app.services import transport as transport_service
 from app.services.numbering import allocate_number
 from app.services.shop_settings import get_settings_row
 
@@ -220,6 +221,11 @@ def create_payment(
     except ValueError as exc:
         raise BusinessRuleError(str(exc), code="ALLOCATION_INVALID", field="allocations") from exc
 
+    warning = (
+        transport_service.freight_cash_note(db, party.id, data.payment_date, data.amount)
+        if not received and data.mode is PaymentMode.CASH
+        else None
+    )
     settings = get_settings_row(db)
     number = allocate_number(
         db,
@@ -239,7 +245,9 @@ def create_payment(
     _write(db, payment, account, data.allocations, actor_id)
     db.commit()
     applied = [AllocationOut(bill_no=ref, amount=amount) for ref, amount in allocation.applied]
-    return _view(db, payment, applied, allocation.advance), True
+    view = _view(db, payment, applied, allocation.advance)
+    view.warnings = [warning] if warning else []
+    return view, True
 
 
 def receive_at_billing(

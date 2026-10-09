@@ -12,6 +12,7 @@ import styles from "@/components/Ledger.module.css";
 import { useAltKey } from "@/hooks/useKeys";
 import { formatMoney, plural, trimDecimal } from "@/lib/format";
 
+import { DirectLink } from "./DirectLink";
 import { InvoiceReturn } from "./InvoiceReturn";
 
 const isOwnerInvoice = (i: InvoiceFull): i is InvoiceOwner => "profit" in i;
@@ -165,9 +166,17 @@ export function SalesPage() {
                 </span>
                 {"cost_per_unit" in l ? (
                   <span className={styles.kv}>
-                    <span>Profit on this line</span>
+                    <span>
+                      Profit on this line
+                      {l.drop_ship_purchase ? ` · supplied by ${l.drop_ship_purchase}` : ""}
+                    </span>
                     <span>{formatMoney(l.profit)}</span>
                   </span>
+                ) : null}
+                {"cost_per_unit" in l &&
+                l.fulfilment_source === "direct" &&
+                !l.drop_ship_purchase ? (
+                  <DirectLink lineId={l.id} itemId={l.item_id} />
                 ) : null}
               </div>
             ))}
@@ -186,7 +195,10 @@ export function SalesPage() {
               <strong>₹{formatMoney(inv.grand_total)}</strong>
             </div>
             {isOwnerInvoice(inv) ? (
-              <p className={styles.sub}>Profit on this bill: ₹{formatMoney(inv.profit)}</p>
+              <p className={styles.sub}>
+                Profit on this bill: ₹{formatMoney(inv.profit)}
+                {Number(inv.freight) > 0 ? ` (after freight ₹${formatMoney(inv.freight)})` : ""}
+              </p>
             ) : null}
             {canBill ? <InvoiceReturn key={inv.id} inv={inv} /> : null}
           </aside>

@@ -216,6 +216,21 @@ line is the sum of its note lines.
 - Numbers: `<location>C/<fy>/<seq>` for credit notes and `<location>D/<fy>/<seq>` for debit
   notes. Notes print as A4 PDFs with the TEST watermark outside production.
 
+**Built (Milestone 9):** `vehicle`, `trip`, `drop_ship_link`.
+
+- Direct lines (B10, B13): a bill line with source "direct" moves no stock. It may name the
+  supplier purchase line (mode `direct`, same item, enough unclaimed quantity) at billing, or the
+  owner links it later. The link copies the purchase line's landed cost, so profit stays fixed.
+  Profit = sale taxable − quantity × landed cost − freight of the trips on that bill. An unlinked
+  direct line is costed at the average cost until linked, and is flagged in the direct-sales
+  report. Counter staff may name a purchase from a cost-free list but never see supplier or cost.
+- Vehicles (B18): hired ones get a supplier account named "Transport: owner (number)" so freight
+  is paid through the normal payments screen; own vehicles (`is_own`) carry no freight.
+- Trips: owner records a run (optionally for a sale or a purchase, not both). Freight credits the
+  vehicle owner's payable as `TRIP-<id>`; a payment aimed at that reference shows as paid on the
+  trip. Trips on a purchase only record the payable (its charge is already in landed cost).
+- Cash payments to one person above ₹35,000 a day answer with a warning, not a block (G14).
+
 **To build** (milestone in brackets):
 
 | Group | Table | Key columns |
@@ -234,11 +249,9 @@ line is the sum of its note lines.
 | Stock [4] | `stock_ledger` | item_id, location_id, qty_in, qty_out, unit_cost, ref_type, ref_id, entry_date — **append-only** |
 | Stock [4] | `stock_transfer`, `stock_count`, `stock_count_line` | from/to location, item, qty; count sessions and variances |
 | Sales [6] | `sales_invoice`, `sales_line` | number, financial_year, location_id, party_id, site_id, bill_to, ship_to, place_of_supply, supply_kind, supply_type (B2B/B2C), invoice_date, due_date, totals, round_off, pending_balance_at_billing, idempotency_key (G19); line: item, qty, unit, rate, rate_source, discount, taxable, cgst/sgst/igst, fulfilment_source |
-| Sales [9] | `drop_ship_link` | sales_line_id, purchase_line_id, freight_amount |
 | Money [7] | `payment`, `payment_allocation` | party, site, location, amount, mode, reference, date, idempotency_key; allocation to invoice or purchase |
 | Money [7] | `approval` | action, document, reason, requested_by, approved_by (G18) |
 | Money [12] | `daily_closing`, `cash_drawer` | location_id, date, totals by mode, pdf_path, closed_by, reopened_by (G17) |
-| Transport [9] | `vehicle`, `trip` | number, owner_name, is_own; trip: vehicle, ref, freight_amount, paid_amount |
 | Compliance [10] | `eway_bill`, `einvoice` | invoice_id, number / IRN, vehicle_no, valid_until, raw API response (G12) |
 | Compliance [11] | `attachment` | ref_type, ref_id, file_path, kind (weighbridge/delivery/other) |
 

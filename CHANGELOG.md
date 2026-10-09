@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.10.0 (Milestone 9)
+
+- Direct-from-supplier sales linked to their purchase line: no stock moves, profit is the sale
+  less the purchase's landed cost less freight, owner-only.
+- Hired vehicles and trips; freight is payable to the vehicle owner and paid through Payments.
+- Warning when cash paid to one person in a day passes ₹35,000.
+- Screens: Transport (Alt+T) with trips, vehicles and direct sales; supplier-purchase pick on a
+  bill line; link action on the owner's bill view.
+
 ## 0.9.0 (Milestone 8)
 
 - Credit notes for goods customers bring back: automatic inside the return window, owner PIN

@@ -97,6 +97,36 @@ stored as editable numbers. Enums are `VARCHAR` + `CHECK`.
 digit, and its first two digits must equal the state code it is stored with. A location code
 cannot change once created (it is printed inside document numbers).
 
+**Built (Milestone 2):** `item`, `item_unit`, `party`, `site`.
+
+- `item.base_whole_only` (added to the model above): bags and pieces are counted in whole
+  numbers, so a conversion that would give 30.2 bags is refused. `item.base_unit` cannot change
+  once the item exists.
+- Units: the base unit is implicit (factor 1); `item_unit` lists the others. When an item is
+  counted in kg and has `weight_per_piece_kg`, "piece" is available automatically (G7).
+- `item.min_margin` is owner-only: counter staff and the accountant get `ItemOut`, the owner
+  `ItemOwnerOut` (B4). Items are created and edited by the owner only; everyone can read them.
+- Credit terms on a party (`credit_allowed`, `credit_limit`, `credit_days`) are set by the owner
+  only (B8); a null limit or days means the shop default from `shop_settings`. Counter staff
+  can create and edit customers and sites. A supplier has no sites, segment or credit.
+- A site with no GSTIN prints "URP" on e-way bills (G13). A GSTIN's first two digits must match
+  its state code, on shop settings, parties and sites.
+- Excel import: one row per item, columns `name, category, brand, hsn, gst_rate, base_unit,
+  base_whole_only, size, grade, weight_per_piece_kg, min_margin, units` (`units` is
+  `unit:factor[:whole]` separated by commas). Same name updates the item; one bad row refuses the
+  whole file; `dry_run=true` checks without saving.
+
+**Built (Milestone 3):** `opening_balance`, `stock_ledger`, `party_ledger` (see ADR 0006). The
+stock ledger moved here from Milestone 4 because opening stock is its first writer.
+
+- `opening_balance.kind`: `stock`, `receivable` (a customer owes us), `customer_advance`,
+  `payable` (we owe a supplier), `supplier_advance`. Draft until posted, then locked.
+- `party_ledger` replaces the `v_party_ledger` view of the first spec; balances and aging are
+  computed by `domain.ledger` (aging buckets 0-30, 31-60, over 60 days since the bill).
+- Both ledgers are append-only, enforced by database triggers.
+- Supplier payables, advances and what we owe are visible to the owner and accountant, not to
+  counter staff; customers' dues are visible to all three roles.
+
 **To build** (milestone in brackets):
 
 | Group | Table | Key columns |

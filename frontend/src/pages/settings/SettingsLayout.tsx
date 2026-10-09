@@ -1,11 +1,12 @@
 import { NavLink, Outlet } from "react-router";
 
-import styles from "./Settings.module.css";
+import styles from "@/components/Ledger.module.css";
 
 const TABS = [
   { to: "/settings", label: "Shop details", end: true },
   { to: "/settings/users", label: "Users", end: false },
   { to: "/settings/locations", label: "Shops and godown", end: false },
+  { to: "/settings/opening", label: "Opening balances", end: false },
 ];
 
 export function SettingsLayout() {

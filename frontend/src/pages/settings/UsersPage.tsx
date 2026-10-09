@@ -15,7 +15,7 @@ import { CheckField, TextField } from "@/components/Field";
 import { moveRowFocus, useAltKey } from "@/hooks/useKeys";
 import { formatDateTime } from "@/lib/format";
 
-import styles from "./Settings.module.css";
+import styles from "@/components/Ledger.module.css";
 
 const MIN_PASSWORD = 8; // backend app/core/security.py MIN_PASSWORD_LENGTH
 

@@ -17,8 +17,9 @@ interface Common {
   rule?: string;
 }
 
-function useDescribedBy(hint: ReactNode, error: string | null | undefined) {
-  const id = useId();
+function useDescribedBy(hint: ReactNode, error: string | null | undefined, custom?: string) {
+  const generated = useId();
+  const id = custom ?? generated;
   const hintId = hint ? `${id}-hint` : undefined;
   const errorId = error ? `${id}-error` : undefined;
   const describedBy = [hintId, errorId].filter(Boolean).join(" ") || undefined;
@@ -63,9 +64,10 @@ export function TextField({
   rule,
   className,
   ref,
+  id: customId,
   ...input
 }: Common & InputHTMLAttributes<HTMLInputElement> & { ref?: Ref<HTMLInputElement> }) {
-  const { id, hintId, errorId, describedBy } = useDescribedBy(hint, error);
+  const { id, hintId, errorId, describedBy } = useDescribedBy(hint, error, customId);
   return (
     <Frame {...{ id, label, rule, hint, hintId, error, errorId }}>
       <input
@@ -86,9 +88,10 @@ export function SelectField({
   error,
   rule,
   children,
+  id: customId,
   ...select
 }: Common & SelectHTMLAttributes<HTMLSelectElement>) {
-  const { id, hintId, errorId, describedBy } = useDescribedBy(hint, error);
+  const { id, hintId, errorId, describedBy } = useDescribedBy(hint, error, customId);
   return (
     <Frame {...{ id, label, rule, hint, hintId, error, errorId }}>
       <select
@@ -109,9 +112,10 @@ export function TextAreaField({
   hint,
   error,
   rule,
+  id: customId,
   ...area
 }: Common & TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  const { id, hintId, errorId, describedBy } = useDescribedBy(hint, error);
+  const { id, hintId, errorId, describedBy } = useDescribedBy(hint, error, customId);
   return (
     <Frame {...{ id, label, rule, hint, hintId, error, errorId }}>
       <textarea

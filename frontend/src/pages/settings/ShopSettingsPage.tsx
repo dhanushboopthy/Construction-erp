@@ -8,7 +8,7 @@ import { CheckField, SelectField, TextAreaField, TextField } from "@/components/
 import { isAmount } from "@/lib/format";
 import { GST_STATES } from "@/lib/gstStates";
 
-import styles from "./Settings.module.css";
+import styles from "@/components/Ledger.module.css";
 
 const MONTHS = [
   "January",

@@ -48,9 +48,17 @@ export const MODULES: ModuleLink[] = [
     path: "/parties",
     label: "Customers and suppliers",
     shortcut: "5",
-    roles: ["owner", "counter"],
+    roles: ALL,
     milestone: 2,
     purpose: "Customers, their sites, credit limits and suppliers.",
+  },
+  {
+    path: "/items",
+    label: "Items",
+    shortcut: "0",
+    roles: ALL,
+    milestone: 2,
+    purpose: "Item master: HSN, GST, units and conversions. Import from Excel.",
   },
   {
     path: "/payments",

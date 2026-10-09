@@ -32,6 +32,9 @@ class InvoiceLineIn(Schema):
     rate_override: Rate | None = None  # per `unit`
     # A direct line may name the supplier purchase line that supplies it (B10, Milestone 9).
     purchase_line_id: int | None = None
+    # B14: weight on the dispatch slip (base unit). A flagged difference needs a note.
+    slip_weight: Qty | None = None
+    weight_note: str | None = Field(default=None, max_length=300)
 
 
 class BillPaymentIn(Schema):
@@ -75,6 +78,8 @@ class PreviewLineOut(Schema):
     fulfilment_source: FulfilmentSource
     stock_available: Decimal | None
     stock_after: Decimal | None
+    weight_variance_pct: Decimal | None = None
+    weight_flagged: bool = False
     problems: list[str]
 
 
@@ -125,6 +130,10 @@ class InvoiceLineOut(Schema):
     source_location_id: int | None
     stock_after: Decimal | None
     returned_qty: Decimal = Decimal("0")  # taken back by credit notes so far
+    slip_weight: Decimal | None = None
+    weight_variance_pct: Decimal = Decimal("0")
+    weight_flagged: bool = False
+    weight_note: str | None = None
 
 
 class InvoiceLineOwnerOut(InvoiceLineOut):

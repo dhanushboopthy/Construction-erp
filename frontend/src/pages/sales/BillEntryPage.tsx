@@ -28,6 +28,8 @@ interface LineRow {
   source: FulfilmentSource;
   sourceLocationId: string;
   purchaseLineId: string;
+  slipWeight: string;
+  weightNote: string;
   discount: string;
   reason: string;
 }
@@ -39,6 +41,8 @@ const emptyLine = (): LineRow => ({
   source: "shop",
   sourceLocationId: "",
   purchaseLineId: "",
+  slipWeight: "",
+  weightNote: "",
   discount: "",
   reason: "",
 });
@@ -135,6 +139,7 @@ export function BillEntryPage() {
     for (const l of lines) {
       if (!l.itemId || !DECIMAL.test(l.quantity) || Number(l.quantity) <= 0) return null;
       if (l.discount && !DECIMAL.test(l.discount)) return null;
+      if (l.slipWeight && (!DECIMAL.test(l.slipWeight) || Number(l.slipWeight) <= 0)) return null;
       if (pays.some((p) => p.amount && !DECIMAL.test(p.amount))) return null;
       out.push({
         item_id: Number(l.itemId),
@@ -145,6 +150,8 @@ export function BillEntryPage() {
           l.source === "godown" && l.sourceLocationId ? Number(l.sourceLocationId) : null,
         purchase_line_id:
           l.source === "direct" && l.purchaseLineId ? Number(l.purchaseLineId) : null,
+        slip_weight: l.slipWeight || null,
+        weight_note: l.slipWeight && l.weightNote.trim() ? l.weightNote.trim() : null,
         discount: l.discount || null,
         discount_reason: l.discount ? l.reason || null : null,
       });
@@ -414,7 +421,20 @@ export function BillEntryPage() {
                     value={l.reason}
                     onChange={(e) => setLine(i, { reason: e.target.value })}
                   />
-                  <span />
+                  <TextField
+                    label="Slip weight (optional)"
+                    inputMode="decimal"
+                    className={styles.amount}
+                    value={l.slipWeight}
+                    onChange={(e) => setLine(i, { slipWeight: e.target.value })}
+                  />
+                  {row?.weight_flagged ? (
+                    <TextField
+                      label="Why the weight differs"
+                      value={l.weightNote}
+                      onChange={(e) => setLine(i, { weightNote: e.target.value })}
+                    />
+                  ) : null}
                 </div>
                 {row ? (
                   <p className={styles.sub} aria-live="polite">

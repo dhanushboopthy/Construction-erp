@@ -17,6 +17,7 @@ from app.core.errors import (
 )
 from app.core.tenancy import TENANT_ID
 from app.domain import landed_cost as lc
+from app.domain import weight_check as wc
 from app.domain.money import ZERO, money, qty
 from app.domain.units import UnitConversion, to_base
 from app.models.enums import (
@@ -112,6 +113,7 @@ class PricedLine:
     billed_qty: Decimal
     received_qty: Decimal
     result: lc.LandedCost
+    weight: wc.WeightCheck
     charges: list[PricedCharge] = field(default_factory=list)
 
     @property
@@ -129,7 +131,11 @@ def _weight_tons(item: Item, base_qty: Decimal) -> Decimal:
 
 
 def _price_line(
-    db: Session, line: PurchaseLineIn, include_gst_in_cost: bool, items: dict[int, Item]
+    db: Session,
+    line: PurchaseLineIn,
+    include_gst_in_cost: bool,
+    items: dict[int, Item],
+    weight_threshold: Decimal,
 ) -> PricedLine:
     item = items.get(line.item_id)
     if item is None or not item.is_active:
@@ -185,7 +191,8 @@ def _price_line(
             code="CHARGE_NEEDS_WEIGHT",
             field="charges",
         ) from exc
-    return PricedLine(item, line, gst_rate, billed_base, received_base, result, charges)
+    weight = wc.check_weight(billed_base, received_base, weight_threshold)
+    return PricedLine(item, line, gst_rate, billed_base, received_base, result, weight, charges)
 
 
 def _load_context(db: Session, data: PurchaseCreate) -> tuple[Party, Location, dict[int, Item]]:
@@ -211,8 +218,16 @@ def _load_context(db: Session, data: PurchaseCreate) -> tuple[Party, Location, d
 def price(db: Session, data: PurchaseCreate) -> tuple[list[PricedLine], bool]:
     settings = get_settings_row(db)
     _, _, items = _load_context(db, data)
-    priced = [_price_line(db, line, settings.include_gst_in_cost, items) for line in data.lines]
+    priced = [
+        _price_line(db, line, settings.include_gst_in_cost, items, settings.weight_variance_pct)
+        for line in data.lines
+    ]
     return priced, settings.include_gst_in_cost
+
+
+def _shortage_value(check: wc.WeightCheck, goods_value: Decimal, billed_qty: Decimal) -> Decimal:
+    """What a short delivery is worth, at the price on the supplier's bill."""
+    return check.shortage_value(goods_value / billed_qty)
 
 
 def _cost_out(index: int, charge: PricedCharge) -> PurchaseCostOut:
@@ -243,6 +258,9 @@ def preview(db: Session, data: PurchaseCreate) -> PurchasePreview:
             charges_total=p.result.charges_total,
             total_cost=p.result.total_cost,
             unit_cost=p.result.unit_cost,
+            weight_variance_pct=p.weight.variance_pct,
+            weight_flagged=p.weight.flagged,
+            shortage_value=_shortage_value(p.weight, p.result.goods_value, p.billed_qty),
             costs=[_cost_out(i, c) for i, c in enumerate(p.charges, start=1)],
         )
         for p in priced
@@ -290,7 +308,19 @@ def create(db: Session, data: PurchaseCreate, *, actor_id: int, can_access: bool
             field="bill_no",
         )
     settings = get_settings_row(db)
-    priced = [_price_line(db, line, settings.include_gst_in_cost, items) for line in data.lines]
+    priced = [
+        _price_line(db, line, settings.include_gst_in_cost, items, settings.weight_variance_pct)
+        for line in data.lines
+    ]
+
+    for index, p in enumerate(priced):
+        if p.weight.flagged and not (p.data.weight_note or "").strip():
+            raise BusinessRuleError(
+                f"{p.item.name}: received weight differs from the bill by "
+                f"{p.weight.variance_pct}%. Write a note about why.",
+                code="WEIGHT_NOTE_REQUIRED",
+                field=f"lines[{index}].weight_note",
+            )
 
     number = allocate_number(
         db,
@@ -343,6 +373,9 @@ def create(db: Session, data: PurchaseCreate, *, actor_id: int, can_access: bool
                 charges_total=p.result.charges_total,
                 total_cost=p.result.total_cost,
                 unit_cost=p.result.unit_cost,
+                weight_variance_pct=p.weight.variance_pct,
+                weight_flagged=p.weight.flagged,
+                weight_note=(p.data.weight_note or "").strip() or None,
                 costs=[
                     PurchaseCost(
                         tenant_id=TENANT_ID,
@@ -438,6 +471,9 @@ def purchase_view(
             "billed_qty": line.billed_qty,
             "received_qty": line.received_qty,
             "base_unit": item.base_unit,
+            "weight_variance_pct": line.weight_variance_pct,
+            "weight_flagged": line.weight_flagged,
+            "weight_note": line.weight_note,
         }
 
     if not with_cost:
@@ -460,6 +496,11 @@ def purchase_view(
                 charges_total=ln.charges_total,
                 total_cost=ln.total_cost,
                 unit_cost=ln.unit_cost,
+                shortage_value=_shortage_value(
+                    wc.check_weight(ln.billed_qty, ln.received_qty, Decimal("100")),
+                    ln.goods_value,
+                    ln.billed_qty,
+                ),
                 costs=[PurchaseCostOut.model_validate(c) for c in ln.costs],
             )
             for ln in purchase.lines

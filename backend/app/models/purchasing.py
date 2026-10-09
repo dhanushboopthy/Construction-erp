@@ -107,6 +107,12 @@ class PurchaseLine(Base, TenantMixin):
     charges_total: Mapped[Money] = mapped_column()
     total_cost: Mapped[Money] = mapped_column()
     unit_cost: Mapped[UnitCost] = mapped_column()  # landed cost per base unit (owner only)
+    # B14: billed against weighbridge weight; a flagged line carries the user's note.
+    weight_variance_pct: Mapped[Decimal] = mapped_column(
+        Numeric(7, 2), default=Decimal("0"), server_default="0"
+    )
+    weight_flagged: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    weight_note: Mapped[str | None] = mapped_column(String(300))
 
     costs: Mapped[list["PurchaseCost"]] = relationship(
         lazy="selectin", cascade="all, delete-orphan", order_by="PurchaseCost.id"

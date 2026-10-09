@@ -28,7 +28,8 @@ RUN uv sync --frozen --no-dev --no-install-project
 COPY app ./app
 COPY alembic ./alembic
 COPY alembic.ini ./
-RUN useradd --system --uid 10001 --no-create-home erp && chown -R erp /app
+RUN useradd --system --uid 10001 --no-create-home erp \
+    && mkdir -p /data/files && chown -R erp /app /data/files
 USER erp
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=20s --retries=3 \

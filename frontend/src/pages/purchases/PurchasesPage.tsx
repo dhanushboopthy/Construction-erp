@@ -1,8 +1,11 @@
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 
+import { useSchemes } from "@/api/documents";
 import { usePurchases, type PurchaseRow } from "@/api/purchasing";
 import type { PurchaseOwner } from "@/api/types";
+import { useAuth } from "@/auth/AuthContext";
+import { Attachments } from "@/components/Attachments";
 import { Button } from "@/components/Button";
 import styles from "@/components/Ledger.module.css";
 import { useAltKey } from "@/hooks/useKeys";
@@ -14,9 +17,11 @@ const isOwnerRow = (row: PurchaseRow): row is PurchaseOwner => "supplier_payable
 
 export function PurchasesPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const location = useLocation();
   const saved = (location.state as { saved?: string } | null)?.saved;
   const query = usePurchases();
+  const alerts = useSchemes(true, user?.role !== "counter");
   const [openId, setOpenId] = useState<number | null>(null);
   useAltKey("n", () => void navigate("/purchases/new"));
   const rows = query.data?.items ?? [];
@@ -35,8 +40,20 @@ export function PurchasesPage() {
         >
           New purchase
         </Button>
+        {user?.role !== "counter" ? <Link to="/purchases/schemes">Supplier schemes</Link> : null}
         <p className={styles.keys}>Alt+N new purchase</p>
       </div>
+      {alerts.data && alerts.data.length > 0 ? (
+        <p role="status" className={styles.callout}>
+          {alerts.data
+            .map(
+              (s) =>
+                `${s.party_name}: ${s.name} is ${s.pct}% done, ${trimDecimal(s.remaining)} ${s.unit} to go`,
+            )
+            .join(". ")}
+          .
+        </p>
+      ) : null}
       {saved ? (
         <p role="status" className={styles.saved}>
           Saved as {saved}.
@@ -135,6 +152,12 @@ export function PurchasesPage() {
                     {trimDecimal(l.received_qty)} {l.base_unit}
                   </span>
                 </span>
+                {l.weight_flagged ? (
+                  <span className={styles.kv}>
+                    <span>Weight differs by {l.weight_variance_pct}%</span>
+                    <span>{l.weight_note}</span>
+                  </span>
+                ) : null}
                 {"unit_cost" in l ? (
                   <>
                     <span className={styles.kv}>
@@ -159,6 +182,12 @@ export function PurchasesPage() {
                 <span>₹{formatMoney(selected.supplier_payable)}</span>
               </span>
             ) : null}
+            <Attachments
+              key={`a${selected.id}`}
+              refType="purchase"
+              refId={selected.id}
+              canAdd={user?.role !== "accountant"}
+            />
             {isOwnerRow(selected) ? <PurchaseReturn key={selected.id} purchase={selected} /> : null}
           </aside>
         ) : null}

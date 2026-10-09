@@ -57,6 +57,10 @@ class Settings(BaseSettings):
     gsp_password: SecretStr = SecretStr("")
     gsp_timeout_seconds: float = 20.0
 
+    # Where uploaded files (weighbridge slips, delivery proof) are kept; back this folder up.
+    storage_dir: str = "./data/files"
+    max_upload_mb: int = 8
+
     log_level: str = "INFO"
     log_json: bool = False
 

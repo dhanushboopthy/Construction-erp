@@ -5,6 +5,7 @@ from datetime import date
 from decimal import Decimal
 
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     Date,
     ForeignKey,
@@ -118,3 +119,10 @@ class SalesLine(Base, TenantMixin):
     )
     stock_after: Mapped[Quantity | None] = mapped_column()  # left at the source after this sale
     cost_per_unit: Mapped[UnitCost] = mapped_column()  # average cost at the time: owner only
+    # B14: weight on the dispatch slip against what was billed, with a note when flagged.
+    slip_weight: Mapped[Quantity | None] = mapped_column()
+    weight_variance_pct: Mapped[Decimal] = mapped_column(
+        Numeric(7, 2), default=Decimal("0"), server_default="0"
+    )
+    weight_flagged: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    weight_note: Mapped[str | None] = mapped_column(String(300))

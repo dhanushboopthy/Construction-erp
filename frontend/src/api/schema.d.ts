@@ -1371,6 +1371,102 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/attachments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Files */
+        get: operations["list_files_api_v1_attachments_get"];
+        put?: never;
+        /**
+         * Upload File
+         * @description Attach a weighbridge slip or delivery proof (photo or PDF, up to the size limit).
+         */
+        post: operations["upload_file_api_v1_attachments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/attachments/{attachment_id}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download */
+        get: operations["download_api_v1_attachments__attachment_id__file_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/schemes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Schemes
+         * @description Supplier target schemes with progress; `alerts_only` keeps those at 80% or more.
+         */
+        get: operations["list_schemes_api_v1_schemes_get"];
+        put?: never;
+        /** Create Scheme */
+        post: operations["create_scheme_api_v1_schemes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/schemes/{scheme_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Scheme */
+        patch: operations["update_scheme_api_v1_schemes__scheme_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/schemes/{scheme_id}/book-rebate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Book Rebate
+         * @description Record the earned rebate as a credit from the supplier. Once only.
+         */
+        post: operations["book_rebate_api_v1_schemes__scheme_id__book_rebate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1442,6 +1538,41 @@ export interface components {
             party_id?: number | null;
         };
         /**
+         * AttachmentKind
+         * @enum {string}
+         */
+        AttachmentKind: "weighbridge" | "delivery" | "other";
+        /** AttachmentOut */
+        AttachmentOut: {
+            /** Id */
+            id: number;
+            ref_type: components["schemas"]["AttachmentRef"];
+            /** Ref Id */
+            ref_id: number;
+            kind: components["schemas"]["AttachmentKind"];
+            /** File Name */
+            file_name: string;
+            /** Content Type */
+            content_type: string;
+            /** Size Bytes */
+            size_bytes: number;
+            /** Note */
+            note: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By */
+            created_by: number | null;
+        };
+        /**
+         * AttachmentRef
+         * @description What a stored file is attached to (B17).
+         * @enum {string}
+         */
+        AttachmentRef: "purchase" | "sales_invoice" | "trip";
+        /**
          * AuditAction
          * @enum {string}
          */
@@ -1486,6 +1617,17 @@ export interface components {
         Body_import_items_api_v1_items_import_post: {
             /** File */
             file: string;
+        };
+        /** Body_upload_file_api_v1_attachments_post */
+        Body_upload_file_api_v1_attachments_post: {
+            ref_type: components["schemas"]["AttachmentRef"];
+            /** Ref Id */
+            ref_id: number;
+            kind: components["schemas"]["AttachmentKind"];
+            /** File */
+            file: string;
+            /** Note */
+            note?: string | null;
         };
         /** ChangePasswordRequest */
         ChangePasswordRequest: {
@@ -2299,6 +2441,10 @@ export interface components {
             rate_override?: number | string | null;
             /** Purchase Line Id */
             purchase_line_id?: number | null;
+            /** Slip Weight */
+            slip_weight?: number | string | null;
+            /** Weight Note */
+            weight_note?: string | null;
         };
         /** InvoiceLineOut */
         InvoiceLineOut: {
@@ -2349,6 +2495,20 @@ export interface components {
              * @default 0
              */
             returned_qty: string;
+            /** Slip Weight */
+            slip_weight?: string | null;
+            /**
+             * Weight Variance Pct
+             * @default 0
+             */
+            weight_variance_pct: string;
+            /**
+             * Weight Flagged
+             * @default false
+             */
+            weight_flagged: boolean;
+            /** Weight Note */
+            weight_note?: string | null;
         };
         /** InvoiceLineOwnerOut */
         InvoiceLineOwnerOut: {
@@ -2399,6 +2559,20 @@ export interface components {
              * @default 0
              */
             returned_qty: string;
+            /** Slip Weight */
+            slip_weight?: string | null;
+            /**
+             * Weight Variance Pct
+             * @default 0
+             */
+            weight_variance_pct: string;
+            /**
+             * Weight Flagged
+             * @default false
+             */
+            weight_flagged: boolean;
+            /** Weight Note */
+            weight_note?: string | null;
             /** Cost Per Unit */
             cost_per_unit: string;
             /** Profit */
@@ -3441,6 +3615,21 @@ export interface components {
             total_cost: string;
             /** Unit Cost */
             unit_cost: string;
+            /**
+             * Weight Variance Pct
+             * @default 0
+             */
+            weight_variance_pct: string;
+            /**
+             * Weight Flagged
+             * @default false
+             */
+            weight_flagged: boolean;
+            /**
+             * Shortage Value
+             * @default 0
+             */
+            shortage_value: string;
             /** Costs */
             costs: components["schemas"]["PurchaseCostOut"][];
         };
@@ -3476,6 +3665,13 @@ export interface components {
             stock_available: string | null;
             /** Stock After */
             stock_after: string | null;
+            /** Weight Variance Pct */
+            weight_variance_pct?: string | null;
+            /**
+             * Weight Flagged
+             * @default false
+             */
+            weight_flagged: boolean;
             /** Problems */
             problems: string[];
         };
@@ -3533,6 +3729,8 @@ export interface components {
             gst_rate?: number | string | null;
             /** Charges */
             charges?: components["schemas"]["ChargeIn"][];
+            /** Weight Note */
+            weight_note?: string | null;
         };
         /**
          * PurchaseLineOut
@@ -3559,6 +3757,18 @@ export interface components {
             received_qty: string;
             /** Base Unit */
             base_unit: string;
+            /**
+             * Weight Variance Pct
+             * @default 0
+             */
+            weight_variance_pct: string;
+            /**
+             * Weight Flagged
+             * @default false
+             */
+            weight_flagged: boolean;
+            /** Weight Note */
+            weight_note?: string | null;
         };
         /** PurchaseLineOwnerOut */
         PurchaseLineOwnerOut: {
@@ -3582,6 +3792,18 @@ export interface components {
             received_qty: string;
             /** Base Unit */
             base_unit: string;
+            /**
+             * Weight Variance Pct
+             * @default 0
+             */
+            weight_variance_pct: string;
+            /**
+             * Weight Flagged
+             * @default false
+             */
+            weight_flagged: boolean;
+            /** Weight Note */
+            weight_note?: string | null;
             /** Rate */
             rate: string;
             /** Gst Rate */
@@ -3596,6 +3818,11 @@ export interface components {
             total_cost: string;
             /** Unit Cost */
             unit_cost: string;
+            /**
+             * Shortage Value
+             * @default 0
+             */
+            shortage_value: string;
             /** Costs */
             costs: components["schemas"]["PurchaseCostOut"][];
         };
@@ -3786,6 +4013,11 @@ export interface components {
             /** Below Min Margin */
             below_min_margin: boolean;
         };
+        /**
+         * RebateRule
+         * @enum {string}
+         */
+        RebateRule: "percent" | "per_unit" | "flat";
         /** ResolvedPriceOut */
         ResolvedPriceOut: {
             /** Item Id */
@@ -3815,6 +4047,91 @@ export interface components {
          * @enum {string}
          */
         Role: "owner" | "counter" | "accountant";
+        /** SchemeCreate */
+        SchemeCreate: {
+            /** Party Id */
+            party_id: number;
+            /** Name */
+            name: string;
+            /** Item Id */
+            item_id?: number | null;
+            category?: components["schemas"]["ItemCategory"] | null;
+            /** Unit */
+            unit?: string | null;
+            /** Target Qty */
+            target_qty: number | string;
+            /**
+             * Period Start
+             * Format: date
+             */
+            period_start: string;
+            /**
+             * Period End
+             * Format: date
+             */
+            period_end: string;
+            rebate_rule: components["schemas"]["RebateRule"];
+            /** Rebate Value */
+            rebate_value: number | string;
+        };
+        /** SchemeOut */
+        SchemeOut: {
+            /** Id */
+            id: number;
+            /** Party Id */
+            party_id: number;
+            /** Party Name */
+            party_name: string;
+            /** Name */
+            name: string;
+            /** Item Id */
+            item_id: number | null;
+            /** Item Name */
+            item_name: string | null;
+            category: components["schemas"]["ItemCategory"] | null;
+            /** Unit */
+            unit: string;
+            /** Target Qty */
+            target_qty: string;
+            /**
+             * Period Start
+             * Format: date
+             */
+            period_start: string;
+            /**
+             * Period End
+             * Format: date
+             */
+            period_end: string;
+            rebate_rule: components["schemas"]["RebateRule"];
+            /** Rebate Value */
+            rebate_value: string;
+            /** Is Active */
+            is_active: boolean;
+            /** Achieved */
+            achieved: string;
+            /** Pct */
+            pct: string;
+            /** Remaining */
+            remaining: string;
+            /** Reached */
+            reached: boolean;
+            /** Alert */
+            alert: boolean;
+            /** Projected Rebate */
+            projected_rebate: string;
+            /** Rebate Amount */
+            rebate_amount: string | null;
+            /** Rebate Booked At */
+            rebate_booked_at: string | null;
+        };
+        /** SchemeUpdate */
+        SchemeUpdate: {
+            /** Name */
+            name?: string | null;
+            /** Is Active */
+            is_active?: boolean | null;
+        };
         /** ShopSettingsOut */
         ShopSettingsOut: {
             /** Legal Name */
@@ -11858,6 +12175,546 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EInvoiceOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_files_api_v1_attachments_get: {
+        parameters: {
+            query: {
+                ref_type: components["schemas"]["AttachmentRef"];
+                ref_id: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttachmentOut"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_file_api_v1_attachments_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_file_api_v1_attachments_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttachmentOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_api_v1_attachments__attachment_id__file_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attachment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_schemes_api_v1_schemes_get: {
+        parameters: {
+            query?: {
+                party_id?: number | null;
+                alerts_only?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchemeOut"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_scheme_api_v1_schemes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SchemeCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchemeOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_scheme_api_v1_schemes__scheme_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scheme_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SchemeUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchemeOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    book_rebate_api_v1_schemes__scheme_id__book_rebate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scheme_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchemeOut"];
                 };
             };
             /** @description Bad Request */

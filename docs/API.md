@@ -41,6 +41,21 @@ Endpoints that return cost, margin or profit use separate response models for ow
 staff (for example `ItemOwnerOut` and `ItemOut`). Choose the model with `principal.sees_cost`;
 never rely on the UI to hide fields. Test each such endpoint as a counter user.
 
+## Endpoints (Milestone 11)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| POST | `/attachments` (multipart: `ref_type`, `ref_id`, `kind`, `note?`, `file`) | owner; counter: own shop's purchases and bills |
+| GET | `/attachments?ref_type=&ref_id=` · `/attachments/{id}/file` | owner, accountant; counter: own shop (not trips) |
+| GET | `/schemes` (`party_id`, `alerts_only`) | owner, accountant |
+| POST/PATCH | `/schemes` · `/schemes/{id}` | owner |
+| POST | `/schemes/{id}/book-rebate` | owner |
+
+Purchase lines accept `weight_note`; bill lines accept `slip_weight` and `weight_note`; both come
+back with `weight_variance_pct`, `weight_flagged`, `weight_note`. Codes: `WEIGHT_NOTE_REQUIRED`,
+`FILE_TYPE_NOT_ALLOWED` (400), `FILE_TOO_LARGE` (413), `FILE_EMPTY`, `TOO_MANY_FILES`,
+`FILE_CORRUPT`, `TARGET_NOT_MET`, `REBATE_BOOKED`, `REBATE_ZERO`.
+
 ## Endpoints (Milestone 10)
 
 | Method | Path | Who |

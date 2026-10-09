@@ -6,6 +6,7 @@ import hashlib
 from datetime import UTC, datetime
 from typing import Any
 
+from app.core.clock import today_ist
 from app.domain.eway import valid_until
 from app.services.gsp.base import EwayRequest, EwayResult, GspError, IrnRequest, IrnResult
 
@@ -31,7 +32,7 @@ class FakeGsp:
             number="39"
             + _digits(f"{request.doc_no}|{request.supplier.gstin}|{len(self.calls)}", 10),
             generated_at=now,
-            valid_until=valid_until(now.date(), request.distance_km),
+            valid_until=valid_until(today_ist(), request.distance_km),
             raw={"fake": True, "doc_no": request.doc_no, "vehicle": request.vehicle_no},
         )
 

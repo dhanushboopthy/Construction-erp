@@ -28,3 +28,6 @@ backups/
 .vscode/*
 !.vscode/extensions.json
 .DS_Store
+
+# uploaded files in local development
+backend/data/

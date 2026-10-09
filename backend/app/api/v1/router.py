@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.v1 import (
     approvals,
+    attachments,
     audit,
     auth,
     compliance,
@@ -16,6 +17,7 @@ from app.api.v1 import (
     purchases,
     rates,
     returns,
+    schemes,
     settings,
     stock,
     stock_ops,
@@ -45,3 +47,5 @@ api_router.include_router(returns.credit_router)
 api_router.include_router(returns.debit_router)
 api_router.include_router(transport.router)
 api_router.include_router(compliance.router)
+api_router.include_router(attachments.router)
+api_router.include_router(schemes.router)

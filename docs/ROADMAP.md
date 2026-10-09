@@ -7,8 +7,8 @@ if time runs short. In Claude Code: `/milestone <n>`.
 
 | # | Milestone | What gets built | Acceptance test | Status |
 | --- | --- | --- | --- | --- |
-| 0 | Foundation | Repo, Docker Compose, Postgres, FastAPI, React + TypeScript, Alembic, CI, seed, docs | `make up` starts the stack; CI green | **Done**, except: the frontend has not been installed or built yet. First task: `cd frontend && npm install && npm run lint && npm run typecheck && npm test && npm run build`, fix anything that fails, commit `package-lock.json`, then switch CI to `npm ci` |
-| 1 | Auth and setup | Users, roles, locations, settings, audit log, numbering, login screen | Counter user gets 403 on owner routes; writes are audited | **API done.** To do: Settings, Users and Locations screens under `/settings` |
+| 0 | Foundation | Repo, Docker Compose, Postgres, FastAPI, React + TypeScript, Alembic, CI, seed, docs | `make up` starts the stack; CI green | **Done** (frontend installed and built, `package-lock.json` committed, CI uses `npm ci`) |
+| 1 | Auth and setup | Users, roles, locations, settings, audit log, numbering, login screen | Counter user gets 403 on owner routes; writes are audited | **Done** (Settings, Users and Locations screens under `/settings`; role test for every route) |
 | 2 | Items and parties | Item master (brand, HSN, GST, units, theoretical weight), parties, sites, Excel import | 50 items import from a sheet; bag ↔ ton conversions correct | |
 | 3 | Opening balances | Wizard for opening stock, customer and supplier dues | Opening entries appear in ledgers and reports | |
 | 4 | Purchase and stock | Purchase entry, cost components, supplier advance, stock ledger, transfers | Sample purchase gives the hand-calculated landed and average cost | |
@@ -32,6 +32,9 @@ if time runs short. In Claude Code: `/milestone <n>`.
 - Domain rules with unit tests: money, financial year and numbering, GST, units, landed cost,
   weighted-average stock, pricing, credit, weight check, compliance thresholds.
 - Frontend: React + TypeScript + Vite, auth provider with in-memory token and silent refresh,
-  keyboard-first app shell (Alt+1–9), login and Today screens, placeholders for every module.
+  keyboard-first app shell (Alt+1–9, phone nav strip), login and Today screens, owner-only
+  Settings (shop details, users, shops and godown), role guard on every module route, API types
+  generated from OpenAPI, placeholders for the modules still to build.
+- Tests: `app/domain` at 100% coverage (enforced in CI); every API route has a role test.
 - Tooling: Docker Compose (dev and simple production with nightly backups), Makefile, CI,
   pre-commit, Dependabot, Claude Code settings, `/milestone` command, two UI skills.

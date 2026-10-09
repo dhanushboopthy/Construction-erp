@@ -93,7 +93,9 @@ unit cost `NUMERIC(14,4)`. Stock, balances and average cost are **derived from l
 stored as editable numbers. Enums are `VARCHAR` + `CHECK`.
 
 **Built (Milestone 1):** `shop_settings`, `location`, `app_user`, `user_location`,
-`auth_session`, `audit_log`, `document_sequence`.
+`auth_session`, `audit_log`, `document_sequence`. A GSTIN is checked for format and check
+digit, and its first two digits must equal the state code it is stored with. A location code
+cannot change once created (it is printed inside document numbers).
 
 **To build** (milestone in brackets):
 

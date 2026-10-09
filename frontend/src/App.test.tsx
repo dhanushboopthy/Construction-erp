@@ -7,7 +7,9 @@ describe("App", () => {
     // No refresh cookie: the API answers 401, so the login screen shows.
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => new Response(JSON.stringify({ code: "NOT_AUTHENTICATED" }), { status: 401 })),
+      vi.fn(
+        async () => new Response(JSON.stringify({ code: "NOT_AUTHENTICATED" }), { status: 401 }),
+      ),
     );
   });
 

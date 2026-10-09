@@ -39,6 +39,8 @@ jobs:
         run: uv run ruff check . && uv run ruff format --check .
       - name: Type-check
         run: uv run mypy app
+      - name: Domain rules fully covered (app/domain stays at 100%)
+        run: uv run pytest tests/unit --cov=app/domain --cov-report=term --cov-fail-under=100
       - name: Tests (also builds the schema from migrations)
         run: uv run pytest --cov --cov-report=term
       - name: Models and migrations agree

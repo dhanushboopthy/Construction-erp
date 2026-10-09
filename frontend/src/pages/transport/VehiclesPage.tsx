@@ -30,6 +30,7 @@ export function VehiclesPage() {
       const made = await create.mutateAsync({
         number: number.trim(),
         owner_name: name.trim(),
+        is_own: false,
         phone: phone.trim() || null,
       });
       setDone(`Vehicle ${made.number} added.`);

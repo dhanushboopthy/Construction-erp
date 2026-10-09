@@ -206,3 +206,61 @@ class TestUnitConversionBetweenUnits:
         assert pieces_to_kg("25", "10.656") == D("266.400")
         with pytest.raises(ValueError, match="weight per piece"):
             pieces_to_kg("25", "0")
+
+
+class TestPurchaseMilestoneRules:
+    """Milestone 4: priced-per-ton lines, supplier payable, location stock checks, counts."""
+
+    def test_line_value_override_keeps_the_bill_amount_exact(self):
+        # 10.250 ton at 52,345.67 per ton: 10.25 x 52,345.67 = 536,543.1175,
+        # so 536,543.12 on the bill.
+        # Per-kg rates would lose paise (52.34567 per kg), so the bill's own amount is used.
+        line = landed_cost.PurchaseLine(
+            billed_qty=D("10250"),
+            received_qty=D("10250"),
+            rate=D("52.34567"),
+            gst_rate=D("18"),
+            received_weight_tons=D("10.250"),
+            line_value=D("536543.12"),
+            charges=[
+                landed_cost.Charge("Unloading", landed_cost.ChargeBasis.PER_TON, D("250")),
+                landed_cost.Charge("Weighbridge", landed_cost.ChargeBasis.FLAT, D("150")),
+            ],
+        )
+        result = landed_cost.landed_cost(line)
+        # Charges: unloading 250 x 10.25 = 2,562.50, weighbridge 150 -> 2,712.50.
+        # Cost 536,543.12 + 2,712.50 = 539,255.62; per kg 539,255.62 / 10,250 = 52.6103.
+        assert result.goods_value == D("536543.12")
+        assert result.charges_total == D("2712.50")
+        assert result.total_cost == D("539255.62")
+        assert result.unit_cost == D("52.6103")
+        # GST on the bill value: 536,543.12 x 18% = 96,577.7616 -> 96,577.76.
+        assert result.gst == D("96577.76")
+
+    def test_supplier_payable_is_goods_plus_gst_plus_charges_on_the_bill(self):
+        # Goods 536,543.12 + GST 96,577.76 = 633,120.88; transport 4,000 is on the supplier's bill.
+        assert landed_cost.supplier_payable(D("536543.12"), D("96577.76"), D("4000")) == D(
+            "637120.88"
+        )
+        assert landed_cost.supplier_payable(D("100"), D("18"), D("0")) == D("118.00")
+
+    def test_shortage_after_weighbridge_raises_cost_per_unit(self):
+        # Billed 10,000 kg, only 9,900 kg received: 550,000 / 9,900 = 55.5556 per kg, not 55.
+        line = landed_cost.PurchaseLine(
+            billed_qty=D("10000"), received_qty=D("9900"), rate=D("55"), gst_rate=D("18")
+        )
+        assert landed_cost.landed_cost(line).unit_cost == D("55.5556")
+
+    def test_a_location_cannot_issue_more_than_it_holds(self):
+        # Rule B13: 40 at the shop, 50 asked for -> refused, 40 is fine.
+        stock_valuation.ensure_available(D("40"), D("40"))
+        with pytest.raises(stock_valuation.NegativeStockError, match="B13"):
+            stock_valuation.ensure_available(D("40"), D("50"))
+
+    def test_count_variance_is_counted_less_system(self):
+        # System says 100 bags, 96 counted: short by 4. 105 counted: 5 over.
+        assert stock_valuation.count_variance("100", "96") == D("-4.000")
+        assert stock_valuation.count_variance("100", "105") == D("5.000")
+        assert stock_valuation.count_variance("100", "100") == D("0.000")
+        with pytest.raises(ValueError, match="negative"):
+            stock_valuation.count_variance("100", "-1")

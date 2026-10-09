@@ -9,8 +9,10 @@ from app.api.v1 import (
     locations,
     opening,
     parties,
+    purchases,
     settings,
     stock,
+    stock_ops,
     users,
 )
 
@@ -26,3 +28,5 @@ api_router.include_router(parties.router)
 api_router.include_router(opening.router)
 api_router.include_router(stock.router)
 api_router.include_router(dues.router)
+api_router.include_router(purchases.router)
+api_router.include_router(stock_ops.router)

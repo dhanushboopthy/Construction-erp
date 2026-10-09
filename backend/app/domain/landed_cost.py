@@ -43,6 +43,10 @@ class PurchaseLine:
     gst_rate: Decimal  # percent, e.g. 18
     received_weight_tons: Decimal = ZERO  # needed only for PER_TON charges
     charges: list[Charge] = field(default_factory=list)
+    # The value printed on the supplier's bill. When goods are priced per ton the rate per kg
+    # has many decimals, so the bill's own amount (rounded to paise) is used instead of
+    # billed_qty x rate.
+    line_value: Decimal | None = None
 
 
 @dataclass(frozen=True)
@@ -74,7 +78,11 @@ def landed_cost(line: PurchaseLine, include_gst_in_cost: bool = False) -> Landed
     if to_decimal(line.billed_qty) <= ZERO:
         raise ValueError("billed quantity must be positive")
 
-    goods_value = money(to_decimal(line.billed_qty) * to_decimal(line.rate))
+    goods_value = (
+        money(line.line_value)
+        if line.line_value is not None
+        else money(to_decimal(line.billed_qty) * to_decimal(line.rate))
+    )
     gst = money(goods_value * to_decimal(line.gst_rate) / 100)
     charges_total = money(sum((charge_amount(c, line) for c in line.charges), ZERO))
     total = goods_value + charges_total + (gst if include_gst_in_cost else ZERO)
@@ -86,3 +94,9 @@ def landed_cost(line: PurchaseLine, include_gst_in_cost: bool = False) -> Landed
         unit_cost=unit_cost(total / received),
         gst_in_cost=include_gst_in_cost,
     )
+
+
+def supplier_payable(goods_value: Decimal, gst: Decimal, charges_on_bill: Decimal) -> Decimal:
+    """What goes on the supplier's account: goods, GST and any charge the supplier billed.
+    Charges we pay to others (labour, vehicle owner) are cost, not supplier payable."""
+    return money(goods_value + gst + charges_on_bill)

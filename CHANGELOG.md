@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0 (Milestone 4)
+
+- Purchase entry with landed cost per base unit (charges per ton, unit, trip or flat), weighbridge
+  shortage raising cost, GST kept out of cost unless the shop cannot claim it.
+- Supplier payable on the party ledger; supplier payments and advances with an Idempotency-Key.
+- Stock transfers (Delivery challan numbers) and physical stock counts with owner posting.
+- Charge types (Settings), setting for counter-staff purchase entry (G28), live landed-cost
+  preview computed by the server for the owner.
+- Screens: Purchases (Alt+3) with keyboard bill entry, Stock tabs: levels, transfers, counts.
+
 ## 0.4.0 (Milestone 3)
 
 - Append-only stock ledger and party ledger (database triggers refuse UPDATE and DELETE).

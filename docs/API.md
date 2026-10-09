@@ -41,6 +41,18 @@ Endpoints that return cost, margin or profit use separate response models for ow
 staff (for example `ItemOwnerOut` and `ItemOut`). Choose the model with `principal.sees_cost`;
 never rely on the UI to hide fields. Test each such endpoint as a counter user.
 
+## Endpoints (Milestone 4)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| GET | `/cost-components` · POST/PATCH (owner) | owner, counter read |
+| POST | `/purchases/preview` | owner (landed cost, nothing saved) |
+| POST/GET | `/purchases` · GET `/purchases/{id}` | enter: owner, counter (own shop, if allowed); read: all, counter's own shop only; money fields owner only |
+| POST/GET | `/payments` (`Idempotency-Key` header) | create: owner; read: owner, accountant |
+| POST/GET | `/transfers` · GET `/transfers/{id}` | owner, counter (out of own shop) |
+| POST/GET | `/stock-counts` · GET `/{id}` · PUT `/{id}/lines` | owner, counter (own shop); rupee variance owner only |
+| POST | `/stock-counts/{id}/post` | owner |
+
 ## Endpoints (Milestone 3)
 
 | Method | Path | Who |

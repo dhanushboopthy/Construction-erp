@@ -526,6 +526,224 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/cost-components": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Components */
+        get: operations["list_components_api_v1_cost_components_get"];
+        put?: never;
+        /** Create Component */
+        post: operations["create_component_api_v1_cost_components_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cost-components/{component_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Component */
+        patch: operations["update_component_api_v1_cost_components__component_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/purchases/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview Purchase
+         * @description Landed cost as the server computes it, for the owner's screen. Nothing is saved.
+         */
+        post: operations["preview_purchase_api_v1_purchases_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Purchases */
+        get: operations["list_purchases_api_v1_purchases_get"];
+        put?: never;
+        /** Create Purchase */
+        post: operations["create_purchase_api_v1_purchases_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchases/{purchase_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Purchase */
+        get: operations["get_purchase_api_v1_purchases__purchase_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Payments */
+        get: operations["list_payments_api_v1_payments_get"];
+        put?: never;
+        /**
+         * Create Payment
+         * @description Pay a supplier or give an advance. A repeated Idempotency-Key returns the first payment.
+         */
+        post: operations["create_payment_api_v1_payments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/transfers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Transfers */
+        get: operations["list_transfers_api_v1_transfers_get"];
+        put?: never;
+        /** Create Transfer */
+        post: operations["create_transfer_api_v1_transfers_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/transfers/{transfer_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Transfer */
+        get: operations["get_transfer_api_v1_transfers__transfer_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stock-counts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Counts */
+        get: operations["list_counts_api_v1_stock_counts_get"];
+        put?: never;
+        /** Open Count */
+        post: operations["open_count_api_v1_stock_counts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stock-counts/{count_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Count */
+        get: operations["get_count_api_v1_stock_counts__count_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stock-counts/{count_id}/lines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Enter Counts */
+        put: operations["enter_counts_api_v1_stock_counts__count_id__lines_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stock-counts/{count_id}/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Post Count
+         * @description Only the owner turns a count into stock adjustments.
+         */
+        post: operations["post_count_api_v1_stock_counts__count_id__post_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -592,6 +810,29 @@ export interface components {
             /** New Password */
             new_password: string;
         };
+        /**
+         * ChargeBasis
+         * @enum {string}
+         */
+        ChargeBasis: "per_ton" | "per_base_unit" | "per_trip" | "flat";
+        /**
+         * ChargeIn
+         * @description A charge on one purchase line. Pick a component, or give a name and basis.
+         */
+        ChargeIn: {
+            /** Component Id */
+            component_id?: number | null;
+            /** Name */
+            name?: string | null;
+            basis?: components["schemas"]["ChargeBasis"] | null;
+            /** Amount */
+            amount: number | string;
+            /**
+             * On Supplier Bill
+             * @default false
+             */
+            on_supplier_bill: boolean;
+        };
         /** ConversionOut */
         ConversionOut: {
             /** Quantity */
@@ -603,6 +844,142 @@ export interface components {
             /** Result */
             result: string;
         };
+        /** CostComponentIn */
+        CostComponentIn: {
+            /** Name */
+            name: string;
+            basis: components["schemas"]["ChargeBasis"];
+            /**
+             * Default Amount
+             * @default 0
+             */
+            default_amount: number | string;
+        };
+        /** CostComponentOut */
+        CostComponentOut: {
+            /** Name */
+            name: string;
+            basis: components["schemas"]["ChargeBasis"];
+            /**
+             * Default Amount
+             * @default 0
+             */
+            default_amount: string;
+            /** Id */
+            id: number;
+            /** Is Active */
+            is_active: boolean;
+        };
+        /** CostComponentUpdate */
+        CostComponentUpdate: {
+            /** Name */
+            name?: string | null;
+            basis?: components["schemas"]["ChargeBasis"] | null;
+            /** Default Amount */
+            default_amount?: number | string | null;
+            /** Is Active */
+            is_active?: boolean | null;
+        };
+        /** CountCreate */
+        CountCreate: {
+            /** Location Id */
+            location_id: number;
+            /** Count Date */
+            count_date?: string | null;
+            /** Item Ids */
+            item_ids?: number[] | null;
+            /** Note */
+            note?: string | null;
+        };
+        /** CountLineIn */
+        CountLineIn: {
+            /** Item Id */
+            item_id: number;
+            /** Counted Qty */
+            counted_qty: number | string | null;
+        };
+        /** CountLineOut */
+        CountLineOut: {
+            /** Item Id */
+            item_id: number;
+            /** Item Name */
+            item_name: string;
+            /** Base Unit */
+            base_unit: string;
+            /** System Qty */
+            system_qty: string;
+            /** Counted Qty */
+            counted_qty: string | null;
+            /** Variance */
+            variance: string | null;
+        };
+        /** CountLineOwnerOut */
+        CountLineOwnerOut: {
+            /** Item Id */
+            item_id: number;
+            /** Item Name */
+            item_name: string;
+            /** Base Unit */
+            base_unit: string;
+            /** System Qty */
+            system_qty: string;
+            /** Counted Qty */
+            counted_qty: string | null;
+            /** Variance */
+            variance: string | null;
+            /** Variance Value */
+            variance_value: string | null;
+        };
+        /** CountLinesUpdate */
+        CountLinesUpdate: {
+            /** Lines */
+            lines: components["schemas"]["CountLineIn"][];
+        };
+        /** CountOut */
+        CountOut: {
+            /** Id */
+            id: number;
+            /** Location Id */
+            location_id: number;
+            /** Location Code */
+            location_code: string;
+            /**
+             * Count Date
+             * Format: date
+             */
+            count_date: string;
+            status: components["schemas"]["CountStatus"];
+            /** Note */
+            note: string | null;
+            /** Lines */
+            lines: components["schemas"]["CountLineOut"][];
+        };
+        /** CountOwnerOut */
+        CountOwnerOut: {
+            /** Id */
+            id: number;
+            /** Location Id */
+            location_id: number;
+            /** Location Code */
+            location_code: string;
+            /**
+             * Count Date
+             * Format: date
+             */
+            count_date: string;
+            status: components["schemas"]["CountStatus"];
+            /** Note */
+            note: string | null;
+            /** Lines */
+            lines: components["schemas"]["CountLineOwnerOut"][];
+            /** Total Variance Value */
+            total_variance_value: string;
+        };
+        /**
+         * CountStatus
+         * @enum {string}
+         */
+        CountStatus: "draft" | "posted";
         /**
          * CustomerSegment
          * @enum {string}
@@ -1083,6 +1460,28 @@ export interface components {
             /** Offset */
             offset: number;
         };
+        /** Page[PurchaseOut] */
+        Page_PurchaseOut_: {
+            /** Items */
+            items: components["schemas"]["PurchaseOut"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+        };
+        /** Page[PurchaseOwnerOut] */
+        Page_PurchaseOwnerOut_: {
+            /** Items */
+            items: components["schemas"]["PurchaseOwnerOut"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+        };
         /** PartyCreate */
         PartyCreate: {
             /** Name */
@@ -1192,6 +1591,63 @@ export interface components {
             /** New Password */
             new_password: string;
         };
+        /** PaymentCreate */
+        PaymentCreate: {
+            /** @default paid */
+            direction: components["schemas"]["PaymentDirection"];
+            /** Party Id */
+            party_id: number;
+            /** Location Id */
+            location_id: number;
+            /** Amount */
+            amount: number | string;
+            mode: components["schemas"]["PaymentMode"];
+            /** Reference */
+            reference?: string | null;
+            /**
+             * Payment Date
+             * Format: date
+             */
+            payment_date: string;
+            /** Note */
+            note?: string | null;
+        };
+        /**
+         * PaymentDirection
+         * @enum {string}
+         */
+        PaymentDirection: "received" | "paid";
+        /**
+         * PaymentMode
+         * @enum {string}
+         */
+        PaymentMode: "cash" | "upi" | "bank";
+        /** PaymentOut */
+        PaymentOut: {
+            /** Id */
+            id: number;
+            /** Number */
+            number: string;
+            direction: components["schemas"]["PaymentDirection"];
+            /** Party Id */
+            party_id: number;
+            /** Party Name */
+            party_name: string;
+            /** Location Id */
+            location_id: number;
+            /** Amount */
+            amount: string;
+            mode: components["schemas"]["PaymentMode"];
+            /** Reference */
+            reference: string | null;
+            /**
+             * Payment Date
+             * Format: date
+             */
+            payment_date: string;
+            /** Note */
+            note: string | null;
+        };
         /** PostRequest */
         PostRequest: {
             /** Kinds */
@@ -1206,6 +1662,244 @@ export interface components {
             /** Party Rows */
             party_rows: number;
         };
+        /** PreviewLine */
+        PreviewLine: {
+            /** Item Id */
+            item_id: number;
+            /** Item Name */
+            item_name: string;
+            /** Base Unit */
+            base_unit: string;
+            /** Billed Qty */
+            billed_qty: string;
+            /** Received Qty */
+            received_qty: string;
+            /** Goods Value */
+            goods_value: string;
+            /** Gst Amount */
+            gst_amount: string;
+            /** Charges Total */
+            charges_total: string;
+            /** Total Cost */
+            total_cost: string;
+            /** Unit Cost */
+            unit_cost: string;
+            /** Costs */
+            costs: components["schemas"]["PurchaseCostOut"][];
+        };
+        /** PurchaseCostOut */
+        PurchaseCostOut: {
+            /** Id */
+            id: number;
+            /** Component Id */
+            component_id: number | null;
+            /** Name */
+            name: string;
+            basis: components["schemas"]["ChargeBasis"];
+            /** Rate */
+            rate: string;
+            /** Total */
+            total: string;
+            /** On Supplier Bill */
+            on_supplier_bill: boolean;
+        };
+        /** PurchaseCreate */
+        PurchaseCreate: {
+            /** Supplier Id */
+            supplier_id: number;
+            /** Location Id */
+            location_id: number;
+            /** Bill No */
+            bill_no: string;
+            /**
+             * Bill Date
+             * Format: date
+             */
+            bill_date: string;
+            /** Due Date */
+            due_date?: string | null;
+            /** @default stock */
+            mode: components["schemas"]["PurchaseMode"];
+            /** Note */
+            note?: string | null;
+            /** Lines */
+            lines: components["schemas"]["PurchaseLineIn"][];
+        };
+        /** PurchaseLineIn */
+        PurchaseLineIn: {
+            /** Item Id */
+            item_id: number;
+            /** Unit */
+            unit: string;
+            /** Quantity */
+            quantity: number | string;
+            /** Received Quantity */
+            received_quantity?: number | string | null;
+            /** Rate */
+            rate: number | string;
+            /** Gst Rate */
+            gst_rate?: number | string | null;
+            /** Charges */
+            charges?: components["schemas"]["ChargeIn"][];
+        };
+        /**
+         * PurchaseLineOut
+         * @description What counter staff and the accountant see: quantities, no money (rule B4).
+         */
+        PurchaseLineOut: {
+            /** Id */
+            id: number;
+            /** Line No */
+            line_no: number;
+            /** Item Id */
+            item_id: number;
+            /** Item Name */
+            item_name: string;
+            /** Unit */
+            unit: string;
+            /** Quantity */
+            quantity: string;
+            /** Received Quantity */
+            received_quantity: string;
+            /** Billed Qty */
+            billed_qty: string;
+            /** Received Qty */
+            received_qty: string;
+            /** Base Unit */
+            base_unit: string;
+        };
+        /** PurchaseLineOwnerOut */
+        PurchaseLineOwnerOut: {
+            /** Id */
+            id: number;
+            /** Line No */
+            line_no: number;
+            /** Item Id */
+            item_id: number;
+            /** Item Name */
+            item_name: string;
+            /** Unit */
+            unit: string;
+            /** Quantity */
+            quantity: string;
+            /** Received Quantity */
+            received_quantity: string;
+            /** Billed Qty */
+            billed_qty: string;
+            /** Received Qty */
+            received_qty: string;
+            /** Base Unit */
+            base_unit: string;
+            /** Rate */
+            rate: string;
+            /** Gst Rate */
+            gst_rate: string;
+            /** Goods Value */
+            goods_value: string;
+            /** Gst Amount */
+            gst_amount: string;
+            /** Charges Total */
+            charges_total: string;
+            /** Total Cost */
+            total_cost: string;
+            /** Unit Cost */
+            unit_cost: string;
+            /** Costs */
+            costs: components["schemas"]["PurchaseCostOut"][];
+        };
+        /**
+         * PurchaseMode
+         * @enum {string}
+         */
+        PurchaseMode: "stock" | "direct";
+        /** PurchaseOut */
+        PurchaseOut: {
+            /** Id */
+            id: number;
+            /** Number */
+            number: string;
+            /** Supplier Id */
+            supplier_id: number;
+            /** Supplier Name */
+            supplier_name: string;
+            /** Location Id */
+            location_id: number;
+            /** Location Code */
+            location_code: string;
+            /** Bill No */
+            bill_no: string;
+            /**
+             * Bill Date
+             * Format: date
+             */
+            bill_date: string;
+            /** Due Date */
+            due_date: string | null;
+            mode: components["schemas"]["PurchaseMode"];
+            status: components["schemas"]["PurchaseStatus"];
+            /** Note */
+            note: string | null;
+            /** Lines */
+            lines: components["schemas"]["PurchaseLineOut"][];
+        };
+        /** PurchaseOwnerOut */
+        PurchaseOwnerOut: {
+            /** Id */
+            id: number;
+            /** Number */
+            number: string;
+            /** Supplier Id */
+            supplier_id: number;
+            /** Supplier Name */
+            supplier_name: string;
+            /** Location Id */
+            location_id: number;
+            /** Location Code */
+            location_code: string;
+            /** Bill No */
+            bill_no: string;
+            /**
+             * Bill Date
+             * Format: date
+             */
+            bill_date: string;
+            /** Due Date */
+            due_date: string | null;
+            mode: components["schemas"]["PurchaseMode"];
+            status: components["schemas"]["PurchaseStatus"];
+            /** Note */
+            note: string | null;
+            /** Lines */
+            lines: components["schemas"]["PurchaseLineOwnerOut"][];
+            /** Goods Value */
+            goods_value: string;
+            /** Gst Amount */
+            gst_amount: string;
+            /** Charges Total */
+            charges_total: string;
+            /** Supplier Payable */
+            supplier_payable: string;
+        };
+        /** PurchasePreview */
+        PurchasePreview: {
+            /** Goods Value */
+            goods_value: string;
+            /** Gst Amount */
+            gst_amount: string;
+            /** Charges Total */
+            charges_total: string;
+            /** Supplier Payable */
+            supplier_payable: string;
+            /** Gst In Cost */
+            gst_in_cost: boolean;
+            /** Lines */
+            lines: components["schemas"]["PreviewLine"][];
+        };
+        /**
+         * PurchaseStatus
+         * @enum {string}
+         */
+        PurchaseStatus: "posted";
         /**
          * Role
          * @enum {string}
@@ -1296,6 +1990,11 @@ export interface components {
              * @default false
              */
             einvoice_enabled: boolean;
+            /**
+             * Counter Can Enter Purchases
+             * @default true
+             */
+            counter_can_enter_purchases: boolean;
             /**
              * Timezone
              * @default Asia/Kolkata
@@ -1392,6 +2091,11 @@ export interface components {
              * @default false
              */
             einvoice_enabled: boolean;
+            /**
+             * Counter Can Enter Purchases
+             * @default true
+             */
+            counter_can_enter_purchases: boolean;
             /**
              * Timezone
              * @default Asia/Kolkata
@@ -1520,6 +2224,63 @@ export interface components {
             /** Expires In */
             expires_in: number;
             user: components["schemas"]["UserOut"];
+        };
+        /** TransferCreate */
+        TransferCreate: {
+            /** From Location Id */
+            from_location_id: number;
+            /** To Location Id */
+            to_location_id: number;
+            /** Transfer Date */
+            transfer_date?: string | null;
+            /** Note */
+            note?: string | null;
+            /** Lines */
+            lines: components["schemas"]["TransferLineIn"][];
+        };
+        /** TransferLineIn */
+        TransferLineIn: {
+            /** Item Id */
+            item_id: number;
+            /** Quantity */
+            quantity: number | string;
+            /** Unit */
+            unit?: string | null;
+        };
+        /** TransferLineOut */
+        TransferLineOut: {
+            /** Item Id */
+            item_id: number;
+            /** Item Name */
+            item_name: string;
+            /** Base Unit */
+            base_unit: string;
+            /** Quantity */
+            quantity: string;
+        };
+        /** TransferOut */
+        TransferOut: {
+            /** Id */
+            id: number;
+            /** Number */
+            number: string;
+            /** From Location Id */
+            from_location_id: number;
+            /** From Code */
+            from_code: string;
+            /** To Location Id */
+            to_location_id: number;
+            /** To Code */
+            to_code: string;
+            /**
+             * Transfer Date
+             * Format: date
+             */
+            transfer_date: string;
+            /** Note */
+            note: string | null;
+            /** Lines */
+            lines: components["schemas"]["TransferLineOut"][];
         };
         /** UserCreate */
         UserCreate: {
@@ -4476,6 +5237,1300 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DuesOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_components_api_v1_cost_components_get: {
+        parameters: {
+            query?: {
+                include_inactive?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CostComponentOut"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_component_api_v1_cost_components_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CostComponentIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CostComponentOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_component_api_v1_cost_components__component_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                component_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CostComponentUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CostComponentOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_purchase_api_v1_purchases_preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PurchaseCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchasePreview"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_purchases_api_v1_purchases_get: {
+        parameters: {
+            query?: {
+                supplier_id?: number | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_PurchaseOwnerOut_"] | components["schemas"]["Page_PurchaseOut_"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_purchase_api_v1_purchases_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PurchaseCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOwnerOut"] | components["schemas"]["PurchaseOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_purchase_api_v1_purchases__purchase_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                purchase_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOwnerOut"] | components["schemas"]["PurchaseOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_payments_api_v1_payments_get: {
+        parameters: {
+            query?: {
+                party_id?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentOut"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_payment_api_v1_payments_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "idempotency-key"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaymentCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_transfers_api_v1_transfers_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransferOut"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_transfer_api_v1_transfers_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TransferCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransferOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_transfer_api_v1_transfers__transfer_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                transfer_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransferOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_counts_api_v1_stock_counts_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CountOwnerOut"][] | components["schemas"]["CountOut"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    open_count_api_v1_stock_counts_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CountCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CountOwnerOut"] | components["schemas"]["CountOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_count_api_v1_stock_counts__count_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                count_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CountOwnerOut"] | components["schemas"]["CountOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    enter_counts_api_v1_stock_counts__count_id__lines_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                count_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CountLinesUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CountOwnerOut"] | components["schemas"]["CountOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_count_api_v1_stock_counts__count_id__post_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                count_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CountOwnerOut"];
                 };
             };
             /** @description Bad Request */

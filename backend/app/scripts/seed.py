@@ -9,6 +9,7 @@ the environment (SEED_OWNER_PASSWORD, ...); the development defaults are refused
 import os
 import secrets
 import sys
+from decimal import Decimal
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -18,7 +19,9 @@ from app.core.config import get_settings
 from app.core.db import SessionLocal
 from app.core.security import hash_password
 from app.core.tenancy import TENANT_ID
+from app.domain.landed_cost import ChargeBasis
 from app.models.enums import LocationKind, Role
+from app.models.purchasing import CostComponent
 from app.models.setup import AppUser, Location, ShopSettings
 
 DEV_PASSWORDS = {
@@ -32,6 +35,16 @@ LOCATIONS = [
     ("S1", "Shop 1", LocationKind.SHOP),
     ("S2", "Shop 2", LocationKind.SHOP),
     ("G1", "Godown", LocationKind.GODOWN),
+]
+
+# Charge types offered on a purchase line; the amounts are only suggestions (owner interview).
+COST_COMPONENTS = [
+    ("Unloading", ChargeBasis.PER_TON, "250"),
+    ("Loading", ChargeBasis.PER_TON, "0"),
+    ("Weighbridge", ChargeBasis.FLAT, "150"),
+    ("Transport rent", ChargeBasis.PER_TRIP, "0"),
+    ("Commission", ChargeBasis.FLAT, "0"),
+    ("Others", ChargeBasis.FLAT, "0"),
 ]
 
 USERS = [
@@ -79,6 +92,18 @@ def seed(db: Session) -> list[str]:
             db.add(by_code[code])
             notes.append(f"created location {code} ({name})")
     db.flush()
+
+    have = set(
+        db.execute(select(CostComponent.name).where(CostComponent.tenant_id == TENANT_ID)).scalars()
+    )
+    for name, basis, amount in COST_COMPONENTS:
+        if name not in have:
+            db.add(
+                CostComponent(
+                    tenant_id=TENANT_ID, name=name, basis=basis, default_amount=Decimal(amount)
+                )
+            )
+            notes.append(f"created charge type {name}")
 
     for username, full_name, role, codes in USERS:
         exists = db.execute(

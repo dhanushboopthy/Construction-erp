@@ -59,6 +59,10 @@ class ShopSettings(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
     eway_threshold_interstate: Mapped[Money] = mapped_column(default=Decimal("50000.00"))
     eway_threshold_intrastate: Mapped[Money] = mapped_column(default=Decimal("100000.00"))
     einvoice_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    # G28: counter staff may key in supplier bills for their own shop but never see costs.
+    counter_can_enter_purchases: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default="true"
+    )
     timezone: Mapped[str] = mapped_column(String(64), default="Asia/Kolkata")
 
     __audit_exclude__ = frozenset({"updated_at"})

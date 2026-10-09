@@ -5,6 +5,7 @@ import { toFormError } from "@/api/errors";
 import { useItems, useParties } from "@/api/masters";
 import { previewInvoice, useCreateInvoice } from "@/api/sales";
 import { useLocations } from "@/api/setup";
+import { useOpenDirectLines } from "@/api/transport";
 import type { FulfilmentSource, InvoiceCreate, InvoicePreview, PaymentMode } from "@/api/types";
 import { useAuth } from "@/auth/AuthContext";
 import { ApprovalPrompt } from "@/components/ApprovalPrompt";
@@ -26,6 +27,7 @@ interface LineRow {
   quantity: string;
   source: FulfilmentSource;
   sourceLocationId: string;
+  purchaseLineId: string;
   discount: string;
   reason: string;
 }
@@ -36,10 +38,34 @@ const emptyLine = (): LineRow => ({
   quantity: "",
   source: "shop",
   sourceLocationId: "",
+  purchaseLineId: "",
   discount: "",
   reason: "",
 });
 const DECIMAL = /^\d+(\.\d+)?$/;
+
+/** Which supplier purchase supplies a direct line. Optional: it can be linked later by the owner. */
+function DirectPurchasePick({
+  itemId,
+  value,
+  onChange,
+}: {
+  itemId: number | null;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const open = useOpenDirectLines(itemId);
+  return (
+    <SelectField label="Supplier purchase" value={value} onChange={(e) => onChange(e.target.value)}>
+      <option value="">Link later</option>
+      {(open.data ?? []).map((p) => (
+        <option key={p.purchase_line_id} value={p.purchase_line_id}>
+          {p.purchase_number} · {p.supplier_name} · {trimDecimal(p.free_qty)} {p.base_unit} free
+        </option>
+      ))}
+    </SelectField>
+  );
+}
 
 function todayISO(): string {
   const d = new Date();
@@ -117,6 +143,8 @@ export function BillEntryPage() {
         source: l.source,
         source_location_id:
           l.source === "godown" && l.sourceLocationId ? Number(l.sourceLocationId) : null,
+        purchase_line_id:
+          l.source === "direct" && l.purchaseLineId ? Number(l.purchaseLineId) : null,
         discount: l.discount || null,
         discount_reason: l.discount ? l.reason || null : null,
       });
@@ -355,6 +383,12 @@ export function BillEntryPage() {
                           </option>
                         ))}
                     </SelectField>
+                  ) : l.source === "direct" ? (
+                    <DirectPurchasePick
+                      itemId={l.itemId ? Number(l.itemId) : null}
+                      value={l.purchaseLineId}
+                      onChange={(v) => setLine(i, { purchaseLineId: v })}
+                    />
                   ) : (
                     <span />
                   )}

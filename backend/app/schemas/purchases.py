@@ -206,3 +206,4 @@ class PaymentOut(Schema):
     site_id: int | None = None
     applied: list[AllocationOut] = Field(default_factory=list)
     advance: Decimal = Decimal("0")
+    warnings: list[str] = Field(default_factory=list)

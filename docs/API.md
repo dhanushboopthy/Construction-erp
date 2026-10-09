@@ -41,6 +41,24 @@ Endpoints that return cost, margin or profit use separate response models for ow
 staff (for example `ItemOwnerOut` and `ItemOut`). Choose the model with `principal.sees_cost`;
 never rely on the UI to hide fields. Test each such endpoint as a counter user.
 
+## Endpoints (Milestone 9)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| GET | `/vehicles` (`include_inactive`) | owner, accountant |
+| POST/PATCH | `/vehicles` · `/vehicles/{id}` | owner |
+| GET | `/trips` (`invoice_id`, `vehicle_id`) | owner, accountant |
+| POST | `/trips` `{vehicle_id, location_id, invoice_id?, purchase_id?, from_place, to_place, freight_amount}` | owner |
+| GET | `/drop-ship/open-purchases?item_id=` (quantities only, no cost) | owner, counter |
+| POST | `/drop-ship/links` `{sales_line_id, purchase_line_id}` | owner |
+| GET | `/reports/drop-ship` | owner |
+
+Invoice lines accept `purchase_line_id` for direct lines. The owner's invoice adds
+`drop_ship_purchase` per line and `freight` (profit is after freight). `POST /payments` answers
+with `warnings` (cash above the daily limit to one person). New codes: `LINK_*`,
+`DIRECT_LINK_INVALID`, `LINK_NEEDS_DIRECT`, `VEHICLE_EXISTS`, `VEHICLE_INACTIVE`,
+`TRIP_ONE_DOCUMENT`, `OWN_VEHICLE_FREIGHT`.
+
 ## Endpoints (Milestone 8)
 
 | Method | Path | Who |

@@ -18,6 +18,7 @@ from app.api.v1 import (
     settings,
     stock,
     stock_ops,
+    transport,
     users,
 )
 
@@ -41,3 +42,4 @@ api_router.include_router(payments.router)
 api_router.include_router(approvals.router)
 api_router.include_router(returns.credit_router)
 api_router.include_router(returns.debit_router)
+api_router.include_router(transport.router)

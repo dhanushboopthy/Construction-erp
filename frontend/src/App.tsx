@@ -27,6 +27,10 @@ import { SettingsLayout } from "@/pages/settings/SettingsLayout";
 import { ShopSettingsPage } from "@/pages/settings/ShopSettingsPage";
 import { UsersPage } from "@/pages/settings/UsersPage";
 import { CountsPage } from "@/pages/stock/CountsPage";
+import { DirectSalesPage } from "@/pages/transport/DirectSalesPage";
+import { TransportLayout } from "@/pages/transport/TransportLayout";
+import { TripsPage } from "@/pages/transport/TripsPage";
+import { VehiclesPage } from "@/pages/transport/VehiclesPage";
 import { StockLayout } from "@/pages/stock/StockLayout";
 import { StockPage } from "@/pages/stock/StockPage";
 import { TransfersPage } from "@/pages/stock/TransfersPage";
@@ -43,6 +47,7 @@ const BUILT = new Set([
   "/purchases",
   "/rates",
   "/sales",
+  "/transport",
 ]);
 
 export function App({ client = queryClient }: { client?: QueryClient }) {
@@ -154,6 +159,18 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
                   </RequireRole>
                 }
               />
+              <Route
+                path="/transport"
+                element={
+                  <RequireRole roles={["owner", "accountant"]}>
+                    <TransportLayout />
+                  </RequireRole>
+                }
+              >
+                <Route index element={<TripsPage />} />
+                <Route path="vehicles" element={<VehiclesPage />} />
+                <Route path="direct" element={<DirectSalesPage />} />
+              </Route>
               {MODULES.filter((m) => m.milestone && !BUILT.has(m.path)).map((m) => (
                 <Route
                   key={m.path}

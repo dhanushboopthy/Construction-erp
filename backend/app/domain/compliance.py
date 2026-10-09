@@ -31,3 +31,12 @@ def return_window_open(invoice_date: date, return_date: date, window_days: int) 
     """Rule B11: a return within the window goes back to stock without owner approval."""
     age = (return_date - invoice_date).days
     return 0 <= age <= window_days
+
+
+def freight_cash_warning(
+    cash_already_paid_today: Decimal, new_cash: Decimal, daily_limit: Decimal
+) -> bool:
+    """G14: cash freight above the daily limit to one transporter is not deductible, so warn.
+    Exactly the limit is still fine."""
+    total: Decimal = money(cash_already_paid_today) + money(new_cash)
+    return total > to_decimal(daily_limit)

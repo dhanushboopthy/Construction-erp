@@ -77,6 +77,14 @@ export const MODULES: ModuleLink[] = [
     purpose: "Today's market rate per item, customer rates and margins.",
   },
   {
+    path: "/transport",
+    label: "Transport",
+    shortcut: "t",
+    roles: ["owner", "accountant"],
+    milestone: 9,
+    purpose: "Hired vehicles, trips and freight, and direct-from-supplier sales.",
+  },
+  {
     path: "/reports",
     label: "Reports",
     shortcut: "8",

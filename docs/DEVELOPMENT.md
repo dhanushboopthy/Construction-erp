@@ -29,6 +29,7 @@ uv run pytest
 cd frontend
 npm install
 npm run dev     # proxies /api to :8000
+npm run gen:api # after an API change: regenerate src/api/schema.d.ts (API must be running)
 ```
 
 ## Workflow

@@ -995,6 +995,116 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/credit-notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Credit Notes */
+        get: operations["list_credit_notes_api_v1_credit_notes_get"];
+        put?: never;
+        /**
+         * Create Credit Note
+         * @description Take back goods from a bill. Inside the return window it needs no approval (B11).
+         */
+        post: operations["create_credit_note_api_v1_credit_notes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/credit-notes/{note_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Credit Note */
+        get: operations["get_credit_note_api_v1_credit_notes__note_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/credit-notes/{note_id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Credit Note Pdf */
+        get: operations["credit_note_pdf_api_v1_credit_notes__note_id__pdf_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/debit-notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Debit Notes */
+        get: operations["list_debit_notes_api_v1_debit_notes_get"];
+        put?: never;
+        /**
+         * Create Debit Note
+         * @description Send goods back to a supplier: stock goes out at its landed cost, the payable falls.
+         */
+        post: operations["create_debit_note_api_v1_debit_notes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/debit-notes/{note_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Debit Note */
+        get: operations["get_debit_note_api_v1_debit_notes__note_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/debit-notes/{note_id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Debit Note Pdf */
+        get: operations["debit_note_pdf_api_v1_debit_notes__note_id__pdf_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1041,7 +1151,7 @@ export interface components {
          * @description What an owner PIN can approve at the counter (G18).
          * @enum {string}
          */
-        ApprovalAction: "credit_override" | "below_cost" | "discount" | "backdate";
+        ApprovalAction: "credit_override" | "below_cost" | "discount" | "backdate" | "late_return";
         /** ApprovalOut */
         ApprovalOut: {
             /** Id */
@@ -1288,6 +1398,132 @@ export interface components {
          * @enum {string}
          */
         CountStatus: "draft" | "posted";
+        /** CreditNoteCreate */
+        CreditNoteCreate: {
+            /** Invoice Id */
+            invoice_id: number;
+            /** Reason */
+            reason: string;
+            /** Lines */
+            lines: components["schemas"]["ReturnLineIn"][];
+            /** Approval Ids */
+            approval_ids?: number[];
+        };
+        /** CreditNoteLineOut */
+        CreditNoteLineOut: {
+            /** Id */
+            id: number;
+            /** Line No */
+            line_no: number;
+            /** Item Id */
+            item_id: number;
+            /** Description */
+            description: string;
+            /** Hsn */
+            hsn: string;
+            /** Base Qty */
+            base_qty: string;
+            /** Base Unit */
+            base_unit: string;
+            /** Taxable */
+            taxable: string;
+            /** Gst Rate */
+            gst_rate: string;
+            /** Cgst */
+            cgst: string;
+            /** Sgst */
+            sgst: string;
+            /** Igst */
+            igst: string;
+            /** Line Total */
+            line_total: string;
+            /** Sales Line Id */
+            sales_line_id: number;
+            /** Rate */
+            rate: string;
+            /** Restocked At */
+            restocked_at: number | null;
+        };
+        /** CreditNoteOut */
+        CreditNoteOut: {
+            /** Id */
+            id: number;
+            /** Number */
+            number: string;
+            /**
+             * Note Date
+             * Format: date
+             */
+            note_date: string;
+            /** Party Id */
+            party_id: number;
+            /** Party Name */
+            party_name: string;
+            /** Location Id */
+            location_id: number;
+            /** Location Code */
+            location_code: string;
+            /** Reason */
+            reason: string;
+            /** Grand Total */
+            grand_total: string;
+            /** Invoice Id */
+            invoice_id: number;
+            /** Invoice Number */
+            invoice_number: string;
+            /** Financial Year */
+            financial_year: string;
+            /** Site Id */
+            site_id: number | null;
+            /** Bill To Gstin */
+            bill_to_gstin: string | null;
+            /** Place Of Supply */
+            place_of_supply: string;
+            supply_kind: components["schemas"]["SupplyKind"];
+            supply_type: components["schemas"]["SupplyType"];
+            /** Taxable Value */
+            taxable_value: string;
+            /** Cgst */
+            cgst: string;
+            /** Sgst */
+            sgst: string;
+            /** Igst */
+            igst: string;
+            /** Round Off */
+            round_off: string;
+            /** Approved By */
+            approved_by: number | null;
+            /** Lines */
+            lines: components["schemas"]["CreditNoteLineOut"][];
+        };
+        /** CreditNoteSummary */
+        CreditNoteSummary: {
+            /** Id */
+            id: number;
+            /** Number */
+            number: string;
+            /**
+             * Note Date
+             * Format: date
+             */
+            note_date: string;
+            /** Party Id */
+            party_id: number;
+            /** Party Name */
+            party_name: string;
+            /** Location Id */
+            location_id: number;
+            /** Location Code */
+            location_code: string;
+            /** Reason */
+            reason: string;
+            /** Grand Total */
+            grand_total: string;
+            /** Invoice Id */
+            invoice_id: number;
+            /** Invoice Number */
+            invoice_number: string;
+        };
         /** CustomerRateCreate */
         CustomerRateCreate: {
             /** Party Id */
@@ -1346,6 +1582,121 @@ export interface components {
          * @enum {string}
          */
         CustomerSegment: "retail" | "contractor" | "bulk";
+        /** DebitNoteCreate */
+        DebitNoteCreate: {
+            /** Purchase Id */
+            purchase_id: number;
+            /** Reason */
+            reason: string;
+            /** Lines */
+            lines: components["schemas"]["ReturnLineIn"][];
+        };
+        /** DebitNoteLineOut */
+        DebitNoteLineOut: {
+            /** Id */
+            id: number;
+            /** Line No */
+            line_no: number;
+            /** Item Id */
+            item_id: number;
+            /** Description */
+            description: string;
+            /** Hsn */
+            hsn: string;
+            /** Base Qty */
+            base_qty: string;
+            /** Base Unit */
+            base_unit: string;
+            /** Taxable */
+            taxable: string;
+            /** Gst Rate */
+            gst_rate: string;
+            /** Cgst */
+            cgst: string;
+            /** Sgst */
+            sgst: string;
+            /** Igst */
+            igst: string;
+            /** Line Total */
+            line_total: string;
+            /** Purchase Line Id */
+            purchase_line_id: number;
+        };
+        /** DebitNoteOut */
+        DebitNoteOut: {
+            /** Id */
+            id: number;
+            /** Number */
+            number: string;
+            /**
+             * Note Date
+             * Format: date
+             */
+            note_date: string;
+            /** Party Id */
+            party_id: number;
+            /** Party Name */
+            party_name: string;
+            /** Location Id */
+            location_id: number;
+            /** Location Code */
+            location_code: string;
+            /** Reason */
+            reason: string;
+            /** Grand Total */
+            grand_total: string;
+            /** Purchase Id */
+            purchase_id: number;
+            /** Purchase Number */
+            purchase_number: string;
+            /** Supplier Bill No */
+            supplier_bill_no: string;
+            /** Financial Year */
+            financial_year: string;
+            supply_kind: components["schemas"]["SupplyKind"];
+            /** Taxable Value */
+            taxable_value: string;
+            /** Cgst */
+            cgst: string;
+            /** Sgst */
+            sgst: string;
+            /** Igst */
+            igst: string;
+            /** Round Off */
+            round_off: string;
+            /** Lines */
+            lines: components["schemas"]["DebitNoteLineOut"][];
+        };
+        /** DebitNoteSummary */
+        DebitNoteSummary: {
+            /** Id */
+            id: number;
+            /** Number */
+            number: string;
+            /**
+             * Note Date
+             * Format: date
+             */
+            note_date: string;
+            /** Party Id */
+            party_id: number;
+            /** Party Name */
+            party_name: string;
+            /** Location Id */
+            location_id: number;
+            /** Location Code */
+            location_code: string;
+            /** Reason */
+            reason: string;
+            /** Grand Total */
+            grand_total: string;
+            /** Purchase Id */
+            purchase_id: number;
+            /** Purchase Number */
+            purchase_number: string;
+            /** Supplier Bill No */
+            supplier_bill_no: string;
+        };
         /** DuesOut */
         DuesOut: {
             account: components["schemas"]["LedgerAccount"];
@@ -1512,6 +1863,11 @@ export interface components {
             source_location_id: number | null;
             /** Stock After */
             stock_after: string | null;
+            /**
+             * Returned Qty
+             * @default 0
+             */
+            returned_qty: string;
         };
         /** InvoiceLineOwnerOut */
         InvoiceLineOwnerOut: {
@@ -1557,6 +1913,11 @@ export interface components {
             source_location_id: number | null;
             /** Stock After */
             stock_after: string | null;
+            /**
+             * Returned Qty
+             * @default 0
+             */
+            returned_qty: string;
             /** Cost Per Unit */
             cost_per_unit: string;
             /** Profit */
@@ -2197,6 +2558,28 @@ export interface components {
         Page_AuditLogOut_: {
             /** Items */
             items: components["schemas"]["AuditLogOut"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+        };
+        /** Page[CreditNoteSummary] */
+        Page_CreditNoteSummary_: {
+            /** Items */
+            items: components["schemas"]["CreditNoteSummary"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+        };
+        /** Page[DebitNoteSummary] */
+        Page_DebitNoteSummary_: {
+            /** Items */
+            items: components["schemas"]["DebitNoteSummary"][];
             /** Total */
             total: number;
             /** Limit */
@@ -2853,6 +3236,13 @@ export interface components {
             /** Base Unit */
             base_unit: string;
             source: components["schemas"]["RateSource"];
+        };
+        /** ReturnLineIn */
+        ReturnLineIn: {
+            /** Line Id */
+            line_id: number;
+            /** Quantity */
+            quantity: number | string;
         };
         /**
          * Role
@@ -8801,6 +9191,620 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_credit_notes_api_v1_credit_notes_get: {
+        parameters: {
+            query?: {
+                invoice_id?: number | null;
+                party_id?: number | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_CreditNoteSummary_"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_credit_note_api_v1_credit_notes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreditNoteCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreditNoteOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_credit_note_api_v1_credit_notes__note_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                note_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreditNoteOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    credit_note_pdf_api_v1_credit_notes__note_id__pdf_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                note_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_debit_notes_api_v1_debit_notes_get: {
+        parameters: {
+            query?: {
+                purchase_id?: number | null;
+                party_id?: number | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_DebitNoteSummary_"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_debit_note_api_v1_debit_notes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DebitNoteCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DebitNoteOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_debit_note_api_v1_debit_notes__note_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                note_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DebitNoteOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    debit_note_pdf_api_v1_debit_notes__note_id__pdf_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                note_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

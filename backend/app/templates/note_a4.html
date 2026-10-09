@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ title }} {{ note.number }}</title>
+<style>
+  @page { size: A4; margin: 12mm 12mm 14mm 12mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 8.5pt; color: #1c2321; margin: 0; }
+  h1 { font-size: 14pt; margin: 0; }
+  .row { display: flex; justify-content: space-between; gap: 8mm; }
+  .box { border: 0.3mm solid #1c2321; padding: 2mm 3mm; }
+  .grow { flex: 1; }
+  .muted { color: #5b6661; }
+  .right { text-align: right; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  table { width: 100%; border-collapse: collapse; margin-top: 3mm; }
+  th, td { border: 0.25mm solid #1c2321; padding: 1mm 1.5mm; vertical-align: top; }
+  th { background: #eceeec; font-weight: 600; text-align: left; }
+  th.num { text-align: right; }
+  .total-band { margin-top: 3mm; border: 0.5mm solid #1c2321; background: #f2c230; padding: 2.5mm 3mm;
+                display: flex; justify-content: space-between; font-size: 12pt; font-weight: 700; }
+  .mark { position: fixed; top: 38%; left: 8%; font-size: 90pt; color: rgba(180, 35, 24, 0.13);
+          transform: rotate(-30deg); letter-spacing: 8mm; z-index: -1; }
+  .sign { margin-top: 12mm; }
+</style>
+</head>
+<body>
+{% if test_mark %}<div class="mark">TEST</div>{% endif %}
+<div class="row">
+  <div class="grow">
+    <h1>{{ seller.trade_name or seller.legal_name }}</h1>
+    <div style="white-space: pre-line">{{ seller.address }}</div>
+    <div><strong>GSTIN:</strong> {{ seller.gstin or "—" }} · <strong>State:</strong> {{ seller.state_code }} {{ seller.state_name }}</div>
+  </div>
+  <div class="right"><h1>{{ title|upper }}</h1></div>
+</div>
+
+<div class="row" style="margin-top: 3mm">
+  <div class="box grow">
+    <div><strong>{{ title }} no.</strong> {{ note.number }}</div>
+    <div><strong>Date</strong> {{ note.note_date.strftime("%d-%m-%Y") }}</div>
+    <div><strong>Against</strong> {{ against_label }} {{ against_no }}</div>
+    <div><strong>Reason</strong> {{ note.reason }}</div>
+    <div class="muted">{{ "Intra-state: CGST + SGST" if intra else "Inter-state: IGST" }}</div>
+  </div>
+  <div class="box grow">
+    <div class="muted">{{ party_label }}</div>
+    <div><strong>{{ party_name }}</strong></div>
+    <div style="white-space: pre-line">{{ party_address }}</div>
+    <div>GSTIN: {{ party_gstin or "Unregistered" }}</div>
+  </div>
+</div>
+
+<table>
+  <thead>
+    <tr><th>#</th><th>Item</th><th>HSN</th><th class="num">Qty</th><th class="num">Taxable</th>
+    <th class="num">GST %</th>{% if intra %}<th class="num">CGST</th><th class="num">SGST</th>{% else %}<th class="num">IGST</th>{% endif %}
+    <th class="num">Total</th></tr>
+  </thead>
+  <tbody>
+  {% for l in lines %}
+    <tr><td>{{ l.line_no }}</td><td>{{ l.description }}</td><td>{{ l.hsn }}</td>
+    <td class="num">{{ l.qty_text }}</td><td class="num">{{ l.taxable_text }}</td><td class="num">{{ l.gst_rate }}</td>
+    {% if intra %}<td class="num">{{ l.cgst_text }}</td><td class="num">{{ l.sgst_text }}</td>{% else %}<td class="num">{{ l.igst_text }}</td>{% endif %}
+    <td class="num">{{ l.total_text }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<table style="width: 60%; margin-left: 40%">
+  <tr><td>Taxable value</td><td class="num">{{ totals.taxable }}</td></tr>
+  {% if intra %}
+  <tr><td>CGST</td><td class="num">{{ totals.cgst }}</td></tr>
+  <tr><td>SGST</td><td class="num">{{ totals.sgst }}</td></tr>
+  {% else %}
+  <tr><td>IGST</td><td class="num">{{ totals.igst }}</td></tr>
+  {% endif %}
+  <tr><td>Round off</td><td class="num">{{ totals.round_off }}</td></tr>
+</table>
+<div class="total-band"><span>{{ total_label }}</span><span>₹ {{ totals.grand_total }}</span></div>
+<div style="margin-top: 2mm">{{ words }}</div>
+<div class="sign right">For {{ seller.trade_name or seller.legal_name }}<br><br>Authorised signatory</div>
+</body>
+</html>

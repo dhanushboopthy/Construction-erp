@@ -41,6 +41,19 @@ Endpoints that return cost, margin or profit use separate response models for ow
 staff (for example `ItemOwnerOut` and `ItemOut`). Choose the model with `principal.sees_cost`;
 never rely on the UI to hide fields. Test each such endpoint as a counter user.
 
+## Endpoints (Milestone 8)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| POST | `/credit-notes` `{invoice_id, reason, lines:[{line_id, quantity}], approval_ids}` | owner, counter (own shop); after the return window: owner or a `late_return` approval |
+| GET | `/credit-notes` (`invoice_id`, `party_id`) · `/credit-notes/{id}` · `/credit-notes/{id}/pdf` | owner, accountant; counter: own shop |
+| POST | `/debit-notes` `{purchase_id, reason, lines:[{line_id, quantity}]}` | owner |
+| GET | `/debit-notes` (`purchase_id`, `party_id`) · `/debit-notes/{id}` · `/debit-notes/{id}/pdf` | owner, accountant |
+
+Invoice lines now carry `returned_qty` (base units taken back so far). `quantity` in a return is
+in the unit of the bill line. New error codes: `RETURN_WINDOW_CLOSED`, `RETURN_TOO_MUCH`,
+`RETURN_LINE_REPEATED`.
+
 ## Endpoints (Milestone 7)
 
 | Method | Path | Who |

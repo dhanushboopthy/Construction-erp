@@ -8,6 +8,8 @@ import styles from "@/components/Ledger.module.css";
 import { useAltKey } from "@/hooks/useKeys";
 import { formatMoney, plural, trimDecimal } from "@/lib/format";
 
+import { PurchaseReturn } from "./PurchaseReturn";
+
 const isOwnerRow = (row: PurchaseRow): row is PurchaseOwner => "supplier_payable" in row;
 
 export function PurchasesPage() {
@@ -157,6 +159,7 @@ export function PurchasesPage() {
                 <span>₹{formatMoney(selected.supplier_payable)}</span>
               </span>
             ) : null}
+            {isOwnerRow(selected) ? <PurchaseReturn key={selected.id} purchase={selected} /> : null}
           </aside>
         ) : null}
       </div>

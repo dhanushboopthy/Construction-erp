@@ -128,6 +128,7 @@ class ApprovalAction(StrEnum):
     BELOW_COST = "below_cost"
     DISCOUNT = "discount"
     BACKDATE = "backdate"
+    LATE_RETURN = "late_return"  # a return after the return window (B11)
 
 
 class AuditAction(StrEnum):

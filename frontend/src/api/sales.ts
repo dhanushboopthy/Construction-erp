@@ -13,6 +13,7 @@ import type {
 /** Milestone 6: sales invoices. */
 
 export type InvoiceFull = Invoice | InvoiceOwner;
+export type SalesInvoiceFull = InvoiceFull;
 
 export function useInvoices(q: string) {
   const params = new URLSearchParams({ limit: "100" });

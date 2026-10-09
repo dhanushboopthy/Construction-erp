@@ -12,6 +12,8 @@ import styles from "@/components/Ledger.module.css";
 import { useAltKey } from "@/hooks/useKeys";
 import { formatMoney, plural, trimDecimal } from "@/lib/format";
 
+import { InvoiceReturn } from "./InvoiceReturn";
+
 const isOwnerInvoice = (i: InvoiceFull): i is InvoiceOwner => "profit" in i;
 
 export function SalesPage() {
@@ -155,6 +157,9 @@ export function SalesPage() {
                 <span className={styles.kv}>
                   <span>
                     {trimDecimal(l.quantity)} {l.unit} at ₹{trimDecimal(l.rate)}/{l.base_unit}
+                    {Number(l.returned_qty) > 0
+                      ? ` · ${trimDecimal(l.returned_qty)} ${l.base_unit} returned`
+                      : ""}
                   </span>
                   <span>{formatMoney(l.taxable)}</span>
                 </span>
@@ -183,6 +188,7 @@ export function SalesPage() {
             {isOwnerInvoice(inv) ? (
               <p className={styles.sub}>Profit on this bill: ₹{formatMoney(inv.profit)}</p>
             ) : null}
+            {canBill ? <InvoiceReturn key={inv.id} inv={inv} /> : null}
           </aside>
         ) : null}
       </div>

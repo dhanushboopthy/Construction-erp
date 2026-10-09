@@ -84,3 +84,10 @@ export type ApiErrorBody = Schemas["ErrorResponse"] & {
   requires_owner_approval?: boolean;
   errors?: { field: string; message: string }[];
 };
+export type CreditNote = Schemas["CreditNoteOut"];
+export type CreditNoteSummary = Schemas["CreditNoteSummary"];
+export type CreditNoteCreate = Schemas["CreditNoteCreate"];
+export type DebitNote = Schemas["DebitNoteOut"];
+export type DebitNoteSummary = Schemas["DebitNoteSummary"];
+export type DebitNoteCreate = Schemas["DebitNoteCreate"];
+export type ReturnLineIn = Schemas["ReturnLineIn"];

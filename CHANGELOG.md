@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.0 (Milestone 8)
+
+- Credit notes for goods customers bring back: automatic inside the return window, owner PIN
+  after it. GST worked out again on the returned value; stock returns at its original cost; the
+  customer's balance falls against the bill.
+- Debit notes for goods sent back to a supplier (owner): stock leaves at landed cost and is
+  refused when already sold; what we owe the supplier falls.
+- A4 PDFs for both notes; invoice lines show how much has come back.
+- Screens: "Return goods" on a sales bill and "Return to supplier" on a purchase.
+
 ## 0.8.0 (Milestone 7)
 
 - Credit control at billing: approved customers, limit, days and overdue bills; unpaid part only.

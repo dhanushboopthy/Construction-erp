@@ -62,6 +62,7 @@ from app.services import items as item_service
 from app.services import ledgers
 from app.services import payments as payment_service
 from app.services import rates as rate_service
+from app.services import returns as returns_service
 from app.services.audit import record_event
 from app.services.numbering import allocate_number
 from app.services.shop_settings import get_settings_row
@@ -691,11 +692,18 @@ def invoice_view(db: Session, inv: SalesInvoice, with_cost: bool) -> InvoiceOut 
         "vehicle_no": inv.vehicle_no,
         "remark": inv.remark,
     }
+    returned = returns_service.returned_on_invoice(db, inv.id)
+
+    def line_out(x: SalesLine) -> InvoiceLineOut:
+        return InvoiceLineOut.model_validate(x).model_copy(
+            update={"returned_qty": returned.get(x.id, ZERO)}
+        )
+
     if not with_cost:
-        return InvoiceOut(**base, lines=[InvoiceLineOut.model_validate(x) for x in inv.lines])
+        return InvoiceOut(**base, lines=[line_out(x) for x in inv.lines])
     lines = [
         InvoiceLineOwnerOut(
-            **InvoiceLineOut.model_validate(x).model_dump(),
+            **line_out(x).model_dump(),
             cost_per_unit=x.cost_per_unit,
             profit=money(x.taxable - x.base_qty * x.cost_per_unit),
         )

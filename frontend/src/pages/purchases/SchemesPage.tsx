@@ -26,7 +26,7 @@ export function SchemesPage() {
   const schemes = useSchemes();
   const create = useCreateScheme();
   const book = useBookRebate();
-  const parties = useParties("");
+  const parties = useParties("", "");
   const items = useItems("", "");
   const [supplier, setSupplier] = useState("");
   const [name, setName] = useState("");

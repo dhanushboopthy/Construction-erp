@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.8.0 (Milestone 7)
+
+- Credit control at billing: approved customers, limit, days and overdue bills; unpaid part only.
+- Owner PIN approvals at the counter (credit, below-cost price, discount, back-dating): one use,
+  ten minutes, full audit trail, lockout after five wrong PINs.
+- Receipts from customers: oldest bill first or aimed at ticked bills; advances; cash limit;
+  receipts printed on the bill when money is taken with it.
+- Screens: Payments (Alt+6), "Money taken now" and the owner-approval prompt on the bill screen,
+  Approval PIN setting.
+
 ## 0.7.0 (Milestone 6)
 
 - GST sales invoices: price from rates, GST per line (CGST + SGST or IGST), round-off, B2B and B2C,

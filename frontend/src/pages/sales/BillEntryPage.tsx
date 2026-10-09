@@ -5,13 +5,20 @@ import { toFormError } from "@/api/errors";
 import { useItems, useParties } from "@/api/masters";
 import { previewInvoice, useCreateInvoice } from "@/api/sales";
 import { useLocations } from "@/api/setup";
-import type { FulfilmentSource, InvoiceCreate, InvoicePreview } from "@/api/types";
+import type { FulfilmentSource, InvoiceCreate, InvoicePreview, PaymentMode } from "@/api/types";
 import { useAuth } from "@/auth/AuthContext";
+import { ApprovalPrompt } from "@/components/ApprovalPrompt";
 import { Button } from "@/components/Button";
 import { SelectField, TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
 import { formatMoney, trimDecimal } from "@/lib/format";
 import { unitNames } from "@/pages/items/itemLabels";
+
+interface PayRow {
+  mode: PaymentMode;
+  amount: string;
+  reference: string;
+}
 
 interface LineRow {
   itemId: string;
@@ -59,6 +66,8 @@ export function BillEntryPage() {
   const [vehicle, setVehicle] = useState("");
   const [remark, setRemark] = useState("");
   const [lines, setLines] = useState<LineRow[]>([emptyLine()]);
+  const [pays, setPays] = useState<PayRow[]>([]);
+  const [approvalIds, setApprovalIds] = useState<number[]>([]);
   const [preview, setPreview] = useState<InvoicePreview | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [serverError, setServerError] = useState<{ message: string; approval: boolean } | null>(
@@ -100,6 +109,7 @@ export function BillEntryPage() {
     for (const l of lines) {
       if (!l.itemId || !DECIMAL.test(l.quantity) || Number(l.quantity) <= 0) return null;
       if (l.discount && !DECIMAL.test(l.discount)) return null;
+      if (pays.some((p) => p.amount && !DECIMAL.test(p.amount))) return null;
       out.push({
         item_id: Number(l.itemId),
         quantity: l.quantity,
@@ -107,18 +117,22 @@ export function BillEntryPage() {
         source: l.source,
         source_location_id:
           l.source === "godown" && l.sourceLocationId ? Number(l.sourceLocationId) : null,
-        discount: owner && l.discount ? l.discount : null,
-        discount_reason: owner && l.discount ? l.reason || null : null,
+        discount: l.discount || null,
+        discount_reason: l.discount ? l.reason || null : null,
       });
     }
     return {
       location_id: Number(locationId),
       party_id: Number(partyId),
       site_id: siteId ? Number(siteId) : null,
-      invoice_date: owner ? date : null,
+      invoice_date: date === todayISO() ? null : date,
       vehicle_no: vehicle.trim() || null,
       remark: remark.trim() || null,
       lines: out,
+      payments: pays
+        .filter((p) => p.amount)
+        .map((p) => ({ mode: p.mode, amount: p.amount, reference: p.reference.trim() || null })),
+      approval_ids: approvalIds,
     };
   }
 
@@ -353,23 +367,21 @@ export function BillEntryPage() {
                     Remove
                   </Button>
                 </div>
-                {owner ? (
-                  <div className={styles.inline}>
-                    <TextField
-                      label="Discount (₹)"
-                      inputMode="decimal"
-                      className={styles.amount}
-                      value={l.discount}
-                      onChange={(e) => setLine(i, { discount: e.target.value })}
-                    />
-                    <TextField
-                      label="Reason for discount"
-                      value={l.reason}
-                      onChange={(e) => setLine(i, { reason: e.target.value })}
-                    />
-                    <span />
-                  </div>
-                ) : null}
+                <div className={styles.inline}>
+                  <TextField
+                    label="Discount (₹)"
+                    inputMode="decimal"
+                    className={styles.amount}
+                    value={l.discount}
+                    onChange={(e) => setLine(i, { discount: e.target.value })}
+                  />
+                  <TextField
+                    label="Reason for discount"
+                    value={l.reason}
+                    onChange={(e) => setLine(i, { reason: e.target.value })}
+                  />
+                  <span />
+                </div>
                 {row ? (
                   <p className={styles.sub} aria-live="polite">
                     {row.rate
@@ -391,12 +403,92 @@ export function BillEntryPage() {
           <div className={styles.actions}>
             <Button onClick={addLine}>Add line</Button>
           </div>
+          <fieldset className={styles.lineBlock} style={{ margin: 0 }}>
+            <legend className="visually-hidden">Money taken now</legend>
+            <strong>Money taken now</strong>
+            {pays.map((p, i) => (
+              <div key={i} className={styles.chargeRow}>
+                <SelectField
+                  label={`Paid by ${i + 1}`}
+                  value={p.mode}
+                  onChange={(e) =>
+                    setPays((r) =>
+                      r.map((x, j) =>
+                        j === i ? { ...x, mode: e.target.value as PaymentMode } : x,
+                      ),
+                    )
+                  }
+                >
+                  <option value="cash">Cash</option>
+                  <option value="upi">UPI</option>
+                  <option value="bank">Bank transfer</option>
+                </SelectField>
+                <TextField
+                  label={`Amount ${i + 1} (₹)`}
+                  inputMode="decimal"
+                  className={styles.amount}
+                  value={p.amount}
+                  onChange={(e) =>
+                    setPays((r) =>
+                      r.map((x, j) => (j === i ? { ...x, amount: e.target.value } : x)),
+                    )
+                  }
+                />
+                <TextField
+                  label="Reference"
+                  value={p.reference}
+                  onChange={(e) =>
+                    setPays((r) =>
+                      r.map((x, j) => (j === i ? { ...x, reference: e.target.value } : x)),
+                    )
+                  }
+                />
+                <Button
+                  variant="quiet"
+                  aria-label={`Remove payment ${i + 1}`}
+                  onClick={() => setPays((r) => r.filter((_, j) => j !== i))}
+                >
+                  Remove
+                </Button>
+              </div>
+            ))}
+            <div className={styles.actions}>
+              <Button
+                onClick={() => setPays((r) => [...r, { mode: "cash", amount: "", reference: "" }])}
+              >
+                Add payment
+              </Button>
+              {preview && pays.length > 0 && !pays[0]?.amount ? (
+                <Button
+                  onClick={() =>
+                    setPays((r) =>
+                      r.map((x, j) => (j === 0 ? { ...x, amount: preview.grand_total } : x)),
+                    )
+                  }
+                >
+                  Paid in full
+                </Button>
+              ) : null}
+            </div>
+            <p className={styles.sub}>
+              Anything not paid now stays on the customer's account, if they are approved for
+              credit.
+            </p>
+          </fieldset>
           <TextField label="Remark" value={remark} onChange={(e) => setRemark(e.target.value)} />
           {serverError ? (
             <p role="alert" className={styles.formError}>
               {serverError.message}
               {serverError.approval ? " Ask the owner to make this bill." : ""}
             </p>
+          ) : null}
+          {preview?.needs_owner && !owner ? (
+            <ApprovalPrompt
+              actions={preview.approvals_needed}
+              partyId={partyId ? Number(partyId) : null}
+              messages={[...preview.invoice_problems, ...preview.lines.flatMap((l) => l.problems)]}
+              onApproved={(ids) => setApprovalIds((old) => [...old, ...ids])}
+            />
           ) : null}
           <div className={styles.actions}>
             <Button
@@ -455,6 +547,23 @@ export function BillEntryPage() {
                 <span>Bill total</span>
                 <strong>₹{formatMoney(preview.grand_total)}</strong>
               </div>
+              {Number(preview.paid_now) > 0 ? (
+                <>
+                  <span className={styles.kv}>
+                    <span>Paid now</span>
+                    <span>{formatMoney(preview.paid_now)}</span>
+                  </span>
+                  <span className={`${styles.kv} ${styles.kvStrong}`}>
+                    <span>Balance on account</span>
+                    <span>{formatMoney(preview.balance_due)}</span>
+                  </span>
+                </>
+              ) : null}
+              {preview.invoice_problems.map((m) => (
+                <p key={m} role="alert" className={styles.problem}>
+                  {m}
+                </p>
+              ))}
               {Number(preview.pending_balance) > 0 ? (
                 <p className={styles.callout}>
                   This customer already owes ₹{formatMoney(preview.pending_balance)}.

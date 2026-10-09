@@ -41,6 +41,17 @@ Endpoints that return cost, margin or profit use separate response models for ow
 staff (for example `ItemOwnerOut` and `ItemOut`). Choose the model with `principal.sees_cost`;
 never rely on the UI to hide fields. Test each such endpoint as a counter user.
 
+## Endpoints (Milestone 7)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| POST | `/auth/pin` | owner (sets their approval PIN; needs their password) |
+| POST | `/approvals` `{pin, action, reason, party_id}` | owner, counter |
+| POST | `/payments` (`direction` received or paid, `allocations`, `Idempotency-Key`) | received: owner, counter at own shop; paid: owner |
+| GET | `/payments` | owner, accountant; counter: own shop's receipts only |
+| GET | `/parties/{id}/open-bills?account=` | signed in; payable side not for counter |
+| POST | `/invoices` and `/invoices/preview` now take `payments` and `approval_ids` | owner, counter |
+
 ## Endpoints (Milestone 6)
 
 | Method | Path | Who |

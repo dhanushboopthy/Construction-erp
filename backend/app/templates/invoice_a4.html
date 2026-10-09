@@ -104,6 +104,9 @@
     {% if inv.pending_balance_at_billing and inv.pending_balance_at_billing != "0.00" %}
     <div style="margin-top: 2mm"><strong>Pending balance before this bill:</strong> ₹ {{ pending_text }}</div>
     {% endif %}
+    {% if inv.paid_at_billing and inv.paid_at_billing > 0 %}
+    <div style="margin-top: 2mm"><strong>Paid at billing:</strong> ₹ {{ paid_text }} · <strong>Balance due:</strong> ₹ {{ due_text }}</div>
+    {% endif %}
     {% if seller.bank_name %}
     <div style="margin-top: 3mm" class="small"><strong>Bank:</strong> {{ seller.bank_name }} · A/c {{ seller.bank_account_no }} · IFSC {{ seller.bank_ifsc }}</div>
     {% endif %}

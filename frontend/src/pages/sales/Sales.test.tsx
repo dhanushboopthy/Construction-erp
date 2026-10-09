@@ -33,6 +33,11 @@ const PREVIEW_OK = {
   igst: "0.00",
   round_off: "0.00",
   grand_total: "66080.00",
+  paid_now: "0.00",
+  balance_due: "66080.00",
+  invoice_problems: [],
+  needs_owner: false,
+  approvals_needed: [],
   can_save: true,
   lines: [
     {
@@ -80,7 +85,7 @@ function routes() {
 }
 
 describe("Billing", () => {
-  it("shows the server's rate and totals, and counter staff get no price or discount box", async () => {
+  it("shows the server's rate and totals, and counter staff never type a price", async () => {
     const user = userEvent.setup();
     const { calls } = mockApi({
       ...session(COUNTER),
@@ -92,7 +97,7 @@ describe("Billing", () => {
 
     await screen.findByRole("option", { name: "TMT bar 12 mm Fe500D" });
     await user.selectOptions(screen.getByLabelText("Item 1"), "10");
-    expect(screen.queryByLabelText("Discount (₹)")).toBeNull();
+    // Counter staff never type a price; a discount is asked for and the owner approves with a PIN.
     expect(screen.queryByLabelText(/Rate/)).toBeNull();
     await user.type(screen.getByLabelText("Quantity"), "1");
     expect(await screen.findByText("₹66,080.00", {}, { timeout: 3000 })).toBeVisible();

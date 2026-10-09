@@ -68,6 +68,7 @@ class SalesInvoice(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
     round_off: Mapped[Money] = mapped_column()
     grand_total: Mapped[Money] = mapped_column()
     pending_balance_at_billing: Mapped[Money] = mapped_column()
+    paid_at_billing: Mapped[Money] = mapped_column(default=Decimal("0"), server_default="0")
     vehicle_no: Mapped[str | None] = mapped_column(String(20))
     remark: Mapped[str | None] = mapped_column(String(300))
     idempotency_key: Mapped[str | None] = mapped_column(String(80))

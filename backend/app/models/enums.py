@@ -121,6 +121,15 @@ class InvoiceStatus(StrEnum):
     POSTED = "posted"
 
 
+class ApprovalAction(StrEnum):
+    """What an owner PIN can approve at the counter (G18)."""
+
+    CREDIT_OVERRIDE = "credit_override"
+    BELOW_COST = "below_cost"
+    DISCOUNT = "discount"
+    BACKDATE = "backdate"
+
+
 class AuditAction(StrEnum):
     INSERT = "insert"
     UPDATE = "update"

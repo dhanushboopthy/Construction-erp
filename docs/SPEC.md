@@ -179,6 +179,24 @@ stock ledger moved here from Milestone 4 because opening stock is its first writ
   behind the `InvoiceRenderer` interface (a thermal layout can be added). Outside production the PDF
   carries a TEST watermark (ADR 0005).
 
+**Built (Milestone 7):** `approval`; `app_user.pin_hash`; `party_ledger.applies_to`;
+`sales_invoice.paid_at_billing`. The planned `payment_allocation` table is not needed: a payment's
+allocation is its ledger rows (ADR 0008).
+
+- Credit (B8): a bill's unpaid part (total less money taken with it) is checked against the
+  customer's approval, limit (customer's own, else the shop default) and overdue bills. The API
+  answers 409 `CREDIT_NOT_ALLOWED`, `CREDIT_LIMIT_EXCEEDED` or `OVERDUE_INVOICES` with
+  `requires_owner_approval`. The owner may bill anyway (an audit `override` event records the rule).
+- Approvals (G18): owner PIN, one use, ten minutes, for one customer; actions `credit_override`,
+  `below_cost`, `discount`, `backdate`. Wrong-PIN lockout after five tries.
+- Receipts: counter staff (own shop) and the owner record money received; only the owner pays
+  suppliers. Bills the user ticks are paid first, the rest oldest first, extra money is an advance
+  (G21). Cash from one customer in a day at or above the limit is refused (G14), cash taken with
+  a bill included. No cheques (B7).
+- Money can be taken with the bill: one receipt per mode, applied to that bill, printed as
+  "Paid at billing" and "Balance due".
+- Statements per customer site balance with the combined statement (B9).
+
 **To build** (milestone in brackets):
 
 | Group | Table | Key columns |

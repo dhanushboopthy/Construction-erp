@@ -30,6 +30,7 @@ def preview_invoice(
         body,
         is_owner=principal.is_owner,
         can_access=principal.can_access_location(body.location_id),
+        actor_id=principal.user_id,
     )
 
 

@@ -74,6 +74,9 @@ export type InvoiceSummary = Schemas["InvoiceSummary"];
 export type Invoice = Schemas["InvoiceOut"];
 export type InvoiceOwner = Schemas["InvoiceOwnerOut"];
 export type FulfilmentSource = Schemas["FulfilmentSource"];
+export type ApprovalAction = Schemas["ApprovalAction"];
+export type ApprovalOut = Schemas["ApprovalOut"];
+export type OpenBills = Schemas["OpenBillsOut"];
 export type AuditLogEntry = Schemas["AuditLogOut"];
 
 /** Error body returned by the API for every failure (core/errors.py adds the extras). */

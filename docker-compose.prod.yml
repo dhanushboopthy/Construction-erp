@@ -29,8 +29,10 @@ services:
       LOG_JSON: "true"
       ENABLE_API_DOCS: "false"
       STORAGE_DIR: /data/files
+      BACKUP_DIR: /backups
     volumes:
       - files:/data/files
+      - ./backups:/backups:ro
     depends_on:
       db: { condition: service_healthy }
 
@@ -51,6 +53,7 @@ services:
       BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-30}
     volumes:
       - ./backups:/backups
+      - files:/files:ro
       - ./scripts/backup-loop.sh:/backup-loop.sh:ro
     entrypoint: ["sh", "/backup-loop.sh"]
     depends_on:

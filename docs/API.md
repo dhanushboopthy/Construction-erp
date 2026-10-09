@@ -41,6 +41,16 @@ Endpoints that return cost, margin or profit use separate response models for ow
 staff (for example `ItemOwnerOut` and `ItemOut`). Choose the model with `principal.sees_cost`;
 never rely on the UI to hide fields. Test each such endpoint as a counter user.
 
+## Endpoints (Milestone 14)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| GET | `/system/status` | owner |
+| POST | `/system/verify?full=true\|false` | owner |
+
+Every other route needs a sign-in; the only open ones are `/health`, `/health/ready`,
+`/auth/login`, `/auth/refresh` and `/auth/logout`. All `/api` answers are `Cache-Control: no-store`.
+
 ## Endpoints (Milestone 13)
 
 | Method | Path | Who |

@@ -21,7 +21,7 @@ if time runs short. In Claude Code: `/milestone <n>`.
 | 11 | Weight and schemes | Weight fail-check, attachments, supplier schemes | Variance above threshold is flagged and needs a note | **Done** (`feat/m11-weight-schemes`) |
 | 12 | Closing and reports | Daily closing PDF per shop, day lock, cloud save, Today figures, dues, segment chart | One PDF per shop per day lands in storage | **Done** (`feat/m12-closing-reports`; local folder or S3-compatible bucket) |
 | 13 | GST exports | GSTR-1, 3B data, 2B matching, accountant views | Accountant opens the export without errors | **Done** (`feat/m13-gst-exports`; layouts to be checked against the accountant's sample file) |
-| 14 | Hardening and go-live | Backups, restore drill, monitoring, training, parallel run on paper | Restore tested; owner signs off after a week in parallel | |
+| 14 | Hardening and go-live | Backups, restore drill, monitoring, training, parallel run on paper | Restore tested; owner signs off after a week in parallel | **Built** (`feat/m14-hardening-go-live`): backups, restore drill, integrity check, status page, runbook, go-live plan. The restore drill, off-site copy and the week of parallel running are done on the real machine ([GO_LIVE](GO_LIVE.md)) |
 
 ## Already in place (Milestones 0–1)
 

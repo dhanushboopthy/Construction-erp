@@ -24,6 +24,7 @@ from app.api.v1 import (
     settings,
     stock,
     stock_ops,
+    system,
     transport,
     users,
 )
@@ -55,3 +56,4 @@ api_router.include_router(schemes.router)
 api_router.include_router(closing.router)
 api_router.include_router(reports.router)
 api_router.include_router(gst.router)
+api_router.include_router(system.router)

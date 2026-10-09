@@ -305,6 +305,23 @@ each request, so they always agree with the books.
   equal. Results: matched, amounts differ, in books not in 2B, in 2B not in books.
 - Owner and accountant only; the accountant can upload 2B files.
 
+**Built (Milestone 14):** no new business tables. Database triggers `*_no_delete` and `*_no_edit`
+on issued documents (ADR 0010).
+
+- Issued documents (bills, credit and debit notes, purchases and their lines, payments, transfers,
+  e-way bills, e-invoices, closings, attachments, 2B imports) cannot be deleted, and the figures of
+  bills, notes, purchase lines, payments and attachments cannot be edited; only `updated_at` and
+  `updated_by` move.
+- `python -m app.scripts.verify [--full]`, `POST /system/verify` and Settings, System: integrity
+  checks listed in the ADR. `GET /system/status` (owner): database version, newest backup age
+  (fails over 30 hours), file storage, e-way provider, shops whose previous day is not closed.
+- Backups: dump plus files archive, off-site copy script, restore drill, restore script that also
+  restores files and runs the check. `python -m app.scripts.reset_password <user>` for a forgotten
+  owner password, from the server only.
+- Every route needs a sign-in (except sign-in, refresh, logout and the health checks); API
+  answers are `Cache-Control: no-store`.
+- Operations documents: [RUNBOOK](RUNBOOK.md), [GO_LIVE](GO_LIVE.md).
+
 **To build** (milestone in brackets):
 
 | Group | Table | Key columns |

@@ -38,6 +38,9 @@ def register_middleware(app: FastAPI) -> None:
             response.headers[REQUEST_ID_HEADER] = request_id
             for key, value in _SECURITY_HEADERS.items():
                 response.headers.setdefault(key, value)
+            if request.url.path.startswith("/api/"):
+                # Money, balances and cost figures must never sit in a shared browser cache.
+                response.headers.setdefault("Cache-Control", "no-store")
             return response
         finally:
             duration_ms = round((time.perf_counter() - started) * 1000, 1)

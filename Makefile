@@ -48,7 +48,16 @@ prod-up: ## Simple production: build and start (see docs/DEPLOYMENT.md)
 prod-seed: ## Production first-run seed
 	$(PROD) exec backend python -m app.scripts.seed
 
-prod-backup: ## Take a backup now
-	$(PROD) exec db sh -c 'pg_dump -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" --format=custom' > backups/erp-manual-$$(date +%Y%m%d-%H%M).dump
+prod-backup: ## Take a backup now (database and uploaded files)
+	@mkdir -p backups; stamp=$$(date +%Y%m%d-%H%M); \
+	$(PROD) exec -T db sh -c 'pg_dump -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" --format=custom' > backups/erp-$$stamp.dump && \
+	$(PROD) exec -T backend tar -czf - -C /data/files . > backups/erp-files-$$stamp.tar.gz && \
+	echo "Wrote backups/erp-$$stamp.dump and backups/erp-files-$$stamp.tar.gz"
 
-.PHONY: help env up down logs migrate migration seed test lint fmt gen-api prod-up prod-seed prod-backup
+prod-verify: ## Check the books against themselves (add FULL=1 to re-read every file)
+	$(PROD) exec backend python -m app.scripts.verify $(if $(FULL),--full,)
+
+prod-drill: ## Restore drill: newest backup into a scratch copy, then check it
+	./scripts/restore-drill.sh
+
+.PHONY: help env up down logs migrate migration seed test lint fmt gen-api prod-up prod-seed prod-backup prod-verify prod-drill

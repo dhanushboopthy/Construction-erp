@@ -10,6 +10,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Environment(StrEnum):
     DEVELOPMENT = "development"
     TEST = "test"
+    STAGING = "staging"  # a copy for training and trials: every PDF is stamped TEST
     PRODUCTION = "production"
 
 
@@ -72,6 +73,10 @@ class Settings(BaseSettings):
     s3_secret_access_key: SecretStr = SecretStr("")
     s3_prefix: str = ""
     max_upload_mb: int = 8
+
+    # Where the nightly backups land (the backup container's folder, mounted read-only here).
+    backup_dir: str = ""
+    app_version: str = "1.0.0"
 
     log_level: str = "INFO"
     log_json: bool = False

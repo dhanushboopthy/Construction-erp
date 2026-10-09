@@ -23,6 +23,7 @@ from app.core.tenancy import TENANT_ID
 from app.domain import credit as credit_rules
 from app.domain import dropship, gst, pricing
 from app.domain import ledger as ledger_rules
+from app.domain import weight_check as wc
 from app.domain.fiscal import fy_label
 from app.domain.ledger import Account, LedgerEntry
 from app.domain.money import ZERO, money
@@ -103,6 +104,7 @@ class PricedLine:
     available: Decimal | None = None
     stock_after: Decimal | None = None
     cost: Decimal = ZERO
+    weight: wc.WeightCheck | None = None
     problems: list[Problem] = field(default_factory=list)
 
 
@@ -215,6 +217,19 @@ def price_invoice(
             raise BusinessRuleError(str(exc), code="UNIT_NOT_WHOLE", field="quantity") from exc
         row = PricedLine(line, item, unit, base_qty)
         priced.append(row)
+        if line.slip_weight is not None:
+            row.weight = wc.check_weight(base_qty, line.slip_weight, settings.weight_variance_pct)
+            if row.weight.flagged and not (line.weight_note or "").strip():
+                row.problems.append(
+                    Problem(
+                        index,
+                        "WEIGHT_NOTE_REQUIRED",
+                        f"The slip weight differs from the bill by {row.weight.variance_pct}%. "
+                        "Write a note about why.",
+                        False,
+                        "weight_note",
+                    )
+                )
 
         # Price (B3): staff never choose it. Only the owner may override or discount.
         if (line.discount or line.rate_override is not None) and not may_discount:
@@ -433,6 +448,8 @@ def preview(
             fulfilment_source=r.data.source,
             stock_available=r.available,
             stock_after=r.stock_after,
+            weight_variance_pct=r.weight.variance_pct if r.weight else None,
+            weight_flagged=r.weight.flagged if r.weight else False,
             problems=[x.message for x in r.problems],
         )
         for r in p.lines
@@ -575,6 +592,10 @@ def create(
                 source_location_id=r.source_location_id,
                 stock_after=r.stock_after,
                 cost_per_unit=r.cost,
+                slip_weight=r.data.slip_weight,
+                weight_variance_pct=r.weight.variance_pct if r.weight else ZERO,
+                weight_flagged=r.weight.flagged if r.weight else False,
+                weight_note=(r.data.weight_note or "").strip() or None if r.weight else None,
             )
             for i, r in enumerate(p.lines, start=1)
         ],

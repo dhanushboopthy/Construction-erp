@@ -7,6 +7,7 @@ import { openFile } from "@/api/client";
 import { useInvoice, useInvoices, type InvoiceFull } from "@/api/sales";
 import type { InvoiceOwner } from "@/api/types";
 import { useAuth } from "@/auth/AuthContext";
+import { Attachments } from "@/components/Attachments";
 import { Button } from "@/components/Button";
 import { TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
@@ -179,6 +180,9 @@ export function SalesPage() {
                 <span className={styles.kv}>
                   <span>
                     {trimDecimal(l.quantity)} {l.unit} at ₹{trimDecimal(l.rate)}/{l.base_unit}
+                    {l.weight_flagged
+                      ? ` · slip ${trimDecimal(l.slip_weight ?? "0")} ${l.base_unit}, differs ${l.weight_variance_pct}%`
+                      : ""}
                     {Number(l.returned_qty) > 0
                       ? ` · ${trimDecimal(l.returned_qty)} ${l.base_unit} returned`
                       : ""}
@@ -221,6 +225,12 @@ export function SalesPage() {
                 {Number(inv.freight) > 0 ? ` (after freight ₹${formatMoney(inv.freight)})` : ""}
               </p>
             ) : null}
+            <Attachments
+              key={`a${inv.id}`}
+              refType="sales_invoice"
+              refId={inv.id}
+              canAdd={canBill}
+            />
             {canBill && inv.ship_to_name ? (
               <EwayPanel key={`e${inv.id}`} invoiceId={inv.id} owner={user?.role === "owner"} />
             ) : null}

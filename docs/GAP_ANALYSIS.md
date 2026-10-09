@@ -36,6 +36,8 @@ They change; keep them in settings, not code.
 | G25 | Free market-rate API assumed. | None reliable found; manual daily rate screen with history; provider interface later. | Decided |
 | G26 | Internet reliability at the shops unknown. | If unreliable, host on a server inside a shop (LAN) with off-site backups; otherwise a small VPS. | Open (Owner) |
 | G28 | Counter staff may enter purchases (SPEC section 2) yet must not see cost. The supplier's rate is the start of cost. | Counter staff key in the bill but every purchase response to them omits rates, charges, landed cost and payable; the owner can switch counter entry off (`counter_can_enter_purchases`). See ADR 0007. | Owner (confirm who should enter purchases) |
+| G29 | A supplier rebate is a financial credit note under GST; the spec only says "supplier credit note". | The rebate is booked by the owner (not automatically) as a debit to the supplier's payable (`RB-<scheme>`); GST treatment of the rebate is left to the accountant. | Accountant |
+| G30 | A weighbridge slip on a sale could override the billed quantity (G7). | Not overridden: the slip weight is checked against the bill, flagged above the setting and needs a note; the bill quantity stands. | Owner |
 | G27 | "Dummy" bills. | Dropped. Test data only in dev/staging, watermarked `TEST`, separate series; no hidden modes. | Decided (ADR 0005) |
 
 ## Still open from the owner interview

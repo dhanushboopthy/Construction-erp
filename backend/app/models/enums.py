@@ -143,6 +143,20 @@ class EwaySource(StrEnum):
     MANUAL = "manual"  # made on the portal by hand, number typed in (fallback)
 
 
+class AttachmentRef(StrEnum):
+    """What a stored file is attached to (B17)."""
+
+    PURCHASE = "purchase"
+    SALES_INVOICE = "sales_invoice"
+    TRIP = "trip"
+
+
+class AttachmentKind(StrEnum):
+    WEIGHBRIDGE = "weighbridge"  # weighbridge slip
+    DELIVERY = "delivery"  # delivery proof
+    OTHER = "other"
+
+
 class AuditAction(StrEnum):
     INSERT = "insert"
     UPDATE = "update"

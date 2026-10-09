@@ -50,3 +50,10 @@ make prod-up          # rebuilds images; migrations run on start
 - `docker compose -f docker-compose.prod.yml logs -f backend` — JSON lines with request ids;
   users quote the request id shown in error messages.
 - Watch disk space for `pgdata` and `backups/`.
+
+## Uploaded files
+
+Weighbridge slips and delivery proof are kept in `STORAGE_DIR` (the `files` volume in
+`docker-compose.prod.yml`, `/data/files`). Include this volume in the off-machine backup together
+with the database dump: the database only holds a record of each file. Milestone 14 adds the
+restore drill for both.

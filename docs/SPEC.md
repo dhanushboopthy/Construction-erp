@@ -247,6 +247,23 @@ line is the sum of its note lines.
   no IRN yet.
 - Running costs: the GSP's price per bill is unknown (GAP_ANALYSIS open question).
 
+**Built (Milestone 11):** `attachment`, `supplier_scheme`; `purchase_line` and `sales_line` gain
+`weight_variance_pct`, `weight_flagged`, `weight_note` (and `slip_weight` on sales).
+
+- Weight check (B14, G20): on a purchase line, billed against received quantity; on a sale line,
+  billed against an optional slip weight. Above `weight_variance_pct` the line is flagged and
+  saving needs a note (409 `WEIGHT_NOTE_REQUIRED`, field `lines[i].weight_note`). The shortage
+  value (at the supplier's bill rate) is owner-only. A slip does not change the billed quantity (G30).
+- Attachments (B17): weighbridge slips, delivery proof and other papers on purchases, bills and
+  trips. Photos (JPEG, PNG, WebP) and PDF only, decided from the bytes, up to `MAX_UPLOAD_MB`
+  (8), at most 20 a document, stored under a generated key behind `services/storage` (a folder,
+  `STORAGE_DIR`), checked by SHA-256 on every read, never deleted. Counter staff: their own shop's
+  purchases and bills; trips owner only (accountant reads).
+- Supplier schemes (B15): item or category, a target in the base unit, a period and a rebate
+  rule (percent of goods bought, rupees per unit, or flat). Progress is calculated from purchases
+  in the period less debit-note returns (never stored); alert at 80% to the owner. When the target
+  is met the owner books the rebate once as a debit on the supplier's payable (G29).
+
 **To build** (milestone in brackets):
 
 | Group | Table | Key columns |
@@ -259,7 +276,6 @@ line is the sum of its note lines.
 | Parties [2] | `party` | name, type (customer/supplier/both), segment (retail/contractor/bulk), gstin, state_code, address, phone, credit_allowed, credit_limit, credit_days |
 | Parties [2] | `site` | party_id, name, address, state_code, gstin or "URP" (G13, G22) |
 | Parties [3] | `opening_balance` | party_id, site_id, amount, as_of |
-| Parties [11] | `supplier_scheme` | party_id, item_or_category, target_qty, period_start, period_end, rebate_rule |
 | Purchase [4] | `purchase`, `purchase_line` | supplier_id, location_id, bill_no, bill_date, mode (stock/direct), status; line: item_id, qty, unit, rate, gst_rate, weight_billed, weight_received, unit_cost |
 | Purchase [4] | `cost_component`, `purchase_cost` | name, basis (per_ton/per_base_unit/per_trip/flat), default_amount; line_id, component_id, amount |
 | Stock [4] | `stock_ledger` | item_id, location_id, qty_in, qty_out, unit_cost, ref_type, ref_id, entry_date — **append-only** |
@@ -268,7 +284,6 @@ line is the sum of its note lines.
 | Money [7] | `payment`, `payment_allocation` | party, site, location, amount, mode, reference, date, idempotency_key; allocation to invoice or purchase |
 | Money [7] | `approval` | action, document, reason, requested_by, approved_by (G18) |
 | Money [12] | `daily_closing`, `cash_drawer` | location_id, date, totals by mode, pdf_path, closed_by, reopened_by (G17) |
-| Compliance [11] | `attachment` | ref_type, ref_id, file_path, kind (weighbridge/delivery/other) |
 
 Derived views: `v_stock` (qty per item per location, company-wide average cost),
 `v_party_ledger` (receivable/payable per party and site, aging 0–30/31–60/60+),

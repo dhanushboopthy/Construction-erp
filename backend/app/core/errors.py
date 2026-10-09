@@ -47,6 +47,11 @@ class ConflictError(AppError):
     code = "CONFLICT"
 
 
+class PayloadTooLargeError(AppError):
+    status_code = status.HTTP_413_CONTENT_TOO_LARGE
+    code = "FILE_TOO_LARGE"
+
+
 class UpstreamError(AppError):
     """An outside service (the GSP) failed. Nothing was saved; the user can try again."""
 

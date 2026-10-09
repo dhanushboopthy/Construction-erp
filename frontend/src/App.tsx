@@ -27,6 +27,7 @@ import { SettingsLayout } from "@/pages/settings/SettingsLayout";
 import { ShopSettingsPage } from "@/pages/settings/ShopSettingsPage";
 import { UsersPage } from "@/pages/settings/UsersPage";
 import { CountsPage } from "@/pages/stock/CountsPage";
+import { SchemesPage } from "@/pages/purchases/SchemesPage";
 import { DirectSalesPage } from "@/pages/transport/DirectSalesPage";
 import { TransportLayout } from "@/pages/transport/TransportLayout";
 import { TripsPage } from "@/pages/transport/TripsPage";
@@ -109,6 +110,14 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
                 element={
                   <RequireRole roles={["owner", "counter", "accountant"]}>
                     <PurchasesPage />
+                  </RequireRole>
+                }
+              />
+              <Route
+                path="/purchases/schemes"
+                element={
+                  <RequireRole roles={["owner", "accountant"]}>
+                    <SchemesPage />
                   </RequireRole>
                 }
               />

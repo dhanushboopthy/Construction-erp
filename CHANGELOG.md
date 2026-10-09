@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.12.0 (Milestone 11)
+
+- Weight checks on purchases (billed vs received) and sales (billed vs slip): a difference above
+  the setting is flagged and needs a note; shortage value shown to the owner only.
+- Weighbridge slips and delivery proof kept as photos or PDFs against purchases, bills and trips.
+- Supplier target schemes with progress, an 80% alert and a once-only rebate booking.
+- Screens: Papers on purchase and bill views, weight note fields, Supplier schemes page.
+
 ## 0.11.0 (Milestone 10)
 
 - E-way bills from a saved bill through a GSP (fake in development, sandbox or live by

@@ -56,6 +56,8 @@ class PurchaseLineIn(Schema):
     rate: Rate
     gst_rate: Percent | None = None
     charges: list[ChargeIn] = Field(default_factory=list)
+    # B14: needed when the received weight differs from the billed weight by more than the setting.
+    weight_note: str | None = Field(default=None, max_length=300)
 
 
 class PurchaseCreate(Schema):
@@ -93,6 +95,9 @@ class PurchaseLineOut(Schema):
     billed_qty: Decimal
     received_qty: Decimal
     base_unit: str
+    weight_variance_pct: Decimal = Decimal("0")
+    weight_flagged: bool = False
+    weight_note: str | None = None
 
 
 class PurchaseCostOut(Schema):
@@ -113,6 +118,7 @@ class PurchaseLineOwnerOut(PurchaseLineOut):
     charges_total: Decimal
     total_cost: Decimal
     unit_cost: Decimal
+    shortage_value: Decimal = Decimal("0")  # billed less received, at the bill rate
     costs: list[PurchaseCostOut]
 
 
@@ -151,6 +157,9 @@ class PreviewLine(Schema):
     charges_total: Decimal
     total_cost: Decimal
     unit_cost: Decimal
+    weight_variance_pct: Decimal = Decimal("0")
+    weight_flagged: bool = False
+    shortage_value: Decimal = Decimal("0")
     costs: list[PurchaseCostOut]
 
 

@@ -24,6 +24,7 @@ interface LineRow {
   unit: string;
   quantity: string;
   received: string;
+  weightNote: string;
   rate: string;
   gst: string;
   charges: ChargeRow[];
@@ -34,6 +35,7 @@ const emptyLine = (): LineRow => ({
   unit: "",
   quantity: "",
   received: "",
+  weightNote: "",
   rate: "",
   gst: "",
   charges: [],
@@ -100,6 +102,7 @@ export function PurchaseEntryPage() {
         unit: line.unit,
         quantity: line.quantity,
         received_quantity: line.received || null,
+        weight_note: line.received && line.weightNote.trim() ? line.weightNote.trim() : null,
         rate: line.rate,
         gst_rate: line.gst || null,
         charges: line.charges.map((c) => ({
@@ -350,6 +353,13 @@ export function PurchaseEntryPage() {
                     onChange={(e) => setLine(i, { received: e.target.value })}
                     error={errors[`${i}.received`]}
                   />
+                  {line.received && line.received !== line.quantity ? (
+                    <TextField
+                      label="Why the weight differs"
+                      value={line.weightNote}
+                      onChange={(e) => setLine(i, { weightNote: e.target.value })}
+                    />
+                  ) : null}
                   <TextField
                     label={`Rate per ${line.unit || "unit"} (₹)`}
                     inputMode="decimal"
@@ -497,6 +507,12 @@ export function PurchaseEntryPage() {
                       <span>Landed total</span>
                       <span>{formatMoney(l.total_cost)}</span>
                     </span>
+                    {l.weight_flagged ? (
+                      <span className={styles.kv} role="status">
+                        <span>Weight differs by {l.weight_variance_pct}%, a note is needed</span>
+                        <span>Shortage ₹{formatMoney(l.shortage_value)}</span>
+                      </span>
+                    ) : null}
                   </div>
                 ))}
                 <div className={styles.stack}>

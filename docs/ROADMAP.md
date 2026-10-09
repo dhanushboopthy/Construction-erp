@@ -18,7 +18,7 @@ if time runs short. In Claude Code: `/milestone <n>`.
 | 8 | Returns and notes | 2-day returns, credit notes, purchase returns, debit notes | Return after 2 days needs owner approval | **Done** (`feat/m8-returns-notes`) |
 | 9 | Drop-ship and transport | Direct fulfilment, purchase link, vehicles, trips, freight | Drop-ship writes no stock rows and shows correct profit | **Done** (`feat/m9-dropship-transport`) |
 | 10 | E-way bill (and IRN) | GSP integration, Part B update, cancel, manual fallback | 50 bills in a sandbox batch succeed | **Done** with the fake GSP (`feat/m10-eway-irn`; ADR 0009). Real sandbox keys still needed to check the adapter |
-| 11 | Weight and schemes | Weight fail-check, attachments, supplier schemes | Variance above threshold is flagged and needs a note | |
+| 11 | Weight and schemes | Weight fail-check, attachments, supplier schemes | Variance above threshold is flagged and needs a note | **Done** (`feat/m11-weight-schemes`) |
 | 12 | Closing and reports | Daily closing PDF per shop, day lock, cloud save, Today figures, dues, segment chart | One PDF per shop per day lands in storage | |
 | 13 | GST exports | GSTR-1, 3B data, 2B matching, accountant views | Accountant opens the export without errors | |
 | 14 | Hardening and go-live | Backups, restore drill, monitoring, training, parallel run on paper | Restore tested; owner signs off after a week in parallel | |

@@ -143,6 +143,7 @@ def test_sample_purchases_give_the_hand_calculated_landed_and_average_cost(clien
                 "unit": "ton",
                 "quantity": "5",
                 "received_quantity": "4.95",
+                "weight_note": "Weighbridge slip shows 50 kg short per bundle",
                 "rate": "57000",
                 "charges": [{"component_id": world["comp"]["Weighbridge"], "amount": "150"}],
             }

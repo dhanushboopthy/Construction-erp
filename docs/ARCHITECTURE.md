@@ -13,7 +13,7 @@ React + TypeScript single-page app. Runs on one machine with Docker Compose (ADR
  │                                                       ▼               │
  │                          backup: nightly pg_dump ◄── db: PostgreSQL   │
  └───────────────────────────────────────────────────────────────────────┘
-        backend ──► GSP API (e-way bill, IRN)      backend ──► cloud storage (PDFs, slips)
+        backend ──► GSP API (e-way bill, IRN)      backend ──► files volume or S3 bucket (PDFs, slips)
 ```
 
 ## Backend layers
@@ -55,3 +55,15 @@ OpenAPI spec into `src/api/schema.d.ts` (`make gen-api`, or `npm run gen:api` wi
 ## Decisions
 
 See [adr/](adr/). Change a decision by adding a new ADR that supersedes the old one.
+
+## Reliability (Milestone 14)
+
+| Concern | How | Where |
+| --- | --- | --- |
+| Issued documents | Database triggers refuse DELETE on issued documents and UPDATE of their figures; ledgers are append-only (ADR 0003, 0010) | migrations 0003 and 0014 |
+| Proof the books add up | Read-only integrity check: version, guards, number gaps, totals, accounts against documents, stock replay, stored files | `services/verify.py`, `python -m app.scripts.verify`, Settings, System |
+| Backups | Nightly dump (read back before it is kept) and files archive; off-site copy; monthly restore drill into a scratch copy | `scripts/backup-loop.sh`, `offsite-sync.sh`, `restore-drill.sh`, `restore.sh` |
+| Files | `Storage` interface: a folder (volume) or an S3-compatible bucket; keys are generated, content type is read from the bytes, checksum checked on read | `services/storage.py`, `services/attachments.py` |
+| Outside services | GSP behind `GspClient`: pretend (never in production) or HTTP adapter; the call happens before anything is saved, so a failure leaves nothing behind | `services/gsp/` |
+| Day lock | A closed shop-day refuses new documents until the owner reopens it (audited) | `services/closing.py` |
+| Authentication on every route | A test walks the OpenAPI description and fails if any route answers without a sign-in | `tests/integration/test_security.py` |

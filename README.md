@@ -21,16 +21,19 @@ Requirements: Docker with Compose. To run without Docker, see
 
 | Path | Contents |
 | --- | --- |
-| `backend/` | FastAPI app: auth and roles, settings, locations, audit log, document numbering, business rules with tests |
-| `frontend/` | React + TypeScript app: sign-in, keyboard-first shell, Today screen, module placeholders |
-| `docs/` | [Spec](docs/SPEC.md) · [Roadmap](docs/ROADMAP.md) · [Gap analysis](docs/GAP_ANALYSIS.md) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Design](docs/DESIGN.md) · [Deployment](docs/DEPLOYMENT.md) · [Glossary](docs/GLOSSARY.md) · [Decisions](docs/adr/) |
+| `backend/` | FastAPI app: auth and roles, items and parties, purchase and landed cost, stock, GST sales invoices, credit and payments, returns and notes, drop-ship and transport, e-way bill and IRN (behind a GSP interface), weight checks and supplier schemes, daily closing, GST returns, integrity checks. Business rules in `domain/` with tests |
+| `frontend/` | React + TypeScript app: keyboard-first screens for every module above |
+| `docs/` | [Spec](docs/SPEC.md) · [Roadmap](docs/ROADMAP.md) · [Gap analysis](docs/GAP_ANALYSIS.md) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Design](docs/DESIGN.md) · [Deployment](docs/DEPLOYMENT.md) · [Runbook](docs/RUNBOOK.md) · [Go-live plan](docs/GO_LIVE.md) · [Glossary](docs/GLOSSARY.md) · [Decisions](docs/adr/) |
 | `.claude/` | Claude Code settings, `/milestone` command, `frontend-design` and `ui-ux-pro-max` skills |
-| `scripts/` | Backup loop, restore, test database init |
+| `scripts/` | Backup loop, restore, restore drill, off-site copy, test database init |
 
 ## Status
 
-Milestones 0–1 (foundation, auth and setup API) are in place. Next: Settings screens, then
-Milestone 2 (items and parties). See [docs/ROADMAP.md](docs/ROADMAP.md).
+All fifteen milestones (0 to 14) are built. What remains is on the real machine and with real
+people, listed in [docs/GO_LIVE.md](docs/GO_LIVE.md): choose and test the e-way bill provider
+(sandbox keys), choose cloud storage, have the accountant confirm the open GST decisions and check
+a real month's GSTR-1, run the restore drill and the off-site copy, train staff, and run a week in
+parallel with the paper book. See [docs/ROADMAP.md](docs/ROADMAP.md) for each milestone.
 
 ## Working with Claude Code
 

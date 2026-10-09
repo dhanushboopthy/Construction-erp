@@ -1687,6 +1687,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/system/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * System Status
+         * @description Is the system healthy: database version, last backup, file storage, e-way provider,
+         *     and any shop whose previous day was not closed.
+         */
+        get: operations["system_status_api_v1_system_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/system/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run Verify
+         * @description Re-add the books and compare with what is stored. Read-only; `full` also re-reads files.
+         */
+        post: operations["run_verify_api_v1_system_verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1933,6 +1974,18 @@ export interface components {
              * @default false
              */
             on_supplier_bill: boolean;
+        };
+        /** Check */
+        Check: {
+            /** Name */
+            name: string;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "ok" | "warn" | "fail";
+            /** Detail */
+            detail: string;
         };
         /** ClosingCreate */
         ClosingCreate: {
@@ -5077,6 +5130,33 @@ export interface components {
             receivable: components["schemas"]["AccountOut"] | null;
             payable: components["schemas"]["AccountOut"] | null;
         };
+        /** StatusOut */
+        StatusOut: {
+            /** Version */
+            version: string;
+            /** Environment */
+            environment: string;
+            /** Test Watermark */
+            test_watermark: boolean;
+            /**
+             * Database
+             * @enum {string}
+             */
+            database: "ok" | "warn" | "fail";
+            migrations: components["schemas"]["Check"];
+            backup: components["schemas"]["Check"];
+            /** Last Backup At */
+            last_backup_at: string | null;
+            storage: components["schemas"]["Check"];
+            gsp: components["schemas"]["Check"];
+            /** Unclosed */
+            unclosed: string[];
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+        };
         /**
          * StockItemOut
          * @description Availability for everyone: quantities only, no cost (rule B4).
@@ -5401,6 +5481,13 @@ export interface components {
             phone?: string | null;
             /** Is Active */
             is_active?: boolean | null;
+        };
+        /** VerifyOut */
+        VerifyOut: {
+            /** Ok */
+            ok: boolean;
+            /** Checks */
+            checks: components["schemas"]["Check"][];
         };
     };
     responses: never;
@@ -14431,6 +14518,147 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ImportOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    system_status_api_v1_system_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatusOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    run_verify_api_v1_system_verify_post: {
+        parameters: {
+            query?: {
+                full?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerifyOut"];
                 };
             };
             /** @description Bad Request */

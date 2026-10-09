@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     try {
-      await api<void>("/auth/logout", { method: "POST" });
+      await api<undefined>("/auth/logout", { method: "POST" });
     } finally {
       setAccessToken(null);
       setUser(null);

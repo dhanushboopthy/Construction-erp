@@ -54,8 +54,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      # Switch to `npm ci` once package-lock.json is committed (see docs/ROADMAP.md, M0).
-      - run: if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
       - run: npm run lint
       - run: npm run format:check
       - run: npm run typecheck

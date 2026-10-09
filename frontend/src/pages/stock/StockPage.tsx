@@ -26,12 +26,7 @@ export function StockPage() {
   );
 
   return (
-    <section aria-labelledby="stock-title" className={styles.page}>
-      <div className={styles.toolbar}>
-        <h1 id="stock-title" className={styles.title}>
-          Stock
-        </h1>
-      </div>
+    <div className={styles.stack}>
       <div className={styles.filters}>
         <div className={styles.search}>
           <TextField
@@ -133,6 +128,6 @@ export function StockPage() {
           <strong>₹{formatMoney((totalValue / 100).toFixed(2))}</strong>
         </div>
       ) : null}
-    </section>
+    </div>
   );
 }

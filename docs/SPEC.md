@@ -127,6 +127,23 @@ stock ledger moved here from Milestone 4 because opening stock is its first writ
 - Supplier payables, advances and what we owe are visible to the owner and accountant, not to
   counter staff; customers' dues are visible to all three roles.
 
+**Built (Milestone 4):** `cost_component`, `purchase`, `purchase_line`, `purchase_cost`,
+`payment` (supplier side), `stock_transfer`, `stock_transfer_line`, `stock_count`,
+`stock_count_line`; `shop_settings.counter_can_enter_purchases` (G28). See ADR 0007.
+
+- A purchase line is entered in any unit of the item (ton, bag...) and converted to the base unit;
+  `goods_value` is the bill's own amount (quantity x rate in the entered unit, to paise), so a
+  per-ton price never loses paise. `received_qty` (weighbridge) is what enters stock and divides
+  cost, so a shortage raises the unit cost (B1).
+- Charges attach to a line (B2) and are priced per ton, per base unit, per trip or flat. A charge
+  flagged "on supplier's bill" is added to what we owe the supplier; others are cost only.
+- Purchase number: `<location code>P/<FY>/<5 digits>`; transfers `<code>DC/...`; payments
+  `<code>R/...`. A supplier's bill number is unique per supplier.
+- A transfer is an out and an in at the company average cost, so it never changes value (G6),
+  and the origin must hold the quantity (B13). A count's variance is posted at the average cost
+  as an adjustment; only the owner posts, and only the owner sees rupee variances.
+- Mode `direct` writes the supplier payable but no stock rows (Milestone 9 links it to a sale).
+
 **To build** (milestone in brackets):
 
 | Group | Table | Key columns |

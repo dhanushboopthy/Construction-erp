@@ -45,6 +45,22 @@ export type Statement = Schemas["StatementOut"];
 export type AccountView = Schemas["AccountOut"];
 export type Dues = Schemas["DuesOut"];
 export type LedgerAccount = Schemas["LedgerAccount"];
+export type CostComponent = Schemas["CostComponentOut"];
+export type CostComponentCreate = Schemas["CostComponentIn"];
+export type ChargeBasis = Schemas["ChargeBasis"];
+export type PurchaseCreate = Schemas["PurchaseCreate"];
+export type PurchaseLineIn = Schemas["PurchaseLineIn"];
+export type ChargeIn = Schemas["ChargeIn"];
+export type Purchase = Schemas["PurchaseOut"];
+export type PurchaseOwner = Schemas["PurchaseOwnerOut"];
+export type PurchasePreview = Schemas["PurchasePreview"];
+export type PaymentCreate = Schemas["PaymentCreate"];
+export type PaymentOut = Schemas["PaymentOut"];
+export type PaymentMode = Schemas["PaymentMode"];
+export type Transfer = Schemas["TransferOut"];
+export type TransferCreate = Schemas["TransferCreate"];
+export type StockCount = Schemas["CountOut"];
+export type StockCountOwner = Schemas["CountOwnerOut"];
 export type AuditLogEntry = Schemas["AuditLogOut"];
 
 /** Error body returned by the API for every failure (core/errors.py adds the extras). */

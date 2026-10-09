@@ -11,18 +11,24 @@ import { ComingSoonPage } from "@/pages/ComingSoonPage";
 import { ItemsPage } from "@/pages/items/ItemsPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { PartiesPage } from "@/pages/parties/PartiesPage";
+import { PurchaseEntryPage } from "@/pages/purchases/PurchaseEntryPage";
+import { PurchasesPage } from "@/pages/purchases/PurchasesPage";
 import { OpeningPage } from "@/pages/opening/OpeningPage";
+import { ChargeTypesPage } from "@/pages/settings/ChargeTypesPage";
 import { LocationsPage } from "@/pages/settings/LocationsPage";
 import { SettingsLayout } from "@/pages/settings/SettingsLayout";
 import { ShopSettingsPage } from "@/pages/settings/ShopSettingsPage";
 import { UsersPage } from "@/pages/settings/UsersPage";
+import { CountsPage } from "@/pages/stock/CountsPage";
+import { StockLayout } from "@/pages/stock/StockLayout";
 import { StockPage } from "@/pages/stock/StockPage";
+import { TransfersPage } from "@/pages/stock/TransfersPage";
 import { TodayPage } from "@/pages/TodayPage";
 
 const queryClient = createQueryClient();
 
 /** Modules that have real screens; the rest show a placeholder until their milestone. */
-const BUILT = new Set(["/settings", "/items", "/parties", "/stock"]);
+const BUILT = new Set(["/settings", "/items", "/parties", "/stock", "/purchases"]);
 
 export function App({ client = queryClient }: { client?: QueryClient }) {
   return (
@@ -50,6 +56,7 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
                 <Route index element={<ShopSettingsPage />} />
                 <Route path="users" element={<UsersPage />} />
                 <Route path="locations" element={<LocationsPage />} />
+                <Route path="charges" element={<ChargeTypesPage />} />
                 <Route path="opening" element={<OpeningPage />} />
               </Route>
               <Route
@@ -61,13 +68,33 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
                 }
               />
               <Route
-                path="/stock"
+                path="/purchases"
                 element={
                   <RequireRole roles={["owner", "counter", "accountant"]}>
-                    <StockPage />
+                    <PurchasesPage />
                   </RequireRole>
                 }
               />
+              <Route
+                path="/purchases/new"
+                element={
+                  <RequireRole roles={["owner", "counter"]}>
+                    <PurchaseEntryPage />
+                  </RequireRole>
+                }
+              />
+              <Route
+                path="/stock"
+                element={
+                  <RequireRole roles={["owner", "counter", "accountant"]}>
+                    <StockLayout />
+                  </RequireRole>
+                }
+              >
+                <Route index element={<StockPage />} />
+                <Route path="transfers" element={<TransfersPage />} />
+                <Route path="counts" element={<CountsPage />} />
+              </Route>
               <Route
                 path="/parties"
                 element={

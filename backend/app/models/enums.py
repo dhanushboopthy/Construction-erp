@@ -81,6 +81,31 @@ class OpeningStatus(StrEnum):
     POSTED = "posted"
 
 
+class PurchaseMode(StrEnum):
+    STOCK = "stock"  # goods come into one of our locations
+    DIRECT = "direct"  # goods go straight to a customer's site (drop-ship, M9)
+
+
+class PurchaseStatus(StrEnum):
+    POSTED = "posted"
+
+
+class PaymentDirection(StrEnum):
+    RECEIVED = "received"  # from a customer
+    PAID = "paid"  # to a supplier or a transporter
+
+
+class PaymentMode(StrEnum):
+    CASH = "cash"
+    UPI = "upi"
+    BANK = "bank"  # transfer; no cheques (B7)
+
+
+class CountStatus(StrEnum):
+    DRAFT = "draft"
+    POSTED = "posted"
+
+
 class AuditAction(StrEnum):
     INSERT = "insert"
     UPDATE = "update"

@@ -32,7 +32,7 @@ export const MODULES: ModuleLink[] = [
     path: "/purchases",
     label: "Purchases",
     shortcut: "3",
-    roles: ["owner", "counter"],
+    roles: ALL,
     milestone: 4,
     purpose: "Enter supplier bills with unloading, weighbridge and transport charges.",
   },

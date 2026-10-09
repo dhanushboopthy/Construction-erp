@@ -19,6 +19,7 @@ import { RatesLayout } from "@/pages/rates/RatesLayout";
 import { BillEntryPage } from "@/pages/sales/BillEntryPage";
 import { SalesPage } from "@/pages/sales/SalesPage";
 import { PaymentsPage } from "@/pages/payments/PaymentsPage";
+import { SystemPage } from "@/pages/settings/SystemPage";
 import { PinPage } from "@/pages/settings/PinPage";
 import { OpeningPage } from "@/pages/opening/OpeningPage";
 import { ChargeTypesPage } from "@/pages/settings/ChargeTypesPage";
@@ -87,6 +88,7 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
                 <Route path="charges" element={<ChargeTypesPage />} />
                 <Route path="pin" element={<PinPage />} />
                 <Route path="opening" element={<OpeningPage />} />
+                <Route path="system" element={<SystemPage />} />
               </Route>
               <Route
                 path="/items"

@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.0 (Milestone 14): ready for go-live checks
+
+- The database refuses to delete issued documents or change their figures (ADR 0010).
+- Integrity check of the books (command line and Settings, System) and a system status page.
+- Backups hold the database and the uploaded files; off-site copy script; monthly restore drill;
+  restore script restores files and re-checks the books.
+- Password reset from the server for a forgotten owner password.
+- Every route proven to need a sign-in by a test; API answers are never cached.
+- Runbook and go-live plan: training, a week of parallel running, sign-off.
+
 ## 0.14.0 (Milestone 13)
 
 - GSTR-1 tables (B2B, B2CL, B2CS, credit notes, HSN, document series) as portal JSON and Excel.

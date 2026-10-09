@@ -8,6 +8,7 @@ from app.api.v1 import (
     closing,
     compliance,
     dues,
+    gst,
     health,
     invoices,
     items,
@@ -53,3 +54,4 @@ api_router.include_router(attachments.router)
 api_router.include_router(schemes.router)
 api_router.include_router(closing.router)
 api_router.include_router(reports.router)
+api_router.include_router(gst.router)

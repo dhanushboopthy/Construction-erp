@@ -29,6 +29,7 @@ import { UsersPage } from "@/pages/settings/UsersPage";
 import { CountsPage } from "@/pages/stock/CountsPage";
 import { ClosingPage } from "@/pages/reports/ClosingPage";
 import { DuesPage } from "@/pages/reports/DuesPage";
+import { GstPage } from "@/pages/reports/GstPage";
 import { ProfitPage } from "@/pages/reports/ProfitPage";
 import { ReportsLayout } from "@/pages/reports/ReportsLayout";
 import { SegmentsPage } from "@/pages/reports/SegmentsPage";
@@ -196,6 +197,14 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
                   element={
                     <RequireRole roles={["owner", "accountant"]}>
                       <DuesPage />
+                    </RequireRole>
+                  }
+                />
+                <Route
+                  path="gst"
+                  element={
+                    <RequireRole roles={["owner", "accountant"]}>
+                      <GstPage />
                     </RequireRole>
                   }
                 />

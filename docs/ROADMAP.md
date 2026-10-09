@@ -20,7 +20,7 @@ if time runs short. In Claude Code: `/milestone <n>`.
 | 10 | E-way bill (and IRN) | GSP integration, Part B update, cancel, manual fallback | 50 bills in a sandbox batch succeed | **Done** with the fake GSP (`feat/m10-eway-irn`; ADR 0009). Real sandbox keys still needed to check the adapter |
 | 11 | Weight and schemes | Weight fail-check, attachments, supplier schemes | Variance above threshold is flagged and needs a note | **Done** (`feat/m11-weight-schemes`) |
 | 12 | Closing and reports | Daily closing PDF per shop, day lock, cloud save, Today figures, dues, segment chart | One PDF per shop per day lands in storage | **Done** (`feat/m12-closing-reports`; local folder or S3-compatible bucket) |
-| 13 | GST exports | GSTR-1, 3B data, 2B matching, accountant views | Accountant opens the export without errors | |
+| 13 | GST exports | GSTR-1, 3B data, 2B matching, accountant views | Accountant opens the export without errors | **Done** (`feat/m13-gst-exports`; layouts to be checked against the accountant's sample file) |
 | 14 | Hardening and go-live | Backups, restore drill, monitoring, training, parallel run on paper | Restore tested; owner signs off after a week in parallel | |
 
 ## Already in place (Milestones 0–1)

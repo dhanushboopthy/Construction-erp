@@ -1603,6 +1603,90 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gst/gstr1": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Gstr1
+         * @description GSTR-1 tables for a month (`2026-10`): B2B, B2CL, B2CS, credit notes, HSN, documents.
+         */
+        get: operations["gstr1_api_v1_gst_gstr1_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gst/gstr1/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Gstr1 Export
+         * @description Download GSTR-1 as the portal's offline-tool JSON, or as an Excel workbook (`xlsx`).
+         */
+        get: operations["gstr1_export_api_v1_gst_gstr1_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gst/gstr3b": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Gstr3B
+         * @description GSTR-3B figures for a month: outward supplies, input tax and tax payable per head.
+         */
+        get: operations["gstr3b_api_v1_gst_gstr3b_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gst/gstr2b": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Match Gstr2B
+         * @description Our purchase bills matched to the latest GSTR-2B upload for the month.
+         */
+        get: operations["match_gstr2b_api_v1_gst_gstr2b_get"];
+        put?: never;
+        /**
+         * Import Gstr2B
+         * @description Upload the GSTR-2B download for a month (portal JSON, or the simple CSV).
+         */
+        post: operations["import_gstr2b_api_v1_gst_gstr2b_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1738,6 +1822,54 @@ export interface components {
             /** Ip */
             ip: string | null;
         };
+        /** B2bInvoice */
+        B2bInvoice: {
+            /** Ctin */
+            ctin: string | null;
+            /** Party Name */
+            party_name: string;
+            /** Number */
+            number: string;
+            /**
+             * Invoice Date
+             * Format: date
+             */
+            invoice_date: string;
+            /** Value */
+            value: string;
+            /** Pos */
+            pos: string;
+            /** Taxable */
+            taxable: string;
+            /** Igst */
+            igst: string;
+            /** Cgst */
+            cgst: string;
+            /** Sgst */
+            sgst: string;
+            /** Rates */
+            rates: components["schemas"]["RateRow"][];
+        };
+        /** B2csRow */
+        B2csRow: {
+            /**
+             * Supply
+             * @enum {string}
+             */
+            supply: "INTRA" | "INTER";
+            /** Pos */
+            pos: string;
+            /** Rate */
+            rate: string;
+            /** Taxable */
+            taxable: string;
+            /** Igst */
+            igst: string;
+            /** Cgst */
+            cgst: string;
+            /** Sgst */
+            sgst: string;
+        };
         /**
          * BillPaymentIn
          * @description Money taken at the counter with the bill (cash, UPI or bank; no cheques, B7).
@@ -1748,6 +1880,13 @@ export interface components {
             amount: number | string;
             /** Reference */
             reference?: string | null;
+        };
+        /** Body_import_gstr2b_api_v1_gst_gstr2b_post */
+        Body_import_gstr2b_api_v1_gst_gstr2b_post: {
+            /** Period */
+            period: string;
+            /** File */
+            file: string;
         };
         /** Body_import_items_api_v1_items_import_post */
         Body_import_items_api_v1_items_import_post: {
@@ -2372,6 +2511,21 @@ export interface components {
             /** Supplier Bill No */
             supplier_bill_no: string;
         };
+        /** DocRow */
+        DocRow: {
+            /** Nature */
+            nature: string;
+            /** Series */
+            series: string;
+            /** First */
+            first: string;
+            /** Last */
+            last: string;
+            /** Count */
+            count: number;
+            /** Gaps */
+            gaps: number[];
+        };
         /** DropShipReport */
         DropShipReport: {
             /** Rows */
@@ -2622,10 +2776,72 @@ export interface components {
          * @enum {string}
          */
         FulfilmentSource: "shop" | "godown" | "direct";
+        /** Gstr1 */
+        Gstr1: {
+            /** Period */
+            period: string;
+            /** Gstin */
+            gstin: string | null;
+            /** B2B */
+            b2b: components["schemas"]["B2bInvoice"][];
+            /** B2Cl */
+            b2cl: components["schemas"]["B2bInvoice"][];
+            /** B2Cs */
+            b2cs: components["schemas"]["B2csRow"][];
+            /** Cdnr */
+            cdnr: components["schemas"]["NoteRow"][];
+            /** Cdnur */
+            cdnur: components["schemas"]["NoteRow"][];
+            /** Hsn */
+            hsn: components["schemas"]["HsnRow"][];
+            /** Docs */
+            docs: components["schemas"]["DocRow"][];
+            totals: components["schemas"]["Totals"];
+        };
+        /** Gstr2bResult */
+        Gstr2bResult: {
+            /** Period */
+            period: string;
+            /** File Name */
+            file_name: string | null;
+            /** Imported Rows */
+            imported_rows: number;
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /** Rows */
+            rows: components["schemas"]["MatchRow"][];
+        };
+        /** Gstr3b */
+        Gstr3b: {
+            /** Period */
+            period: string;
+            /** Gstin */
+            gstin: string | null;
+            outward_taxable: components["schemas"]["Heads"];
+            /** Outward Nil */
+            outward_nil: string;
+            itc_books: components["schemas"]["Heads"];
+            itc_reversed: components["schemas"]["Heads"];
+            itc_in_2b: components["schemas"]["Heads"] | null;
+            net_payable: components["schemas"]["Heads"];
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** Heads */
+        Heads: {
+            /** Taxable */
+            taxable: string;
+            /** Igst */
+            igst: string;
+            /** Cgst */
+            cgst: string;
+            /** Sgst */
+            sgst: string;
         };
         /** HistoryPoint */
         HistoryPoint: {
@@ -2640,6 +2856,40 @@ export interface components {
             entered_unit: string;
             /** Entered Rate */
             entered_rate: string;
+        };
+        /** HsnRow */
+        HsnRow: {
+            /** Hsn */
+            hsn: string;
+            /** Description */
+            description: string;
+            /** Uqc */
+            uqc: string;
+            /** Quantity */
+            quantity: string;
+            /** Rate */
+            rate: string;
+            /** Value */
+            value: string;
+            /** Taxable */
+            taxable: string;
+            /** Igst */
+            igst: string;
+            /** Cgst */
+            cgst: string;
+            /** Sgst */
+            sgst: string;
+        };
+        /** ImportOut */
+        ImportOut: {
+            /** Id */
+            id: number;
+            /** Period */
+            period: string;
+            /** File Name */
+            file_name: string;
+            /** Row Count */
+            row_count: number;
         };
         /** ImportResult */
         ImportResult: {
@@ -3377,6 +3627,34 @@ export interface components {
             /** Warnings */
             warnings: components["schemas"]["RateWarning"][];
         };
+        /** MatchRow */
+        MatchRow: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "matched" | "mismatch" | "missing_in_2b" | "missing_in_books";
+            /** Gstin */
+            gstin: string;
+            /** Supplier */
+            supplier: string | null;
+            /** Number */
+            number: string;
+            /** Books Date */
+            books_date: string | null;
+            /** Books Taxable */
+            books_taxable: string | null;
+            /** Books Tax */
+            books_tax: string | null;
+            /** Portal Taxable */
+            portal_taxable: string | null;
+            /** Portal Tax */
+            portal_tax: string | null;
+            /** Difference Taxable */
+            difference_taxable: string;
+            /** Difference Tax */
+            difference_tax: string;
+        };
         /** ModeTotals */
         ModeTotals: {
             /** Cash */
@@ -3387,6 +3665,41 @@ export interface components {
             bank: string;
             /** Total */
             total: string;
+        };
+        /** NoteRow */
+        NoteRow: {
+            /** Ctin */
+            ctin: string | null;
+            /** Party Name */
+            party_name: string;
+            /** Number */
+            number: string;
+            /**
+             * Note Date
+             * Format: date
+             */
+            note_date: string;
+            /** Invoice Number */
+            invoice_number: string;
+            /**
+             * Invoice Date
+             * Format: date
+             */
+            invoice_date: string;
+            /** Value */
+            value: string;
+            /** Pos */
+            pos: string;
+            /** Taxable */
+            taxable: string;
+            /** Igst */
+            igst: string;
+            /** Cgst */
+            cgst: string;
+            /** Sgst */
+            sgst: string;
+            /** Rates */
+            rates: components["schemas"]["RateRow"][];
         };
         /** OpenBillOut */
         OpenBillOut: {
@@ -4255,6 +4568,19 @@ export interface components {
             /** Unit */
             unit?: string | null;
         };
+        /** RateRow */
+        RateRow: {
+            /** Rate */
+            rate: string;
+            /** Taxable */
+            taxable: string;
+            /** Igst */
+            igst: string;
+            /** Cgst */
+            cgst: string;
+            /** Sgst */
+            sgst: string;
+        };
         /**
          * RateRowOut
          * @description Selling rate for one item as of a date. Staff see this; no cost, no margin (rule B4).
@@ -4850,6 +5176,21 @@ export interface components {
             quantity: string;
             /** Taxable */
             taxable: string;
+        };
+        /** Totals */
+        Totals: {
+            /** Invoices */
+            invoices: number;
+            /** Notes */
+            notes: number;
+            /** Taxable */
+            taxable: string;
+            /** Igst */
+            igst: string;
+            /** Cgst */
+            cgst: string;
+            /** Sgst */
+            sgst: string;
         };
         /** TransferCreate */
         TransferCreate: {
@@ -13709,6 +14050,387 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SegmentReport"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    gstr1_api_v1_gst_gstr1_get: {
+        parameters: {
+            query: {
+                period: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Gstr1"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    gstr1_export_api_v1_gst_gstr1_export_get: {
+        parameters: {
+            query: {
+                period: string;
+                format?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    gstr3b_api_v1_gst_gstr3b_get: {
+        parameters: {
+            query: {
+                period: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Gstr3b"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    match_gstr2b_api_v1_gst_gstr2b_get: {
+        parameters: {
+            query: {
+                period: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Gstr2bResult"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_gstr2b_api_v1_gst_gstr2b_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_import_gstr2b_api_v1_gst_gstr2b_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"];
                 };
             };
             /** @description Bad Request */

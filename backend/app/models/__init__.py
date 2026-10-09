@@ -5,7 +5,7 @@ from app.models.audit import AuditLog
 from app.models.auth import AuthSession
 from app.models.base import Base
 from app.models.compliance import EInvoice, EwayBill
-from app.models.documents import Attachment, DailyClosing
+from app.models.documents import Attachment, DailyClosing, Gstr2bImport
 from app.models.ledgers import PartyLedger, StockLedger
 from app.models.masters import Item, ItemUnit, Party, Site
 from app.models.numbering import DocumentSequence
@@ -37,6 +37,7 @@ __all__ = [
     "DropShipLink",
     "EInvoice",
     "EwayBill",
+    "Gstr2bImport",
     "Item",
     "ItemMargin",
     "ItemUnit",

@@ -3,6 +3,7 @@ The bytes live in a `Storage` (services/storage); this row says what they belong
 never deleted: a wrong upload is explained by a newer one."""
 
 from datetime import date, datetime
+from typing import Any
 
 from sqlalchemy import (
     BigInteger,
@@ -14,6 +15,7 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import ActorMixin, Audited, Base, IntPK, Money, TenantMixin, TimestampMixin
@@ -71,3 +73,20 @@ class DailyClosing(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
     times_closed: Mapped[int] = mapped_column(Integer, default=1)
 
     __audit_exclude__ = frozenset({"updated_at"})
+
+
+class Gstr2bImport(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
+    """A GSTR-2B file downloaded from the portal, kept as received so a match can be redone
+    later. The newest import for a month is the one used (Milestone 13)."""
+
+    __tablename__ = "gstr2b_import"
+    __table_args__ = (Index("ix_gstr2b_import_period", "period"),)
+
+    id: Mapped[IntPK]
+    period: Mapped[str] = mapped_column(String(7))  # 2026-10
+    file_name: Mapped[str] = mapped_column(String(150))
+    sha256: Mapped[str] = mapped_column(String(64))
+    row_count: Mapped[int] = mapped_column(Integer)
+    rows: Mapped[list[dict[str, Any]]] = mapped_column(JSONB)
+
+    __audit_exclude__ = frozenset({"updated_at", "rows"})

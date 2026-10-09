@@ -231,6 +231,22 @@ line is the sum of its note lines.
   trip. Trips on a purchase only record the payable (its charge is already in landed cost).
 - Cash payments to one person above ₹35,000 a day answer with a warning, not a block (G14).
 
+**Built (Milestone 10):** `eway_bill`, `einvoice` (ADR 0009).
+
+- E-way bill from a saved invoice: Part A from the invoice (shop GSTIN required; buyer GSTIN or
+  "URP"; ship-to when delivered), distance and both pincodes typed by the user, optional vehicle
+  (Part B) added or changed later. Validity is one day per 200 km or part (to midnight of the last
+  day); cancel only within 24 hours, owner only. `required` is shown against the shop thresholds
+  (G13) but making one below the threshold is allowed.
+- One live bill per invoice; a cancelled one may be replaced. Provider failures save nothing
+  (502, retryable). A bill made on the portal by hand can be recorded by number (fallback).
+- `GET /eway-bills/pending` lists delivered bills over the threshold with no live bill;
+  `POST /eway-bills/batch` makes many, each succeeding or failing alone.
+- E-invoice: only when `einvoice_enabled` and the buyer has a GSTIN. The IRN, acknowledgement
+  and QR print on the A4 bill; cancel within 24 hours, owner only. Credit and debit notes carry
+  no IRN yet.
+- Running costs: the GSP's price per bill is unknown (GAP_ANALYSIS open question).
+
 **To build** (milestone in brackets):
 
 | Group | Table | Key columns |
@@ -252,7 +268,6 @@ line is the sum of its note lines.
 | Money [7] | `payment`, `payment_allocation` | party, site, location, amount, mode, reference, date, idempotency_key; allocation to invoice or purchase |
 | Money [7] | `approval` | action, document, reason, requested_by, approved_by (G18) |
 | Money [12] | `daily_closing`, `cash_drawer` | location_id, date, totals by mode, pdf_path, closed_by, reopened_by (G17) |
-| Compliance [10] | `eway_bill`, `einvoice` | invoice_id, number / IRN, vehicle_no, valid_until, raw API response (G12) |
 | Compliance [11] | `attachment` | ref_type, ref_id, file_path, kind (weighbridge/delivery/other) |
 
 Derived views: `v_stock` (qty per item per location, company-wide average cost),

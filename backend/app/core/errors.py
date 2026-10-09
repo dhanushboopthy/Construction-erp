@@ -47,6 +47,13 @@ class ConflictError(AppError):
     code = "CONFLICT"
 
 
+class UpstreamError(AppError):
+    """An outside service (the GSP) failed. Nothing was saved; the user can try again."""
+
+    status_code = status.HTTP_502_BAD_GATEWAY
+    code = "UPSTREAM_ERROR"
+
+
 class AuthenticationError(AppError):
     status_code = status.HTTP_401_UNAUTHORIZED
     code = "NOT_AUTHENTICATED"

@@ -14,6 +14,7 @@ from app.schemas.sales import (
     InvoicePreview,
     InvoiceSummary,
 )
+from app.services import compliance as compliance_service
 from app.services import invoice_pdf
 from app.services import sales as sales_service
 
@@ -106,7 +107,15 @@ def invoice_pdf_file(
         "duplicate": "Duplicate for transporter",
         "triplicate": "Triplicate for supplier",
     }.get(copy, "Original for recipient")
-    pdf = invoice_pdf.DEFAULT_RENDERER.render(db, invoice, copy_label=label, eway_no=None)
+    bill = compliance_service.live_eway(db, invoice.id)
+    irn = compliance_service.live_einvoice(db, invoice.id)
+    pdf = invoice_pdf.DEFAULT_RENDERER.render(
+        db,
+        invoice,
+        copy_label=label,
+        eway_no=bill.number if bill else None,
+        irn=invoice_pdf.irn_print(irn) if irn else None,
+    )
     return Response(
         pdf,
         media_type="application/pdf",

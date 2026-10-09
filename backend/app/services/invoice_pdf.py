@@ -6,6 +6,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Protocol
 
+import segno
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from sqlalchemy.orm import Session
 from weasyprint import HTML
@@ -14,6 +15,7 @@ from app.core.config import get_settings
 from app.domain.gst import STATE_NAMES, SupplyKind
 from app.domain.money import money
 from app.domain.words import amount_in_words
+from app.models.compliance import EInvoice
 from app.models.sales import SalesInvoice
 from app.services.shop_settings import get_settings_row
 
@@ -42,9 +44,34 @@ def _plain(value: Decimal) -> str:
     return text.rstrip("0").rstrip(".") if "." in text else text
 
 
+@dataclass(frozen=True)
+class IrnPrint:
+    """What an e-invoice adds to the printed bill: the IRN, acknowledgement and QR (G12)."""
+
+    irn: str
+    ack_no: str
+    ack_date: str
+    qr_uri: str
+
+
+def irn_print(row: EInvoice) -> IrnPrint:
+    return IrnPrint(
+        irn=row.irn,
+        ack_no=row.ack_no,
+        ack_date=row.ack_date.strftime("%d-%m-%Y"),
+        qr_uri=segno.make(row.signed_qr, error="m").svg_data_uri(scale=3, border=1),
+    )
+
+
 class InvoiceRenderer(Protocol):
     def render(
-        self, db: Session, invoice: SalesInvoice, *, copy_label: str, eway_no: str | None
+        self,
+        db: Session,
+        invoice: SalesInvoice,
+        *,
+        copy_label: str,
+        eway_no: str | None,
+        irn: IrnPrint | None = None,
     ) -> bytes: ...
 
 
@@ -55,7 +82,13 @@ class A4HtmlRenderer:
     template: str = "invoice_a4.html"
 
     def render(
-        self, db: Session, invoice: SalesInvoice, *, copy_label: str, eway_no: str | None = None
+        self,
+        db: Session,
+        invoice: SalesInvoice,
+        *,
+        copy_label: str,
+        eway_no: str | None = None,
+        irn: IrnPrint | None = None,
     ) -> bytes:
         settings = get_settings_row(db)
         intra = invoice.supply_kind is SupplyKind.INTRA_STATE
@@ -107,6 +140,7 @@ class A4HtmlRenderer:
             place_name=STATES.get(invoice.place_of_supply, ""),
             copy_label=copy_label,
             eway_no=eway_no,
+            irn=irn,
             words=amount_in_words(invoice.grand_total),
             pending_text=inr(invoice.pending_balance_at_billing),
             paid_text=inr(invoice.paid_at_billing),

@@ -3,7 +3,7 @@
 from enum import StrEnum
 from functools import lru_cache
 
-from pydantic import Field, model_validator
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,6 +11,12 @@ class Environment(StrEnum):
     DEVELOPMENT = "development"
     TEST = "test"
     PRODUCTION = "production"
+
+
+class GspProvider(StrEnum):
+    FAKE = "fake"
+    SANDBOX = "sandbox"
+    LIVE = "live"
 
 
 _DEV_SECRET = "dev-only-secret-change-me-dev-only-secret"  # noqa: S105 - rejected in production
@@ -40,6 +46,16 @@ class Settings(BaseSettings):
 
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:5173"])
     enable_api_docs: bool = True
+
+    # GSP for e-way bills and IRN (Milestone 10). "fake" only works outside production; "sandbox"
+    # and "live" call the provider's HTTP API. Keys come from the environment, never the code.
+    gsp_provider: GspProvider = GspProvider.FAKE
+    gsp_base_url: str = ""
+    gsp_client_id: str = ""
+    gsp_client_secret: SecretStr = SecretStr("")
+    gsp_username: str = ""
+    gsp_password: SecretStr = SecretStr("")
+    gsp_timeout_seconds: float = 20.0
 
     log_level: str = "INFO"
     log_json: bool = False

@@ -131,6 +131,18 @@ class ApprovalAction(StrEnum):
     LATE_RETURN = "late_return"  # a return after the return window (B11)
 
 
+class ComplianceStatus(StrEnum):
+    """State of an e-way bill or an e-invoice (IRN) at the government portal."""
+
+    GENERATED = "generated"
+    CANCELLED = "cancelled"
+
+
+class EwaySource(StrEnum):
+    GSP = "gsp"  # made through the GSP API
+    MANUAL = "manual"  # made on the portal by hand, number typed in (fallback)
+
+
 class AuditAction(StrEnum):
     INSERT = "insert"
     UPDATE = "update"

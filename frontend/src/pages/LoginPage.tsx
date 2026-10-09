@@ -1,3 +1,4 @@
+import { Building2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router";
 
@@ -41,7 +42,11 @@ export function LoginPage() {
         onSubmit={(e) => void onSubmit(e)}
         aria-describedby="login-error"
       >
+        <span className={styles.appIcon} aria-hidden="true">
+          <Building2 size={30} strokeWidth={2} />
+        </span>
         <h1 className={styles.title}>Sign in to the shop</h1>
+        <p className={styles.subtitle}>Construction ERP</p>
         <label className={styles.field}>
           Username
           <input

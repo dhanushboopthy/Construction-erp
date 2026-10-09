@@ -6,10 +6,10 @@ import styles from "@/components/Ledger.module.css";
 import { formatMoney } from "@/lib/format";
 
 const SERIES = [
-  { key: "retail", label: "Retail", color: "var(--color-oxide)" },
-  { key: "contractor", label: "Contractor", color: "var(--color-tag)" },
-  { key: "bulk", label: "Bulk", color: "var(--color-steel)" },
-  { key: "unassigned", label: "No segment", color: "var(--color-rule-strong)" },
+  { key: "retail", label: "Retail", color: "var(--color-chart-1)" },
+  { key: "contractor", label: "Contractor", color: "var(--color-chart-2)" },
+  { key: "bulk", label: "Bulk", color: "var(--color-chart-3)" },
+  { key: "unassigned", label: "No segment", color: "var(--color-chart-4)" },
 ] as const;
 
 const MONTH = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -45,7 +45,8 @@ export function SegmentsPage() {
               width: "100%",
               maxWidth: 760,
               background: "var(--color-surface)",
-              border: "1px solid var(--color-rule)",
+              border: "1px solid var(--color-separator)",
+              borderRadius: 12,
             }}
           >
             {r.months.map((m, i) => {
@@ -75,7 +76,7 @@ export function SegmentsPage() {
                     y={H + 16}
                     textAnchor="middle"
                     fontSize="11"
-                    fill="var(--color-steel)"
+                    fill="var(--color-secondary)"
                   >
                     {MONTH[Number(mo) - 1]}
                   </text>

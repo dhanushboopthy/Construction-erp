@@ -1,6 +1,4 @@
-@import "@fontsource/ibm-plex-sans/400.css";
-@import "@fontsource/ibm-plex-sans/500.css";
-@import "@fontsource/ibm-plex-sans/600.css";
+@import "@fontsource-variable/inter";
 @import "./tokens.css";
 
 *,
@@ -19,10 +17,20 @@ body,
 body {
   font-family: var(--font-sans);
   font-size: var(--text-md);
-  line-height: 1.5;
-  color: var(--color-ink);
-  background: var(--color-slab);
+  line-height: 1.47;
+  letter-spacing: -0.011em;
+  color: var(--color-label);
+  background: var(--color-bg);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizelegibility;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  letter-spacing: var(--tracking-tight);
 }
 
 /* Money and quantities line up in columns. */
@@ -32,9 +40,14 @@ body {
   white-space: nowrap;
 }
 
+/* Apple-style focus: a soft blue halo, always visible for keyboard users. */
 :focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: 0 0 0 4px var(--color-focus);
+}
+
+a {
+  color: var(--color-accent);
 }
 
 button,
@@ -43,6 +56,11 @@ select,
 textarea {
   font: inherit;
   color: inherit;
+  letter-spacing: inherit;
+}
+
+::selection {
+  background: var(--color-accent-soft);
 }
 
 .visually-hidden {

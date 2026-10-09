@@ -10,7 +10,7 @@ if time runs short. In Claude Code: `/milestone <n>`.
 | 0 | Foundation | Repo, Docker Compose, Postgres, FastAPI, React + TypeScript, Alembic, CI, seed, docs | `make up` starts the stack; CI green | **Done** (frontend installed and built, `package-lock.json` committed, CI uses `npm ci`) |
 | 1 | Auth and setup | Users, roles, locations, settings, audit log, numbering, login screen | Counter user gets 403 on owner routes; writes are audited | **Done** (Settings, Users and Locations screens under `/settings`; role test for every route) |
 | 2 | Items and parties | Item master (brand, HSN, GST, units, theoretical weight), parties, sites, Excel import | 50 items import from a sheet; bag ↔ ton conversions correct | **Done** (`feat/m2-items-parties`) |
-| 3 | Opening balances | Wizard for opening stock, customer and supplier dues | Opening entries appear in ledgers and reports | |
+| 3 | Opening balances | Wizard for opening stock, customer and supplier dues | Opening entries appear in ledgers and reports | **Done** (`feat/m3-opening-balances`; ADR 0006) |
 | 4 | Purchase and stock | Purchase entry, cost components, supplier advance, stock ledger, transfers | Sample purchase gives the hand-calculated landed and average cost | |
 | 5 | Rates | Daily market rate screen, customer rates, margins (owner only) | Price resolves in order; staff API never returns cost | |
 | 6 | Sales invoice | Billing screen, GST maths, sites, numbering, A4 PDF, B2C, idempotency | Totals match a manual calculation; numbers gapless under concurrent saves | |

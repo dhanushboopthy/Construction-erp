@@ -144,6 +144,19 @@ stock ledger moved here from Milestone 4 because opening stock is its first writ
   as an adjustment; only the owner posts, and only the owner sees rupee variances.
 - Mode `direct` writes the supplier payable but no stock rows (Milestone 9 links it to a sale).
 
+**Built (Milestone 5):** `market_rate`, `customer_rate`, `item_margin`.
+
+- Rates are stored per base unit, excluding GST, to 6 decimals (G2). The owner types them in the
+  unit he quotes in (per ton for steel, per bag for cement); with `rates_include_gst` on, the tax is
+  backed out first (118 incl 18% is 100). The typed value and unit are kept for display.
+- One market rate per item per day; re-entering the day overwrites it. The latest on or before the
+  bill date applies; a rate dated in the future is ignored. A customer rate beats the market rate
+  while active; two active customer rates for one customer and item cannot overlap.
+- Margin is entered per ton (or per unit) and stored per base unit; suggested rate = average cost +
+  margin. Saving a rate below cost or below the item's minimum margin returns a warning to the owner.
+- Counter staff and the accountant can read the selling rate and resolve a price; they never
+  receive cost, margin, suggestion or flags. Customer rates and margins are owner-only.
+
 **To build** (milestone in brackets):
 
 | Group | Table | Key columns |

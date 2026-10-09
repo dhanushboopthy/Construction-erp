@@ -264,3 +264,43 @@ class TestPurchaseMilestoneRules:
         assert stock_valuation.count_variance("100", "100") == D("0.000")
         with pytest.raises(ValueError, match="negative"):
             stock_valuation.count_variance("100", "-1")
+
+
+class TestRateRules:
+    """Milestone 5: rates exclude GST (G2), per-base-unit conversion, suggested price."""
+
+    def test_inclusive_rate_is_backed_out_to_exclusive(self):
+        # 118 including 18% GST is 100 before tax; 55,000 including 18% is 46,610.169492 (6 places).
+        assert pricing.exclusive_rate("118", "18", includes_gst=True) == D("100.000000")
+        assert pricing.exclusive_rate("55000", "18", includes_gst=True) == D("46610.169492")
+
+    def test_exclusive_rate_is_kept_as_typed(self):
+        assert pricing.exclusive_rate("55000", "18", includes_gst=False) == D("55000.000000")
+
+    def test_rate_per_base_unit_from_the_unit_it_was_quoted_in(self):
+        # 55,432.55 per ton is 55.43255 per kg; 380 per bag stays 380 per bag.
+        assert pricing.rate_per_base_unit("55432.55", D("1000")) == D("55.432550")
+        assert pricing.rate_per_base_unit("380", D("1")) == D("380.000000")
+        with pytest.raises(ValueError, match="factor"):
+            pricing.rate_per_base_unit("1", D("0"))
+
+    def test_negative_rates_are_refused(self):
+        with pytest.raises(ValueError, match="negative"):
+            pricing.exclusive_rate("-1", "18", includes_gst=False)
+        with pytest.raises(ValueError, match="negative"):
+            pricing.rate_per_base_unit("-1", D("1"))
+
+    def test_suggested_price_from_margin_per_ton(self):
+        # Cost 55.6650 per kg, margin Rs 1,250 per ton = 1.25 per kg: suggest 56.9150 -> 56.92.
+        assert pricing.suggested_price(
+            "55.6650", pricing.margin_per_base_unit("1250", D("1000"))
+        ) == D("56.92")
+
+    def test_margin_below_cost_and_minimum(self):
+        # Cost 55.6650: selling at 55.00 is below cost; 56.00 clears cost (0.335) but not a
+        # 1.00 minimum margin; 57.00 (1.335) is fine.
+        assert pricing.check_margin("55", "55.6650", "1").below_cost
+        low = pricing.check_margin("56", "55.6650", "1")
+        assert not low.below_cost and low.below_min_margin
+        ok = pricing.check_margin("57", "55.6650", "1")
+        assert not ok.below_cost and not ok.below_min_margin

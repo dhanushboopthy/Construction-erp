@@ -61,6 +61,12 @@ export type Transfer = Schemas["TransferOut"];
 export type TransferCreate = Schemas["TransferCreate"];
 export type StockCount = Schemas["CountOut"];
 export type StockCountOwner = Schemas["CountOwnerOut"];
+export type RateRow = Schemas["RateRowOut"];
+export type RateRowOwner = Schemas["RateRowOwnerOut"];
+export type MarketRatesResult = Schemas["MarketRatesResult"];
+export type CustomerRate = Schemas["CustomerRateOut"];
+export type CustomerRateCreate = Schemas["CustomerRateCreate"];
+export type MarginOut = Schemas["MarginOut"];
 export type AuditLogEntry = Schemas["AuditLogOut"];
 
 /** Error body returned by the API for every failure (core/errors.py adds the extras). */

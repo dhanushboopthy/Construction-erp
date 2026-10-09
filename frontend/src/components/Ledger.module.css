@@ -483,3 +483,124 @@ fieldset.choices legend {
 .negative {
   color: var(--color-critical);
 }
+
+/* ------------------------------------------------------------ purchase entry */
+.entryLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.entryLayout > * {
+  min-width: 0;
+}
+
+@media (max-width: 1100px) {
+  .entryLayout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.headerGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-rule);
+  border-top: 3px solid var(--color-oxide);
+  border-radius: var(--radius-md);
+}
+
+.lineBlock {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-rule);
+  border-left: 4px solid var(--color-rule-strong);
+  border-radius: var(--radius-md);
+}
+
+.lineBlock:focus-within {
+  border-left-color: var(--color-oxide);
+}
+
+.lineGrid {
+  display: grid;
+  grid-template-columns: minmax(150px, 2.2fr) 84px repeat(3, minmax(88px, 1fr)) auto;
+  gap: var(--space-3);
+  align-items: end;
+}
+
+@media (max-width: 900px) {
+  .lineGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.chargeRow {
+  display: grid;
+  grid-template-columns: minmax(140px, 2fr) minmax(90px, 1fr) auto auto;
+  gap: var(--space-2);
+  align-items: end;
+}
+
+.preview {
+  position: sticky;
+  top: var(--space-4);
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-rule);
+  border-top: 3px solid var(--color-oxide);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+}
+
+.preview h3 {
+  margin: 0;
+  font-size: var(--text-md);
+}
+
+.kv {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.kvStrong {
+  font-weight: 600;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-rule);
+}
+
+/* The one yellow band in the app: the bill total (docs/DESIGN.md). */
+.billTotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-tag);
+  color: var(--color-on-tag);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+
+.billTotal strong {
+  font-size: var(--text-figure);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.problem {
+  margin: 0;
+  padding-left: var(--space-2);
+  border-left: 3px solid var(--color-critical);
+  color: var(--color-critical);
+  font-size: var(--text-sm);
+}

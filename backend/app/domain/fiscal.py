@@ -41,3 +41,11 @@ def format_doc_number(series: str, fy: str, sequence: int) -> str:
     if len(number) > DOC_NUMBER_MAX_LENGTH:
         raise ValueError(f"document number {number!r} exceeds {DOC_NUMBER_MAX_LENGTH} characters")
     return number
+
+
+def fy_months(start_year: int, start_month: int = 4) -> list[tuple[int, int]]:
+    """The twelve (year, month) pairs of the financial year that starts in `start_year`."""
+    return [
+        (start_year + (start_month - 1 + i) // 12, (start_month - 1 + i) % 12 + 1)
+        for i in range(12)
+    ]

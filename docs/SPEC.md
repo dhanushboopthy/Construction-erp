@@ -127,6 +127,201 @@ stock ledger moved here from Milestone 4 because opening stock is its first writ
 - Supplier payables, advances and what we owe are visible to the owner and accountant, not to
   counter staff; customers' dues are visible to all three roles.
 
+**Built (Milestone 4):** `cost_component`, `purchase`, `purchase_line`, `purchase_cost`,
+`payment` (supplier side), `stock_transfer`, `stock_transfer_line`, `stock_count`,
+`stock_count_line`; `shop_settings.counter_can_enter_purchases` (G28). See ADR 0007.
+
+- A purchase line is entered in any unit of the item (ton, bag...) and converted to the base unit;
+  `goods_value` is the bill's own amount (quantity x rate in the entered unit, to paise), so a
+  per-ton price never loses paise. `received_qty` (weighbridge) is what enters stock and divides
+  cost, so a shortage raises the unit cost (B1).
+- Charges attach to a line (B2) and are priced per ton, per base unit, per trip or flat. A charge
+  flagged "on supplier's bill" is added to what we owe the supplier; others are cost only.
+- Purchase number: `<location code>P/<FY>/<5 digits>`; transfers `<code>DC/...`; payments
+  `<code>R/...`. A supplier's bill number is unique per supplier.
+- A transfer is an out and an in at the company average cost, so it never changes value (G6),
+  and the origin must hold the quantity (B13). A count's variance is posted at the average cost
+  as an adjustment; only the owner posts, and only the owner sees rupee variances.
+- Mode `direct` writes the supplier payable but no stock rows (Milestone 9 links it to a sale).
+
+**Built (Milestone 5):** `market_rate`, `customer_rate`, `item_margin`.
+
+- Rates are stored per base unit, excluding GST, to 6 decimals (G2). The owner types them in the
+  unit he quotes in (per ton for steel, per bag for cement); with `rates_include_gst` on, the tax is
+  backed out first (118 incl 18% is 100). The typed value and unit are kept for display.
+- One market rate per item per day; re-entering the day overwrites it. The latest on or before the
+  bill date applies; a rate dated in the future is ignored. A customer rate beats the market rate
+  while active; two active customer rates for one customer and item cannot overlap.
+- Margin is entered per ton (or per unit) and stored per base unit; suggested rate = average cost +
+  margin. Saving a rate below cost or below the item's minimum margin returns a warning to the owner.
+- Counter staff and the accountant can read the selling rate and resolve a price; they never
+  receive cost, margin, suggestion or flags. Customer rates and margins are owner-only.
+
+**Built (Milestone 6):** `sales_invoice`, `sales_line`; Walk-in customer party seeded.
+
+- Saving a bill is one transaction: advisory locks on its items (so two counters cannot sell the
+  last bag together, B13), price from rates (B3), tax per line then totals with a round-off line
+  (G3), next gapless number, stock-out rows at the average cost, receivable debit on the
+  customer's account (and site), commit.
+- Place of supply is the ship-to site's state, else the billing shop's; the seller state is the
+  shop settings' state; same state means CGST + SGST, otherwise IGST (G5). A customer with a GSTIN
+  makes a B2B bill, otherwise a B2C tax invoice: still a real bill (ADR 0005).
+- Counter staff cannot choose a price, give a discount or back-date; the API answers 409
+  `DISCOUNT_NEEDS_OWNER` or `BACKDATE_NEEDS_OWNER` with `requires_owner_approval` (owner PIN in
+  Milestone 7). A price below average cost needs the owner (`BELOW_COST`, message without figures).
+  Owner discounts need a reason (G10).
+- Each line keeps the average cost at the time (`cost_per_unit`); profit per line and bill is
+  taxable less cost and is shown to the owner only. A bill also keeps the customer's pending
+  balance and the stock left after each line, for printing.
+- `Idempotency-Key` on create: a repeat returns the first bill; the same key for another customer
+  or shop is a conflict (G19).
+- A4 PDF: `GET /invoices/{id}/pdf?copy=` via WeasyPrint, template `app/templates/invoice_a4.html`
+  behind the `InvoiceRenderer` interface (a thermal layout can be added). Outside production the PDF
+  carries a TEST watermark (ADR 0005).
+
+**Built (Milestone 7):** `approval`; `app_user.pin_hash`; `party_ledger.applies_to`;
+`sales_invoice.paid_at_billing`. The planned `payment_allocation` table is not needed: a payment's
+allocation is its ledger rows (ADR 0008).
+
+- Credit (B8): a bill's unpaid part (total less money taken with it) is checked against the
+  customer's approval, limit (customer's own, else the shop default) and overdue bills. The API
+  answers 409 `CREDIT_NOT_ALLOWED`, `CREDIT_LIMIT_EXCEEDED` or `OVERDUE_INVOICES` with
+  `requires_owner_approval`. The owner may bill anyway (an audit `override` event records the rule).
+- Approvals (G18): owner PIN, one use, ten minutes, for one customer; actions `credit_override`,
+  `below_cost`, `discount`, `backdate`. Wrong-PIN lockout after five tries.
+- Receipts: counter staff (own shop) and the owner record money received; only the owner pays
+  suppliers. Bills the user ticks are paid first, the rest oldest first, extra money is an advance
+  (G21). Cash from one customer in a day at or above the limit is refused (G14), cash taken with
+  a bill included. No cheques (B7).
+- Money can be taken with the bill: one receipt per mode, applied to that bill, printed as
+  "Paid at billing" and "Balance due".
+- Statements per customer site balance with the combined statement (B9).
+
+**Built (Milestone 8):** `credit_note`, `credit_note_line`, `debit_note`, `debit_note_line`. There is
+no separate "return" table: the note is the return document (B16), and what has come back on a
+line is the sum of its note lines.
+
+- Credit note (B11): taken for part of one invoice, by counter staff at their own shop or the
+  owner. Inside `return_window_days` (default 2) it needs no approval; later it needs the owner
+  or a `late_return` PIN approval (409 `RETURN_WINDOW_CLOSED` with `requires_owner_approval`).
+  Quantities are in the line's own unit and cannot exceed what is left (422 `RETURN_TOO_MUCH`).
+- Value is pro rata to quantity on the line's taxable value (a whole-line return reverses it
+  exactly); GST is worked out again per line with the invoice's supply kind; round-off per note.
+  Stock goes back to the location it left at the cost it left at; lines delivered direct from a
+  supplier restock nothing. The customer's receivable is credited against that invoice number.
+- Debit note: owner only. Taxable value is pro rata to the billed quantity on the supplier line,
+  GST by supplier state against shop state. Stock leaves at the line's landed cost and cannot
+  exceed what is held (B13, 409 `INSUFFICIENT_STOCK`; direct purchases touch no stock). The
+  supplier payable is debited against the purchase number. Accountant may read debit notes.
+- Numbers: `<location>C/<fy>/<seq>` for credit notes and `<location>D/<fy>/<seq>` for debit
+  notes. Notes print as A4 PDFs with the TEST watermark outside production.
+
+**Built (Milestone 9):** `vehicle`, `trip`, `drop_ship_link`.
+
+- Direct lines (B10, B13): a bill line with source "direct" moves no stock. It may name the
+  supplier purchase line (mode `direct`, same item, enough unclaimed quantity) at billing, or the
+  owner links it later. The link copies the purchase line's landed cost, so profit stays fixed.
+  Profit = sale taxable − quantity × landed cost − freight of the trips on that bill. An unlinked
+  direct line is costed at the average cost until linked, and is flagged in the direct-sales
+  report. Counter staff may name a purchase from a cost-free list but never see supplier or cost.
+- Vehicles (B18): hired ones get a supplier account named "Transport: owner (number)" so freight
+  is paid through the normal payments screen; own vehicles (`is_own`) carry no freight.
+- Trips: owner records a run (optionally for a sale or a purchase, not both). Freight credits the
+  vehicle owner's payable as `TRIP-<id>`; a payment aimed at that reference shows as paid on the
+  trip. Trips on a purchase only record the payable (its charge is already in landed cost).
+- Cash payments to one person above ₹35,000 a day answer with a warning, not a block (G14).
+
+**Built (Milestone 10):** `eway_bill`, `einvoice` (ADR 0009).
+
+- E-way bill from a saved invoice: Part A from the invoice (shop GSTIN required; buyer GSTIN or
+  "URP"; ship-to when delivered), distance and both pincodes typed by the user, optional vehicle
+  (Part B) added or changed later. Validity is one day per 200 km or part (to midnight of the last
+  day); cancel only within 24 hours, owner only. `required` is shown against the shop thresholds
+  (G13) but making one below the threshold is allowed.
+- One live bill per invoice; a cancelled one may be replaced. Provider failures save nothing
+  (502, retryable). A bill made on the portal by hand can be recorded by number (fallback).
+- `GET /eway-bills/pending` lists delivered bills over the threshold with no live bill;
+  `POST /eway-bills/batch` makes many, each succeeding or failing alone.
+- E-invoice: only when `einvoice_enabled` and the buyer has a GSTIN. The IRN, acknowledgement
+  and QR print on the A4 bill; cancel within 24 hours, owner only. Credit and debit notes carry
+  no IRN yet.
+- Running costs: the GSP's price per bill is unknown (GAP_ANALYSIS open question).
+
+**Built (Milestone 11):** `attachment`, `supplier_scheme`; `purchase_line` and `sales_line` gain
+`weight_variance_pct`, `weight_flagged`, `weight_note` (and `slip_weight` on sales).
+
+- Weight check (B14, G20): on a purchase line, billed against received quantity; on a sale line,
+  billed against an optional slip weight. Above `weight_variance_pct` the line is flagged and
+  saving needs a note (409 `WEIGHT_NOTE_REQUIRED`, field `lines[i].weight_note`). The shortage
+  value (at the supplier's bill rate) is owner-only. A slip does not change the billed quantity (G30).
+- Attachments (B17): weighbridge slips, delivery proof and other papers on purchases, bills and
+  trips. Photos (JPEG, PNG, WebP) and PDF only, decided from the bytes, up to `MAX_UPLOAD_MB`
+  (8), at most 20 a document, stored under a generated key behind `services/storage` (a folder,
+  `STORAGE_DIR`), checked by SHA-256 on every read, never deleted. Counter staff: their own shop's
+  purchases and bills; trips owner only (accountant reads).
+- Supplier schemes (B15): item or category, a target in the base unit, a period and a rebate
+  rule (percent of goods bought, rupees per unit, or flat). Progress is calculated from purchases
+  in the period less debit-note returns (never stored); alert at 80% to the owner. When the target
+  is met the owner books the rebate once as a debit on the supplier's payable (G29).
+
+**Built (Milestone 12):** `daily_closing` (the cash drawer is part of it, so there is no separate
+`cash_drawer` table).
+
+- Daily closing per shop and day (B12, G17): figures from the day's bills, credit notes and
+  receipts (cash, UPI, bank), cash paid out, items sold and the first and last bill numbers.
+  The drawer is opening cash (the last count; entered by hand for a shop's first closing) plus
+  cash received less cash paid out; the counted cash is typed in and any difference needs a note
+  (409 `CASH_NOTE_REQUIRED`). The PDF carries no cost or profit, so staff can close their own shop.
+- The PDF is saved date-wise (`closing/<shop>/<yyyy>/<mm>/<date>.pdf`) to storage: a local folder
+  or an S3-compatible bucket (`STORAGE_PROVIDER`). If saving fails the day is not closed.
+- Day lock: once closed, bills, purchases, payments, credit and debit notes, transfers, stock
+  count posting and trips dated on that shop-day are refused (409 `DAY_CLOSED`); other shops and
+  days are untouched. Only the owner reopens a day, with a reason (audit `override` event); it can
+  then be closed again (the PDF is replaced and `times_closed` counts).
+- Today: items in stock, what customers owe, what we owe (not for counter staff), sales today,
+  profit today (owner only); counter staff see their own shop's sales.
+- Profit (owner): sales less returns, less average cost (or the linked supplier cost for direct
+  sales), less freight shared over a bill's lines by value; by item, customer or site, up to a year.
+- Sales by customer segment (owner, accountant): monthly bars for a financial year, net of returns;
+  customers without a segment fall under "No segment".
+
+**Built (Milestone 13):** `gstr2b_import`. All return figures are rebuilt from issued documents on
+each request, so they always agree with the books.
+
+- GSTR-1 for a month: B2B (buyer GSTIN), B2CL (unregistered, between states, over ₹1,00,000),
+  B2CS (all other B2C, by supply type, place of supply and rate, net of returns on those bills),
+  CDNR (credit notes to registered buyers), CDNUR (credit notes on B2CL bills), HSN summary (net
+  of returns, GST quantity code from the unit), document series summary with any missing numbers
+  (there should never be any). Download as the portal's offline-tool JSON or as an Excel workbook
+  with one sheet per table. `gt` and `cur_gt` (turnover) are left 0 for the accountant to fill.
+- GSTR-3B figures: 3.1(a) sales at a rate net of credit notes, 3.1(c) sales at 0%, 4(A) input tax
+  on the month's purchases (heads from supplier state against the shop's), 4(B) input tax taken
+  back on debit notes, the input tax the uploaded 2B shows, and tax to pay per head. Reverse
+  charge, imports, interest and late fees are not modelled.
+- GSTR-2B: upload the portal's JSON or a simple CSV (`gstin, supplier, invoice_no, invoice_date,
+  taxable, igst, cgst, sgst`). The newest upload for a month is kept (older ones stay for the
+  record). Our purchase bills (from suppliers with a GSTIN, the month and the two before it) are
+  matched by GSTIN and bill number (case, spaces and punctuation ignored); amounts within ₹1 count as
+  equal. Results: matched, amounts differ, in books not in 2B, in 2B not in books.
+- Owner and accountant only; the accountant can upload 2B files.
+
+**Built (Milestone 14):** no new business tables. Database triggers `*_no_delete` and `*_no_edit`
+on issued documents (ADR 0010).
+
+- Issued documents (bills, credit and debit notes, purchases and their lines, payments, transfers,
+  e-way bills, e-invoices, closings, attachments, 2B imports) cannot be deleted, and the figures of
+  bills, notes, purchase lines, payments and attachments cannot be edited; only `updated_at` and
+  `updated_by` move.
+- `python -m app.scripts.verify [--full]`, `POST /system/verify` and Settings, System: integrity
+  checks listed in the ADR. `GET /system/status` (owner): database version, newest backup age
+  (fails over 30 hours), file storage, e-way provider, shops whose previous day is not closed.
+- Backups: dump plus files archive, off-site copy script, restore drill, restore script that also
+  restores files and runs the check. `python -m app.scripts.reset_password <user>` for a forgotten
+  owner password, from the server only.
+- Every route needs a sign-in (except sign-in, refresh, logout and the health checks); API
+  answers are `Cache-Control: no-store`.
+- Operations documents: [RUNBOOK](RUNBOOK.md), [GO_LIVE](GO_LIVE.md).
+
 **To build** (milestone in brackets):
 
 | Group | Table | Key columns |
@@ -139,21 +334,13 @@ stock ledger moved here from Milestone 4 because opening stock is its first writ
 | Parties [2] | `party` | name, type (customer/supplier/both), segment (retail/contractor/bulk), gstin, state_code, address, phone, credit_allowed, credit_limit, credit_days |
 | Parties [2] | `site` | party_id, name, address, state_code, gstin or "URP" (G13, G22) |
 | Parties [3] | `opening_balance` | party_id, site_id, amount, as_of |
-| Parties [11] | `supplier_scheme` | party_id, item_or_category, target_qty, period_start, period_end, rebate_rule |
 | Purchase [4] | `purchase`, `purchase_line` | supplier_id, location_id, bill_no, bill_date, mode (stock/direct), status; line: item_id, qty, unit, rate, gst_rate, weight_billed, weight_received, unit_cost |
 | Purchase [4] | `cost_component`, `purchase_cost` | name, basis (per_ton/per_base_unit/per_trip/flat), default_amount; line_id, component_id, amount |
-| Purchase [8] | `purchase_return`, `debit_note` | purchase_id, lines, reason (G9) |
 | Stock [4] | `stock_ledger` | item_id, location_id, qty_in, qty_out, unit_cost, ref_type, ref_id, entry_date — **append-only** |
 | Stock [4] | `stock_transfer`, `stock_count`, `stock_count_line` | from/to location, item, qty; count sessions and variances |
 | Sales [6] | `sales_invoice`, `sales_line` | number, financial_year, location_id, party_id, site_id, bill_to, ship_to, place_of_supply, supply_kind, supply_type (B2B/B2C), invoice_date, due_date, totals, round_off, pending_balance_at_billing, idempotency_key (G19); line: item, qty, unit, rate, rate_source, discount, taxable, cgst/sgst/igst, fulfilment_source |
-| Sales [9] | `drop_ship_link` | sales_line_id, purchase_line_id, freight_amount |
-| Sales [8] | `sales_return`, `credit_note` | invoice_id, date, lines, reason, approved_by |
 | Money [7] | `payment`, `payment_allocation` | party, site, location, amount, mode, reference, date, idempotency_key; allocation to invoice or purchase |
 | Money [7] | `approval` | action, document, reason, requested_by, approved_by (G18) |
-| Money [12] | `daily_closing`, `cash_drawer` | location_id, date, totals by mode, pdf_path, closed_by, reopened_by (G17) |
-| Transport [9] | `vehicle`, `trip` | number, owner_name, is_own; trip: vehicle, ref, freight_amount, paid_amount |
-| Compliance [10] | `eway_bill`, `einvoice` | invoice_id, number / IRN, vehicle_no, valid_until, raw API response (G12) |
-| Compliance [11] | `attachment` | ref_type, ref_id, file_path, kind (weighbridge/delivery/other) |
 
 Derived views: `v_stock` (qty per item per location, company-wide average cost),
 `v_party_ledger` (receivable/payable per party and site, aging 0–30/31–60/60+),

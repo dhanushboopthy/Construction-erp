@@ -88,3 +88,18 @@ def replay(moves: list[StockMove]) -> Replay:
             per_location.get(move.location, ZERO) + move.qty_in - move.qty_out
         )
     return Replay(position, {k: qty(v) for k, v in per_location.items()})
+
+
+def ensure_available(available_at_location: Numberish, requested: Numberish) -> None:
+    """Rule B13: a location cannot give out more than it holds."""
+    have, want = to_decimal(available_at_location), to_decimal(requested)
+    if want > have:
+        raise NegativeStockError(f"only {have} here, cannot give out {want} (rule B13)")
+
+
+def count_variance(system_qty: Numberish, counted_qty: Numberish) -> Decimal:
+    """Physical count less what the ledger says: negative is a shortage, positive a surplus."""
+    counted = to_decimal(counted_qty)
+    if counted < ZERO:
+        raise ValueError("counted quantity cannot be negative")
+    return qty(counted - to_decimal(system_qty))

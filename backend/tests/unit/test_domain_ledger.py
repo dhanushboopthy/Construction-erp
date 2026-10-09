@@ -147,3 +147,95 @@ class TestStockReplay:
         moves = [StockMove(date(2026, 10, 1), "S1", D("0"), D("5"), D("50"))]
         with pytest.raises(stock_valuation.NegativeStockError):
             stock_valuation.replay(moves)
+
+
+class TestTargetedPayments:
+    """A payment can be aimed at chosen bills; anything left over follows oldest-first."""
+
+    def test_a_payment_aimed_at_one_bill_leaves_the_older_bill_open(self):
+        entries = [
+            e("2026-08-01", debit="10000", ref="A"),
+            e("2026-09-01", debit="5000", ref="B"),
+            LedgerEntry(date(2026, 9, 10), D("0"), D("5000"), "R1", applies_to="B"),
+        ]
+        # The 5,000 pays bill B only, so A (the older bill) stays whole at 10,000.
+        result = ledger.open_items(entries, Account.RECEIVABLE)
+        assert [(i.ref, i.remaining) for i in result.items] == [("A", D("10000.00"))]
+
+    def test_a_part_payment_aimed_at_a_bill_leaves_the_rest_of_that_bill(self):
+        entries = [
+            e("2026-09-01", debit="5000", ref="B"),
+            LedgerEntry(date(2026, 9, 10), D("0"), D("2000"), "R1", applies_to="B"),
+        ]
+        result = ledger.open_items(entries, Account.RECEIVABLE)
+        assert [(i.ref, i.remaining, i.original) for i in result.items] == [
+            ("B", D("3000.00"), D("5000.00"))
+        ]
+
+    def test_amount_beyond_the_chosen_bill_flows_oldest_first(self):
+        entries = [
+            e("2026-08-01", debit="10000", ref="A"),
+            e("2026-09-01", debit="2000", ref="B"),
+            LedgerEntry(date(2026, 9, 10), D("0"), D("3000"), "R1", applies_to="B"),
+        ]
+        # B takes 2,000; the other 1,000 goes to the oldest open bill A: 9,000 left.
+        result = ledger.open_items(entries, Account.RECEIVABLE)
+        assert [(i.ref, i.remaining) for i in result.items] == [("A", D("9000.00"))]
+
+    def test_a_target_that_is_not_open_falls_back_to_oldest_first(self):
+        entries = [
+            e("2026-08-01", debit="1000", ref="A"),
+            LedgerEntry(date(2026, 9, 10), D("0"), D("400"), "R1", applies_to="ZZ"),
+        ]
+        assert ledger.open_items(entries, Account.RECEIVABLE).items[0].remaining == D("600.00")
+
+    def test_supplier_payments_can_target_a_bill_too(self):
+        entries = [
+            e("2026-08-01", credit="8000", ref="P1"),
+            e("2026-08-05", credit="3000", ref="P2"),
+            LedgerEntry(date(2026, 8, 20), D("3000"), D("0"), "PAY", applies_to="P2"),
+        ]
+        result = ledger.open_items(entries, Account.PAYABLE)
+        assert [(i.ref, i.remaining) for i in result.items] == [("P1", D("8000.00"))]
+
+
+class TestAllocation:
+    def _open(self):
+        return ledger.open_items(
+            [e("2026-08-01", debit="10000", ref="A"), e("2026-09-01", debit="5000", ref="B")],
+            Account.RECEIVABLE,
+        )
+
+    def test_default_is_oldest_first_with_the_rest_as_advance(self):
+        # 12,000 clears A (10,000) and 2,000 of B.
+        result = ledger.allocate(self._open(), D("12000"))
+        assert result.applied == [("A", D("10000.00")), ("B", D("2000.00"))]
+        assert result.advance == D("0.00")
+        # 16,000 clears both bills (15,000) and leaves 1,000 as an advance.
+        more = ledger.allocate(self._open(), D("16000"))
+        assert more.advance == D("1000.00")
+
+    def test_chosen_bills_are_paid_first_then_the_rest_oldest_first(self):
+        # 12,000 paid: B in full (5,000) and 4,000 aimed at A; the other 3,000 goes to the oldest
+        # open bill, A again. A is paid 7,000 in all and 3,000 of it is still open.
+        result = ledger.allocate(self._open(), D("12000"), {"B": D("5000"), "A": D("4000")})
+        assert result.applied == [("B", D("5000.00")), ("A", D("7000.00"))]
+        assert result.advance == D("0.00")
+
+    def test_picking_one_bill_with_money_to_spare_keeps_an_advance_only_when_all_paid(self):
+        # 20,000 against bills of 10,000 and 5,000 with B picked: B 5,000, A 10,000, 5,000 advance.
+        result = ledger.allocate(self._open(), D("20000"), {"B": D("5000")})
+        assert result.applied == [("B", D("5000.00")), ("A", D("10000.00"))]
+        assert result.advance == D("5000.00")
+
+    def test_picks_cannot_exceed_the_bill_or_the_payment(self):
+        with pytest.raises(ValueError, match="more than"):
+            ledger.allocate(self._open(), D("20000"), {"B": D("5001")})
+        with pytest.raises(ValueError, match="exceed"):
+            ledger.allocate(self._open(), D("1000"), {"A": D("600"), "B": D("600")})
+        with pytest.raises(ValueError, match="not open"):
+            ledger.allocate(self._open(), D("1000"), {"ZZ": D("100")})
+        with pytest.raises(ValueError, match="positive"):
+            ledger.allocate(self._open(), D("0"))
+        with pytest.raises(ValueError, match="positive"):
+            ledger.allocate(self._open(), D("100"), {"A": D("0")})

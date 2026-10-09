@@ -82,6 +82,17 @@ export async function api<T>(path: string, init: RequestInit = {}, retry = true)
 
 export const json = (value: unknown): string => JSON.stringify(value);
 
+/** Open a PDF in a new tab. The request carries the access token, so a plain link cannot do it. */
+export async function openFile(path: string): Promise<void> {
+  const headers = new Headers();
+  if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
+  const response = await fetch(`/api/v1${path}`, { headers, credentials: "include" });
+  if (!response.ok) throw await parseError(response);
+  const url = URL.createObjectURL(await response.blob());
+  window.open(url, "_blank", "noopener");
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
 /** Download a file (spreadsheet, PDF) with the access token and hand it to the browser. */
 export async function downloadFile(path: string, filename: string): Promise<void> {
   const headers = new Headers();

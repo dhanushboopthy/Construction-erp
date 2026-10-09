@@ -29,6 +29,7 @@ class ShopSettingsBase(Schema):
     eway_threshold_interstate: Decimal = Field(default=Decimal("50000"), ge=0)
     eway_threshold_intrastate: Decimal = Field(default=Decimal("100000"), ge=0)
     einvoice_enabled: bool = False
+    counter_can_enter_purchases: bool = True
     timezone: str = "Asia/Kolkata"
 
     @field_validator("gstin")

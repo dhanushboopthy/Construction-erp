@@ -12,6 +12,7 @@ import { GST_STATES } from "@/lib/gstStates";
 
 import { TYPE_LABEL } from "./partyLabels";
 import { SitesSection } from "./SitesSection";
+import { SupplierPayment } from "./SupplierPayment";
 import { StatementSection } from "./StatementSection";
 
 const SEGMENTS: { value: CustomerSegment; label: string }[] = [
@@ -247,6 +248,7 @@ export function PartyEditor({
         ) : null}
       </form>
       {party && party.type !== "supplier" ? <SitesSection party={party} /> : null}
+      {party ? <SupplierPayment party={party} /> : null}
       {party ? <StatementSection party={party} /> : null}
     </aside>
   );

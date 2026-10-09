@@ -7,7 +7,7 @@ cost are always recomputed from these rows by the domain functions."""
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.errors import NotFoundError
@@ -74,6 +74,7 @@ def add_party_entry(
     ref_type: PartyRef,
     ref_id: int | None,
     doc_no: str | None = None,
+    applies_to: str | None = None,
     debit: Decimal = ZERO,
     credit: Decimal = ZERO,
     narration: str | None = None,
@@ -88,6 +89,7 @@ def add_party_entry(
         ref_type=ref_type,
         ref_id=ref_id,
         doc_no=doc_no,
+        applies_to=applies_to,
         debit=debit,
         credit=credit,
         narration=narration,
@@ -98,6 +100,20 @@ def add_party_entry(
 
 
 # ---------------------------------------------------------------------------- stock
+
+
+def lock_items(db: Session, item_ids: set[int]) -> None:
+    """Serialise stock-out for these items until the transaction ends (rule B13).
+
+    Two counters selling the last bag at once would otherwise both pass the stock check. The
+    locks are taken in id order so two bills with the same items cannot deadlock."""
+    for item_id in sorted(item_ids):
+        db.execute(select(func.pg_advisory_xact_lock(item_id)))
+
+
+def lock_party(db: Session, party_id: int) -> None:
+    """Serialise bills for one customer so the credit limit is checked against the true balance."""
+    db.execute(select(func.pg_advisory_xact_lock(2, party_id)))
 
 
 def stock_position(
@@ -195,7 +211,9 @@ def stock_summary(
 def _account_view(rows: list[PartyLedger], account: LedgerAccount, today: date) -> AccountOut:
     domain_account = Account(account.value)
     entries = [
-        LedgerEntry(r.entry_date, r.debit, r.credit, r.doc_no or str(r.ref_type.value))
+        LedgerEntry(
+            r.entry_date, r.debit, r.credit, r.doc_no or str(r.ref_type.value), r.applies_to
+        )
         for r in rows
     ]
     opened = ledger_rules.open_items(entries, domain_account)
@@ -282,7 +300,10 @@ def dues_report(db: Session, account: LedgerAccount, today: date) -> DuesOut:
     domain_account = Account(account.value)
     result: list[DuesRowOut] = []
     for party_id, party_rows in grouped.items():
-        entries = [LedgerEntry(r.entry_date, r.debit, r.credit, r.doc_no or "") for r in party_rows]
+        entries = [
+            LedgerEntry(r.entry_date, r.debit, r.credit, r.doc_no or "", r.applies_to)
+            for r in party_rows
+        ]
         bal = ledger_rules.balance(entries, domain_account)
         opened = ledger_rules.open_items(entries, domain_account)
         if bal == ZERO and opened.advance == ZERO:

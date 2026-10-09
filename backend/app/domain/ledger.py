@@ -25,6 +25,8 @@ class LedgerEntry:
     debit: Decimal
     credit: Decimal
     ref: str = ""
+    # A payment aimed at one bill (by its number). Blank means oldest bill first.
+    applies_to: str | None = None
 
 
 @dataclass(frozen=True)
@@ -81,6 +83,18 @@ def open_items(entries: list[LedgerEntry], account: Account) -> OpenItems:
             if bill - used > ZERO:
                 queue.append(OpenItem(entry.ref, entry.entry_date, money(bill), money(bill - used)))
         payment = _decrease(entry, account)
+        if payment > ZERO and entry.applies_to:
+            for position, head in enumerate(queue):
+                if head.ref == entry.applies_to:
+                    applied = min(head.remaining, payment)
+                    payment -= applied
+                    if applied == head.remaining:
+                        queue.pop(position)
+                    else:
+                        queue[position] = OpenItem(
+                            head.ref, head.entry_date, head.original, head.remaining - applied
+                        )
+                    break
         while payment > ZERO and queue:
             head = queue[0]
             applied = min(head.remaining, payment)
@@ -102,3 +116,43 @@ def aging(result: OpenItems, today: date) -> Aging:
         days = max((today - item.entry_date).days, 0)
         buckets[0 if days <= 30 else 1 if days <= 60 else 2] += item.remaining
     return Aging(money(buckets[0]), money(buckets[1]), money(buckets[2]))
+
+
+@dataclass(frozen=True)
+class Allocation:
+    applied: list[tuple[str, Decimal]]  # (bill number, amount) in the order they were paid
+    advance: Decimal  # money left over, held on the account (G21)
+
+
+def allocate(
+    opened: OpenItems, amount: Decimal, picks: dict[str, Decimal] | None = None
+) -> Allocation:
+    """Split a payment over open bills: the bills the user picked first, then oldest first,
+    and any money left after every bill is paid is an advance (G21).
+
+    Raises ValueError if a pick is not open, is more than the bill's balance, or the picks add
+    up to more than the payment."""
+    if amount <= ZERO:
+        raise ValueError("a payment must be positive")
+    remaining = {i.ref: i.remaining for i in opened.items}
+    paid: dict[str, Decimal] = {}
+    left = amount
+    for ref, pick in (picks or {}).items():
+        if pick <= ZERO:
+            raise ValueError("each picked amount must be positive")
+        if ref not in remaining:
+            raise ValueError(f"bill {ref} is not open")
+        if pick > remaining[ref]:
+            raise ValueError(f"{pick} is more than the {remaining[ref]} still open on {ref}")
+        if pick > left:
+            raise ValueError("the picked amounts exceed the payment")
+        paid[ref] = paid.get(ref, ZERO) + pick
+        remaining[ref] -= pick
+        left -= pick
+    # What is not aimed at a bill goes oldest first, exactly as the ledger will replay it.
+    for item in opened.items:
+        take = min(remaining[item.ref], left)
+        if take > ZERO:
+            paid[item.ref] = paid.get(item.ref, ZERO) + take
+            left -= take
+    return Allocation(applied=[(ref, money(v)) for ref, v in paid.items()], advance=money(left))

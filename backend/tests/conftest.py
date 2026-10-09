@@ -7,6 +7,7 @@ inside a transaction that is rolled back, even when the code under test commits.
 """
 
 import os
+import tempfile
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -17,6 +18,7 @@ TEST_DATABASE_URL = os.environ.get(
 )
 os.environ["DATABASE_URL"] = TEST_DATABASE_URL
 os.environ.setdefault("APP_ENV", "test")
+os.environ.setdefault("STORAGE_DIR", tempfile.mkdtemp(prefix="erp-files-"))
 
 
 @pytest.fixture(scope="session")

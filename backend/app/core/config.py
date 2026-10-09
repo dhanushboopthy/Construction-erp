@@ -3,14 +3,26 @@
 from enum import StrEnum
 from functools import lru_cache
 
-from pydantic import Field, model_validator
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Environment(StrEnum):
     DEVELOPMENT = "development"
     TEST = "test"
+    STAGING = "staging"  # a copy for training and trials: every PDF is stamped TEST
     PRODUCTION = "production"
+
+
+class GspProvider(StrEnum):
+    FAKE = "fake"
+    SANDBOX = "sandbox"
+    LIVE = "live"
+
+
+class StorageProvider(StrEnum):
+    LOCAL = "local"  # a folder on the server (development, or a volume that is backed up)
+    S3 = "s3"  # any S3-compatible bucket: AWS S3, Cloudflare R2, Backblaze B2, MinIO, Wasabi
 
 
 _DEV_SECRET = "dev-only-secret-change-me-dev-only-secret"  # noqa: S105 - rejected in production
@@ -40,6 +52,31 @@ class Settings(BaseSettings):
 
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:5173"])
     enable_api_docs: bool = True
+
+    # GSP for e-way bills and IRN (Milestone 10). "fake" only works outside production; "sandbox"
+    # and "live" call the provider's HTTP API. Keys come from the environment, never the code.
+    gsp_provider: GspProvider = GspProvider.FAKE
+    gsp_base_url: str = ""
+    gsp_client_id: str = ""
+    gsp_client_secret: SecretStr = SecretStr("")
+    gsp_username: str = ""
+    gsp_password: SecretStr = SecretStr("")
+    gsp_timeout_seconds: float = 20.0
+
+    # Where uploaded files (weighbridge slips, delivery proof) are kept; back this folder up.
+    storage_provider: StorageProvider = StorageProvider.LOCAL
+    storage_dir: str = "./data/files"
+    s3_bucket: str = ""
+    s3_endpoint_url: str = ""  # blank for AWS S3
+    s3_region: str = "ap-south-1"
+    s3_access_key_id: str = ""
+    s3_secret_access_key: SecretStr = SecretStr("")
+    s3_prefix: str = ""
+    max_upload_mb: int = 8
+
+    # Where the nightly backups land (the backup container's folder, mounted read-only here).
+    backup_dir: str = ""
+    app_version: str = "1.0.0"
 
     log_level: str = "INFO"
     log_json: bool = False

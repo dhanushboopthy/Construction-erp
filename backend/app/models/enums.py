@@ -81,6 +81,87 @@ class OpeningStatus(StrEnum):
     POSTED = "posted"
 
 
+class PurchaseMode(StrEnum):
+    STOCK = "stock"  # goods come into one of our locations
+    DIRECT = "direct"  # goods go straight to a customer's site (drop-ship, M9)
+
+
+class PurchaseStatus(StrEnum):
+    POSTED = "posted"
+
+
+class PaymentDirection(StrEnum):
+    RECEIVED = "received"  # from a customer
+    PAID = "paid"  # to a supplier or a transporter
+
+
+class PaymentMode(StrEnum):
+    CASH = "cash"
+    UPI = "upi"
+    BANK = "bank"  # transfer; no cheques (B7)
+
+
+class CountStatus(StrEnum):
+    DRAFT = "draft"
+    POSTED = "posted"
+
+
+class SupplyType(StrEnum):
+    B2B = "B2B"  # buyer has a GSTIN
+    B2C = "B2C"  # buyer has none: still a real tax invoice
+
+
+class FulfilmentSource(StrEnum):
+    SHOP = "shop"  # from the stock of the shop billing
+    GODOWN = "godown"  # from another location's stock
+    DIRECT = "direct"  # supplier to the customer's site, no stock moves (B10)
+
+
+class InvoiceStatus(StrEnum):
+    POSTED = "posted"
+
+
+class ApprovalAction(StrEnum):
+    """What an owner PIN can approve at the counter (G18)."""
+
+    CREDIT_OVERRIDE = "credit_override"
+    BELOW_COST = "below_cost"
+    DISCOUNT = "discount"
+    BACKDATE = "backdate"
+    LATE_RETURN = "late_return"  # a return after the return window (B11)
+
+
+class ComplianceStatus(StrEnum):
+    """State of an e-way bill or an e-invoice (IRN) at the government portal."""
+
+    GENERATED = "generated"
+    CANCELLED = "cancelled"
+
+
+class EwaySource(StrEnum):
+    GSP = "gsp"  # made through the GSP API
+    MANUAL = "manual"  # made on the portal by hand, number typed in (fallback)
+
+
+class AttachmentRef(StrEnum):
+    """What a stored file is attached to (B17)."""
+
+    PURCHASE = "purchase"
+    SALES_INVOICE = "sales_invoice"
+    TRIP = "trip"
+
+
+class AttachmentKind(StrEnum):
+    WEIGHBRIDGE = "weighbridge"  # weighbridge slip
+    DELIVERY = "delivery"  # delivery proof
+    OTHER = "other"
+
+
+class ClosingStatus(StrEnum):
+    CLOSED = "closed"  # the shop-day is locked
+    REOPENED = "reopened"  # the owner unlocked it; it can be closed again
+
+
 class AuditAction(StrEnum):
     INSERT = "insert"
     UPDATE = "update"

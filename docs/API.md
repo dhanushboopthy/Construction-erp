@@ -41,6 +41,146 @@ Endpoints that return cost, margin or profit use separate response models for ow
 staff (for example `ItemOwnerOut` and `ItemOut`). Choose the model with `principal.sees_cost`;
 never rely on the UI to hide fields. Test each such endpoint as a counter user.
 
+## Endpoints (Milestone 14)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| GET | `/system/status` | owner |
+| POST | `/system/verify?full=true\|false` | owner |
+
+Every other route needs a sign-in; the only open ones are `/health`, `/health/ready`,
+`/auth/login`, `/auth/refresh` and `/auth/logout`. All `/api` answers are `Cache-Control: no-store`.
+
+## Endpoints (Milestone 13)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| GET | `/gst/gstr1?period=2026-10` | owner, accountant |
+| GET | `/gst/gstr1/export?period=&format=json\|xlsx` | owner, accountant |
+| GET | `/gst/gstr3b?period=` | owner, accountant |
+| POST | `/gst/gstr2b` (multipart: `period`, `file`) | owner, accountant |
+| GET | `/gst/gstr2b?period=` | owner, accountant |
+
+Codes: `BAD_PERIOD`, `GSTR2B_UNREADABLE`, `GSTR2B_EMPTY`.
+
+## Endpoints (Milestone 12)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| GET | `/reports/today` | all roles; payables not for counter, profit owner only |
+| GET | `/closings/preview?location_id=&closing_date=` | owner, accountant; counter: own shop. `profit` for the owner only |
+| POST | `/closings` `{location_id, closing_date, counted_cash, opening_cash?, note?}` | owner, counter (own shop) |
+| POST | `/closings/{id}/reopen` `{reason}` | owner |
+| GET | `/closings` · `/closings/{id}/pdf` | owner, accountant; counter: own shop |
+| GET | `/reports/profit?group=item\|customer\|site&date_from=&date_to=` | owner |
+| GET | `/reports/sales-by-segment?start_year=` | owner, accountant |
+
+New codes: `DAY_CLOSED`, `ALREADY_CLOSED`, `NOT_CLOSED`, `CASH_NOTE_REQUIRED`, `STORAGE_FAILED`,
+`BAD_RANGE`, `RANGE_TOO_LONG`.
+
+## Endpoints (Milestone 11)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| POST | `/attachments` (multipart: `ref_type`, `ref_id`, `kind`, `note?`, `file`) | owner; counter: own shop's purchases and bills |
+| GET | `/attachments?ref_type=&ref_id=` · `/attachments/{id}/file` | owner, accountant; counter: own shop (not trips) |
+| GET | `/schemes` (`party_id`, `alerts_only`) | owner, accountant |
+| POST/PATCH | `/schemes` · `/schemes/{id}` | owner |
+| POST | `/schemes/{id}/book-rebate` | owner |
+
+Purchase lines accept `weight_note`; bill lines accept `slip_weight` and `weight_note`; both come
+back with `weight_variance_pct`, `weight_flagged`, `weight_note`. Codes: `WEIGHT_NOTE_REQUIRED`,
+`FILE_TYPE_NOT_ALLOWED` (400), `FILE_TOO_LARGE` (413), `FILE_EMPTY`, `TOO_MANY_FILES`,
+`FILE_CORRUPT`, `TARGET_NOT_MET`, `REBATE_BOOKED`, `REBATE_ZERO`.
+
+## Endpoints (Milestone 10)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| GET | `/invoices/{id}/eway-bill` · `/invoices/{id}/einvoice` | owner, accountant; counter: own shop |
+| POST | `/invoices/{id}/eway-bill` `{distance_km, from_pincode, to_pincode, vehicle_no?}` | owner, counter (own shop) |
+| POST | `/invoices/{id}/eway-bill/manual` `{number, vehicle_no?, valid_until?}` · `/eway-bill/vehicle` | owner, counter (own shop) |
+| POST | `/invoices/{id}/eway-bill/cancel` `{reason}` · `/invoices/{id}/einvoice/cancel` | owner |
+| POST | `/invoices/{id}/einvoice` `{from_pincode, to_pincode}` | owner, counter (own shop) |
+| GET | `/eway-bills/pending` | owner, accountant, counter (own shop) |
+| POST | `/eway-bills/batch` `{items:[{invoice_id, ...}]}` | owner, counter (own shop) |
+
+The invoice PDF prints the live e-way bill number, and the IRN with its QR. Codes:
+`EWAY_EXISTS`, `EWAY_NUMBER_USED`, `EWAY_CANCEL_WINDOW_CLOSED`, `EINVOICE_NOT_REQUIRED`,
+`EINVOICE_EXISTS`, `EINVOICE_CANCEL_WINDOW_CLOSED`, `SELLER_GSTIN_MISSING`, `VEHICLE_INVALID`.
+A provider failure is 502 (`GSP_TIMEOUT`, `GSP_DOWN`, `GSP_REFUSED`, `GSP_NOT_CONFIGURED`...).
+
+## Endpoints (Milestone 9)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| GET | `/vehicles` (`include_inactive`) | owner, accountant |
+| POST/PATCH | `/vehicles` · `/vehicles/{id}` | owner |
+| GET | `/trips` (`invoice_id`, `vehicle_id`) | owner, accountant |
+| POST | `/trips` `{vehicle_id, location_id, invoice_id?, purchase_id?, from_place, to_place, freight_amount}` | owner |
+| GET | `/drop-ship/open-purchases?item_id=` (quantities only, no cost) | owner, counter |
+| POST | `/drop-ship/links` `{sales_line_id, purchase_line_id}` | owner |
+| GET | `/reports/drop-ship` | owner |
+
+Invoice lines accept `purchase_line_id` for direct lines. The owner's invoice adds
+`drop_ship_purchase` per line and `freight` (profit is after freight). `POST /payments` answers
+with `warnings` (cash above the daily limit to one person). New codes: `LINK_*`,
+`DIRECT_LINK_INVALID`, `LINK_NEEDS_DIRECT`, `VEHICLE_EXISTS`, `VEHICLE_INACTIVE`,
+`TRIP_ONE_DOCUMENT`, `OWN_VEHICLE_FREIGHT`.
+
+## Endpoints (Milestone 8)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| POST | `/credit-notes` `{invoice_id, reason, lines:[{line_id, quantity}], approval_ids}` | owner, counter (own shop); after the return window: owner or a `late_return` approval |
+| GET | `/credit-notes` (`invoice_id`, `party_id`) · `/credit-notes/{id}` · `/credit-notes/{id}/pdf` | owner, accountant; counter: own shop |
+| POST | `/debit-notes` `{purchase_id, reason, lines:[{line_id, quantity}]}` | owner |
+| GET | `/debit-notes` (`purchase_id`, `party_id`) · `/debit-notes/{id}` · `/debit-notes/{id}/pdf` | owner, accountant |
+
+Invoice lines now carry `returned_qty` (base units taken back so far). `quantity` in a return is
+in the unit of the bill line. New error codes: `RETURN_WINDOW_CLOSED`, `RETURN_TOO_MUCH`,
+`RETURN_LINE_REPEATED`.
+
+## Endpoints (Milestone 7)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| POST | `/auth/pin` | owner (sets their approval PIN; needs their password) |
+| POST | `/approvals` `{pin, action, reason, party_id}` | owner, counter |
+| POST | `/payments` (`direction` received or paid, `allocations`, `Idempotency-Key`) | received: owner, counter at own shop; paid: owner |
+| GET | `/payments` | owner, accountant; counter: own shop's receipts only |
+| GET | `/parties/{id}/open-bills?account=` | signed in; payable side not for counter |
+| POST | `/invoices` and `/invoices/preview` now take `payments` and `approval_ids` | owner, counter |
+
+## Endpoints (Milestone 6)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| POST | `/invoices/preview` | owner, counter (own shop): prices, tax, stock and problems; nothing saved |
+| POST | `/invoices` (`Idempotency-Key`) | owner, counter (own shop) |
+| GET | `/invoices` (`q`, `party_id`, `date_from`, `date_to`) · `/invoices/{id}` · `/invoices/{id}/pdf` | owner, accountant; counter: own shop. Cost and profit: owner only |
+
+## Endpoints (Milestone 5)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| GET | `/rates/market?on=` · `/rates/market/{item_id}/history` · `/rates/resolve?item_id=&party_id=&on=` | signed in; cost, margin and suggestion for the owner only |
+| PUT | `/rates/market` (`{effective_date, rates:[{item_id, rate, unit}]}`) | owner |
+| GET/POST/PATCH | `/customer-rates` | owner |
+| GET/PUT | `/margins` | owner |
+
+## Endpoints (Milestone 4)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| GET | `/cost-components` · POST/PATCH (owner) | owner, counter read |
+| POST | `/purchases/preview` | owner (landed cost, nothing saved) |
+| POST/GET | `/purchases` · GET `/purchases/{id}` | enter: owner, counter (own shop, if allowed); read: all, counter's own shop only; money fields owner only |
+| POST/GET | `/payments` (`Idempotency-Key` header) | create: owner; read: owner, accountant |
+| POST/GET | `/transfers` · GET `/transfers/{id}` | owner, counter (out of own shop) |
+| POST/GET | `/stock-counts` · GET `/{id}` · PUT `/{id}/lines` | owner, counter (own shop); rupee variance owner only |
+| POST | `/stock-counts/{id}/post` | owner |
+
 ## Endpoints (Milestone 3)
 
 | Method | Path | Who |

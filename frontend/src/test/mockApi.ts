@@ -7,6 +7,7 @@ export interface Call {
   method: string;
   path: string;
   body: unknown;
+  headers: Record<string, string>;
 }
 
 export function mockApi(routes: Record<string, Handler>) {
@@ -16,7 +17,12 @@ export function mockApi(routes: Record<string, Handler>) {
     const method = (init?.method ?? "GET").toUpperCase();
     const path = url.pathname.replace(/^\/api\/v1/, "");
     const body = typeof init?.body === "string" ? (JSON.parse(init.body) as unknown) : undefined;
-    calls.push({ method, path, body });
+    calls.push({
+      method,
+      path,
+      body,
+      headers: Object.fromEntries(new Headers(init?.headers).entries()),
+    });
     const handler = routes[`${method} ${path}`];
     if (!handler) {
       return new Response(JSON.stringify({ code: "NOT_FOUND", message: "no mock" }), {
@@ -87,6 +93,7 @@ export const SETTINGS: ShopSettings = {
   eway_threshold_interstate: "50000.00",
   eway_threshold_intrastate: "100000.00",
   einvoice_enabled: false,
+  counter_can_enter_purchases: true,
   timezone: "Asia/Kolkata",
 };
 
@@ -144,3 +151,49 @@ export const PARTY = {
 };
 
 export const page = <T>(items: T[]) => ({ items, total: items.length, limit: 200, offset: 0 });
+
+export const SUPPLIER = {
+  ...PARTY,
+  id: 40,
+  name: "Steel Mills",
+  type: "supplier" as const,
+  segment: null,
+  credit_allowed: false,
+  credit_limit: null,
+  credit_days: null,
+  sites: [],
+};
+
+export const COMPONENTS = [
+  {
+    id: 1,
+    name: "Unloading",
+    basis: "per_ton" as const,
+    default_amount: "250.00",
+    is_active: true,
+  },
+  { id: 2, name: "Weighbridge", basis: "flat" as const, default_amount: "150.00", is_active: true },
+];
+
+export const PREVIEW = {
+  goods_value: "550000.00",
+  gst_amount: "99000.00",
+  charges_total: "6650.00",
+  supplier_payable: "649000.00",
+  gst_in_cost: false,
+  lines: [
+    {
+      item_id: 10,
+      item_name: "TMT bar 12 mm Fe500D",
+      base_unit: "kg",
+      billed_qty: "10000.000",
+      received_qty: "10000.000",
+      goods_value: "550000.00",
+      gst_amount: "99000.00",
+      charges_total: "6650.00",
+      total_cost: "556650.00",
+      unit_cost: "55.6650",
+      costs: [],
+    },
+  ],
+};

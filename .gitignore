@@ -31,3 +31,4 @@ backups/
 
 # uploaded files in local development
 backend/data/
+docker-compose.override.yml

@@ -4,7 +4,8 @@ Quantity is tracked per location, but the average cost is company-wide, so movin
 between a shop and the godown never changes its value.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import date
 from decimal import Decimal
 
 from app.domain.money import ZERO, Numberish, qty, to_decimal, unit_cost
@@ -51,3 +52,39 @@ def issue(position: StockPosition, quantity: Numberish) -> StockPosition:
             f"only {position.quantity} in stock, cannot issue {q_out} (rule B13)"
         )
     return StockPosition(qty(position.quantity - q_out), position.avg_cost)
+
+
+@dataclass(frozen=True)
+class StockMove:
+    """One row of the stock ledger as the domain sees it (never edited, only appended)."""
+
+    entry_date: date
+    location: str
+    qty_in: Decimal
+    qty_out: Decimal
+    unit_cost: Decimal
+
+
+@dataclass(frozen=True)
+class Replay:
+    total: StockPosition  # all locations together: quantity and the company-wide average cost
+    by_location: dict[str, Decimal] = field(default_factory=dict)
+
+
+def replay(moves: list[StockMove]) -> Replay:
+    """Rebuild quantity and average cost from the ledger (G6).
+
+    One average per item for the whole business; quantity is also kept per location. Moves are
+    taken by date, then in the order given. A transfer is an out and an in at the average, so
+    it never changes the average. When stock runs out the next receipt sets the cost."""
+    position = EMPTY
+    per_location: dict[str, Decimal] = {}
+    for _index, move in sorted(enumerate(moves), key=lambda p: (p[1].entry_date, p[0])):
+        if move.qty_in > ZERO:
+            position = receive(position, move.qty_in, move.unit_cost)
+        if move.qty_out > ZERO:
+            position = issue(position, move.qty_out)
+        per_location[move.location] = (
+            per_location.get(move.location, ZERO) + move.qty_in - move.qty_out
+        )
+    return Replay(position, {k: qty(v) for k, v in per_location.items()})

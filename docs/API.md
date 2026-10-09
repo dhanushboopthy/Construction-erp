@@ -41,6 +41,16 @@ Endpoints that return cost, margin or profit use separate response models for ow
 staff (for example `ItemOwnerOut` and `ItemOut`). Choose the model with `principal.sees_cost`;
 never rely on the UI to hide fields. Test each such endpoint as a counter user.
 
+## Endpoints (Milestone 3)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| GET/POST | `/opening` · PATCH/DELETE `/opening/{id}` (drafts only) | owner |
+| POST | `/opening/post` `{kinds: [...]}` | owner |
+| GET | `/stock` (`location_id`, `q`, `include_zero`) | signed in; `avg_cost` and `value` for the owner only |
+| GET | `/parties/{id}/statement?site_id=` | signed in; supplier payable side hidden from counter staff |
+| GET | `/reports/dues?account=receivable\|payable` | receivable: all roles; payable: owner and accountant |
+
 ## Endpoints (Milestone 2)
 
 | Method | Path | Who |

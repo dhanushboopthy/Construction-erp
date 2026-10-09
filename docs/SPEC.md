@@ -116,6 +116,17 @@ cannot change once created (it is printed inside document numbers).
   `unit:factor[:whole]` separated by commas). Same name updates the item; one bad row refuses the
   whole file; `dry_run=true` checks without saving.
 
+**Built (Milestone 3):** `opening_balance`, `stock_ledger`, `party_ledger` (see ADR 0006). The
+stock ledger moved here from Milestone 4 because opening stock is its first writer.
+
+- `opening_balance.kind`: `stock`, `receivable` (a customer owes us), `customer_advance`,
+  `payable` (we owe a supplier), `supplier_advance`. Draft until posted, then locked.
+- `party_ledger` replaces the `v_party_ledger` view of the first spec; balances and aging are
+  computed by `domain.ledger` (aging buckets 0-30, 31-60, over 60 days since the bill).
+- Both ledgers are append-only, enforced by database triggers.
+- Supplier payables, advances and what we owe are visible to the owner and accountant, not to
+  counter staff; customers' dues are visible to all three roles.
+
 **To build** (milestone in brackets):
 
 | Group | Table | Key columns |

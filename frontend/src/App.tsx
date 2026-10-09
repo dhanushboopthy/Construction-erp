@@ -11,16 +11,18 @@ import { ComingSoonPage } from "@/pages/ComingSoonPage";
 import { ItemsPage } from "@/pages/items/ItemsPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { PartiesPage } from "@/pages/parties/PartiesPage";
+import { OpeningPage } from "@/pages/opening/OpeningPage";
 import { LocationsPage } from "@/pages/settings/LocationsPage";
 import { SettingsLayout } from "@/pages/settings/SettingsLayout";
 import { ShopSettingsPage } from "@/pages/settings/ShopSettingsPage";
 import { UsersPage } from "@/pages/settings/UsersPage";
+import { StockPage } from "@/pages/stock/StockPage";
 import { TodayPage } from "@/pages/TodayPage";
 
 const queryClient = createQueryClient();
 
 /** Modules that have real screens; the rest show a placeholder until their milestone. */
-const BUILT = new Set(["/settings", "/items", "/parties"]);
+const BUILT = new Set(["/settings", "/items", "/parties", "/stock"]);
 
 export function App({ client = queryClient }: { client?: QueryClient }) {
   return (
@@ -48,12 +50,21 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
                 <Route index element={<ShopSettingsPage />} />
                 <Route path="users" element={<UsersPage />} />
                 <Route path="locations" element={<LocationsPage />} />
+                <Route path="opening" element={<OpeningPage />} />
               </Route>
               <Route
                 path="/items"
                 element={
                   <RequireRole roles={["owner", "counter", "accountant"]}>
                     <ItemsPage />
+                  </RequireRole>
+                }
+              />
+              <Route
+                path="/stock"
+                element={
+                  <RequireRole roles={["owner", "counter", "accountant"]}>
+                    <StockPage />
                   </RequireRole>
                 }
               />

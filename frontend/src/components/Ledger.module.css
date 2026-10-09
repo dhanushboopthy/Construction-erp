@@ -577,3 +577,30 @@ fieldset.choices legend {
   padding-top: var(--space-2);
   border-top: 1px solid var(--color-rule);
 }
+
+/* The one yellow band in the app: the bill total (docs/DESIGN.md). */
+.billTotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-tag);
+  color: var(--color-on-tag);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+
+.billTotal strong {
+  font-size: var(--text-figure);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.problem {
+  margin: 0;
+  padding-left: var(--space-2);
+  border-left: 3px solid var(--color-critical);
+  color: var(--color-critical);
+  font-size: var(--text-sm);
+}

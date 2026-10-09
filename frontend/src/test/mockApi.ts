@@ -7,6 +7,7 @@ export interface Call {
   method: string;
   path: string;
   body: unknown;
+  headers: Record<string, string>;
 }
 
 export function mockApi(routes: Record<string, Handler>) {
@@ -16,7 +17,12 @@ export function mockApi(routes: Record<string, Handler>) {
     const method = (init?.method ?? "GET").toUpperCase();
     const path = url.pathname.replace(/^\/api\/v1/, "");
     const body = typeof init?.body === "string" ? (JSON.parse(init.body) as unknown) : undefined;
-    calls.push({ method, path, body });
+    calls.push({
+      method,
+      path,
+      body,
+      headers: Object.fromEntries(new Headers(init?.headers).entries()),
+    });
     const handler = routes[`${method} ${path}`];
     if (!handler) {
       return new Response(JSON.stringify({ code: "NOT_FOUND", message: "no mock" }), {

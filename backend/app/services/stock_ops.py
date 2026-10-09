@@ -98,6 +98,7 @@ def create_transfer(
             raise BusinessRuleError(str(exc), code="UNIT_NOT_WHOLE", field="quantity") from exc
 
     # Rule B13: check the origin holds enough of every item before moving anything.
+    ledgers.lock_items(db, set(wanted))
     positions = {}
     for item_id, base_qty in wanted.items():
         position, at_origin = ledgers.stock_position(db, item_id, origin.id)

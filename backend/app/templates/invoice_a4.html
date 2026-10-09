@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tax invoice {{ inv.number }}</title>
+<style>
+  @page { size: A4; margin: 12mm 12mm 14mm 12mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 8.5pt; color: #1c2321; margin: 0; }
+  h1 { font-size: 14pt; margin: 0; }
+  .row { display: flex; justify-content: space-between; gap: 8mm; }
+  .box { border: 0.3mm solid #1c2321; padding: 2mm 3mm; }
+  .grow { flex: 1; }
+  .muted { color: #5b6661; }
+  .right { text-align: right; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  table { width: 100%; border-collapse: collapse; margin-top: 3mm; }
+  th, td { border: 0.25mm solid #1c2321; padding: 1mm 1.5mm; vertical-align: top; }
+  th { background: #eceeec; font-weight: 600; text-align: left; }
+  th.num { text-align: right; }
+  .total-band { margin-top: 3mm; border: 0.5mm solid #1c2321; background: #f2c230; padding: 2.5mm 3mm;
+                display: flex; justify-content: space-between; font-size: 12pt; font-weight: 700; }
+  .small { font-size: 7.5pt; }
+  .mark { position: fixed; top: 38%; left: 8%; font-size: 90pt; color: rgba(180, 35, 24, 0.13);
+          transform: rotate(-30deg); letter-spacing: 8mm; z-index: -1; }
+  .copy { font-size: 8pt; border: 0.3mm solid #1c2321; padding: 0.5mm 2mm; }
+  .sign { margin-top: 12mm; }
+</style>
+</head>
+<body>
+{% if test_mark %}<div class="mark">TEST</div>{% endif %}
+<div class="row">
+  <div class="grow">
+    <h1>{{ seller.trade_name or seller.legal_name }}</h1>
+    {% if seller.trade_name %}<div class="muted">{{ seller.legal_name }}</div>{% endif %}
+    <div style="white-space: pre-line">{{ seller.address }}</div>
+    <div>{% if seller.phone %}Phone {{ seller.phone }}{% endif %}{% if seller.email %} · {{ seller.email }}{% endif %}</div>
+    <div><strong>GSTIN:</strong> {{ seller.gstin or "—" }} · <strong>State:</strong> {{ seller.state_code }} {{ seller.state_name }}</div>
+  </div>
+  <div class="right">
+    <h1>TAX INVOICE</h1>
+    <div><span class="copy">{{ copy_label }}</span></div>
+  </div>
+</div>
+
+<div class="row" style="margin-top: 3mm">
+  <div class="box grow">
+    <div><strong>Invoice no.</strong> {{ inv.number }}</div>
+    <div><strong>Date</strong> {{ inv.invoice_date.strftime("%d-%m-%Y") }}{% if inv.due_date and inv.due_date != inv.invoice_date %} · <strong>Due</strong> {{ inv.due_date.strftime("%d-%m-%Y") }}{% endif %}</div>
+    <div><strong>Place of supply</strong> {{ inv.place_of_supply }} {{ place_name }} ({{ "Intra-state: CGST + SGST" if intra else "Inter-state: IGST" }})</div>
+    {% if inv.vehicle_no %}<div><strong>Vehicle</strong> {{ inv.vehicle_no }}</div>{% endif %}
+    {% if eway_no %}<div><strong>E-way bill</strong> {{ eway_no }}</div>{% endif %}
+  </div>
+  <div class="box grow">
+    <div class="muted">Bill to</div>
+    <div><strong>{{ inv.bill_to_name }}</strong></div>
+    <div style="white-space: pre-line">{{ inv.bill_to_address }}</div>
+    <div>GSTIN: {{ inv.bill_to_gstin or "Unregistered (B2C)" }}</div>
+  </div>
+  <div class="box grow">
+    <div class="muted">Ship to</div>
+    {% if inv.ship_to_name %}
+      <div><strong>{{ inv.ship_to_name }}</strong></div>
+      <div style="white-space: pre-line">{{ inv.ship_to_address }}</div>
+      <div>GSTIN: {{ inv.ship_to_gstin or "URP" }}</div>
+    {% else %}<div>Collected from the shop</div>{% endif %}
+  </div>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th><th>Description</th><th>HSN</th><th class="num">Qty</th><th class="num">Rate</th>
+      <th class="num">Discount</th><th class="num">Taxable</th>
+      {% if intra %}<th class="num">CGST</th><th class="num">SGST</th>{% else %}<th class="num">IGST</th>{% endif %}
+      <th class="num">Amount</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for l in lines %}
+    <tr>
+      <td>{{ l.line_no }}</td>
+      <td>{{ l.description }}{% if l.stock_after is not none %}<div class="muted small">Stock left: {{ l.stock_after }} {{ l.base_unit }}</div>{% endif %}</td>
+      <td>{{ l.hsn }}</td>
+      <td class="num">{{ l.qty_text }}</td>
+      <td class="num">{{ l.rate_text }}</td>
+      <td class="num">{{ l.discount_text }}</td>
+      <td class="num">{{ l.taxable_text }}</td>
+      {% if intra %}
+        <td class="num">{{ l.cgst_text }}<div class="muted small">{{ l.half_rate }}%</div></td>
+        <td class="num">{{ l.sgst_text }}<div class="muted small">{{ l.half_rate }}%</div></td>
+      {% else %}
+        <td class="num">{{ l.igst_text }}<div class="muted small">{{ l.gst_rate }}%</div></td>
+      {% endif %}
+      <td class="num">{{ l.total_text }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<div class="row" style="margin-top: 3mm">
+  <div class="grow">
+    <div><strong>Amount in words:</strong> {{ words }}</div>
+    {% if inv.pending_balance_at_billing and inv.pending_balance_at_billing != "0.00" %}
+    <div style="margin-top: 2mm"><strong>Pending balance before this bill:</strong> ₹ {{ pending_text }}</div>
+    {% endif %}
+    {% if seller.bank_name %}
+    <div style="margin-top: 3mm" class="small"><strong>Bank:</strong> {{ seller.bank_name }} · A/c {{ seller.bank_account_no }} · IFSC {{ seller.bank_ifsc }}</div>
+    {% endif %}
+    {% if seller.invoice_terms %}<div class="small" style="white-space: pre-line; margin-top: 2mm"><strong>Terms</strong><br>{{ seller.invoice_terms }}</div>{% endif %}
+  </div>
+  <div style="width: 70mm">
+    <table style="margin-top: 0">
+      <tr><td>Taxable value</td><td class="num">{{ totals.taxable }}</td></tr>
+      {% if intra %}
+      <tr><td>CGST</td><td class="num">{{ totals.cgst }}</td></tr>
+      <tr><td>SGST</td><td class="num">{{ totals.sgst }}</td></tr>
+      {% else %}
+      <tr><td>IGST</td><td class="num">{{ totals.igst }}</td></tr>
+      {% endif %}
+      <tr><td>Round off</td><td class="num">{{ totals.round_off }}</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="total-band"><span>Bill total</span><span>₹ {{ totals.grand_total }}</span></div>
+
+<div class="row sign">
+  <div class="small muted">Subject to the jurisdiction of the shop's city. This is a computer generated tax invoice.</div>
+  <div class="right">For {{ seller.trade_name or seller.legal_name }}<br><br>Authorised signatory</div>
+</div>
+</body>
+</html>

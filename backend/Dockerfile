@@ -9,6 +9,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     UV_PROJECT_ENVIRONMENT=/opt/venv \
     PATH="/opt/venv/bin:$PATH"
 WORKDIR /app
+# WeasyPrint draws the A4 invoice PDFs with Pango; DejaVu supplies the rupee sign.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libpango-1.0-0 libpangoft2-1.0-0 fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/*
 
 # ---------- dev: all dependencies, code mounted as a volume, auto-reload ----------
 FROM base AS dev

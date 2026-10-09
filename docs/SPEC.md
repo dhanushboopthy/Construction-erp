@@ -157,6 +157,28 @@ stock ledger moved here from Milestone 4 because opening stock is its first writ
 - Counter staff and the accountant can read the selling rate and resolve a price; they never
   receive cost, margin, suggestion or flags. Customer rates and margins are owner-only.
 
+**Built (Milestone 6):** `sales_invoice`, `sales_line`; Walk-in customer party seeded.
+
+- Saving a bill is one transaction: advisory locks on its items (so two counters cannot sell the
+  last bag together, B13), price from rates (B3), tax per line then totals with a round-off line
+  (G3), next gapless number, stock-out rows at the average cost, receivable debit on the
+  customer's account (and site), commit.
+- Place of supply is the ship-to site's state, else the billing shop's; the seller state is the
+  shop settings' state; same state means CGST + SGST, otherwise IGST (G5). A customer with a GSTIN
+  makes a B2B bill, otherwise a B2C tax invoice: still a real bill (ADR 0005).
+- Counter staff cannot choose a price, give a discount or back-date; the API answers 409
+  `DISCOUNT_NEEDS_OWNER` or `BACKDATE_NEEDS_OWNER` with `requires_owner_approval` (owner PIN in
+  Milestone 7). A price below average cost needs the owner (`BELOW_COST`, message without figures).
+  Owner discounts need a reason (G10).
+- Each line keeps the average cost at the time (`cost_per_unit`); profit per line and bill is
+  taxable less cost and is shown to the owner only. A bill also keeps the customer's pending
+  balance and the stock left after each line, for printing.
+- `Idempotency-Key` on create: a repeat returns the first bill; the same key for another customer
+  or shop is a conflict (G19).
+- A4 PDF: `GET /invoices/{id}/pdf?copy=` via WeasyPrint, template `app/templates/invoice_a4.html`
+  behind the `InvoiceRenderer` interface (a thermal layout can be added). Outside production the PDF
+  carries a TEST watermark (ADR 0005).
+
 **To build** (milestone in brackets):
 
 | Group | Table | Key columns |

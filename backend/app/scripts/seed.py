@@ -20,7 +20,8 @@ from app.core.db import SessionLocal
 from app.core.security import hash_password
 from app.core.tenancy import TENANT_ID
 from app.domain.landed_cost import ChargeBasis
-from app.models.enums import LocationKind, Role
+from app.models.enums import LocationKind, PartyType, Role
+from app.models.masters import Party
 from app.models.purchasing import CostComponent
 from app.models.setup import AppUser, Location, ShopSettings
 
@@ -104,6 +105,21 @@ def seed(db: Session) -> list[str]:
                 )
             )
             notes.append(f"created charge type {name}")
+
+    # Walk-in sales are normal B2C tax invoices to this party (ADR 0005).
+    if not db.execute(
+        select(Party.id).where(Party.tenant_id == TENANT_ID, Party.name == "Walk-in customer")
+    ).first():
+        db.add(
+            Party(
+                tenant_id=TENANT_ID,
+                name="Walk-in customer",
+                type=PartyType.CUSTOMER,
+                state_code=state_code,
+                address="",
+            )
+        )
+        notes.append("created party Walk-in customer")
 
     for username, full_name, role, codes in USERS:
         exists = db.execute(

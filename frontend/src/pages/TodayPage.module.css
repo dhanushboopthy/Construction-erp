@@ -1,0 +1,41 @@
+.title {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-xl);
+  font-weight: 600;
+}
+
+/* One ledger strip divided by rules, not a row of cards. */
+.strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  margin: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-md);
+}
+
+.figure {
+  padding: var(--space-3) var(--space-4);
+  border-left: 1px solid var(--color-rule);
+}
+
+.figure:first-child {
+  border-left: 0;
+}
+
+.figure dt {
+  font-size: var(--text-sm);
+  color: var(--color-steel);
+}
+
+.figure dd {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-figure);
+  font-weight: 600;
+  text-align: left;
+}
+
+.note {
+  color: var(--color-steel);
+  font-size: var(--text-sm);
+}

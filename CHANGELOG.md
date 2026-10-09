@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.0 (Milestone 5)
+
+- Daily market rates per item with history, customer-specific rates with periods, owner-only
+  margins and a suggested rate (cost + margin), warnings below cost or minimum margin.
+- Price resolution: customer rate, else latest market rate on or before the date, else blocked.
+- Rates quoted per ton or bag, stored per base unit without GST; GST-inclusive quoting supported.
+- Screen: Daily rates (Alt+7) with a one-sheet rate entry and a Customer rates tab.
+
 ## 0.5.0 (Milestone 4)
 
 - Purchase entry with landed cost per base unit (charges per ton, unit, trip or flat), weighbridge

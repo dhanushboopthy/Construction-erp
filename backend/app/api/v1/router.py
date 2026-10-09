@@ -10,6 +10,7 @@ from app.api.v1 import (
     opening,
     parties,
     purchases,
+    rates,
     settings,
     stock,
     stock_ops,
@@ -30,3 +31,4 @@ api_router.include_router(stock.router)
 api_router.include_router(dues.router)
 api_router.include_router(purchases.router)
 api_router.include_router(stock_ops.router)
+api_router.include_router(rates.router)

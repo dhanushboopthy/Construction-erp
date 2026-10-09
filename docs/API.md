@@ -41,6 +41,15 @@ Endpoints that return cost, margin or profit use separate response models for ow
 staff (for example `ItemOwnerOut` and `ItemOut`). Choose the model with `principal.sees_cost`;
 never rely on the UI to hide fields. Test each such endpoint as a counter user.
 
+## Endpoints (Milestone 5)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| GET | `/rates/market?on=` · `/rates/market/{item_id}/history` · `/rates/resolve?item_id=&party_id=&on=` | signed in; cost, margin and suggestion for the owner only |
+| PUT | `/rates/market` (`{effective_date, rates:[{item_id, rate, unit}]}`) | owner |
+| GET/POST/PATCH | `/customer-rates` | owner |
+| GET/PUT | `/margins` | owner |
+
 ## Endpoints (Milestone 4)
 
 | Method | Path | Who |

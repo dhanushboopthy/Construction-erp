@@ -91,3 +91,4 @@ def require_roles(*roles: Role) -> Callable[[Principal], Principal]:
 
 OwnerOnly = Annotated[Principal, Depends(require_roles(Role.OWNER))]
 OwnerOrAccountant = Annotated[Principal, Depends(require_roles(Role.OWNER, Role.ACCOUNTANT))]
+OwnerOrCounter = Annotated[Principal, Depends(require_roles(Role.OWNER, Role.COUNTER))]

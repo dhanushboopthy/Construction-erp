@@ -175,3 +175,34 @@ class TestUnitAndWeightGuards:
         # 10,050 received against 10,000 billed: +0.50%, not above 0.50%, nothing short.
         result = check_weight("10000", "10050", "0.5")
         assert not result.flagged and result.shortage_value("55") == D("0.00")
+
+
+class TestUnitConversionBetweenUnits:
+    """Milestone 2: bag <-> ton and piece <-> kg conversions."""
+
+    def test_ton_to_kg_and_back(self):
+        from app.domain.units import UnitConversion, convert
+
+        ton, kg = UnitConversion("ton", D("1000")), UnitConversion("kg", D("1"))
+        # 2.5 ton x 1000 = 2,500 kg; 2,500 kg / 1000 = 2.5 ton.
+        assert convert("2.5", ton, kg) == D("2500.000")
+        assert convert("2500", kg, ton) == D("2.500")
+
+    def test_cement_bag_to_ton(self):
+        from app.domain.units import UnitConversion, convert
+
+        # Cement base unit is the bag; 1 ton = 20 bags of 50 kg. 30 bags = 1.5 ton.
+        bag, ton = UnitConversion("bag", D("1"), whole_only=True), UnitConversion("ton", D("20"))
+        assert convert("30", bag, ton) == D("1.500")
+        # 1.5 ton = 30 bags; 1.51 ton = 30.2 bags, which cannot be sold as a fraction.
+        assert convert("1.5", ton, bag) == D("30.000")
+        with pytest.raises(ValueError, match="whole"):
+            convert("1.51", ton, bag)
+
+    def test_pieces_to_kg_uses_theoretical_weight(self):
+        from app.domain.units import pieces_to_kg
+
+        # 12 mm TMT bar, 12 m long, 10.656 kg per piece: 25 pieces = 266.400 kg.
+        assert pieces_to_kg("25", "10.656") == D("266.400")
+        with pytest.raises(ValueError, match="weight per piece"):
+            pieces_to_kg("25", "0")

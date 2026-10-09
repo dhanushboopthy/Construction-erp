@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 
 import type { ModuleLink } from "@/modules";
 
-/** Alt+1..9 jumps between modules so counter staff never need the mouse. */
+/** Alt+1..9 and Alt+0 jump between modules so counter staff never need the mouse. */
 export function useModuleShortcuts(modules: ModuleLink[]): void {
   const navigate = useNavigate();
   useEffect(() => {

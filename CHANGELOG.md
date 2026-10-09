@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0 (Milestone 2)
+
+- Item master: category, brand, HSN, GST rate, base unit, size, grade, theoretical weight per
+  piece, unit conversions (bag ↔ ton, piece ↔ kg), owner-only warning margin.
+- Customers, suppliers and customer delivery sites; credit terms are owner-only.
+- Excel import with a check-first step and per-row errors; downloadable template.
+- Screens: Items (Alt+0) and Customers and suppliers (Alt+5), with search, unit converter and
+  site management. Counter staff see items without any margin figure.
+
 ## 0.2.0 (2026-10-09)
 
 - Milestone 0 closed: frontend installed, lint and format fixed, `package-lock.json` committed,

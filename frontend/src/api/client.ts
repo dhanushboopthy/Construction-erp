@@ -61,7 +61,8 @@ export async function refreshSession(): Promise<TokenResponse | null> {
 
 export async function api<T>(path: string, init: RequestInit = {}, retry = true): Promise<T> {
   const headers = new Headers(init.headers);
-  if (init.body !== undefined && !headers.has("Content-Type")) {
+  // A FormData body (file upload) sets its own multipart Content-Type with the boundary.
+  if (init.body !== undefined && !(init.body instanceof FormData) && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
   if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
@@ -80,3 +81,17 @@ export async function api<T>(path: string, init: RequestInit = {}, retry = true)
 }
 
 export const json = (value: unknown): string => JSON.stringify(value);
+
+/** Download a file (spreadsheet, PDF) with the access token and hand it to the browser. */
+export async function downloadFile(path: string, filename: string): Promise<void> {
+  const headers = new Headers();
+  if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
+  const response = await fetch(`/api/v1${path}`, { headers, credentials: "include" });
+  if (!response.ok) throw await parseError(response);
+  const url = URL.createObjectURL(await response.blob());
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}

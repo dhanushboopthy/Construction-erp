@@ -345,3 +345,72 @@ fieldset.choices legend {
     grid-template-columns: 1fr;
   }
 }
+
+/* ------------------------------------------------------------ filters, tabs and small bits */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: end;
+}
+
+.filters > * {
+  min-width: 160px;
+}
+
+.search {
+  flex: 1 1 220px;
+}
+
+.results {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-top: 1px solid var(--color-rule);
+  font-size: var(--text-xs);
+  color: var(--color-steel);
+}
+
+.pillRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pill {
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+}
+
+.sub {
+  color: var(--color-steel);
+  font-size: var(--text-xs);
+}
+
+.errorList {
+  margin: 0;
+  padding-left: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-critical);
+}
+
+.inline {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: var(--space-2);
+  align-items: end;
+}
+
+.resultBox {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  background: var(--color-slab);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}

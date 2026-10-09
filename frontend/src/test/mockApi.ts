@@ -99,3 +99,48 @@ export function session(user: User): Record<string, Handler> {
     "GET /auth/me": () => ({ body: user }),
   };
 }
+
+export const TMT_ITEM = {
+  id: 10,
+  name: "TMT bar 12 mm Fe500D",
+  category: "tmt" as const,
+  brand: "Kamachi",
+  hsn: "72142090",
+  gst_rate: "18.00",
+  base_unit: "kg",
+  base_whole_only: false,
+  size: "12 mm",
+  grade: "Fe500D",
+  weight_per_piece_kg: "10.656",
+  is_active: true,
+  units: [{ id: 1, unit: "ton", factor_to_base: "1000.000000", whole_only: false }],
+};
+
+export const PARTY = {
+  id: 20,
+  name: "Ravi Builders",
+  type: "customer" as const,
+  segment: "contractor" as const,
+  gstin: null,
+  state_code: "33",
+  address: "",
+  phone: "9876543210",
+  credit_allowed: true,
+  credit_limit: "15000.00",
+  credit_days: 10,
+  is_active: true,
+  created_at: "2026-10-09T10:00:00Z",
+  sites: [
+    {
+      id: 30,
+      party_id: 20,
+      name: "Anna Nagar villa",
+      address: "",
+      state_code: "33",
+      gstin: null,
+      is_active: true,
+    },
+  ],
+};
+
+export const page = <T>(items: T[]) => ({ items, total: items.length, limit: 200, offset: 0 });

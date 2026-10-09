@@ -16,6 +16,28 @@ class LocationKind(StrEnum):
     GODOWN = "godown"
 
 
+class ItemCategory(StrEnum):
+    TMT = "tmt"
+    PIPE = "pipe"
+    CEMENT = "cement"
+    WIRE = "wire"
+    ANGLE = "angle"
+    CHANNEL = "channel"
+    OTHER = "other"
+
+
+class PartyType(StrEnum):
+    CUSTOMER = "customer"
+    SUPPLIER = "supplier"
+    BOTH = "both"
+
+
+class CustomerSegment(StrEnum):
+    RETAIL = "retail"
+    CONTRACTOR = "contractor"
+    BULK = "bulk"
+
+
 class AuditAction(StrEnum):
     INSERT = "insert"
     UPDATE = "update"

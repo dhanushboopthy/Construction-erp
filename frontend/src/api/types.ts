@@ -18,6 +18,23 @@ export type PasswordReset = Schemas["PasswordReset"];
 export type ShopSettings = Schemas["ShopSettingsOut"];
 export type ShopSettingsUpdate = Schemas["ShopSettingsUpdate"];
 export type TokenResponse = Schemas["TokenResponse"];
+export type Item = Schemas["ItemOut"];
+export type ItemOwner = Schemas["ItemOwnerOut"];
+export type ItemCreate = Schemas["ItemCreate"];
+export type ItemUpdate = Schemas["ItemUpdate"];
+export type ItemUnit = Schemas["ItemUnitOut"];
+export type ItemCategory = Schemas["ItemCategory"];
+export type ImportResult = Schemas["ImportResult"];
+export type Conversion = Schemas["ConversionOut"];
+export type Party = Schemas["PartyOut"];
+export type PartyCreate = Schemas["PartyCreate"];
+export type PartyUpdate = Schemas["PartyUpdate"];
+export type PartyType = Schemas["PartyType"];
+export type Site = Schemas["SiteOut"];
+export type SiteCreate = Schemas["SiteCreate"];
+export type SiteUpdate = Schemas["SiteUpdate"];
+export type CustomerSegment = Schemas["CustomerSegment"];
+export type Page<T> = { items: T[]; total: number; limit: number; offset: number };
 export type AuditLogEntry = Schemas["AuditLogOut"];
 
 /** Error body returned by the API for every failure (core/errors.py adds the extras). */

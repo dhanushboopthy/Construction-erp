@@ -32,3 +32,22 @@ def to_base(quantity: Numberish, conversion: UnitConversion) -> Decimal:
 
 def from_base(base_quantity: Numberish, conversion: UnitConversion) -> Decimal:
     return qty(to_decimal(base_quantity) / conversion.factor_to_base)
+
+
+def convert(quantity: Numberish, source: UnitConversion, target: UnitConversion) -> Decimal:
+    """Convert between two units of the same item through the base unit.
+
+    The result respects `whole_only` of the target (bags and pieces are never fractions)."""
+    base = to_base(quantity, source)
+    result = from_base(base, target)
+    if target.whole_only and result != result.to_integral_value():
+        raise ValueError(f"{target.unit} must be a whole number")
+    return result
+
+
+def pieces_to_kg(pieces: Numberish, weight_per_piece_kg: Numberish) -> Decimal:
+    """Theoretical weight of a number of pieces (gap fix G7). Weighbridge weight overrides it."""
+    per_piece = to_decimal(weight_per_piece_kg)
+    if per_piece <= ZERO:
+        raise ValueError("weight per piece must be positive")
+    return qty(to_decimal(pieces) * per_piece)

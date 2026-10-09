@@ -14,6 +14,8 @@ dependencies = [
     "alembic>=1.14",
     "pyjwt>=2.10",
     "pwdlib[argon2]>=0.2",
+    "openpyxl>=3.1.5",
+    "python-multipart>=0.0.32",
 ]
 
 [dependency-groups]
@@ -68,6 +70,10 @@ python_version = "3.13"
 strict = true
 plugins = ["pydantic.mypy"]
 exclude = ["alembic/versions/"]
+
+[[tool.mypy.overrides]]
+module = ["openpyxl", "openpyxl.*"]
+ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = ["tests.*"]

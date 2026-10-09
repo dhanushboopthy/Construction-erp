@@ -456,7 +456,7 @@ def test_party_rules_and_filters(client):
     ).json()
     customers = client.get("/api/v1/parties?kind=customer", headers=headers).json()
     suppliers = client.get("/api/v1/parties?kind=supplier", headers=headers).json()
-    assert [p["name"] for p in customers["items"]] == ["Both Co"]
+    assert {p["name"] for p in customers["items"]} == {"Both Co", "Walk-in customer"}
     assert {p["name"] for p in suppliers["items"]} == {"Both Co", "Steel Mills Ltd"}
     assert client.get("/api/v1/parties?q=steel", headers=headers).json()["total"] == 1
 
@@ -476,4 +476,6 @@ def test_party_rules_and_filters(client):
     assert mism.status_code == 409 and mism.json()["code"] == "GSTIN_STATE_MISMATCH"
     off = client.patch(f"/api/v1/parties/{both['id']}", headers=headers, json={"is_active": False})
     assert off.status_code == 200
-    assert client.get("/api/v1/parties", headers=headers).json()["total"] == 1
+    assert (
+        client.get("/api/v1/parties", headers=headers).json()["total"] == 2
+    )  # Steel Mills Ltd and the seeded Walk-in customer

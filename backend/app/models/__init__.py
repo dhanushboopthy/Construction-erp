@@ -9,6 +9,7 @@ from app.models.numbering import DocumentSequence
 from app.models.opening import OpeningBalance
 from app.models.purchasing import CostComponent, Payment, Purchase, PurchaseCost, PurchaseLine
 from app.models.rates import CustomerRate, ItemMargin, MarketRate
+from app.models.sales import SalesInvoice, SalesLine
 from app.models.setup import AppUser, Location, ShopSettings, UserLocation
 from app.models.stock_ops import StockCount, StockCountLine, StockTransfer, StockTransferLine
 
@@ -32,6 +33,8 @@ __all__ = [
     "Purchase",
     "PurchaseCost",
     "PurchaseLine",
+    "SalesInvoice",
+    "SalesLine",
     "ShopSettings",
     "Site",
     "StockCount",

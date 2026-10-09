@@ -16,6 +16,8 @@ import { PurchasesPage } from "@/pages/purchases/PurchasesPage";
 import { CustomerRatesPage } from "@/pages/rates/CustomerRatesPage";
 import { RateBoardPage } from "@/pages/rates/RateBoardPage";
 import { RatesLayout } from "@/pages/rates/RatesLayout";
+import { BillEntryPage } from "@/pages/sales/BillEntryPage";
+import { SalesPage } from "@/pages/sales/SalesPage";
 import { OpeningPage } from "@/pages/opening/OpeningPage";
 import { ChargeTypesPage } from "@/pages/settings/ChargeTypesPage";
 import { LocationsPage } from "@/pages/settings/LocationsPage";
@@ -31,7 +33,15 @@ import { TodayPage } from "@/pages/TodayPage";
 const queryClient = createQueryClient();
 
 /** Modules that have real screens; the rest show a placeholder until their milestone. */
-const BUILT = new Set(["/settings", "/items", "/parties", "/stock", "/purchases", "/rates"]);
+const BUILT = new Set([
+  "/settings",
+  "/items",
+  "/parties",
+  "/stock",
+  "/purchases",
+  "/rates",
+  "/sales",
+]);
 
 export function App({ client = queryClient }: { client?: QueryClient }) {
   return (
@@ -67,6 +77,22 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
                 element={
                   <RequireRole roles={["owner", "counter", "accountant"]}>
                     <ItemsPage />
+                  </RequireRole>
+                }
+              />
+              <Route
+                path="/sales"
+                element={
+                  <RequireRole roles={["owner", "counter", "accountant"]}>
+                    <SalesPage />
+                  </RequireRole>
+                }
+              />
+              <Route
+                path="/sales/new"
+                element={
+                  <RequireRole roles={["owner", "counter"]}>
+                    <BillEntryPage />
                   </RequireRole>
                 }
               />

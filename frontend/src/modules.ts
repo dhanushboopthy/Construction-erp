@@ -24,7 +24,7 @@ export const MODULES: ModuleLink[] = [
     path: "/sales",
     label: "Sales bills",
     shortcut: "2",
-    roles: ["owner", "counter"],
+    roles: ALL,
     milestone: 6,
     purpose: "Create GST invoices, with pending balance and remaining stock on the bill.",
   },

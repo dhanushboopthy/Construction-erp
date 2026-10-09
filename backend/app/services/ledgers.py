@@ -7,7 +7,7 @@ cost are always recomputed from these rows by the domain functions."""
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.errors import NotFoundError
@@ -98,6 +98,15 @@ def add_party_entry(
 
 
 # ---------------------------------------------------------------------------- stock
+
+
+def lock_items(db: Session, item_ids: set[int]) -> None:
+    """Serialise stock-out for these items until the transaction ends (rule B13).
+
+    Two counters selling the last bag at once would otherwise both pass the stock check. The
+    locks are taken in id order so two bills with the same items cannot deadlock."""
+    for item_id in sorted(item_ids):
+        db.execute(select(func.pg_advisory_xact_lock(item_id)))
 
 
 def stock_position(

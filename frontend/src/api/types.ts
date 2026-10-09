@@ -67,6 +67,13 @@ export type MarketRatesResult = Schemas["MarketRatesResult"];
 export type CustomerRate = Schemas["CustomerRateOut"];
 export type CustomerRateCreate = Schemas["CustomerRateCreate"];
 export type MarginOut = Schemas["MarginOut"];
+export type InvoiceCreate = Schemas["InvoiceCreate"];
+export type InvoiceLineIn = Schemas["InvoiceLineIn"];
+export type InvoicePreview = Schemas["InvoicePreview"];
+export type InvoiceSummary = Schemas["InvoiceSummary"];
+export type Invoice = Schemas["InvoiceOut"];
+export type InvoiceOwner = Schemas["InvoiceOwnerOut"];
+export type FulfilmentSource = Schemas["FulfilmentSource"];
 export type AuditLogEntry = Schemas["AuditLogOut"];
 
 /** Error body returned by the API for every failure (core/errors.py adds the extras). */

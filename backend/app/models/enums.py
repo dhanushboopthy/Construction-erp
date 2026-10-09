@@ -106,6 +106,21 @@ class CountStatus(StrEnum):
     POSTED = "posted"
 
 
+class SupplyType(StrEnum):
+    B2B = "B2B"  # buyer has a GSTIN
+    B2C = "B2C"  # buyer has none: still a real tax invoice
+
+
+class FulfilmentSource(StrEnum):
+    SHOP = "shop"  # from the stock of the shop billing
+    GODOWN = "godown"  # from another location's stock
+    DIRECT = "direct"  # supplier to the customer's site, no stock moves (B10)
+
+
+class InvoiceStatus(StrEnum):
+    POSTED = "posted"
+
+
 class AuditAction(StrEnum):
     INSERT = "insert"
     UPDATE = "update"

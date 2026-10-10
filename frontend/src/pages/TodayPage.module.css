@@ -1,47 +1,56 @@
 .title {
-  margin: 0 0 var(--space-4);
+  margin: 0 0 var(--space-5);
+  font-family: var(--font-display);
   font-size: var(--text-xl);
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: var(--tracking-tight);
+  line-height: 1.15;
 }
 
-/* One ledger strip divided by rules, not a row of cards. */
+/* Today's figures as widgets. */
 .strip {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
   margin: 0;
-  background: var(--color-surface);
-  border: 1px solid var(--color-rule);
-  border-radius: var(--radius-md);
 }
 
 .figure {
-  padding: var(--space-3) var(--space-4);
-  border-left: 1px solid var(--color-rule);
-}
-
-.figure:first-child {
-  border-left: 0;
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  container-type: inline-size;
 }
 
 .figure dt {
   font-size: var(--text-sm);
-  color: var(--color-steel);
+  font-weight: 500;
+  color: var(--color-secondary);
 }
 
 .figure dd {
-  margin: var(--space-1) 0 0;
-  font-size: var(--text-figure);
-  font-weight: 600;
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-display);
+  /* Scales with the tile so a lakh-sized figure never spills out. */
+  font-size: clamp(1.25rem, 14cqi, var(--text-figure));
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  letter-spacing: var(--tracking-tight);
+  line-height: 1.05;
   text-align: left;
 }
 
 .note {
-  color: var(--color-steel);
+  color: var(--color-secondary);
   font-size: var(--text-sm);
 }
 
 .stockTitle {
-  margin: var(--space-5) 0 var(--space-3);
+  margin: var(--space-6) 0 var(--space-3);
+  font-family: var(--font-display);
   font-size: var(--text-lg);
   font-weight: 600;
+  letter-spacing: var(--tracking-tight);
 }

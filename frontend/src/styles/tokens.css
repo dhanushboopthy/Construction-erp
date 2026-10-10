@@ -2,43 +2,67 @@
  * Design tokens. Source of truth: docs/DESIGN.md. Components use these variables only,
  * never raw hex values.
  *
- * Palette is taken from the trade itself: concrete slab grey for the page, graphite ink,
- * oxide green (painted structural steel) for actions, and bundle-tag yellow (the tags on
- * steel bundles) used in one place only: the bill total and the active row.
+ * Apple-style system: light grey grouped background, white rounded cards, one blue accent,
+ * system semantic colours for status. Dark mode: `data-theme="dark"` on <html>, set before
+ * paint by public/theme-init.js (saved choice, else the operating system) and by the toggle.
  */
 :root {
-  --color-slab: #f3f4f2;
+  color-scheme: light;
+
+  --color-bg: #f5f5f7;
   --color-surface: #ffffff;
-  --color-ink: #1c2321;
-  --color-steel: #5b6661;
-  --color-rule: #d5d9d6;
-  /* Input and control borders: 3.7:1 on white, the non-text contrast floor is 3:1. */
-  --color-rule-strong: #7d8783;
-  --color-oxide: #2f5d50;
-  --color-oxide-strong: #24493f;
-  --color-on-oxide: #ffffff;
-  --color-tag: #f2c230;
-  --color-on-tag: #1c2321;
-  --color-good: #2e7d4f;
-  --color-warn: #a16207;
-  --color-critical: #b42318;
-  --color-focus: #1f6feb;
+  --color-surface-raised: #ffffff;
+  --color-fill: #e8e8ed; /* segmented controls, grey buttons */
+  --color-fill-hover: #dcdce1;
+  --color-label: #1d1d1f;
+  --color-secondary: #6e6e73;
+  --color-separator: #e5e5ea;
+  /* Input and control borders: 3.3:1 on white, the non-text contrast floor is 3:1. */
+  --color-control-border: #8e8e93;
+  --color-accent: #0071e3;
+  --color-accent-strong: #0062c4;
+  --color-accent-soft: rgb(0 113 227 / 10%);
+  --color-on-accent: #ffffff;
+  /* The bill total card (dark, like an Apple Pay summary). */
+  --color-hero: #1d1d1f;
+  --color-on-hero: #ffffff;
+  --color-good: #1e7b34;
+  --color-good-soft: rgb(36 138 61 / 12%);
+  --color-warn: #b25000;
+  --color-warn-soft: rgb(255 149 0 / 14%);
+  --color-critical: #d70015;
+  --color-critical-soft: rgb(255 59 48 / 10%);
+  --color-focus: rgb(0 113 227 / 35%);
 
-  /* Sidebar (ink background). */
-  --color-sidebar-text: #e7ebe8;
-  --color-sidebar-muted: #9aa6a1;
-  --color-sidebar-rule: #39433f;
-  --color-sidebar-hover: #28322f;
+  /* Chart series (Apple system colours). */
+  --color-chart-1: #0071e3;
+  --color-chart-2: #ff9500;
+  --color-chart-3: #af52de;
+  --color-chart-4: #aeaeb2;
 
-  --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", "Noto Sans Tamil", sans-serif;
+  /* Sidebar: translucent, blurred over the page. */
+  --color-sidebar: rgb(246 246 248 / 78%);
+  --color-sidebar-hover: rgb(0 0 0 / 5%);
+  --color-bar: rgb(255 255 255 / 72%);
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 4%), 0 0 0 0.5px rgb(0 0 0 / 6%);
+  --shadow-raised: 0 4px 16px rgb(0 0 0 / 8%), 0 0 0 0.5px rgb(0 0 0 / 6%);
+  --shadow-thumb: 0 1px 3px rgb(0 0 0 / 12%), 0 0 0 0.5px rgb(0 0 0 / 4%);
+
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter Variable", "Inter", "Segoe UI",
+    "Noto Sans Tamil", system-ui, sans-serif;
+  --font-display:
+    -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter Variable", "Inter", "Segoe UI",
+    "Noto Sans Tamil", system-ui, sans-serif;
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-md: 1rem;
   --text-lg: 1.25rem;
-  --text-xl: 1.75rem;
-  --text-figure: 2.25rem;
+  --text-xl: 2rem;
+  --text-figure: 2.5rem;
+  --tracking-tight: -0.022em;
 
-  /* Dense spacing scale for a data-heavy counter screen. */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -46,9 +70,47 @@
   --space-5: 24px;
   --space-6: 32px;
 
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --sidebar-width: 224px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 980px;
+  --control-height: 40px;
+  --sidebar-width: 248px;
   --panel-width: 400px;
-  --duration-fast: 120ms;
+  --duration-fast: 160ms;
+  --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #000000;
+  --color-surface: #1c1c1e;
+  --color-surface-raised: #2c2c2e;
+  --color-fill: #2c2c2e;
+  --color-fill-hover: #3a3a3c;
+  --color-label: #f5f5f7;
+  --color-secondary: #98989d;
+  --color-separator: #38383a;
+  --color-control-border: #7c7c80;
+  --color-accent: #0a84ff;
+  --color-accent-strong: #409cff;
+  --color-accent-soft: rgb(10 132 255 / 18%);
+  --color-hero: #2c2c2e;
+  --color-good: #30d158;
+  --color-good-soft: rgb(48 209 88 / 16%);
+  --color-warn: #ff9f0a;
+  --color-warn-soft: rgb(255 159 10 / 16%);
+  --color-critical: #ff453a;
+  --color-critical-soft: rgb(255 69 58 / 16%);
+  --color-focus: rgb(10 132 255 / 50%);
+  --color-chart-1: #0a84ff;
+  --color-chart-2: #ff9f0a;
+  --color-chart-3: #bf5af2;
+  --color-chart-4: #636366;
+  --color-sidebar: rgb(28 28 30 / 78%);
+  --color-sidebar-hover: rgb(255 255 255 / 7%);
+  --color-bar: rgb(0 0 0 / 65%);
+  --shadow-card: 0 0 0 0.5px rgb(255 255 255 / 8%);
+  --shadow-raised: 0 4px 16px rgb(0 0 0 / 40%), 0 0 0 0.5px rgb(255 255 255 / 10%);
+  --shadow-thumb: 0 1px 3px rgb(0 0 0 / 40%);
 }

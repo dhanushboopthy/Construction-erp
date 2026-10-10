@@ -187,8 +187,8 @@ export function RateBoardPage() {
                           width: 90,
                           textAlign: "right",
                           padding: "4px 8px",
-                          border: "1px solid var(--color-rule-strong)",
-                          borderRadius: 4,
+                          border: "1px solid var(--color-control-border)",
+                          borderRadius: 8,
                         }}
                       />
                     ) : null}
@@ -218,8 +218,8 @@ export function RateBoardPage() {
                         width: 110,
                         textAlign: "right",
                         padding: "4px 8px",
-                        border: "1px solid var(--color-rule-strong)",
-                        borderRadius: 4,
+                        border: "1px solid var(--color-control-border)",
+                        borderRadius: 8,
                       }}
                     />
                   </td>

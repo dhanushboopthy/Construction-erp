@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.0: new look
+
+- Apple-style interface: system font (Inter fallback), frosted sidebar with icons, large titles,
+  rounded cards, segmented-control tabs, pill buttons, blue accent and focus glow.
+- Light and dark mode with a sun/moon toggle in the top bar; follows the system until chosen.
+- The bill total is a dark hero card; Today's figures are widgets that scale to fit.
+
 ## 1.0.0 (Milestone 14): ready for go-live checks
 
 - The database refuses to delete issued documents or change their figures (ADR 0010).

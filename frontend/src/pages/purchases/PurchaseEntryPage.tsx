@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useState, type FormEvent, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router";
 
+import { ApiError } from "@/api/client";
 import { toFormError } from "@/api/errors";
 import { useItems } from "@/api/masters";
 import { previewPurchase, useCostComponents, useCreatePurchase } from "@/api/purchasing";
+import { useOrders } from "@/api/orders";
 import { useLocations } from "@/api/setup";
 import { useParties } from "@/api/masters";
 import type { PurchaseCreate, PurchasePreview } from "@/api/types";
 import { useAuth } from "@/auth/AuthContext";
+import { ApprovalPrompt } from "@/components/ApprovalPrompt";
 import { Button } from "@/components/Button";
 import { CheckField, SelectField, TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
@@ -27,6 +30,8 @@ interface LineRow {
   weightNote: string;
   rate: string;
   gst: string;
+  mfgWeek: string;
+  mfgYear: string;
   charges: ChargeRow[];
 }
 
@@ -38,6 +43,8 @@ const emptyLine = (): LineRow => ({
   weightNote: "",
   rate: "",
   gst: "",
+  mfgWeek: "",
+  mfgYear: "",
   charges: [],
 });
 const DECIMAL = /^\d+(\.\d+)?$/;
@@ -70,6 +77,8 @@ export function PurchaseEntryPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [focusLine, setFocusLine] = useState<number | null>(null);
+  const [orderId, setOrderId] = useState("");
+  const [needsOwner, setNeedsOwner] = useState<string | null>(null);
   const [preview, setPreview] = useState<PurchasePreview | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
 
@@ -79,6 +88,10 @@ export function PurchaseEntryPage() {
   );
   const itemById = (id: string) => itemList.find((i) => String(i.id) === id);
   const supplierList = (suppliers.data?.items ?? []).filter((s) => s.is_active);
+  const orders = useOrders(true, supplierId);
+  const orderList = (orders.data ?? []).filter(
+    (o) => !locationId || String(o.location_id) === locationId,
+  );
   const placeList = locations.data ?? [];
 
   function payload(): PurchaseCreate | null {
@@ -97,6 +110,7 @@ export function PurchaseEntryPage() {
         return null;
       if (line.gst && !DECIMAL.test(line.gst)) return null;
       if (line.charges.some((c) => !c.componentId || !DECIMAL.test(c.amount))) return null;
+      if (Boolean(line.mfgWeek) !== Boolean(line.mfgYear)) return null;
       out.push({
         item_id: Number(line.itemId),
         unit: line.unit,
@@ -105,6 +119,8 @@ export function PurchaseEntryPage() {
         weight_note: line.received && line.weightNote.trim() ? line.weightNote.trim() : null,
         rate: line.rate,
         gst_rate: line.gst || null,
+        mfg_week: line.mfgWeek ? Number(line.mfgWeek) : null,
+        mfg_year: line.mfgYear ? Number(line.mfgYear) : null,
         charges: line.charges.map((c) => ({
           component_id: Number(c.componentId),
           amount: c.amount,
@@ -120,6 +136,7 @@ export function PurchaseEntryPage() {
       due_date: dueDate || null,
       mode,
       note: note.trim() || null,
+      purchase_order_id: orderId ? Number(orderId) : null,
       lines: out,
     };
   }
@@ -186,6 +203,10 @@ export function PurchaseEntryPage() {
       if (l.received && (!DECIMAL.test(l.received) || Number(l.received) <= 0))
         found[`${i}.received`] = "Enter a quantity above 0.";
       if (!DECIMAL.test(l.rate)) found[`${i}.rate`] = "Enter the rate on the bill.";
+      if (Boolean(l.mfgWeek) !== Boolean(l.mfgYear))
+        found[`${i}.mfgWeek`] = "Give the week and its year, or neither.";
+      else if (l.mfgWeek && (Number(l.mfgWeek) < 1 || Number(l.mfgWeek) > 53))
+        found[`${i}.mfgWeek`] = "A week is 1 to 53.";
       l.charges.forEach((c, j) => {
         if (!c.componentId) found[`${i}.c${j}.type`] = "Pick a charge type.";
         if (!DECIMAL.test(c.amount)) found[`${i}.c${j}.amount`] = "Enter an amount.";
@@ -194,16 +215,18 @@ export function PurchaseEntryPage() {
     return found;
   }
 
-  async function onSubmit(event?: FormEvent) {
+  async function onSubmit(event?: FormEvent, approvalIds: number[] = []) {
     event?.preventDefault();
     const found = validate();
     setErrors(found);
     setServerError(null);
     if (Object.keys(found).length > 0 || !body) return;
     try {
-      const saved = await create.mutateAsync(body);
+      const saved = await create.mutateAsync({ ...body, approval_ids: approvalIds });
       void navigate("/purchases", { state: { saved: saved.number } });
     } catch (err) {
+      // A bill that differs from its order: the owner types a PIN, or the shop fixes the bill.
+      if (err instanceof ApiError && err.requiresOwnerApproval) return setNeedsOwner(err.message);
       setServerError(toFormError(err).message);
     }
   }
@@ -255,6 +278,24 @@ export function PurchaseEntryPage() {
                 </option>
               ))}
             </SelectField>
+            {orderList.length > 0 || orderId ? (
+              <SelectField
+                label="Against order"
+                value={orderId}
+                onChange={(e) => {
+                  setOrderId(e.target.value);
+                  setNeedsOwner(null);
+                }}
+                hint="Optional. The bill is checked against the order and the goods received."
+              >
+                <option value="">No order</option>
+                {orderList.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.number} ({o.order_date})
+                  </option>
+                ))}
+              </SelectField>
+            ) : null}
             <SelectField
               label="Goods arrive at"
               value={locationId}
@@ -378,6 +419,26 @@ export function PurchaseEntryPage() {
                     Remove
                   </Button>
                 </div>
+                {item?.category === "cement" ? (
+                  <div className={styles.filters}>
+                    <TextField
+                      label="Week made (on the bag)"
+                      inputMode="numeric"
+                      className={styles.amount}
+                      value={line.mfgWeek}
+                      onChange={(e) => setLine(i, { mfgWeek: e.target.value })}
+                      error={errors[`${i}.mfgWeek`]}
+                      hint="Optional. Cement is sold oldest week first."
+                    />
+                    <TextField
+                      label="Year made"
+                      inputMode="numeric"
+                      className={styles.amount}
+                      value={line.mfgYear}
+                      onChange={(e) => setLine(i, { mfgYear: e.target.value })}
+                    />
+                  </div>
+                ) : null}
                 {item ? (
                   <p className={styles.sub}>
                     GST {trimDecimal(item.gst_rate)}% · leave Received blank when the weighbridge
@@ -467,6 +528,14 @@ export function PurchaseEntryPage() {
             <Button onClick={addLine}>Add line</Button>
           </div>
           <TextField label="Note" value={note} onChange={(e) => setNote(e.target.value)} />
+          {needsOwner ? (
+            <ApprovalPrompt
+              actions={["po_mismatch"]}
+              partyId={null}
+              messages={[needsOwner]}
+              onApproved={(ids) => void onSubmit(undefined, ids)}
+            />
+          ) : null}
           {serverError ? (
             <p role="alert" className={styles.formError}>
               {serverError}

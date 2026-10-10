@@ -111,6 +111,14 @@ class ShopSettings(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
         default=Decimal("80"), server_default="80"
     )
     exception_shortage_count: Mapped[int] = mapped_column(Integer, default=3, server_default="3")
+    # FM10: how far a supplier bill may go past the goods received (or ordered), and above the
+    # order rate, before the owner must approve it. Tight by default; zero means exactly.
+    po_qty_tolerance_pct: Mapped[Percent] = mapped_column(
+        default=Decimal("1.00"), server_default="1.00"
+    )
+    po_rate_tolerance_pct: Mapped[Percent] = mapped_column(
+        default=Decimal("0.50"), server_default="0.50"
+    )
 
     __audit_exclude__ = frozenset({"updated_at"})
 

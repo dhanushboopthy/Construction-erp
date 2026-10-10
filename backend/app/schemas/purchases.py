@@ -58,6 +58,15 @@ class PurchaseLineIn(Schema):
     charges: list[ChargeIn] = Field(default_factory=list)
     # B14: needed when the received weight differs from the billed weight by more than the setting.
     weight_note: str | None = Field(default=None, max_length=300)
+    # FM10: the manufacturing week printed on the bags (cement only, optional).
+    mfg_week: int | None = Field(default=None, ge=1, le=53)
+    mfg_year: int | None = Field(default=None, ge=2000, le=2100)
+
+    @model_validator(mode="after")
+    def _week_with_year(self) -> Self:
+        if (self.mfg_week is None) != (self.mfg_year is None):
+            raise ValueError("Give both the manufacturing week and its year, or neither")
+        return self
 
 
 class PurchaseCreate(Schema):
@@ -69,6 +78,10 @@ class PurchaseCreate(Schema):
     mode: PurchaseMode = PurchaseMode.STOCK
     note: str | None = Field(default=None, max_length=500)
     lines: list[PurchaseLineIn] = Field(min_length=1, max_length=100)
+    # FM10: the purchase order this bill is against, and the owner's approval (po_mismatch) for a
+    # bill that does not match it.
+    purchase_order_id: int | None = None
+    approval_ids: list[int] = Field(default_factory=list, max_length=5)
 
     @field_validator("due_date")
     @classmethod
@@ -98,6 +111,8 @@ class PurchaseLineOut(Schema):
     weight_variance_pct: Decimal = Decimal("0")
     weight_flagged: bool = False
     weight_note: str | None = None
+    mfg_week: int | None = None
+    mfg_year: int | None = None
 
 
 class PurchaseCostOut(Schema):
@@ -135,6 +150,9 @@ class PurchaseOut(Schema):
     mode: PurchaseMode
     status: PurchaseStatus
     note: str | None
+    purchase_order_id: int | None = None
+    purchase_order_number: str | None = None
+    match_approved: bool = False  # an owner approval let a bill that differs from its order in
     lines: list[PurchaseLineOut]
 
 

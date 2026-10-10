@@ -52,6 +52,8 @@ class ShopSettingsBase(Schema):
     exception_returns_days: int = Field(default=30, ge=1, le=365)
     exception_cash_near_pct: Decimal = Field(default=Decimal("80"), ge=0, le=100)
     exception_shortage_count: int = Field(default=3, ge=0, le=100)
+    po_qty_tolerance_pct: Decimal = Field(default=Decimal("1"), ge=0, le=100)
+    po_rate_tolerance_pct: Decimal = Field(default=Decimal("0.5"), ge=0, le=100)
 
     @field_validator("gstin")
     @classmethod

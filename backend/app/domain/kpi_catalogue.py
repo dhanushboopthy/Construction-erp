@@ -557,6 +557,33 @@ CATALOGUE: tuple[Kpi, ...] = (
         Direction.NONE,
         "₹",
     ),
+    # FM10: orders, lots and demand
+    Kpi(
+        "ppv",
+        "Purchase price variance",
+        "Σ (rate on the supplier bill - rate on the purchase order) x quantity billed, on bills "
+        "entered against an order",
+        "Money paid above (plus) or below (minus) the rate you agreed on the order.",
+        "Order ₹55,000 a ton, bill ₹55,500 for 10 t = ₹5,000 over",
+        "purchase_line.rate, purchase_order_line.rate",
+        True,
+        Refresh.LIVE,
+        Direction.DOWN,
+        "₹",
+    ),
+    Kpi(
+        "fill_rate",
+        "Fill rate",
+        "Quantity supplied ÷ (quantity supplied + quantity logged as asked for but out of stock) "
+        "x 100",
+        "How often a customer who asks gets what they asked for. Low means stock-outs.",
+        "90 bags sold and 10 asked for with none in stock = 90 ÷ 100 = 90 %",
+        "sales_line.base_qty, lost_sale.base_qty",
+        False,
+        Refresh.LIVE,
+        Direction.UP,
+        "%",
+    ),
 )
 
 

@@ -11,6 +11,7 @@ import { ComingSoonPage } from "@/pages/ComingSoonPage";
 import { ItemsPage } from "@/pages/items/ItemsPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { PartiesPage } from "@/pages/parties/PartiesPage";
+import { OrdersPage } from "@/pages/purchases/OrdersPage";
 import { PurchaseEntryPage } from "@/pages/purchases/PurchaseEntryPage";
 import { PurchasesPage } from "@/pages/purchases/PurchasesPage";
 import { CustomerRatesPage } from "@/pages/rates/CustomerRatesPage";
@@ -29,6 +30,7 @@ import { LocationsPage } from "@/pages/settings/LocationsPage";
 import { SettingsLayout } from "@/pages/settings/SettingsLayout";
 import { ShopSettingsPage } from "@/pages/settings/ShopSettingsPage";
 import { UsersPage } from "@/pages/settings/UsersPage";
+import { LostSalesPage } from "@/pages/stock/LostSalesPage";
 import { ShrinkagePage } from "@/pages/stock/ShrinkagePage";
 import { StockAnalysisPage } from "@/pages/stock/StockAnalysisPage";
 import { StockValuePage } from "@/pages/stock/StockValuePage";
@@ -37,6 +39,7 @@ import { CountsPage } from "@/pages/stock/CountsPage";
 import { ClosingPage } from "@/pages/reports/ClosingPage";
 import { BankPage } from "@/pages/reports/BankPage";
 import { DuesPage } from "@/pages/reports/DuesPage";
+import { OrderMatchPage } from "@/pages/reports/OrderMatchPage";
 import { ExceptionsPage } from "@/pages/reports/ExceptionsPage";
 import { GstPage } from "@/pages/reports/GstPage";
 import { ItcRiskPage } from "@/pages/reports/ItcRiskPage";
@@ -151,6 +154,14 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
                 }
               />
               <Route
+                path="/purchases/orders"
+                element={
+                  <RequireRole roles={["owner", "counter", "accountant"]}>
+                    <OrdersPage />
+                  </RequireRole>
+                }
+              />
+              <Route
                 path="/purchases/schemes"
                 element={
                   <RequireRole roles={["owner", "accountant"]}>
@@ -205,6 +216,14 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
                 <Route path="transfers" element={<TransfersPage />} />
                 <Route path="counts" element={<CountsPage />} />
                 <Route path="adjustments" element={<AdjustmentsPage />} />
+                <Route
+                  path="lost-sales"
+                  element={
+                    <RequireRole roles={["owner", "counter"]}>
+                      <LostSalesPage />
+                    </RequireRole>
+                  }
+                />
                 <Route
                   path="analysis"
                   element={
@@ -324,6 +343,14 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
                   element={
                     <RequireRole roles={["owner", "accountant"]}>
                       <BankPage />
+                    </RequireRole>
+                  }
+                />
+                <Route
+                  path="order-match"
+                  element={
+                    <RequireRole roles={["owner"]}>
+                      <OrderMatchPage />
                     </RequireRole>
                   }
                 />

@@ -41,6 +41,30 @@ Endpoints that return cost, margin or profit use separate response models for ow
 staff (for example `ItemOwnerOut` and `ItemOut`). Choose the model with `principal.sees_cost`;
 never rely on the UI to hide fields. Test each such endpoint as a counter user.
 
+## Endpoints (FM10: orders, receipts, match report, lost sales)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| POST | `/purchase-orders` (`supplier_id`, `location_id`, `order_date`, `expected_date`, `lines[item_id, unit, quantity, rate]`) | owner only |
+| GET | `/purchase-orders?supplier_id=&open_only=` | owner (rates, value); counter (own shop) and accountant (quantities only) |
+| GET | `/purchase-orders/{id}` | same |
+| POST | `/purchase-orders/{id}/receipts` (`receipt_date`, `note`, `lines[order_line_id, quantity]`) | owner, counter (own shop, today) |
+| GET | `/reports/match-exceptions?date_from=&date_to=&all_lines=` (30 days by default) | owner only |
+| POST | `/lost-sales` (`location_id`, `item_id`, `quantity`, `unit`, `note`, `entry_date`) | owner, counter (own shop, today) |
+| GET | `/lost-sales?date_from=&date_to=` (7 days by default) | owner (with `value`), counter (own shop, quantities) |
+| GET | `/reports/fill-rate?period=2026-10` | owner (with `lost_value`), counter (own shop, quantities) |
+
+`POST /purchases` gains `purchase_order_id` and `approval_ids` (an approval with action
+`po_mismatch`), and each line gains optional `mfg_week` and `mfg_year` (cement only). The purchase
+answer gains `purchase_order_id`, `purchase_order_number`, `match_approved` and per-line lots.
+Invoice lines gain `lots` (label, week, year, quantity taken). Errors: `MATCH_EXCEPTION` (409,
+`requires_owner_approval`; the message names quantities and rates in words, never a rupee value),
+`APPROVAL_INVALID`, `ORDER_SUPPLIER_MISMATCH`, `ORDER_PLACE_MISMATCH`, `LOT_ONLY_CEMENT`,
+`BAD_LOT`, `LINE_REPEATED`, `BAD_DATES`, `BACKDATE_NEEDS_OWNER`, `FUTURE_DATE`, `UNKNOWN_UNIT`,
+`UNIT_NOT_WHOLE`, `FUTURE_PERIOD`. Settings gain `po_qty_tolerance_pct` and
+`po_rate_tolerance_pct`. The accountant gets 403 on receipts, lost sales, fill rate and the match
+report.
+
 ## Endpoints (FM8: profit cuts, ITC at risk)
 
 | Method | Path | Who |

@@ -63,6 +63,7 @@ from app.services import closing as closing_service
 from app.services import credit as credit_service
 from app.services import items as item_service
 from app.services import ledgers
+from app.services import lots as lot_service
 from app.services import payments as payment_service
 from app.services import rates as rate_service
 from app.services import returns as returns_service
@@ -628,6 +629,7 @@ def create(
             if supplier_line is not None:
                 transport_service.add_link(db, line, supplier_line, actor_id)
         if line.source_location_id is not None:
+            lot_service.record_picks(db, line, priced_line.item, line.source_location_id)
             ledgers.add_stock_move(
                 db,
                 item_id=line.item_id,
@@ -766,9 +768,11 @@ def invoice_view(db: Session, inv: SalesInvoice, with_cost: bool) -> InvoiceOut 
     }
     returned = returns_service.returned_on_invoice(db, inv.id)
 
+    lots = lot_service.lots_for_lines(db, [x.id for x in inv.lines])
+
     def line_out(x: SalesLine) -> InvoiceLineOut:
         return InvoiceLineOut.model_validate(x).model_copy(
-            update={"returned_qty": returned.get(x.id, ZERO)}
+            update={"returned_qty": returned.get(x.id, ZERO), "lots": lots.get(x.id, [])}
         )
 
     if not with_cost:

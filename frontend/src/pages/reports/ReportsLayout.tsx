@@ -18,6 +18,7 @@ const TABS = [
   { to: "/reports/working-capital", label: "Working capital", end: false, roles: ["owner"] },
   { to: "/reports/overrides", label: "Price overrides", end: false, roles: ["owner"] },
   { to: "/reports/bank", label: "Bank", end: false, roles: ["owner", "accountant"] },
+  { to: "/reports/order-match", label: "Order matches", end: false, roles: ["owner"] },
   { to: "/reports/exceptions", label: "Exceptions", end: false, roles: ["owner"] },
   { to: "/reports/dues", label: "Dues", end: false, roles: ["owner", "accountant"] },
   {

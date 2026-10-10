@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.8.0 (FM7): controls and exceptions
+
+- Books lock (owner, Settings): lock the books through a date after a return is filed. A bill,
+  receipt, credit or debit note, cash-book voucher, adjustment, stock count, transfer, write-off,
+  rebate or supplier bill dated on or before it is refused ("PERIOD_LOCKED"). Moving the lock
+  earlier, or removing it, needs a reason and is written to the audit log. A month-end checklist
+  shows what needs a look first.
+- Reports, Bank (owner, accountant): upload the bank's CSV (any bank, columns are found by name).
+  Every line is matched to a receipt, supplier payment, deposit or withdrawal of the same amount
+  and direction within a few days, a matching UPI or bank reference first. Lines with no entry,
+  and entries the bank never showed (a failed or fake UPI), are listed. Matching is worked out
+  when you open the page, so a late entry finds its line. Statements are permanent.
+- Reports, Exceptions (owner): round-number stock adjustments, adjustments just before a stock
+  count, many returns from one customer, entries dated well before they were keyed in, cash near
+  the daily limit and repeated weighbridge shortages from one supplier. The limits are in
+  Settings; zero switches a check off.
+- Settings, Audit log (owner): who changed what and when, with filters and the before and after.
+- Settings gain the bank matching days and the exception limits.
+
 ## 1.7.0 (FM6): inventory analytics and replenishment
 
 - Stock, Analysis (owner): items to reorder now (reorder point = average daily sales x lead time

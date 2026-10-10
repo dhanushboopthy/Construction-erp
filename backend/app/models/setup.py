@@ -1,11 +1,12 @@
 """Setup tables: shop settings, locations, users and their location assignments."""
 
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
+    Date,
     DateTime,
     ForeignKey,
     Integer,
@@ -94,6 +95,22 @@ class ShopSettings(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
     nrv_writedown_enabled: Mapped[bool] = mapped_column(
         Boolean, default=True, server_default="true"
     )
+    # FM7: nothing may be dated on or before this day (F18). Set and reopened only through
+    # /period-lock, with a reason, so the settings form never carries it.
+    locked_through: Mapped[date | None] = mapped_column(Date)
+    # FM7: how far apart in days a bank line and a receipt may be and still match.
+    bank_match_days: Mapped[int] = mapped_column(Integer, default=3, server_default="3")
+    # FM7: thresholds for the owner's exception report. Zero switches a rule off.
+    exception_round_amount: Mapped[Money] = mapped_column(
+        default=Decimal("1000.00"), server_default="1000.00"
+    )
+    exception_count_days: Mapped[int] = mapped_column(Integer, default=2, server_default="2")
+    exception_returns_count: Mapped[int] = mapped_column(Integer, default=4, server_default="4")
+    exception_returns_days: Mapped[int] = mapped_column(Integer, default=30, server_default="30")
+    exception_cash_near_pct: Mapped[Percent] = mapped_column(
+        default=Decimal("80"), server_default="80"
+    )
+    exception_shortage_count: Mapped[int] = mapped_column(Integer, default=3, server_default="3")
 
     __audit_exclude__ = frozenset({"updated_at"})
 

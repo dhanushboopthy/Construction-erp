@@ -49,12 +49,13 @@ NO_DELETE = [
     "stock_transfer", "stock_transfer_line", "drop_ship_link", "eway_bill", "einvoice",
     "daily_closing", "attachment", "gstr2b_import", "cash_entry", "stock_adjustment",
     "stock_adjustment_line", "bad_debt_writeoff", "stock_writedown", "stock_writedown_line",
+    "bank_statement", "bank_statement_line",
 ]  # fmt: skip
 NO_EDIT = [
     "sales_invoice", "sales_line", "credit_note", "credit_note_line", "debit_note",
     "debit_note_line", "purchase_line", "purchase_cost", "payment", "attachment", "gstr2b_import",
     "cash_entry", "stock_adjustment", "stock_adjustment_line", "bad_debt_writeoff",
-    "stock_writedown", "stock_writedown_line",
+    "stock_writedown", "stock_writedown_line", "bank_statement", "bank_statement_line",
 ]  # fmt: skip
 BACKUP_MAX_AGE_HOURS = 30
 

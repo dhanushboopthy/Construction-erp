@@ -61,6 +61,11 @@ const INT_KEYS = [
   "default_lead_time_days",
   "default_safety_days",
   "fsn_fast_min_days",
+  "bank_match_days",
+  "exception_count_days",
+  "exception_returns_count",
+  "exception_returns_days",
+  "exception_shortage_count",
 ] as const;
 const AMOUNT_KEYS = [
   "weight_variance_pct",
@@ -76,6 +81,8 @@ const AMOUNT_KEYS = [
   "provision_pct_31_60",
   "provision_pct_over_60",
   "nrv_selling_cost_pct",
+  "exception_round_amount",
+  "exception_cash_near_pct",
 ] as const;
 const PROVISION_KEYS = [
   "provision_pct_current",
@@ -135,10 +142,20 @@ function validate(form: Form): Record<string, string> {
   days("default_lead_time_days", 365);
   days("default_safety_days", 365);
   days("fsn_fast_min_days", 90);
+  days("bank_match_days", 30);
+  days("exception_count_days", 30);
+  days("exception_returns_count", 100);
+  days("exception_returns_days", 365);
+  days("exception_shortage_count", 100);
   for (const k of AMOUNT_KEYS) {
     if (!isAmount(text(k))) errors[k] = "Enter an amount like 10000 or 10000.50.";
   }
-  for (const k of ["weight_variance_pct", "nrv_selling_cost_pct", ...PROVISION_KEYS] as const) {
+  for (const k of [
+    "weight_variance_pct",
+    "nrv_selling_cost_pct",
+    "exception_cash_near_pct",
+    ...PROVISION_KEYS,
+  ] as const) {
     if (!errors[k] && Number(text(k)) > 100) errors[k] = "A percentage cannot be above 100.";
   }
   return errors;
@@ -460,6 +477,62 @@ function ShopSettingsForm({ settings }: { settings: ShopSettings }) {
             {...flag("nrv_writedown_enabled")}
           />
         </div>
+      </Group>
+
+      <Group
+        title="Bank matching and exception report"
+        note="Used by Bank and Exceptions. A zero switches that check off."
+      >
+        <TextField
+          label="Bank line and receipt may differ by (days)"
+          rule="FM7"
+          inputMode="numeric"
+          className={styles.amount}
+          {...text("bank_match_days")}
+        />
+        <TextField
+          label="Round-number adjustment: a multiple of (₹)"
+          rule="FM7"
+          inputMode="decimal"
+          className={styles.amount}
+          hint="A stock adjustment worth exactly this, or a whole number of it, is listed."
+          {...text("exception_round_amount")}
+        />
+        <TextField
+          label="Adjustment before a stock count (days)"
+          rule="FM7"
+          inputMode="numeric"
+          className={styles.amount}
+          {...text("exception_count_days")}
+        />
+        <TextField
+          label="Returns from one customer (count)"
+          rule="FM7"
+          inputMode="numeric"
+          className={styles.amount}
+          {...text("exception_returns_count")}
+        />
+        <TextField
+          label="…within (days)"
+          rule="FM7"
+          inputMode="numeric"
+          className={styles.amount}
+          {...text("exception_returns_days")}
+        />
+        <TextField
+          label="Cash near the daily limit (% of the limit)"
+          rule="FM7"
+          inputMode="decimal"
+          className={styles.amount}
+          {...text("exception_cash_near_pct")}
+        />
+        <TextField
+          label="Short weighbridge lines from one supplier (count in 90 days)"
+          rule="FM7"
+          inputMode="numeric"
+          className={styles.amount}
+          {...text("exception_shortage_count")}
+        />
       </Group>
 
       <Group

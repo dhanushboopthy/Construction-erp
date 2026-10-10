@@ -19,6 +19,8 @@ import { RatesLayout } from "@/pages/rates/RatesLayout";
 import { BillEntryPage } from "@/pages/sales/BillEntryPage";
 import { SalesPage } from "@/pages/sales/SalesPage";
 import { PaymentsPage } from "@/pages/payments/PaymentsPage";
+import { AuditLogPage } from "@/pages/settings/AuditLogPage";
+import { PeriodLockPage } from "@/pages/settings/PeriodLockPage";
 import { SystemPage } from "@/pages/settings/SystemPage";
 import { PinPage } from "@/pages/settings/PinPage";
 import { OpeningPage } from "@/pages/opening/OpeningPage";
@@ -33,7 +35,9 @@ import { StockValuePage } from "@/pages/stock/StockValuePage";
 import { AdjustmentsPage } from "@/pages/stock/AdjustmentsPage";
 import { CountsPage } from "@/pages/stock/CountsPage";
 import { ClosingPage } from "@/pages/reports/ClosingPage";
+import { BankPage } from "@/pages/reports/BankPage";
 import { DuesPage } from "@/pages/reports/DuesPage";
+import { ExceptionsPage } from "@/pages/reports/ExceptionsPage";
 import { GstPage } from "@/pages/reports/GstPage";
 import { ItcReversalPage } from "@/pages/reports/ItcReversalPage";
 import { MetricsPage } from "@/pages/MetricsPage";
@@ -108,6 +112,8 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
                 <Route path="charges" element={<ChargeTypesPage />} />
                 <Route path="pin" element={<PinPage />} />
                 <Route path="opening" element={<OpeningPage />} />
+                <Route path="lock" element={<PeriodLockPage />} />
+                <Route path="audit" element={<AuditLogPage />} />
                 <Route path="system" element={<SystemPage />} />
               </Route>
               <Route
@@ -292,6 +298,22 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
                   element={
                     <RequireRole roles={["owner", "accountant"]}>
                       <ItcReversalPage />
+                    </RequireRole>
+                  }
+                />
+                <Route
+                  path="bank"
+                  element={
+                    <RequireRole roles={["owner", "accountant"]}>
+                      <BankPage />
+                    </RequireRole>
+                  }
+                />
+                <Route
+                  path="exceptions"
+                  element={
+                    <RequireRole roles={["owner"]}>
+                      <ExceptionsPage />
                     </RequireRole>
                   }
                 />

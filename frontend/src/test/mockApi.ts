@@ -107,6 +107,14 @@ export const SETTINGS: ShopSettings = {
   fsn_fast_min_days: 15,
   nrv_selling_cost_pct: "0.00",
   nrv_writedown_enabled: true,
+  bank_match_days: 3,
+  exception_round_amount: "1000.00",
+  exception_count_days: 2,
+  exception_returns_count: 4,
+  exception_returns_days: 30,
+  exception_cash_near_pct: "80.00",
+  exception_shortage_count: 3,
+  locked_through: null,
   timezone: "Asia/Kolkata",
 };
 

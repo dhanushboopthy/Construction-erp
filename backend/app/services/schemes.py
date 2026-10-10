@@ -19,6 +19,7 @@ from app.models.purchasing import Purchase, PurchaseLine
 from app.models.returns import DebitNote, DebitNoteLine
 from app.models.schemes import SupplierScheme
 from app.schemas.schemes import SchemeCreate, SchemeOut, SchemeUpdate
+from app.services import closing as closing_service
 from app.services import ledgers
 
 
@@ -168,6 +169,7 @@ def book_rebate(db: Session, scheme_id: int, *, actor_id: int) -> SupplierScheme
     if amount <= ZERO:
         raise BusinessRuleError("The rebate works out to nothing", code="REBATE_ZERO")
     today = today_ist()
+    closing_service.ensure_period_open(db, today)  # FM7: booking a rebate is a dated entry
     ledgers.add_party_entry(
         db,
         party_id=scheme.party_id,

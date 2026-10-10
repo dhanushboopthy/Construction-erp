@@ -450,6 +450,58 @@ CATALOGUE: tuple[Kpi, ...] = (
         Direction.UP,
         "%",
     ),
+    # FM7: controls
+    Kpi(
+        "bank_unmatched_lines",
+        "Bank lines with no entry",
+        "Count of statement lines with no receipt, payment or cash-book entry of the same amount "
+        "and direction within the matching days",
+        "Money the bank shows that your books do not: a missing receipt, or a charge to book.",
+        "10 lines, 8 match a receipt: 2 left (a ₹18,750 cheque deposit, ₹590 bank charges)",
+        "bank_statement_line, payment, cash_entry",
+        False,
+        Refresh.LIVE,
+        Direction.DOWN,
+        "count",
+    ),
+    Kpi(
+        "bank_not_received",
+        "Recorded, not in the bank",
+        "Σ receipts and payments by UPI or bank, and deposits, with no statement line",
+        "Money you booked as received or paid that the bank has not shown: a failed or fake UPI.",
+        "A ₹8,000 UPI receipt (ref 999999999999) with no credit on the statement = ₹8,000",
+        "payment, cash_entry, bank_statement_line",
+        False,
+        Refresh.LIVE,
+        Direction.DOWN,
+        "₹",
+    ),
+    Kpi(
+        "bank_statement_balance",
+        "Balance on the statement",
+        "The closing balance printed on the latest imported statement line",
+        "What the bank says you hold, as at the last statement line.",
+        "Last line of the October statement: ₹4,97,960",
+        "bank_statement_line.balance",
+        False,
+        Refresh.LIVE,
+        Direction.NONE,
+        "₹",
+    ),
+    Kpi(
+        "exceptions_flagged",
+        "Entries flagged",
+        "Count of entries matching a rule: round-number adjustment, adjustment just before a "
+        "count, many returns from one customer, back-dated entry, cash near the limit, repeated "
+        "weighbridge shortage",
+        "Entries worth a look. A flag is a reason to ask, not proof of anything.",
+        "A ₹1,000 adjustment the day before a count + 4 returns in 30 days = 2 flagged",
+        "stock_adjustment, credit_note, payment, purchase_line, audit rules in settings",
+        True,
+        Refresh.LIVE,
+        Direction.DOWN,
+        "count",
+    ),
 )
 
 

@@ -493,6 +493,45 @@ confirm AS 2).
   weighbridge showed less than the bill, by supplier (share of the value billed, rupees) and as a
   claims list; shortage value = goods value x (billed - received) ÷ billed. 90 days by default.
 
+**Built (FM7, finance review F16, F17, F18):** `bank_account`, `bank_statement`,
+`bank_statement_line`; `shop_settings.locked_through`, `bank_match_days` (3),
+`exception_round_amount` (₹1,000), `exception_count_days` (2), `exception_returns_count` (4),
+`exception_returns_days` (30), `exception_cash_near_pct` (80), `exception_shortage_count` (3).
+
+- Period lock (`PUT /period-lock`, owner): `ensure_day_open` (every service that dates a
+  document) first refuses any date on or before `locked_through` with 409 `PERIOD_LOCKED`; bad-debt
+  write-offs and rebate booking, which had no day check, now check the lock too. Reopening (an
+  earlier date, or none) needs a reason; each change is an audit event (`period_lock`) with
+  from, to, reason. The settings form never carries the lock. Opening balances are not locked.
+  Accountant to confirm whether to lock after GSTR-1 or after GSTR-3B. A month-end checklist
+  (days closed, GSTR-2B imported, bank reconciled, exceptions) is advice only.
+- Bank statements: any bank's CSV; the header row is found by column names (date, narration,
+  reference, debit or withdrawal, credit or deposit, balance), dates as dd/mm/yyyy, dd-mm-yy,
+  yyyy-mm-dd or dd-Mon-yyyy, commas in amounts allowed. One bad row refuses the whole file and
+  names the lines. The same file twice is refused; rows already held from an overlapping file are
+  skipped (counted per identical row, so two real equal rows both stay). Statements and lines are
+  permanent (triggers). Owner and accountant upload; only the owner adds accounts.
+- Matching is not stored: it is worked out when read (`domain/controls.match_statement`). A line
+  pairs with at most one entry of the same direction and amount within `bank_match_days`;
+  references are paired first (a UPI or bank reference of 4 or more characters found in the
+  narration), then the nearest date. Entries considered: receipts and supplier payments by UPI
+  or bank, cash deposits and withdrawals, and expenses, drawings and capital paid by UPI or
+  bank. A voucher and its reversal are both left out. With several bank accounts the line is
+  matched against all entries (entries do not name an account). Left over on each side:
+  lines with no entry, and entries not on the statement.
+- Exception report (owner, `domain/controls`, `services/exceptions`): round-number adjustment
+  (value of all lines at average cost is a multiple of the step, at least one step); adjustment 0
+  to N days before a stock count at the same place; N or more credit notes to one customer inside
+  M days; entries (bills, receipts, vouchers, adjustments) dated at least a day before they were
+  keyed in (IST); cash from one customer in a day at or above the given % of the cash limit; N or
+  more purchase lines in 90 days where the weighbridge showed less than billed. Thresholds are
+  settings; zero switches a rule off. Nothing is stored.
+- Audit-log screen (owner): filters by record kind, action, user and dates, with before and after.
+- KPIs `bank_unmatched_lines`, `bank_not_received`, `bank_statement_balance` (owner and
+  accountant) and `exceptions_flagged` (owner).
+- Not built: price realisation per item, customer and user on every line (the rest of F24);
+  month-end snapshot; matching to a named bank account; reading PDF or Excel statements.
+
 **To build** (milestone in brackets):
 
 | Group | Table | Key columns |

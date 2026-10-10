@@ -1928,6 +1928,67 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tally/ledgers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Ledgers
+         * @description The ledger names the export uses, with the defaults the accountant can change.
+         */
+        get: operations["read_ledgers_api_v1_tally_ledgers_get"];
+        /** Save Ledgers */
+        put: operations["save_ledgers_api_v1_tally_ledgers_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tally/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Preview
+         * @description What the export would contain, and whether it agrees with GSTR-1, GSTR-3B and the dues.
+         */
+        get: operations["preview_api_v1_tally_preview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tally/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export
+         * @description The day book as a Tally XML import file (`masters=false` leaves out the ledger masters).
+         */
+        get: operations["export_api_v1_tally_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2193,7 +2254,7 @@ export interface components {
          * AuditAction
          * @enum {string}
          */
-        AuditAction: "insert" | "update" | "delete" | "login" | "login_failed" | "logout" | "token_reuse" | "override";
+        AuditAction: "insert" | "update" | "delete" | "login" | "login_failed" | "logout" | "token_reuse" | "override" | "export";
         /** AuditLogOut */
         AuditLogOut: {
             /** Id */
@@ -5994,6 +6055,89 @@ export interface components {
          * @enum {string}
          */
         SupplyType: "B2B" | "B2C";
+        /** TallyCheckOut */
+        TallyCheckOut: {
+            /** Code */
+            code: string;
+            /** Label */
+            label: string;
+            /** Vouchers */
+            vouchers: string;
+            /** Report */
+            report: string;
+            /** Ok */
+            ok: boolean;
+        };
+        /** TallyKindOut */
+        TallyKindOut: {
+            /** Kind */
+            kind: string;
+            /** Count */
+            count: number;
+            /** Total */
+            total: string;
+        };
+        /** TallyLedgerOut */
+        TallyLedgerOut: {
+            /** Purpose */
+            purpose: string;
+            /** Label */
+            label: string;
+            /** Name */
+            name: string;
+            /** Default */
+            default: string;
+            /** Group */
+            group: string;
+            /** Is Custom */
+            is_custom: boolean;
+        };
+        /** TallyLedgersOut */
+        TallyLedgersOut: {
+            /** Company */
+            company: string;
+            /** Default Company */
+            default_company: string;
+            /** Ledgers */
+            ledgers: components["schemas"]["TallyLedgerOut"][];
+        };
+        /**
+         * TallyLedgersPut
+         * @description Names the accountant uses in Tally. A blank name goes back to the default.
+         */
+        TallyLedgersPut: {
+            /** Company */
+            company?: string | null;
+            /** Names */
+            names?: {
+                [key: string]: string;
+            };
+        };
+        /** TallyPreviewOut */
+        TallyPreviewOut: {
+            /**
+             * Date From
+             * Format: date
+             */
+            date_from: string;
+            /**
+             * Date To
+             * Format: date
+             */
+            date_to: string;
+            /** Company */
+            company: string;
+            /** Voucher Count */
+            voucher_count: number;
+            /** Kinds */
+            kinds: components["schemas"]["TallyKindOut"][];
+            /** Checks */
+            checks: components["schemas"]["TallyCheckOut"][];
+            /** Gst Checked */
+            gst_checked: boolean;
+            /** Note */
+            note: string | null;
+        };
         /** TodayOut */
         TodayOut: {
             /**
@@ -16440,6 +16584,302 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["VerifyOut"];
                 };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_ledgers_api_v1_tally_ledgers_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TallyLedgersOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    save_ledgers_api_v1_tally_ledgers_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TallyLedgersPut"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TallyLedgersOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_api_v1_tally_preview_get: {
+        parameters: {
+            query: {
+                date_from: string;
+                date_to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TallyPreviewOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_api_v1_tally_export_get: {
+        parameters: {
+            query: {
+                date_from: string;
+                date_to: string;
+                masters?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Bad Request */
             400: {

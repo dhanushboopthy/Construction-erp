@@ -41,6 +41,21 @@ Endpoints that return cost, margin or profit use separate response models for ow
 staff (for example `ItemOwnerOut` and `ItemOut`). Choose the model with `principal.sees_cost`;
 never rely on the UI to hide fields. Test each such endpoint as a counter user.
 
+## Endpoints (FM4: Tally export)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| GET | `/tally/ledgers` | owner, accountant |
+| PUT | `/tally/ledgers` (`company`, `names{purpose: name}`) | owner, accountant |
+| GET | `/tally/preview?date_from=&date_to=` | owner, accountant |
+| GET | `/tally/export?date_from=&date_to=&masters=true` (XML download) | owner, accountant (403 for counter) |
+
+The preview returns voucher counts and debit totals per type and the checks (`receivable`,
+`payable`, and for whole months `gstr1_taxable`, `gstr1_cgst`, `gstr1_sgst`, `gstr1_igst`,
+`itc_cgst`, `itc_sgst`, `itc_igst`), each with `vouchers`, `report` and `ok`. Errors: `BAD_RANGE`,
+`RANGE_TOO_LONG`, `EXPORT_MISMATCH` (a check failed; nothing is exported), `UNKNOWN_LEDGER`,
+`DUPLICATE_LEDGER_NAME`.
+
 ## Endpoints (FM3: labelled rate overrides)
 
 | Method | Path | Who |

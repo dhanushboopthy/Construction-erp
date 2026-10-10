@@ -26,6 +26,7 @@ from app.api.v1 import (
     stock,
     stock_ops,
     system,
+    tally,
     transport,
     users,
 )
@@ -59,3 +60,4 @@ api_router.include_router(closing.router)
 api_router.include_router(reports.router)
 api_router.include_router(gst.router)
 api_router.include_router(system.router)
+api_router.include_router(tally.router)

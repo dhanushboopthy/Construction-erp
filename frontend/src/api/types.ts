@@ -137,6 +137,12 @@ export type CashBook = Schemas["CashBookOut"];
 export type Pnl = Schemas["PnlOut"];
 export type KpiDefinition = Schemas["KpiDefinitionOut"];
 
+// FM4: Tally export.
+export type TallyLedgers = Schemas["TallyLedgersOut"];
+export type TallyLedger = Schemas["TallyLedgerOut"];
+export type TallyPreview = Schemas["TallyPreviewOut"];
+export type TallyCheck = Schemas["TallyCheckOut"];
+
 // FM3: labelled rate overrides.
 export type RateOverrides = Schemas["RateOverridesOut"];
 export type RateOverrideLine = Schemas["OverrideLineOut"];

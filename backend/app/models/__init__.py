@@ -25,6 +25,7 @@ from app.models.stock_ops import (
     StockTransfer,
     StockTransferLine,
 )
+from app.models.tally import TallyLedger
 from app.models.transport import DropShipLink, Trip, Vehicle
 
 __all__ = [
@@ -72,6 +73,7 @@ __all__ = [
     "StockTransfer",
     "StockTransferLine",
     "SupplierScheme",
+    "TallyLedger",
     "Trip",
     "UserLocation",
     "Vehicle",

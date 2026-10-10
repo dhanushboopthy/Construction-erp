@@ -174,6 +174,7 @@ class AuditAction(StrEnum):
     LOGOUT = "logout"
     TOKEN_REUSE = "token_reuse"  # noqa: S105 - an audit action name, not a secret
     OVERRIDE = "override"
+    EXPORT = "export"  # the books were exported, for example to Tally (FM4)
 
 
 class DocType(StrEnum):

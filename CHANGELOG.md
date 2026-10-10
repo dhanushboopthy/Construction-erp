@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.5.0 (FM4): Tally export
+
+- Reports, Tally export (owner and accountant): the day book for a date range as a Tally XML
+  file. Sales, credit notes, purchases, debit notes, receipts, payments, cash-book entries
+  (expenses, bank deposits and withdrawals, drawings, capital), supplier rebates and freight.
+- Each file is checked against GSTR-1, GSTR-3B input tax and the dues reports before it can be
+  downloaded; a file that disagrees with the books is refused.
+- Ledger names for Tally (sales, purchases, each GST head, cash, bank, round off...) and the
+  company name are settings the accountant confirms.
+- Every export is written to the audit log.
+
 ## 1.4.0 (FM3): labelled rate overrides
 
 - A price typed for one bill is saved as an override, not as the market rate, and needs a

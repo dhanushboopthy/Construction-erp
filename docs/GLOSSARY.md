@@ -47,3 +47,7 @@
 | List rate | What the system would have charged a line (customer rate, else market rate) per base unit, excluding GST; kept on every bill line from FM3. |
 | Discount leakage | Rupees given away by hand: (list rate − billed rate) × quantity on override lines where positive, plus bill discounts. 1,000 kg billed ₹60 against ₹62 = ₹2,000; plus a ₹500 discount = ₹2,500. |
 | Price realisation | Billed value ÷ list value × 100 on hand-priced lines. ₹60,000 ÷ ₹62,000 = 96.77 %. |
+| Voucher (Tally) | One balanced double-entry record in Tally: debits equal credits. A ₹66,080 bill is Dr customer 66,080, Cr Sales 56,000, Cr Output CGST 5,040, Cr Output SGST 5,040. |
+| Contra | A Tally voucher that moves money between cash and bank, e.g. ₹1,50,000 taken to the bank: Dr Bank, Cr Cash. |
+| Ledger master | A ledger (account name) that must exist in Tally before a voucher can post to it; the export lists them first. |
+| Day book | Every voucher in date order. The export is the day book for a date range. |

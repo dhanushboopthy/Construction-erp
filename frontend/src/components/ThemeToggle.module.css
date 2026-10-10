@@ -2,23 +2,25 @@
   display: grid;
   place-items: center;
   flex: none;
-  width: 30px;
-  height: 30px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border: 0;
-  border-radius: 50%;
-  background: var(--color-fill);
-  color: var(--color-label);
+  border-radius: 14px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  color: var(--color-accent);
   cursor: pointer;
   transition:
-    background-color var(--duration-fast) var(--ease),
-    transform var(--duration-fast) var(--ease);
+    transform var(--duration-fast) var(--ease),
+    box-shadow var(--duration-fast) var(--ease);
 }
 
 .toggle:hover {
-  background: var(--color-fill-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-raised);
 }
 
 .toggle:active {
-  transform: scale(0.94);
+  transform: scale(0.96);
 }

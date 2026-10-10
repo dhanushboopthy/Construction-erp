@@ -62,6 +62,15 @@ export function useStock(q: string, locationId: string) {
   });
 }
 
+/** Every item, including those at zero: the dashboard and alerts use it to spot what has run out. */
+export function useStockOverview(enabled = true) {
+  return useQuery({
+    queryKey: ["stock", "overview"],
+    enabled,
+    queryFn: () => api<StockRow[]>("/stock?include_zero=true"),
+  });
+}
+
 export function useStatement(partyId: number, siteId?: number) {
   return useQuery({
     queryKey: ["statement", partyId, siteId ?? null],

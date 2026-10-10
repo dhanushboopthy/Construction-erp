@@ -3,16 +3,18 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  min-height: 36px;
-  padding: 0 var(--space-4);
+  min-height: 40px;
+  padding: 0 var(--space-5);
   border: 0;
-  border-radius: var(--radius-pill);
+  border-radius: 12px;
   font-size: var(--text-sm);
-  font-weight: 500;
+  font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
   transition:
     background-color var(--duration-fast) var(--ease),
+    box-shadow var(--duration-fast) var(--ease),
+    filter var(--duration-fast) var(--ease),
     transform var(--duration-fast) var(--ease);
 }
 
@@ -27,11 +29,14 @@
 
 .primary {
   background: var(--color-accent);
+  background-image: var(--gradient-action);
   color: var(--color-on-accent);
+  box-shadow: var(--shadow-glow);
 }
 
 .primary:hover:not(:disabled) {
-  background: var(--color-accent-strong);
+  filter: brightness(1.08);
+  transform: translateY(-1px);
 }
 
 .secondary {

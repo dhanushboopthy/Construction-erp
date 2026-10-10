@@ -21,9 +21,10 @@ export function useEwayStatus(invoiceId: number) {
   });
 }
 
-export function usePendingEway() {
+export function usePendingEway(enabled = true) {
   return useQuery({
     queryKey: ["eway", "pending"],
+    enabled,
     queryFn: () => api<PendingEway[]>("/eway-bills/pending"),
   });
 }

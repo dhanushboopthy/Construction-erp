@@ -45,6 +45,7 @@ export function PartyEditor({
   const [creditAllowed, setCreditAllowed] = useState(party?.credit_allowed ?? false);
   const [creditLimit, setCreditLimit] = useState(party?.credit_limit ?? "");
   const [creditDays, setCreditDays] = useState(party?.credit_days?.toString() ?? "");
+  const [leadDays, setLeadDays] = useState(party?.lead_time_days?.toString() ?? "");
   const [active, setActive] = useState(party?.is_active ?? true);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState<FormError | null>(null);
@@ -54,6 +55,7 @@ export function PartyEditor({
   const titleId = `party-editor-${party?.id ?? "new"}`;
   const pending = create.isPending || update.isPending;
   const isCustomer = type !== "supplier";
+  const supplies = type !== "customer";
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -69,6 +71,8 @@ export function PartyEditor({
       found.credit_limit = "Enter an amount like 10000.";
     if (isOwner && creditDays && !/^\d{1,3}$/.test(creditDays))
       found.credit_days = "Enter whole days, 0 to 365.";
+    if (isOwner && supplies && leadDays && (!/^\d{1,3}$/.test(leadDays) || Number(leadDays) > 365))
+      found.lead_time_days = "Enter whole days, 0 to 365.";
     setErrors(found);
     setServerError(null);
     if (Object.keys(found).length > 0) return;
@@ -89,13 +93,16 @@ export function PartyEditor({
     };
     // Counter staff may not touch credit terms, so an update from them leaves them out.
     const creditChange = isOwner ? credit : {};
+    // A supplier's delivery time feeds the reorder points (FM6): owner only.
+    const supplierTerms =
+      isOwner && supplies ? { lead_time_days: leadDays ? Number(leadDays) : null } : {};
     try {
       const saved = party
         ? await update.mutateAsync({
             id: party.id,
-            body: { ...base, ...creditChange, is_active: active },
+            body: { ...base, ...creditChange, ...supplierTerms, is_active: active },
           })
-        : await create.mutateAsync({ ...base, ...credit });
+        : await create.mutateAsync({ ...base, ...credit, ...supplierTerms });
       onDone(saved);
     } catch (err) {
       setServerError(toFormError(err));
@@ -104,7 +111,7 @@ export function PartyEditor({
 
   const fieldError = (key: string) =>
     errors[key] ?? (serverError?.field === key ? serverError.message : null);
-  const known = ["name", "gstin", "credit_limit", "credit_days"];
+  const known = ["name", "gstin", "credit_limit", "credit_days", "lead_time_days"];
   const general =
     serverError && !known.includes(serverError.field ?? "") ? serverError.message : null;
 
@@ -225,6 +232,18 @@ export function PartyEditor({
                 : "Cash and UPI only. Ask the owner to approve credit."}
             </p>
           )
+        ) : null}
+        {isOwner && supplies ? (
+          <TextField
+            label="Delivery lead time (days)"
+            rule="FM6"
+            inputMode="numeric"
+            className={styles.amount}
+            value={leadDays}
+            onChange={(e) => setLeadDays(e.target.value)}
+            error={fieldError("lead_time_days")}
+            hint="Days from ordering to delivery. Blank uses the shop's default (Settings)."
+          />
         ) : null}
         {party && canEdit ? (
           <CheckField

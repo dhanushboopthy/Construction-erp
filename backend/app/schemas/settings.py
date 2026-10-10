@@ -39,6 +39,11 @@ class ShopSettingsBase(Schema):
     provision_pct_16_30: Decimal = Field(default=Decimal("2"), ge=0, le=100)
     provision_pct_31_60: Decimal = Field(default=Decimal("10"), ge=0, le=100)
     provision_pct_over_60: Decimal = Field(default=Decimal("50"), ge=0, le=100)
+    default_lead_time_days: int = Field(default=7, ge=0, le=365)
+    default_safety_days: int = Field(default=2, ge=0, le=365)
+    fsn_fast_min_days: int = Field(default=15, ge=1, le=90)
+    nrv_selling_cost_pct: Decimal = Field(default=Decimal("0"), ge=0, le=100)
+    nrv_writedown_enabled: bool = True
 
     @field_validator("gstin")
     @classmethod

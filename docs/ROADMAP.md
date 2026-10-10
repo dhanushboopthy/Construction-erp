@@ -34,7 +34,7 @@ From [FINANCE_REVIEW.md](FINANCE_REVIEW.md); one branch and PR each.
 | FM3 | Labelled rate overrides | An owner override saves `rate_source = override` with a reason | **Done** (`feat/fm3-rate-overrides`) |
 | FM4 | Tally export | The accountant imports a month's day book into Tally | **Done** (`feat/fm4-tally-export`) |
 | FM5 | Working capital and receivables | Hand-worked DIO, DSO, DPO, advance days and CCC | **Done** (`feat/fm5-working-capital`) |
-| FM6 | Inventory analytics and replenishment | ABC, aging, cover days, reorder point by hand | To do |
+| FM6 | Inventory analytics and replenishment | ABC, aging, cover days, reorder point by hand | **Done** (`feat/fm6-inventory-analytics`) |
 | FM7 | Controls and exceptions | Bank CSV matching, exception report, period lock | To do |
 | FM8 | Profitability cuts and GST health | Profit per ton by brand, shop, user; ITC at risk | To do |
 | FM9 | Forecast and accruals | 13-week cash forecast; rebate accrual | To do |

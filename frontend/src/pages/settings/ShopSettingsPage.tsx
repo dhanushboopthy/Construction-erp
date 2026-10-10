@@ -58,6 +58,9 @@ const INT_KEYS = [
   "financial_year_start_month",
   "return_window_days",
   "default_credit_days",
+  "default_lead_time_days",
+  "default_safety_days",
+  "fsn_fast_min_days",
 ] as const;
 const AMOUNT_KEYS = [
   "weight_variance_pct",
@@ -72,6 +75,7 @@ const AMOUNT_KEYS = [
   "provision_pct_16_30",
   "provision_pct_31_60",
   "provision_pct_over_60",
+  "nrv_selling_cost_pct",
 ] as const;
 const PROVISION_KEYS = [
   "provision_pct_current",
@@ -86,6 +90,7 @@ const FLAG_KEYS = [
   "einvoice_enabled",
   "counter_can_enter_purchases",
   "itc_reverse_shortages",
+  "nrv_writedown_enabled",
 ] as const;
 const OPTIONAL = new Set([
   "trade_name",
@@ -127,10 +132,13 @@ function validate(form: Form): Record<string, string> {
   };
   days("return_window_days", 30);
   days("default_credit_days", 365);
+  days("default_lead_time_days", 365);
+  days("default_safety_days", 365);
+  days("fsn_fast_min_days", 90);
   for (const k of AMOUNT_KEYS) {
     if (!isAmount(text(k))) errors[k] = "Enter an amount like 10000 or 10000.50.";
   }
-  for (const k of ["weight_variance_pct", ...PROVISION_KEYS] as const) {
+  for (const k of ["weight_variance_pct", "nrv_selling_cost_pct", ...PROVISION_KEYS] as const) {
     if (!errors[k] && Number(text(k)) > 100) errors[k] = "A percentage cannot be above 100.";
   }
   return errors;
@@ -406,6 +414,52 @@ function ShopSettingsForm({ settings }: { settings: ShopSettings }) {
           className={styles.amount}
           {...text("provision_pct_over_60")}
         />
+      </Group>
+
+      <Group
+        title="Stock replenishment and value"
+        note="Used by Stock, Analysis and Stock value. An item's or supplier's own days win over these."
+      >
+        <TextField
+          label="Lead time (days)"
+          rule="FM6"
+          inputMode="numeric"
+          className={styles.amount}
+          hint="Days from ordering to delivery."
+          {...text("default_lead_time_days")}
+        />
+        <TextField
+          label="Safety stock (days of sales)"
+          rule="FM6"
+          inputMode="numeric"
+          className={styles.amount}
+          hint="Extra stock kept for a bad week."
+          {...text("default_safety_days")}
+        />
+        <TextField
+          label="Fast-moving: sold on at least (days of 90)"
+          rule="FM6"
+          inputMode="numeric"
+          className={styles.amount}
+          hint="Fewer days is slow; none is non-moving."
+          {...text("fsn_fast_min_days")}
+        />
+        <TextField
+          label="Cost of selling, for realisable value (%)"
+          rule="FM6"
+          inputMode="decimal"
+          className={styles.amount}
+          hint="Subtracted from the market rate to get what stock would fetch. Ask the accountant."
+          {...text("nrv_selling_cost_pct")}
+        />
+        <div className={styles.wide}>
+          <CheckField
+            label="Allow writing stock down to market value"
+            rule="FM6"
+            hint="When the market falls below cost, the owner can lower the stock value and book the loss (AS 2). Ask the accountant."
+            {...flag("nrv_writedown_enabled")}
+          />
+        </div>
       </Group>
 
       <Group

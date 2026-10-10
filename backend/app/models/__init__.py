@@ -25,6 +25,8 @@ from app.models.stock_ops import (
     StockCountLine,
     StockTransfer,
     StockTransferLine,
+    StockWritedown,
+    StockWritedownLine,
 )
 from app.models.tally import TallyLedger
 from app.models.transport import DropShipLink, Trip, Vehicle
@@ -74,6 +76,8 @@ __all__ = [
     "StockLedger",
     "StockTransfer",
     "StockTransferLine",
+    "StockWritedown",
+    "StockWritedownLine",
     "SupplierScheme",
     "TallyLedger",
     "Trip",

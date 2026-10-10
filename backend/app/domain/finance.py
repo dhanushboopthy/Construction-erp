@@ -116,10 +116,19 @@ def ebitda(gross: Numberish, operating_expenses: Numberish) -> Decimal:
 
 
 def net_profit(
-    ebitda_value: Numberish, interest: Numberish, bad_debts: Numberish = ZERO
+    ebitda_value: Numberish,
+    interest: Numberish,
+    bad_debts: Numberish = ZERO,
+    write_downs: Numberish = ZERO,
 ) -> Decimal:
-    """EBITDA less interest and the bad debts written off in the period (FM5)."""
-    return money(to_decimal(ebitda_value) - to_decimal(interest) - to_decimal(bad_debts))
+    """EBITDA less interest, the bad debts written off (FM5) and the stock written down to its
+    realisable value (FM6) in the period."""
+    return money(
+        to_decimal(ebitda_value)
+        - to_decimal(interest)
+        - to_decimal(bad_debts)
+        - to_decimal(write_downs)
+    )
 
 
 def contribution(

@@ -102,6 +102,7 @@ class PnlOut(Schema):
     ebitda: Decimal
     interest: Decimal
     bad_debts: Decimal  # written off in the month (no GST effect)
+    write_downs: Decimal  # stock written down to net realisable value in the month
     net_profit: Decimal
     net_margin_pct: Decimal | None
     fixed_costs: Decimal

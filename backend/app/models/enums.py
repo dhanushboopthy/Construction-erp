@@ -54,6 +54,7 @@ class StockRef(StrEnum):
     TRANSFER = "transfer"
     ADJUSTMENT = "adjustment"  # posting a stock count (ref_id is the count)
     STOCK_ADJUSTMENT = "stock_adjustment"  # an adjustment document with a reason (FM2)
+    STOCK_WRITEDOWN = "stock_writedown"  # value-only: stock out and back in at NRV (FM6)
 
 
 class PartyRef(StrEnum):
@@ -190,6 +191,7 @@ class DocType(StrEnum):
     CASH_VOUCHER = "cash_voucher"  # cash book: expenses, bank deposits and withdrawals (FM1)
     STOCK_ADJUSTMENT = "stock_adjustment"  # breakage, theft, weighbridge, count fixes (FM2)
     BAD_DEBT_WRITEOFF = "bad_debt_writeoff"  # a customer debt given up, no GST effect (FM5)
+    STOCK_WRITEDOWN = "stock_writedown"  # stock value lowered to NRV (FM6)
 
 
 def str_enum(enum_cls: type[StrEnum], name: str) -> sa.Enum:

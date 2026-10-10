@@ -102,6 +102,11 @@ export const SETTINGS: ShopSettings = {
   provision_pct_16_30: "2.00",
   provision_pct_31_60: "10.00",
   provision_pct_over_60: "50.00",
+  default_lead_time_days: 7,
+  default_safety_days: 2,
+  fsn_fast_min_days: 15,
+  nrv_selling_cost_pct: "0.00",
+  nrv_writedown_enabled: true,
   timezone: "Asia/Kolkata",
 };
 

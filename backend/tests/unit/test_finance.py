@@ -352,6 +352,11 @@ def test_bad_debts_come_off_net_profit() -> None:
     assert f.net_profit("-29000", "12000") == Decimal("-41000.00")  # unchanged without write-offs
 
 
+def test_stock_written_down_to_nrv_also_comes_off_net_profit() -> None:
+    # -29,000 - 12,000 - 5,000 bad debts - 25,000 stock written down (25,000 kg x ₹1) = -₹71,000.
+    assert f.net_profit("-29000", "12000", "5000", "25000") == Decimal("-71000.00")
+
+
 def test_the_working_capital_kpis_are_in_the_catalogue() -> None:
     from app.domain import kpi_catalogue as cat
 

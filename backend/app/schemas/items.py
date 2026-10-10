@@ -39,6 +39,8 @@ class ItemBase(Schema):
     weight_per_piece_kg: Annotated[Decimal, Field(gt=0, max_digits=14, decimal_places=3)] | None = (
         None
     )
+    lead_time_days: Annotated[int, Field(ge=0, le=365)] | None = None
+    safety_days: Annotated[int, Field(ge=0, le=365)] | None = None
 
     @field_validator("base_unit")
     @classmethod
@@ -79,6 +81,8 @@ class ItemUpdate(Schema):
         None
     )
     min_margin: Annotated[Decimal, Field(ge=0, max_digits=14, decimal_places=4)] | None = None
+    lead_time_days: Annotated[int, Field(ge=0, le=365)] | None = None
+    safety_days: Annotated[int, Field(ge=0, le=365)] | None = None
     units: list[ItemUnitIn] | None = None
     is_active: bool | None = None
 

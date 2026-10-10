@@ -27,6 +27,9 @@ import { LocationsPage } from "@/pages/settings/LocationsPage";
 import { SettingsLayout } from "@/pages/settings/SettingsLayout";
 import { ShopSettingsPage } from "@/pages/settings/ShopSettingsPage";
 import { UsersPage } from "@/pages/settings/UsersPage";
+import { ShrinkagePage } from "@/pages/stock/ShrinkagePage";
+import { StockAnalysisPage } from "@/pages/stock/StockAnalysisPage";
+import { StockValuePage } from "@/pages/stock/StockValuePage";
 import { AdjustmentsPage } from "@/pages/stock/AdjustmentsPage";
 import { CountsPage } from "@/pages/stock/CountsPage";
 import { ClosingPage } from "@/pages/reports/ClosingPage";
@@ -194,6 +197,30 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
                 <Route path="transfers" element={<TransfersPage />} />
                 <Route path="counts" element={<CountsPage />} />
                 <Route path="adjustments" element={<AdjustmentsPage />} />
+                <Route
+                  path="analysis"
+                  element={
+                    <RequireRole roles={["owner"]}>
+                      <StockAnalysisPage />
+                    </RequireRole>
+                  }
+                />
+                <Route
+                  path="value"
+                  element={
+                    <RequireRole roles={["owner", "accountant"]}>
+                      <StockValuePage />
+                    </RequireRole>
+                  }
+                />
+                <Route
+                  path="shortages"
+                  element={
+                    <RequireRole roles={["owner", "accountant"]}>
+                      <ShrinkagePage />
+                    </RequireRole>
+                  }
+                />
               </Route>
               <Route
                 path="/parties"

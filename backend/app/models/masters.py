@@ -49,6 +49,10 @@ class Item(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
     weight_per_piece_kg: Mapped[Decimal | None] = mapped_column(Numeric(14, 3))  # G7
     # Owner only: the least margin per base unit before the owner is warned (B5).
     min_margin: Mapped[UnitCost] = mapped_column(default=Decimal("0"))
+    # FM6: days from ordering to delivery and days of sales kept as safety stock; blank means the
+    # supplier's, then the shop's default.
+    lead_time_days: Mapped[int | None] = mapped_column(Integer)
+    safety_days: Mapped[int | None] = mapped_column(Integer)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     units: Mapped[list["ItemUnit"]] = relationship(
@@ -89,6 +93,8 @@ class Party(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
     # Null means "use the shop default" from shop_settings (B8).
     credit_limit: Mapped[Money | None] = mapped_column()
     credit_days: Mapped[int | None] = mapped_column(Integer)
+    # FM6: a supplier's days from ordering to delivery; blank means the shop's default.
+    lead_time_days: Mapped[int | None] = mapped_column(Integer)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     sites: Mapped[list["Site"]] = relationship(

@@ -454,6 +454,45 @@ number series `W`; `shop_settings.provision_pct_*` (not yet due 0, 1-15 days 1, 
 - Deferred: bank and cash balances in working capital (FM7); booking the provision; reversing a
   write-off (a later payment covers it).
 
+**Built (FM6, finance review F10 to F14):** `stock_writedown`, `stock_writedown_line`; stock ledger
+ref `stock_writedown`; number series `N`; `item.lead_time_days`, `item.safety_days`,
+`party.lead_time_days`; `shop_settings.default_lead_time_days` (7), `default_safety_days` (2),
+`fsn_fast_min_days` (15), `nrv_selling_cost_pct` (0), `nrv_writedown_enabled` (on; accountant to
+confirm AS 2).
+
+- Analysis (`GET /inventory/analytics`, owner): per item, rebuilt from the stock ledger. Movement
+  means a purchase, sale or return (and opening stock); adjustments, count corrections, transfers
+  and write-downs never count, so a theft entry cannot make dead stock look alive. Aging buckets
+  0-30, 31-90, 91-180, over 180 days since the last movement, at cost. FSN: fast when it sold on
+  at least `fsn_fast_min_days` of the last 90 days, slow when on at least one, else non-moving.
+  ABC on the cost of what sold in 90 days: A while the share of items ranked above is under 80 %,
+  B under 95 %, then C; items with no sales get no class. Average daily sales = quantity sold in
+  the last 30 days ÷ 30; cover = on hand ÷ that; reorder point = daily x lead days + daily x
+  safety days (1.2 t x 7 + 1.2 t x 2 = 10.8 t); an item is reordered when on hand is at or below
+  it. Lead time comes from the item, else the supplier of its last purchase, else the shop;
+  safety days from the item, else the shop. With fewer than 30 days since the first bill or
+  purchase, classes, speed, cover and reorder points are blank and the page says "Not enough data
+  yet (needs 30 days)". Not built: safety stock from demand variation after 90 days.
+- Cement by age (`GET /inventory/fifo-age`, owner): for cement items, each day's receipts less
+  sales and losses taken oldest first, shown by age (0-30, 31-60, 61-90, over 90 days). An
+  estimate: there are no lots until FM10.
+- Stock value (`GET /inventory/nrv`, owner and accountant): market rate on the rate board less
+  `nrv_selling_cost_pct` is the net realisable value; loss = (average cost - NRV) x quantity when
+  positive, never a gain; holding gain or loss = (last purchase landed cost - average cost) x
+  quantity. Items with no rate show no NRV: nothing is guessed.
+- Write-down to NRV (`POST /inventory/writedowns`, owner only, behind `nrv_writedown_enabled`):
+  a permanent document `<shop>N/<FY>/<seq>` for chosen items. It writes the stock out at the old
+  average and back in at the NRV at every place, so the average becomes the NRV, no quantity moves
+  and no stock adjustment or input tax is involved (ITC to reverse is unchanged). It is not
+  movement for FSN or aging. The loss is `write_downs` on the P&L, off net profit (not gross
+  profit, EBITDA or break-even). Refused: no market rate (`NO_MARKET_RATE`), not worth less than
+  cost (`NOTHING_TO_WRITE_DOWN`), switched off (`WRITEDOWN_DISABLED`). A further fall is a new
+  document. Cost of goods check and ledger checks include write-downs. Not exported to Tally,
+  which holds accounts only: the accountant values closing stock from the Stock value report.
+- Weight shortages (`GET /inventory/shrinkage`, owner and accountant): purchase lines where the
+  weighbridge showed less than the bill, by supplier (share of the value billed, rupees) and as a
+  claims list; shortage value = goods value x (billed - received) ÷ billed. 90 days by default.
+
 **To build** (milestone in brackets):
 
 | Group | Table | Key columns |

@@ -41,6 +41,24 @@ Endpoints that return cost, margin or profit use separate response models for ow
 staff (for example `ItemOwnerOut` and `ItemOut`). Choose the model with `principal.sees_cost`;
 never rely on the UI to hide fields. Test each such endpoint as a counter user.
 
+## Endpoints (FM6: inventory analytics, stock value, shortages)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| GET | `/inventory/analytics` | owner |
+| GET | `/inventory/fifo-age` | owner |
+| GET | `/inventory/nrv` | owner, accountant |
+| GET | `/inventory/writedowns?date_from=&date_to=` | owner, accountant |
+| POST | `/inventory/writedowns` (`location_id`, `item_ids`, `note`) | owner only |
+| GET | `/inventory/shrinkage?date_from=&date_to=` (90 days by default) | owner, accountant |
+
+Counter staff get 403 on all of them. Errors: `NO_MARKET_RATE`, `NOTHING_TO_WRITE_DOWN`,
+`WRITEDOWN_DISABLED`, `DUPLICATE_ITEM` (409), `BAD_RANGE`. Analytics fields are `null` with
+`enough_data: false` (fewer than 30 days of history). Items gain `lead_time_days` and
+`safety_days`, parties `lead_time_days` (all optional); settings gain `default_lead_time_days`,
+`default_safety_days`, `fsn_fast_min_days`, `nrv_selling_cost_pct`, `nrv_writedown_enabled`. The
+P&L gains `write_downs`, taken off `net_profit`.
+
 ## Endpoints (FM5: working capital, receivables, write-offs)
 
 | Method | Path | Who |

@@ -30,7 +30,7 @@ from app.schemas.finance import (
     PnlOut,
     RateOverridesOut,
 )
-from app.services import adjustments, receivables, reports
+from app.services import adjustments, inventory, receivables, reports
 
 
 def month_bounds(period: str) -> tuple[date, date]:
@@ -92,7 +92,8 @@ def profit_and_loss(db: Session, period: str, location_id: int | None = None) ->
     split = finance.split_expenses(expense_lines)
     ebitda = finance.ebitda(gross, split.operating)
     bad_debts = receivables.written_off(db, date_from, date_to, location_id)
-    net_profit = finance.net_profit(ebitda, split.interest, bad_debts)
+    write_downs = inventory.written_down(db, date_from, date_to, location_id)
+    net_profit = finance.net_profit(ebitda, split.interest, bad_debts, write_downs)
     contribution = finance.contribution(net, cogs, freight, split.variable, lost)
 
     enough = bool(lines) or bool(expense_lines)
@@ -124,6 +125,7 @@ def profit_and_loss(db: Session, period: str, location_id: int | None = None) ->
         ebitda=ebitda,
         interest=split.interest,
         bad_debts=bad_debts,
+        write_downs=write_downs,
         net_profit=net_profit,
         net_margin_pct=finance.margin_pct(net_profit, net),
         fixed_costs=split.fixed,

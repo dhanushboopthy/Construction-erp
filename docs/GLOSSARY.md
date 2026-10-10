@@ -63,3 +63,15 @@
 | Credit utilisation | Outstanding ÷ credit limit. ₹4,00,000 ÷ ₹5,00,000 = 80 %. |
 | Provision for doubtful debts | Money set aside for bills that may never be paid: each overdue bucket x its percentage. ₹95,000 overdue in the example gives ₹23,400. A report, not booked. |
 | Bad-debt write-off | Giving up on money a customer owes; a numbered owner document (`S1W/26-27/00001`) with no GST effect that reduces profit. |
+| ABC class | Items ranked by the cost of what was sold in 90 days: A is the few that make most of it (until 80 % is reached), B the next 15 %, C the rest. TMT ₹1,65,000, cement ₹10,500: TMT A, cement B. |
+| FSN | Fast, slow or non-moving, by how many of the last 90 days an item sold. Adjustments do not count as selling. |
+| Stock age | Days since the last purchase, sale or return of an item: 0-30, 31-90, 91-180, over 180. |
+| Stock cover | Days the stock will last at the recent pace: 9 t ÷ 1.2 t a day = 7.5 days. |
+| Lead time | Days from ordering to delivery; per item, supplier or shop. |
+| Safety stock | Days of sales kept back for a bad week: 1.2 t x 2 days = 2.4 t. |
+| Reorder point | Average daily sales x lead time + safety stock: 1.2 t x 7 + 2.4 t = 10.8 t. Order when stock falls to it. |
+| NRV | Net realisable value: today's market rate less the cost of selling. Stock is valued at the lower of cost and NRV (AS 2): TMT cost ₹55, market ₹54, 23,000 kg = ₹23,000 loss. |
+| Holding gain or loss | (Last purchase cost - average cost) x quantity on hand. |
+| Write-down | Lowering the value of stock to its NRV; a permanent document `S1N/26-27/00001`. No quantity moves, no input tax is reversed, the loss comes off net profit. |
+| Cement age (FIFO proxy) | Cement by the day it came in, assuming the oldest is sold first; an estimate, not lot tracking. |
+| Weight shortage | Billed weight less weighbridge weight on a supplier bill: 1,000 kg billed, 994 kg received = 0.60 %, ₹420 on ₹70,000 of goods. |

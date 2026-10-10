@@ -48,6 +48,23 @@ describe("Parties", () => {
     });
   });
 
+  it("lets the owner set a supplier's delivery time for the reorder points", async () => {
+    const user = userEvent.setup();
+    const supplier = { ...PARTY, id: 21, name: "Mills", type: "supplier" as const };
+    const { calls } = mockApi({
+      ...session(OWNER),
+      "GET /parties": () => ({ body: page([supplier]) }),
+      "PATCH /parties/21": (body) => ({ body: { ...supplier, ...(body as object) } }),
+    });
+    renderAt("/parties");
+    await user.click(await screen.findByRole("button", { name: "Mills" }));
+    const panel = await screen.findByRole("complementary", { name: "Mills" });
+    await user.type(within(panel).getByLabelText(/Delivery lead time/), "10");
+    await user.click(within(panel).getByRole("button", { name: "Save changes" }));
+    expect(await screen.findByText("Changes saved.")).toBeVisible();
+    expect(calls.find((c) => c.method === "PATCH")?.body).toMatchObject({ lead_time_days: 10 });
+  });
+
   it("adds a site, and a new customer counter user cannot send credit fields", async () => {
     const user = userEvent.setup();
     let created: typeof PARTY | null = null;

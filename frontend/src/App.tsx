@@ -39,6 +39,8 @@ import { BankPage } from "@/pages/reports/BankPage";
 import { DuesPage } from "@/pages/reports/DuesPage";
 import { ExceptionsPage } from "@/pages/reports/ExceptionsPage";
 import { GstPage } from "@/pages/reports/GstPage";
+import { ItcRiskPage } from "@/pages/reports/ItcRiskPage";
+import { ProfitCutsPage } from "@/pages/reports/ProfitCutsPage";
 import { ItcReversalPage } from "@/pages/reports/ItcReversalPage";
 import { MetricsPage } from "@/pages/MetricsPage";
 import { ReceivablesPage } from "@/pages/reports/ReceivablesPage";
@@ -258,6 +260,22 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
                   element={
                     <RequireRole roles={["owner"]}>
                       <PnlPage />
+                    </RequireRole>
+                  }
+                />
+                <Route
+                  path="profit-cuts"
+                  element={
+                    <RequireRole roles={["owner"]}>
+                      <ProfitCutsPage />
+                    </RequireRole>
+                  }
+                />
+                <Route
+                  path="itc-risk"
+                  element={
+                    <RequireRole roles={["owner", "accountant"]}>
+                      <ItcRiskPage />
                     </RequireRole>
                   }
                 />

@@ -16,7 +16,7 @@ from app.domain import closing as closing_rules
 from app.domain.fiscal import fy_label, fy_months, fy_start_year
 from app.domain.money import ZERO, money, split_pro_rata
 from app.models.enums import CustomerSegment, LedgerAccount
-from app.models.masters import Party, Site
+from app.models.masters import Item, Party, Site
 from app.models.returns import CreditNote, CreditNoteLine
 from app.models.sales import SalesInvoice, SalesLine
 from app.models.transport import DropShipLink, Trip
@@ -42,6 +42,13 @@ class _Line:
     site: str
     taxable: Decimal
     cost: Decimal
+    # FM8: what the profitability cuts group by. Quantity is in the item's base unit.
+    item_id: int = 0
+    brand: str | None = None
+    base_unit: str = ""
+    base_qty: Decimal = ZERO
+    location_id: int = 0
+    user_id: int | None = None
 
 
 def _lines(
@@ -57,12 +64,13 @@ def _lines(
     }
     out: list[_Line] = []
     sold = db.execute(
-        select(SalesLine, SalesInvoice, Site.name)
+        select(SalesLine, SalesInvoice, Site.name, Item.brand, Item.base_unit)
         .join(SalesInvoice, SalesInvoice.id == SalesLine.invoice_id)
+        .join(Item, Item.id == SalesLine.item_id)
         .outerjoin(Site, Site.id == SalesInvoice.site_id)
         .where(*scope, SalesInvoice.invoice_date >= date_from, SalesInvoice.invoice_date <= date_to)
     ).all()
-    for line, inv, site_name in sold:
+    for line, inv, site_name, brand, base_unit in sold:
         unit = links.get(line.id, line.cost_per_unit)
         out.append(
             _Line(
@@ -72,17 +80,24 @@ def _lines(
                 site_name or "Collected from the shop",
                 line.taxable,
                 money(line.base_qty * unit),
+                line.item_id,
+                brand,
+                base_unit,
+                line.base_qty,
+                inv.location_id,
+                inv.created_by,
             )
         )
     returned = db.execute(
-        select(CreditNoteLine, SalesLine, SalesInvoice, Site.name)
+        select(CreditNoteLine, SalesLine, SalesInvoice, Site.name, Item.brand, Item.base_unit)
         .join(CreditNote, CreditNote.id == CreditNoteLine.credit_note_id)
         .join(SalesLine, SalesLine.id == CreditNoteLine.sales_line_id)
+        .join(Item, Item.id == SalesLine.item_id)
         .join(SalesInvoice, SalesInvoice.id == CreditNote.invoice_id)
         .outerjoin(Site, Site.id == SalesInvoice.site_id)
         .where(*scope, CreditNote.note_date >= date_from, CreditNote.note_date <= date_to)
     ).all()
-    for cn_line, line, inv, site_name in returned:
+    for cn_line, line, inv, site_name, brand, base_unit in returned:
         unit = links.get(line.id, line.cost_per_unit)
         out.append(
             _Line(
@@ -92,6 +107,12 @@ def _lines(
                 site_name or "Collected from the shop",
                 -cn_line.taxable,
                 -money(cn_line.base_qty * unit),
+                line.item_id,
+                brand,
+                base_unit,
+                -cn_line.base_qty,
+                inv.location_id,
+                inv.created_by,
             )
         )
     return out
@@ -108,6 +129,23 @@ def _freight(db: Session, invoice_ids: set[int]) -> dict[int, Decimal]:
     return {inv_id: money(total) for inv_id, total in rows if inv_id is not None}
 
 
+def freight_shares(db: Session, lines: list[_Line]) -> dict[int, Decimal]:
+    """An invoice's freight shared over its sold lines by taxable value, so it follows the item,
+    customer, brand or site that earned it. Returned rows carry no freight of their own. The
+    result is keyed by position in `lines`; the shares of an invoice add back to its freight."""
+    freight = _freight(db, {x.invoice_id for x in lines})
+    sold_by_invoice: dict[int, list[int]] = defaultdict(list)
+    for index, x in enumerate(lines):
+        if x.taxable > ZERO:
+            sold_by_invoice[x.invoice_id].append(index)
+    share: dict[int, Decimal] = defaultdict(lambda: ZERO)
+    for invoice_id, indices in sold_by_invoice.items():
+        parts = split_pro_rata(freight.get(invoice_id, ZERO), [lines[i].taxable for i in indices])
+        for i, part in zip(indices, parts, strict=True):
+            share[i] = part
+    return share
+
+
 def profit_report(
     db: Session,
     group: ProfitGroup,
@@ -120,18 +158,7 @@ def profit_report(
     if (date_to - date_from).days > MAX_RANGE_DAYS:
         raise BusinessRuleError("Choose a range of a year or less", code="RANGE_TOO_LONG")
     lines = _lines(db, date_from, date_to, location_ids)
-    freight = _freight(db, {x.invoice_id for x in lines})
-    # An invoice's freight is shared over its lines by taxable value, so it follows the item,
-    # customer or site that earned it. Returned rows carry no freight of their own.
-    sold_by_invoice: dict[int, list[int]] = defaultdict(list)
-    for index, x in enumerate(lines):
-        if x.taxable > ZERO:
-            sold_by_invoice[x.invoice_id].append(index)
-    share: dict[int, Decimal] = defaultdict(lambda: ZERO)
-    for invoice_id, indices in sold_by_invoice.items():
-        parts = split_pro_rata(freight.get(invoice_id, ZERO), [lines[i].taxable for i in indices])
-        for i, part in zip(indices, parts, strict=True):
-            share[i] = part
+    share = freight_shares(db, lines)
     totals: dict[str, list[Decimal]] = defaultdict(lambda: [ZERO, ZERO, ZERO])
     for index, x in enumerate(lines):
         key = {

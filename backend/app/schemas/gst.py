@@ -145,3 +145,34 @@ class ImportOut(Schema):
     period: str
     file_name: str
     row_count: int
+
+
+class ItcRiskRow(Schema):
+    gstin: str
+    supplier: str | None
+    number: str
+    bill_date: date | None
+    taxable: Decimal
+    itc: Decimal  # input tax on the bill in our books
+    portal_itc: Decimal | None = None  # what GSTR-2B shows, for a bill whose amounts differ
+    at_risk: Decimal
+
+
+class ItcAtRiskOut(Schema):
+    period: str
+    has_2b: bool
+    note: str | None  # "No GSTR-2B imported for this month" instead of a made-up figure
+    file_name: str | None
+    # In our books, not in GSTR-2B: cannot be claimed until the supplier reports it.
+    missing_itc: Decimal | None
+    missing: list[ItcRiskRow]
+    # In both, but the supplier's tax is lower than ours.
+    mismatch_itc: Decimal | None
+    mismatches: list[ItcRiskRow]
+    at_risk_total: Decimal | None
+    no_gstin_itc: Decimal  # bills from suppliers with no GSTIN this month: not claimable either
+    # GST payable from GSTR-3B for the month (to date while the month is open).
+    payable_estimate: Decimal
+    payable_if_unclaimed: Decimal | None
+    payable_to_date: bool
+    due_date: date

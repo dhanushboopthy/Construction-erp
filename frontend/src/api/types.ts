@@ -188,3 +188,10 @@ export type Reconciliation = Schemas["ReconciliationOut"];
 export type ExceptionReport = Schemas["ExceptionReport"];
 export type AuditLogRow = Schemas["AuditLogOut"];
 export type AuditAction = Schemas["AuditAction"];
+
+// FM8: profitability cuts and ITC at risk
+export type Cut = Schemas["Cut"];
+export type Profitability = Schemas["ProfitabilityOut"];
+export type CutRow = Schemas["CutRow"];
+export type ItcAtRisk = Schemas["ItcAtRiskOut"];
+export type ItcRiskRow = Schemas["ItcRiskRow"];

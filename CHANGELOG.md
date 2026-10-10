@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.9.0 (FM8): profitability cuts and GST health
+
+- Reports, Profit per ton (owner): profit for a month by brand, shop, who made the bill, item or
+  customer, with net sales, cost, freight, margin, share of profit, tons sold and profit per ton.
+  Steel sold by weight is counted in tons; cement and other items are counted in bags or pieces
+  apart, so a bag never inflates the tons. Every cut adds up to the Profit & loss gross profit
+  once the stock lost is taken off. With no bills it says "Not enough data yet".
+- Reports, ITC at risk (owner, accountant): input tax on supplier bills in your books that
+  GSTR-2B does not show, plus bills where the supplier reported less tax than you booked, and
+  the GST payable estimate for the month (the 3B figure, to date) with the 20th as the due date.
+  With no GSTR-2B imported it says so instead of showing a figure.
+- Fixed: Profit & loss freight counted an older bill's freight again when a credit note was
+  issued for it in a later month.
+
 ## 1.8.0 (FM7): controls and exceptions
 
 - Books lock (owner, Settings): lock the books through a date after a return is filed. A bill,

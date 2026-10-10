@@ -3,8 +3,11 @@ from datetime import date
 from fastapi import APIRouter
 
 from app.api.deps import CurrentPrincipal, DbSession, OwnerOnly, OwnerOrAccountant
+from app.core.clock import today_ist
 from app.models.enums import Role
+from app.schemas.profitability import Cut, ProfitabilityOut
 from app.schemas.reports import ProfitGroup, ProfitReport, SegmentReport, TodayOut
+from app.services import profitability as profit_service
 from app.services import reports as service
 
 router = APIRouter(prefix="/reports", tags=["reports"])
@@ -28,6 +31,21 @@ def profit(
 ) -> ProfitReport:
     """Profit by item, customer or site: sales less returns, less cost, less freight."""
     return service.profit_report(db, group, date_from, date_to)
+
+
+@router.get("/profitability", response_model=ProfitabilityOut)
+def profitability(
+    _: OwnerOnly,
+    db: DbSession,
+    by: Cut,
+    period: str | None = None,
+    location_id: int | None = None,
+) -> ProfitabilityOut:
+    """Profit for a month by brand, shop, user, item or customer, with profit per ton. The rows
+    add up to the profit and loss gross profit once stock lost is taken off (owner only)."""
+    return profit_service.profitability(
+        db, period or today_ist().strftime("%Y-%m"), by, location_id
+    )
 
 
 @router.get("/sales-by-segment", response_model=SegmentReport)

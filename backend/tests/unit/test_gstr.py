@@ -94,3 +94,15 @@ def test_reconcile_matches_flags_differences_and_finds_the_missing():
 def test_a_duplicate_bill_in_the_books_is_not_matched_twice():
     result = gstr.reconcile([book(no="B-1"), book(no="B-1")], [book(no="B-1")], tolerance=D("1"))
     assert sorted(r.status for r in result) == ["matched", "missing_in_2b"]
+
+
+def test_itc_at_risk_is_books_less_2b_and_never_negative():
+    # Books ITC 99,000 against 2B 98,980: 20 at risk. 2B showing more than the books is no risk.
+    assert gstr.mismatch_itc_at_risk(D("99000"), D("98980")) == D("20.00")
+    assert gstr.mismatch_itc_at_risk(D("99000"), D("99010")) == D("0.00")
+
+
+def test_payable_if_the_at_risk_input_tax_is_not_claimed():
+    # Payable 20,160; 5,000 of input tax may be lost: 25,160. A credit of -31,454.11 becomes -26,454.11.
+    assert gstr.payable_if_unclaimed(D("20160"), D("5000")) == D("25160.00")
+    assert gstr.payable_if_unclaimed(D("-31454.11"), D("5000")) == D("-26454.11")

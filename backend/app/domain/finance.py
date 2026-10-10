@@ -202,6 +202,55 @@ def price_realisation_pct(billed_value: Numberish, list_value: Numberish) -> Dec
     return margin_pct(billed_value, list_value)
 
 
+# ---------------------------------------------------------------------------- profitability cuts
+
+_KG_PER_TON = Decimal(1000)
+
+
+def tons(kilograms: Numberish) -> Decimal:
+    """Kilograms as tons, to 3 places: 10,000 kg = 10.000 t."""
+    return (to_decimal(kilograms) / _KG_PER_TON).quantize(Decimal("0.001"), ROUND_HALF_UP)
+
+
+def profit_per_unit(profit: Numberish, quantity: Numberish) -> Decimal | None:
+    """Profit for each ton (or bag, or piece) sold, to the paisa. None when nothing was sold,
+    never 0: an empty cut has no profit per ton. A loss comes out negative."""
+    qty = to_decimal(quantity)
+    if qty <= ZERO:
+        return None
+    return money(to_decimal(profit) / qty)
+
+
+def margin_per_base_unit(profit: Numberish, base_quantity: Numberish) -> Decimal | None:
+    """Profit for each base unit (kg, bag), to 4 places, since a kilogram earns paise."""
+    qty = to_decimal(base_quantity)
+    if qty <= ZERO:
+        return None
+    return (to_decimal(profit) / qty).quantize(Decimal("0.0001"), ROUND_HALF_UP)
+
+
+def contribution_per_ton(
+    net_sales: Numberish,
+    cogs: Numberish,
+    freight: Numberish,
+    variable_expenses: Numberish,
+    stock_lost: Numberish,
+    tons_sold: Numberish,
+) -> Decimal | None:
+    """(net sales - COGS - freight - variable expenses - stock lost) per ton sold."""
+    return profit_per_unit(
+        contribution(net_sales, cogs, freight, variable_expenses, stock_lost), tons_sold
+    )
+
+
+def share_pct(part: Numberish, whole: Numberish) -> Decimal | None:
+    """Part as a percentage of whole, to 2 places; None when whole is zero."""
+    base = to_decimal(whole)
+    if base == ZERO:
+        return None
+    return (to_decimal(part) / base * 100).quantize(Decimal("0.01"), ROUND_HALF_UP)
+
+
 # ---------------------------------------------------------------------------- working capital
 
 

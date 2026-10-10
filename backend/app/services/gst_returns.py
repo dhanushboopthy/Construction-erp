@@ -37,6 +37,8 @@ from app.schemas.gst import (
     Gstr3b,
     Heads,
     HsnRow,
+    ItcAtRiskOut,
+    ItcRiskRow,
     MatchRow,
     NoteRow,
     RateRow,
@@ -868,4 +870,138 @@ def match_2b(db: Session, period: str) -> Gstr2bResult:
         imported_rows=latest.row_count if latest else 0,
         counts=counts,
         rows=rows,
+    )
+
+
+# ---------------------------------------------------------------------------- ITC at risk (FM8)
+
+
+def _shift_month(period: str, back: int) -> str:
+    year, month = gstr.parse_period(period)
+    index = year * 12 + (month - 1) - back
+    return f"{index // 12:04d}-{index % 12 + 1:02d}"
+
+
+def itc_at_risk(db: Session, period: str, today: date) -> ItcAtRiskOut:
+    """Input tax on supplier bills in our books that GSTR-2B does not support (F29).
+
+    A bill is judged against the latest GSTR-2B imported for its month and the months after it up
+    to this one (a supplier may report late), so a bill from last month that was in last month's
+    2B is not counted again. With no GSTR-2B for the month no figure is made up. Bills from
+    suppliers with no GSTIN can never be in 2B; they are shown apart."""
+    first, last = _bounds(period)
+    latest = _latest_import(db, period)
+    plain = gstr3b(db, period)
+    payable = money(plain.net_payable.igst + plain.net_payable.cgst + plain.net_payable.sgst)
+    due = date(last.year + (last.month == 12), last.month % 12 + 1, 20)
+    no_gstin = ZERO
+    for _, supplier, heads in _purchase_figures(db, first, last):
+        if not supplier.gstin:
+            no_gstin += heads.igst + heads.cgst + heads.sgst
+    common = {
+        "period": period,
+        "file_name": latest.file_name if latest else None,
+        "no_gstin_itc": money(no_gstin),
+        "payable_estimate": payable,
+        "payable_to_date": first <= today <= last,
+        "due_date": due,
+    }
+    if latest is None:
+        return ItcAtRiskOut(
+            has_2b=False,
+            note="No GSTR-2B imported for this month",
+            missing_itc=None,
+            missing=[],
+            mismatch_itc=None,
+            mismatches=[],
+            at_risk_total=None,
+            payable_if_unclaimed=None,
+            **common,
+        )
+    portal: list[gstr.BillFigures] = []
+    for back in (0, 1, 2):
+        imported = latest if back == 0 else _latest_import(db, _shift_month(period, back))
+        for r in imported.rows if imported else []:
+            portal.append(
+                gstr.BillFigures(
+                    r["gstin"],
+                    r["number"],
+                    money(Decimal(r["taxable"])),
+                    money(Decimal(r["igst"])),
+                    money(Decimal(r["cgst"])),
+                    money(Decimal(r["sgst"])),
+                )
+            )
+    start = date(first.year - (first.month <= 2), (first.month - 3) % 12 + 1, 1)
+    books: list[gstr.BillFigures] = []
+    meta: dict[tuple[str, str], tuple[str, date]] = {}
+    for purchase, supplier, heads in _purchase_figures(db, start, last):
+        if not supplier.gstin:
+            continue
+        bill = gstr.BillFigures(
+            supplier.gstin.upper(),
+            purchase.bill_no,
+            heads.taxable,
+            heads.igst,
+            heads.cgst,
+            heads.sgst,
+        )
+        books.append(bill)
+        meta[(bill.gstin, gstr.normalize_doc_no(bill.number))] = (supplier.name, purchase.bill_date)
+    missing: list[ItcRiskRow] = []
+    mismatches: list[ItcRiskRow] = []
+    for m in gstr.reconcile(books, portal, TOLERANCE):
+        if m.books is None:
+            continue  # in 2B, not in our books: no input tax of ours is at risk
+        k = (m.gstin.upper(), gstr.normalize_doc_no(m.number))
+        name, on = meta.get(k, (None, None))
+        if m.status == "missing_in_2b":
+            # An older bill is judged only if its own month has a 2B; otherwise we cannot say.
+            if (
+                on is not None
+                and on < first
+                and _latest_import(db, f"{on.year:04d}-{on.month:02d}") is None
+            ):
+                continue
+            missing.append(
+                ItcRiskRow(
+                    gstin=m.gstin,
+                    supplier=name,
+                    number=m.number,
+                    bill_date=on,
+                    taxable=m.books.taxable,
+                    itc=m.books.tax,
+                    at_risk=m.books.tax,
+                )
+            )
+        elif m.status == "mismatch" and m.portal is not None:
+            risk = gstr.mismatch_itc_at_risk(m.books.tax, m.portal.tax)
+            if risk > ZERO:
+                mismatches.append(
+                    ItcRiskRow(
+                        gstin=m.gstin,
+                        supplier=name,
+                        number=m.number,
+                        bill_date=on,
+                        taxable=m.books.taxable,
+                        itc=m.books.tax,
+                        portal_itc=m.portal.tax,
+                        at_risk=risk,
+                    )
+                )
+    missing.sort(key=lambda r: (-r.at_risk, r.gstin, r.number))
+    mismatches.sort(key=lambda r: (-r.at_risk, r.gstin, r.number))
+    missing_total = money(sum((r.at_risk for r in missing), ZERO))
+    mismatch_total = money(sum((r.at_risk for r in mismatches), ZERO))
+    total = money(missing_total + mismatch_total)
+    return ItcAtRiskOut(
+        has_2b=True,
+        note=None,
+        missing_itc=missing_total,
+        missing=missing,
+        mismatch_itc=mismatch_total,
+        mismatches=mismatches,
+        at_risk_total=total,
+        payable_if_unclaimed=gstr.payable_if_unclaimed(payable, total),
+        **common,
     )

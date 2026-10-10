@@ -1948,6 +1948,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reports/profitability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Profitability
+         * @description Profit for a month by brand, shop, user, item or customer, with profit per ton. The rows
+         *     add up to the profit and loss gross profit once stock lost is taken off (owner only).
+         */
+        get: operations["profitability_api_v1_reports_profitability_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reports/sales-by-segment": {
         parameters: {
             query?: never;
@@ -2046,6 +2067,27 @@ export interface paths {
          * @description Upload the GSTR-2B download for a month (portal JSON, or the simple CSV).
          */
         post: operations["import_gstr2b_api_v1_gst_gstr2b_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gst/itc-at-risk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Itc At Risk
+         * @description Input tax on supplier bills in our books that GSTR-2B does not show, and the GST payable
+         *     estimate from GSTR-3B. No figure is made up when no GSTR-2B is imported.
+         */
+        get: operations["itc_at_risk_api_v1_gst_itc_at_risk_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -3423,6 +3465,40 @@ export interface components {
          * @enum {string}
          */
         CustomerSegment: "retail" | "contractor" | "bulk";
+        /**
+         * Cut
+         * @enum {string}
+         */
+        Cut: "brand" | "shop" | "user" | "item" | "customer";
+        /** CutRow */
+        CutRow: {
+            /** Key */
+            key: string;
+            /** Net Sales */
+            net_sales: string;
+            /** Cogs */
+            cogs: string;
+            /** Freight */
+            freight: string;
+            /** Gross Profit */
+            gross_profit: string;
+            /** Margin Pct */
+            margin_pct: string | null;
+            /** Share Pct */
+            share_pct: string | null;
+            /** Tons */
+            tons: string;
+            /** Units */
+            units: string;
+            /** Unit Label */
+            unit_label: string | null;
+            /** Profit Per Ton */
+            profit_per_ton: string | null;
+            /** Profit Per Unit */
+            profit_per_unit: string | null;
+            /** Margin Per Base Unit */
+            margin_per_base_unit: string | null;
+        };
         /** DebitNoteCreate */
         DebitNoteCreate: {
             /** Purchase Id */
@@ -4527,6 +4603,40 @@ export interface components {
             grand_total: string;
             status: components["schemas"]["InvoiceStatus"];
         };
+        /** ItcAtRiskOut */
+        ItcAtRiskOut: {
+            /** Period */
+            period: string;
+            /** Has 2B */
+            has_2b: boolean;
+            /** Note */
+            note: string | null;
+            /** File Name */
+            file_name: string | null;
+            /** Missing Itc */
+            missing_itc: string | null;
+            /** Missing */
+            missing: components["schemas"]["ItcRiskRow"][];
+            /** Mismatch Itc */
+            mismatch_itc: string | null;
+            /** Mismatches */
+            mismatches: components["schemas"]["ItcRiskRow"][];
+            /** At Risk Total */
+            at_risk_total: string | null;
+            /** No Gstin Itc */
+            no_gstin_itc: string;
+            /** Payable Estimate */
+            payable_estimate: string;
+            /** Payable If Unclaimed */
+            payable_if_unclaimed: string | null;
+            /** Payable To Date */
+            payable_to_date: boolean;
+            /**
+             * Due Date
+             * Format: date
+             */
+            due_date: string;
+        };
         /** ItcReversalOut */
         ItcReversalOut: {
             /** Period */
@@ -4580,6 +4690,25 @@ export interface components {
             gst_rate: string;
             /** Itc */
             itc: string;
+        };
+        /** ItcRiskRow */
+        ItcRiskRow: {
+            /** Gstin */
+            gstin: string;
+            /** Supplier */
+            supplier: string | null;
+            /** Number */
+            number: string;
+            /** Bill Date */
+            bill_date: string | null;
+            /** Taxable */
+            taxable: string;
+            /** Itc */
+            itc: string;
+            /** Portal Itc */
+            portal_itc?: string | null;
+            /** At Risk */
+            at_risk: string;
         };
         /**
          * ItemCategory
@@ -5847,6 +5976,50 @@ export interface components {
             profit: string;
             /** Margin Pct */
             margin_pct: string | null;
+        };
+        /** ProfitabilityOut */
+        ProfitabilityOut: {
+            /** Period */
+            period: string;
+            by: components["schemas"]["Cut"];
+            /**
+             * Date From
+             * Format: date
+             */
+            date_from: string;
+            /**
+             * Date To
+             * Format: date
+             */
+            date_to: string;
+            /** Location Id */
+            location_id: number | null;
+            /** Rows */
+            rows: components["schemas"]["CutRow"][];
+            /** Net Sales */
+            net_sales: string;
+            /** Cogs */
+            cogs: string;
+            /** Freight */
+            freight: string;
+            /** Gross Profit Before Loss */
+            gross_profit_before_loss: string;
+            /** Stock Lost */
+            stock_lost: string;
+            /** Gross Profit */
+            gross_profit: string;
+            /** Tons */
+            tons: string;
+            /** Profit Per Ton */
+            profit_per_ton: string | null;
+            /** Variable Expenses */
+            variable_expenses: string;
+            /** Contribution Per Ton */
+            contribution_per_ton: string | null;
+            /** Enough Data */
+            enough_data: boolean;
+            /** Data Note */
+            data_note: string | null;
         };
         /** PurchaseCostOut */
         PurchaseCostOut: {
@@ -17991,6 +18164,84 @@ export interface operations {
             };
         };
     };
+    profitability_api_v1_reports_profitability_get: {
+        parameters: {
+            query: {
+                by: components["schemas"]["Cut"];
+                period?: string | null;
+                location_id?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfitabilityOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     sales_by_segment_api_v1_reports_sales_by_segment_get: {
         parameters: {
             query?: {
@@ -18390,6 +18641,82 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ImportOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    itc_at_risk_api_v1_gst_itc_at_risk_get: {
+        parameters: {
+            query: {
+                period: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItcAtRiskOut"];
                 };
             };
             /** @description Bad Request */

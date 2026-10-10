@@ -75,3 +75,7 @@
 | Write-down | Lowering the value of stock to its NRV; a permanent document `S1N/26-27/00001`. No quantity moves, no input tax is reversed, the loss comes off net profit. |
 | Cement age (FIFO proxy) | Cement by the day it came in, assuming the oldest is sold first; an estimate, not lot tracking. |
 | Weight shortage | Billed weight less weighbridge weight on a supplier bill: 1,000 kg billed, 994 kg received = 0.60 %, ₹420 on ₹70,000 of goods. |
+| Books lock | A date the owner sets after a return is filed: nothing can be dated on or before it until the owner reopens it with a reason. Lock through 30-09-2026 and a credit note dated 30-09 is refused. |
+| Bank reconciliation | Matching the bank's statement lines to what the shop recorded. 10 lines, 8 match a receipt, 2 do not: ₹18,750 cheque deposit and ₹590 bank charges. |
+| Recorded, not in the bank | A UPI or bank receipt in the books that the statement never shows: ₹8,000 receipt with reference 999999999999, no credit. A failed or fake payment until proved otherwise. |
+| Exception | An entry that looks like a usual way money or stock goes missing, such as 20 kg wire at ₹50 = exactly ₹1,000 adjusted the day before a count. A reason to ask, not proof. |

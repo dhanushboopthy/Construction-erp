@@ -41,6 +41,32 @@ Endpoints that return cost, margin or profit use separate response models for ow
 staff (for example `ItemOwnerOut` and `ItemOut`). Choose the model with `principal.sees_cost`;
 never rely on the UI to hide fields. Test each such endpoint as a counter user.
 
+## Endpoints (FM7: period lock, bank statements, exceptions)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| GET | `/period-lock` | owner, accountant |
+| PUT | `/period-lock` (`locked_through` or null, `reason`) | owner only |
+| GET | `/period-lock/checklist?period=2026-10` | owner, accountant |
+| GET | `/bank/accounts` | owner, accountant |
+| POST | `/bank/accounts` (`name`, `account_no_last4`) | owner only |
+| PATCH | `/bank/accounts/{id}` (`name`, `is_active`) | owner only |
+| GET | `/bank/statements` | owner, accountant |
+| POST | `/bank/statements` (multipart: `bank_account_id`, `file`) | owner, accountant |
+| GET | `/bank/reconciliation?date_from=&date_to=&bank_account_id=` (30 days by default) | owner, accountant |
+| GET | `/reports/exceptions?date_from=&date_to=` (30 days by default) | owner only |
+
+Counter staff get 403 on all of them; the accountant gets 403 on the exception report and on every
+write except the statement upload. Errors: `PERIOD_LOCKED` (409, from any route that dates a
+document), `LOCK_IN_FUTURE`, `LOCK_UNCHANGED`, `STATEMENT_IMPORTED` (the same file twice),
+`STATEMENT_UNREADABLE` (the message names the first bad lines; nothing is imported),
+`STATEMENT_EMPTY`, `ACCOUNT_INACTIVE`, `DUPLICATE_NAME`, `BAD_RANGE`, `RANGE_TOO_LONG`. Settings
+gain `bank_match_days`, `exception_round_amount`, `exception_count_days`,
+`exception_returns_count`, `exception_returns_days`, `exception_cash_near_pct` and
+`exception_shortage_count` (zero switches a rule off); `locked_through` is read-only there.
+The audit log gains the entity `period_lock` (action `override`; changes: `from`, `to`, `reason`,
+`reopens`).
+
 ## Endpoints (FM6: inventory analytics, stock value, shortages)
 
 | Method | Path | Who |

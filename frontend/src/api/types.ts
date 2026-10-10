@@ -177,3 +177,14 @@ export type AdjustmentOwner = Schemas["AdjustmentOwnerOut"];
 export type AdjustmentBook = Schemas["AdjustmentBookOut"];
 export type AdjustmentBookOwner = Schemas["AdjustmentBookOwnerOut"];
 export type ItcReversal = Schemas["ItcReversalOut"];
+
+// FM7: controls
+export type PeriodLock = Schemas["PeriodLockOut"];
+export type PeriodLockSet = Schemas["PeriodLockSet"];
+export type PeriodChecklist = Schemas["PeriodChecklist"];
+export type BankAccount = Schemas["BankAccountOut"];
+export type BankStatement = Schemas["BankStatementOut"];
+export type Reconciliation = Schemas["ReconciliationOut"];
+export type ExceptionReport = Schemas["ExceptionReport"];
+export type AuditLogRow = Schemas["AuditLogOut"];
+export type AuditAction = Schemas["AuditAction"];

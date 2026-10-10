@@ -32,6 +32,8 @@ interface LineRow {
   weightNote: string;
   discount: string;
   reason: string;
+  price: string; // a price typed for this bill, per the line's unit (owner or approved)
+  priceReason: string;
 }
 
 const emptyLine = (): LineRow => ({
@@ -45,6 +47,8 @@ const emptyLine = (): LineRow => ({
   weightNote: "",
   discount: "",
   reason: "",
+  price: "",
+  priceReason: "",
 });
 const DECIMAL = /^\d+(\.\d+)?$/;
 
@@ -139,6 +143,7 @@ export function BillEntryPage() {
     for (const l of lines) {
       if (!l.itemId || !DECIMAL.test(l.quantity) || Number(l.quantity) <= 0) return null;
       if (l.discount && !DECIMAL.test(l.discount)) return null;
+      if (l.price && !DECIMAL.test(l.price)) return null;
       if (l.slipWeight && (!DECIMAL.test(l.slipWeight) || Number(l.slipWeight) <= 0)) return null;
       if (pays.some((p) => p.amount && !DECIMAL.test(p.amount))) return null;
       out.push({
@@ -154,6 +159,8 @@ export function BillEntryPage() {
         weight_note: l.slipWeight && l.weightNote.trim() ? l.weightNote.trim() : null,
         discount: l.discount || null,
         discount_reason: l.discount ? l.reason || null : null,
+        rate_override: l.price || null,
+        rate_override_reason: l.price ? l.priceReason.trim() || null : null,
       });
     }
     return {
@@ -422,6 +429,20 @@ export function BillEntryPage() {
                     onChange={(e) => setLine(i, { reason: e.target.value })}
                   />
                   <TextField
+                    label="Different price (₹ per unit)"
+                    inputMode="decimal"
+                    className={styles.amount}
+                    value={l.price}
+                    onChange={(e) => setLine(i, { price: e.target.value })}
+                  />
+                  {l.price ? (
+                    <TextField
+                      label="Reason for different price"
+                      value={l.priceReason}
+                      onChange={(e) => setLine(i, { priceReason: e.target.value })}
+                    />
+                  ) : null}
+                  <TextField
                     label="Slip weight (optional)"
                     inputMode="decimal"
                     className={styles.amount}
@@ -439,7 +460,7 @@ export function BillEntryPage() {
                 {row ? (
                   <p className={styles.sub} aria-live="polite">
                     {row.rate
-                      ? `₹${trimDecimal(row.rate)} per ${row.base_unit}${row.rate_source === "customer" ? " (this customer's rate)" : ""} · ${trimDecimal(row.base_qty)} ${row.base_unit} · taxable ₹${formatMoney(row.taxable)} · GST ${trimDecimal(row.gst_rate)}% · line ₹${formatMoney(row.line_total)}`
+                      ? `₹${trimDecimal(row.rate)} per ${row.base_unit}${row.rate_source === "customer" ? " (this customer's rate)" : row.rate_source === "override" ? " (price set by hand)" : ""} · ${trimDecimal(row.base_qty)} ${row.base_unit} · taxable ₹${formatMoney(row.taxable)} · GST ${trimDecimal(row.gst_rate)}% · line ₹${formatMoney(row.line_total)}`
                       : "No rate yet"}
                     {row.stock_after !== null
                       ? ` · ${trimDecimal(row.stock_after)} ${row.base_unit} left`

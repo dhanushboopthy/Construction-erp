@@ -99,6 +99,7 @@ class PricedLine:
     base_qty: Decimal
     rate: Decimal | None = None
     source: pricing.RateSource | None = None
+    list_rate: Decimal | None = None  # what the system would charge, before an owner override
     discount: Decimal = ZERO
     tax: gst.LineTax | None = None
     source_location_id: int | None = None
@@ -246,6 +247,7 @@ def price_invoice(
         try:
             resolved = rate_service.resolve(db, item.id, party.id, on)
             row.rate, row.source = resolved.rate, resolved.source
+            row.list_rate = resolved.rate
         except BusinessRuleError as exc:
             row.problems.append(Problem(index, exc.code, exc.message, False, "item_id"))
         if line.rate_override is not None and may_discount:
@@ -254,8 +256,18 @@ def price_invoice(
                 line.rate_override, item.gst_rate, includes_gst=settings.rates_include_gst
             )
             row.rate = pricing.rate_per_base_unit(exclusive, factor)
-            row.source = pricing.RateSource.MARKET
+            row.source = pricing.RateSource.OVERRIDE
             row.problems = [p for p in row.problems if p.code != "PRICE_NOT_SET"]
+            if not (line.rate_override_reason or "").strip():
+                row.problems.append(
+                    Problem(
+                        index,
+                        "OVERRIDE_REASON",
+                        "Give a reason for the different price.",
+                        False,
+                        "rate_override_reason",
+                    )
+                )
         if line.discount and may_discount:
             if not line.discount_reason:
                 row.problems.append(
@@ -582,6 +594,12 @@ def create(
                 base_unit=r.item.base_unit,
                 rate=r.rate or ZERO,
                 rate_source=r.source or pricing.RateSource.MARKET,
+                list_rate=r.list_rate,
+                rate_override_reason=(
+                    (r.data.rate_override_reason or "").strip()
+                    if r.source is pricing.RateSource.OVERRIDE
+                    else None
+                ),
                 discount=r.discount,
                 discount_reason=r.data.discount_reason if r.discount else None,
                 taxable=r.tax.taxable if r.tax else ZERO,

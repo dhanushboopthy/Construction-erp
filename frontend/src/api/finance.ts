@@ -10,6 +10,7 @@ import type {
   ExpenseCategoryUpdate,
   KpiDefinition,
   Pnl,
+  RateOverrides,
 } from "./types";
 
 /** FM1: cash book, expense heads, profit and loss and the KPI catalogue. */
@@ -80,6 +81,17 @@ export function usePnl(period: string, locationId: string) {
     queryKey: ["pnl", period, locationId],
     enabled: /^\d{4}-\d{2}$/.test(period),
     queryFn: () => api<Pnl>(`/reports/pnl?${params.toString()}`),
+  });
+}
+
+/** FM3: prices set by hand, by user, with their rupee effect (owner only). */
+export function useRateOverrides(period: string, locationId: string) {
+  const params = new URLSearchParams({ period });
+  if (locationId) params.set("location_id", locationId);
+  return useQuery({
+    queryKey: ["rate-overrides", period, locationId],
+    enabled: /^\d{4}-\d{2}$/.test(period),
+    queryFn: () => api<RateOverrides>(`/reports/rate-overrides?${params.toString()}`),
   });
 }
 

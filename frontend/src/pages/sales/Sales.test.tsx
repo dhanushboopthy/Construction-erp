@@ -165,6 +165,34 @@ describe("Billing", () => {
     );
   });
 
+  it("lets the owner type a different price, and sends the reason with it", async () => {
+    const user = userEvent.setup();
+    const { calls } = mockApi({
+      ...session(OWNER),
+      ...routes(),
+      "POST /invoices/preview": () => ({ body: PREVIEW_OK }),
+    });
+    renderAt("/sales/new");
+    await screen.findByRole("option", { name: "TMT bar 12 mm Fe500D" });
+    await user.selectOptions(screen.getByLabelText("Item 1"), "10");
+    await user.type(screen.getByLabelText("Quantity"), "1");
+    expect(screen.queryByLabelText("Reason for different price")).toBeNull();
+    await user.type(screen.getByLabelText("Different price (₹ per unit)"), "54000");
+    await user.type(screen.getByLabelText("Reason for different price"), "matching a competitor");
+    await vi.waitFor(
+      () => {
+        const last = calls.filter((c) => c.path === "/invoices/preview").at(-1)?.body as {
+          lines: { rate_override: string | null; rate_override_reason: string | null }[];
+        };
+        expect(last?.lines[0]).toMatchObject({
+          rate_override: "54000",
+          rate_override_reason: "matching a competitor",
+        });
+      },
+      { timeout: 3000 },
+    );
+  });
+
   it("lists bills and opens one with its print button", async () => {
     const user = userEvent.setup();
     mockApi({

@@ -19,8 +19,17 @@ from app.core.tenancy import TENANT_ID
 from app.domain import finance
 from app.domain.finance import CashEntryKind
 from app.domain.money import ZERO, money
+from app.domain.pricing import RateSource
 from app.models.cashbook import CashEntry, ExpenseCategory
-from app.schemas.finance import PnlExpense, PnlOut
+from app.models.sales import SalesInvoice, SalesLine
+from app.models.setup import AppUser
+from app.schemas.finance import (
+    OverrideLineOut,
+    OverrideUserOut,
+    PnlExpense,
+    PnlOut,
+    RateOverridesOut,
+)
 from app.services import adjustments, reports
 
 
@@ -121,4 +130,98 @@ def profit_and_loss(db: Session, period: str, location_id: int | None = None) ->
         break_even_sales=finance.break_even_sales(split.fixed, contribution, net),
         enough_data=enough,
         data_note=note,
+    )
+
+
+def rate_overrides(db: Session, period: str, location_id: int | None = None) -> RateOverridesOut:
+    """Prices the owner set by hand in a month, by user, with their rupee effect against the rate
+    the system would have charged (FM3, F4). Owner only; every figure comes from the bill lines."""
+    date_from, date_to = month_bounds(period)
+    if date_from > today_ist():
+        raise BusinessRuleError("This month has not started yet", code="FUTURE_PERIOD")
+    in_period = [
+        SalesInvoice.tenant_id == TENANT_ID,
+        SalesInvoice.invoice_date >= date_from,
+        SalesInvoice.invoice_date <= date_to,
+    ]
+    if location_id is not None:
+        in_period.append(SalesInvoice.location_id == location_id)
+    users = {u.id: u.full_name for u in db.execute(select(AppUser)).scalars()}
+
+    rows: list[OverrideLineOut] = []
+    effects: dict[int | None, list[Decimal | None]] = defaultdict(list)
+    listed = billed = ZERO
+    stmt = (
+        select(SalesInvoice, SalesLine)
+        .join(SalesLine, SalesLine.invoice_id == SalesInvoice.id)
+        .where(*in_period, SalesLine.rate_source == RateSource.OVERRIDE)
+        .order_by(SalesInvoice.invoice_date, SalesInvoice.number, SalesLine.line_no)
+    )
+    for invoice, line in db.execute(stmt).all():
+        effect = finance.override_effect(line.list_rate, line.rate, line.base_qty)
+        effects[invoice.created_by].append(effect)
+        if line.list_rate is not None:
+            listed += line.list_rate * line.base_qty
+            billed += line.rate * line.base_qty
+        rows.append(
+            OverrideLineOut(
+                invoice_id=invoice.id,
+                invoice_number=invoice.number,
+                invoice_date=invoice.invoice_date,
+                location_id=invoice.location_id,
+                item_name=line.description,
+                user_id=invoice.created_by,
+                user_name=users.get(invoice.created_by) if invoice.created_by else None,
+                base_qty=line.base_qty,
+                base_unit=line.base_unit,
+                list_rate=line.list_rate,
+                billed_rate=line.rate,
+                effect=effect,
+                reason=line.rate_override_reason,
+            )
+        )
+
+    discounts: dict[int | None, Decimal] = defaultdict(lambda: ZERO)
+    discount_stmt = (
+        select(SalesInvoice.created_by, SalesLine.discount)
+        .join(SalesLine, SalesLine.invoice_id == SalesInvoice.id)
+        .where(*in_period, SalesLine.discount > ZERO)
+    )
+    for user_id, discount in db.execute(discount_stmt).all():
+        discounts[user_id] += discount
+
+    everyone = effects.keys() | discounts.keys()
+    by_user: list[OverrideUserOut] = []
+    for user_id in everyone:
+        summary = finance.summarise_overrides(effects.get(user_id, []))
+        by_user.append(
+            OverrideUserOut(
+                user_id=user_id,
+                user_name=users.get(user_id) if user_id else None,
+                lines=summary.lines,
+                cut=summary.cut,
+                raised=summary.raised,
+                net=summary.net,
+                discounts=money(discounts.get(user_id, ZERO)),
+            )
+        )
+    by_user.sort(key=lambda x: (-(x.cut + x.discounts), x.user_name or ""))
+
+    total = finance.summarise_overrides([e for items in effects.values() for e in items])
+    total_discounts = money(sum(discounts.values(), ZERO))
+    return RateOverridesOut(
+        period=period,
+        date_from=date_from,
+        date_to=date_to,
+        location_id=location_id,
+        lines=total.lines,
+        unpriced=total.unpriced,
+        cut=total.cut,
+        raised=total.raised,
+        net=total.net,
+        discounts=total_discounts,
+        leakage=finance.discount_leakage(total.cut, total_discounts),
+        realisation_pct=finance.price_realisation_pct(billed, listed),
+        by_user=by_user,
+        rows=rows,
     )

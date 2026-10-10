@@ -15,6 +15,7 @@ from app.domain.money import ZERO, Numberish, money, to_decimal, unit_cost
 class RateSource(StrEnum):
     CUSTOMER = "customer"
     MARKET = "market"
+    OVERRIDE = "override"  # the owner typed a price for this bill (FM3)
 
 
 class PriceNotSetError(LookupError):

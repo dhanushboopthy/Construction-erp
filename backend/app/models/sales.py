@@ -89,6 +89,11 @@ class SalesLine(Base, TenantMixin):
     __table_args__ = (
         UniqueConstraint("invoice_id", "line_no"),
         CheckConstraint("base_qty > 0", name="positive_qty"),
+        CheckConstraint(
+            "rate_source <> 'override' OR "
+            "(rate_override_reason IS NOT NULL AND btrim(rate_override_reason) <> '')",
+            name="override_has_reason",
+        ),
     )
 
     id: Mapped[IntPK]
@@ -103,6 +108,10 @@ class SalesLine(Base, TenantMixin):
     base_unit: Mapped[str] = mapped_column(String(16))
     rate: Mapped[Decimal] = mapped_column(Numeric(14, 6))  # per base unit, excluding GST
     rate_source: Mapped[RateSource] = mapped_column(str_enum(RateSource, "rate_source"))
+    # FM3: what the system would have charged (customer or market rate, per base unit, excl.
+    # GST) and why the owner charged something else. Blank on bills issued before FM3.
+    list_rate: Mapped[Decimal | None] = mapped_column(Numeric(14, 6))
+    rate_override_reason: Mapped[str | None] = mapped_column(String(200))
     discount: Mapped[Money] = mapped_column()
     discount_reason: Mapped[str | None] = mapped_column(String(200))
     taxable: Mapped[Money] = mapped_column()

@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.4.0 (FM3): labelled rate overrides
+
+- A price typed for one bill is saved as an override, not as the market rate, and needs a
+  reason (Sales, New bill: "Different price" and "Reason for different price"). Without one the
+  bill is refused (`OVERRIDE_REASON`). Bills are printed exactly as before.
+- Every new bill line keeps the rate the system would have charged, so the rupees given away
+  are exact. Bills issued before FM3 keep a blank list rate and are not changed.
+- Reports, Price overrides (owner): discount leakage, price realisation, a table by person and
+  every hand-priced line with its reason.
+
 ## 1.3.0 (FM2): stock adjustments and ITC to reverse
 
 - Stock, Adjustments: breakage, rust or damage, theft, free samples, weighbridge differences

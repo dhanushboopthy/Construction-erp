@@ -625,6 +625,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reports/rate-overrides": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Rate Overrides
+         * @description Hand-set prices by user and their rupee effect against the list rate. Owner only.
+         */
+        get: operations["rate_overrides_api_v1_reports_rate_overrides_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/kpis/definitions": {
         parameters: {
             query?: never;
@@ -3483,6 +3503,8 @@ export interface components {
             discount_reason?: string | null;
             /** Rate Override */
             rate_override?: number | string | null;
+            /** Rate Override Reason */
+            rate_override_reason?: string | null;
             /** Purchase Line Id */
             purchase_line_id?: number | null;
             /** Slip Weight */
@@ -3513,6 +3535,8 @@ export interface components {
             /** Rate */
             rate: string;
             rate_source: components["schemas"]["RateSource"];
+            /** Rate Override Reason */
+            rate_override_reason?: string | null;
             /** Discount */
             discount: string;
             /** Discount Reason */
@@ -3577,6 +3601,8 @@ export interface components {
             /** Rate */
             rate: string;
             rate_source: components["schemas"]["RateSource"];
+            /** Rate Override Reason */
+            rate_override_reason?: string | null;
             /** Discount */
             discount: string;
             /** Discount Reason */
@@ -4458,6 +4484,58 @@ export interface components {
             /** Note */
             note?: string | null;
         };
+        /**
+         * OverrideLineOut
+         * @description One bill line whose price the owner set by hand (FM3). Owner only.
+         */
+        OverrideLineOut: {
+            /** Invoice Id */
+            invoice_id: number;
+            /** Invoice Number */
+            invoice_number: string;
+            /**
+             * Invoice Date
+             * Format: date
+             */
+            invoice_date: string;
+            /** Location Id */
+            location_id: number;
+            /** Item Name */
+            item_name: string;
+            /** User Id */
+            user_id: number | null;
+            /** User Name */
+            user_name: string | null;
+            /** Base Qty */
+            base_qty: string;
+            /** Base Unit */
+            base_unit: string;
+            /** List Rate */
+            list_rate: string | null;
+            /** Billed Rate */
+            billed_rate: string;
+            /** Effect */
+            effect: string | null;
+            /** Reason */
+            reason: string | null;
+        };
+        /** OverrideUserOut */
+        OverrideUserOut: {
+            /** User Id */
+            user_id: number | null;
+            /** User Name */
+            user_name: string | null;
+            /** Lines */
+            lines: number;
+            /** Cut */
+            cut: string;
+            /** Raised */
+            raised: string;
+            /** Net */
+            net: string;
+            /** Discounts */
+            discounts: string;
+        };
         /** Page[AuditLogOut] */
         Page_AuditLogOut_: {
             /** Items */
@@ -5246,6 +5324,46 @@ export interface components {
             /** Unit */
             unit?: string | null;
         };
+        /**
+         * RateOverridesOut
+         * @description Who set prices by hand, and what it cost, for one calendar month (owner only).
+         */
+        RateOverridesOut: {
+            /** Period */
+            period: string;
+            /**
+             * Date From
+             * Format: date
+             */
+            date_from: string;
+            /**
+             * Date To
+             * Format: date
+             */
+            date_to: string;
+            /** Location Id */
+            location_id: number | null;
+            /** Lines */
+            lines: number;
+            /** Unpriced */
+            unpriced: number;
+            /** Cut */
+            cut: string;
+            /** Raised */
+            raised: string;
+            /** Net */
+            net: string;
+            /** Discounts */
+            discounts: string;
+            /** Leakage */
+            leakage: string;
+            /** Realisation Pct */
+            realisation_pct: string | null;
+            /** By User */
+            by_user: components["schemas"]["OverrideUserOut"][];
+            /** Rows */
+            rows: components["schemas"]["OverrideLineOut"][];
+        };
         /** RateRow */
         RateRow: {
             /** Rate */
@@ -5332,7 +5450,7 @@ export interface components {
          * RateSource
          * @enum {string}
          */
-        RateSource: "customer" | "market";
+        RateSource: "customer" | "market" | "override";
         /** RateWarning */
         RateWarning: {
             /** Item Id */
@@ -9602,6 +9720,83 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PnlOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rate_overrides_api_v1_reports_rate_overrides_get: {
+        parameters: {
+            query?: {
+                period?: string | null;
+                location_id?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RateOverridesOut"];
                 };
             };
             /** @description Bad Request */

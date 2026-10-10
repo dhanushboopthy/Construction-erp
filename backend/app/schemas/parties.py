@@ -74,6 +74,7 @@ class PartyUpdate(Schema):
     credit_allowed: bool | None = None
     credit_limit: Annotated[Decimal, Field(ge=0, max_digits=14, decimal_places=2)] | None = None
     credit_days: Annotated[int, Field(ge=0, le=365)] | None = None
+    lead_time_days: Annotated[int, Field(ge=0, le=365)] | None = None
     is_active: bool | None = None
 
 
@@ -82,6 +83,7 @@ class PartyOut(PartyBase):
     credit_allowed: bool
     credit_limit: Decimal | None
     credit_days: int | None
+    lead_time_days: int | None
     is_active: bool
     created_at: datetime
     sites: list[SiteOut]

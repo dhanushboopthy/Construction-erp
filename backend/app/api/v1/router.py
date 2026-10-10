@@ -11,6 +11,7 @@ from app.api.v1 import (
     finance,
     gst,
     health,
+    inventory,
     invoices,
     items,
     locations,
@@ -49,6 +50,7 @@ api_router.include_router(finance.router)
 api_router.include_router(purchases.router)
 api_router.include_router(stock_ops.router)
 api_router.include_router(rates.router)
+api_router.include_router(inventory.router)
 api_router.include_router(invoices.router)
 api_router.include_router(payments.router)
 api_router.include_router(approvals.router)

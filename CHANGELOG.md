@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.7.0 (FM6): inventory analytics and replenishment
+
+- Stock, Analysis (owner): items to reorder now (reorder point = average daily sales x lead time
+  + safety stock), days of stock, ABC class by what was sold, fast, slow or non-moving by days
+  sold, and how old the stock is since its last sale or purchase. Stock not moving for over 180
+  days is totalled. With under 30 days of bills it says "Not enough data yet (needs 30 days)".
+- Cement by age (an estimate): oldest cement first from receipts and sales.
+- Stock, Stock value (owner, accountant): stock against today's market rate; the loss when it is
+  worth less than cost; gain or loss against the last purchase. The owner can write the stock
+  down to market value: quantities do not change, no GST is reversed, the loss comes off the
+  month's net profit.
+- Stock, Weight shortages (owner, accountant): billed against the weighbridge by supplier, with
+  the lines to claim.
+- Lead time and safety days per item, lead time per supplier, and shop defaults in Settings.
+
 ## 1.6.0 (FM5): working capital and receivables
 
 - Reports, Working capital (owner): days inventory outstanding, days sales outstanding, days

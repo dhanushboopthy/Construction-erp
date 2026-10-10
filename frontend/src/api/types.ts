@@ -137,6 +137,16 @@ export type CashBook = Schemas["CashBookOut"];
 export type Pnl = Schemas["PnlOut"];
 export type KpiDefinition = Schemas["KpiDefinitionOut"];
 
+// FM6: inventory analytics, stock value (NRV), cement age, weight shortages.
+export type InventoryAnalytics = Schemas["InventoryAnalyticsOut"];
+export type InventoryRow = Schemas["InventoryRowOut"];
+export type NrvReport = Schemas["NrvReportOut"];
+export type NrvRow = Schemas["NrvRowOut"];
+export type Writedown = Schemas["WritedownOut"];
+export type WritedownCreate = Schemas["WritedownCreate"];
+export type FifoAge = Schemas["FifoAgeOut"];
+export type Shrinkage = Schemas["ShrinkageOut"];
+
 // FM5: working capital, receivables by due date, bad-debt write-offs.
 export type WorkingCapital = Schemas["WorkingCapitalOut"];
 export type WorkingCapitalPoint = Schemas["WorkingCapitalPoint"];

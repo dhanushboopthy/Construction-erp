@@ -140,6 +140,15 @@ export function PnlPage() {
                   <th scope="row">Less interest and bank charges</th>
                   <td className="num">{rupees(p.interest)}</td>
                 </tr>
+                {Number(p.write_downs) > 0 ? (
+                  <tr>
+                    <th scope="row">
+                      Less stock written down to market value{" "}
+                      <span className={styles.sub}>no GST reversed</span>
+                    </th>
+                    <td className="num">{rupees(p.write_downs)}</td>
+                  </tr>
+                ) : null}
                 {Number(p.bad_debts) > 0 ? (
                   <tr>
                     <th scope="row">

@@ -1097,6 +1097,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/inventory/analytics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Analytics
+         * @description ABC, FSN, stock age, cover days and reorder points. Owner only (it shows stock at cost).
+         */
+        get: operations["analytics_api_v1_inventory_analytics_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/nrv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Nrv
+         * @description Stock against today's market rate: the loss when it is worth less than it cost.
+         */
+        get: operations["nrv_api_v1_inventory_nrv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/writedowns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Writedowns */
+        get: operations["list_writedowns_api_v1_inventory_writedowns_get"];
+        put?: never;
+        /**
+         * Create Writedown
+         * @description Lower stock to its realisable value. Owner only; no quantity moves, no input tax is
+         *     reversed, and the loss comes off the month's net profit.
+         */
+        post: operations["create_writedown_api_v1_inventory_writedowns_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/fifo-age": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Fifo Age
+         * @description Cement by the day it came in, assuming the oldest is sold first.
+         */
+        get: operations["fifo_age_api_v1_inventory_fifo_age_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/shrinkage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Shrinkage
+         * @description Weight shortages by supplier (billed against the weighbridge); 90 days by default.
+         */
+        get: operations["shrinkage_api_v1_inventory_shrinkage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/invoices/preview": {
         parameters: {
             query?: never;
@@ -2223,6 +2325,15 @@ export interface components {
          * @enum {string}
          */
         AdjustmentReason: "weighbridge_gain" | "weighbridge_loss" | "breakage" | "damage" | "theft" | "free_sample" | "count_correction";
+        /** AgeBucketOut */
+        AgeBucketOut: {
+            /** Bucket */
+            bucket: string;
+            /** Value */
+            value: string;
+            /** Items */
+            items: number;
+        };
         /** AgingOut */
         AgingOut: {
             /** Up To 30 */
@@ -3464,6 +3575,51 @@ export interface components {
          * @enum {string}
          */
         ExpenseNature: "fixed" | "variable" | "interest";
+        /** FifoAgeOut */
+        FifoAgeOut: {
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** Note */
+            note: string;
+            /** Items */
+            items: components["schemas"]["FifoItemOut"][];
+        };
+        /** FifoItemOut */
+        FifoItemOut: {
+            /** Item Id */
+            item_id: number;
+            /** Item Name */
+            item_name: string;
+            /** Base Unit */
+            base_unit: string;
+            /** On Hand */
+            on_hand: string;
+            /** Oldest Age Days */
+            oldest_age_days: number | null;
+            /** Buckets */
+            buckets: {
+                [key: string]: string;
+            };
+            /** Over 90 Value */
+            over_90_value: string;
+            /** Layers */
+            layers: components["schemas"]["FifoLayerOut"][];
+        };
+        /** FifoLayerOut */
+        FifoLayerOut: {
+            /**
+             * Received
+             * Format: date
+             */
+            received: string;
+            /** Quantity */
+            quantity: string;
+            /** Age Days */
+            age_days: number;
+        };
         /**
          * FulfilmentSource
          * @enum {string}
@@ -3603,6 +3759,78 @@ export interface components {
             field: string | null;
             /** Message */
             message: string;
+        };
+        /** InventoryAnalyticsOut */
+        InventoryAnalyticsOut: {
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** History Days */
+            history_days: number;
+            /** Enough Data */
+            enough_data: boolean;
+            /** Data Note */
+            data_note: string | null;
+            /** Default Lead Days */
+            default_lead_days: number;
+            /** Default Safety Days */
+            default_safety_days: number;
+            /** Fsn Fast Min Days */
+            fsn_fast_min_days: number;
+            /** Stock Value */
+            stock_value: string;
+            /** Dead Stock Value */
+            dead_stock_value: string;
+            /** Aging */
+            aging: components["schemas"]["AgeBucketOut"][];
+            /** Rows */
+            rows: components["schemas"]["InventoryRowOut"][];
+        };
+        /** InventoryRowOut */
+        InventoryRowOut: {
+            /** Item Id */
+            item_id: number;
+            /** Item Name */
+            item_name: string;
+            category: components["schemas"]["ItemCategory"];
+            /** Base Unit */
+            base_unit: string;
+            /** On Hand */
+            on_hand: string;
+            /** Avg Cost */
+            avg_cost: string;
+            /** Value */
+            value: string;
+            /** Last Movement */
+            last_movement: string | null;
+            /** Age Days */
+            age_days: number | null;
+            /** Age Bucket */
+            age_bucket: string | null;
+            /** Days Sold */
+            days_sold: number;
+            /** Consumption */
+            consumption: string;
+            /** Abc */
+            abc: string | null;
+            /** Fsn */
+            fsn: string | null;
+            /** Avg Daily Sales */
+            avg_daily_sales: string | null;
+            /** Cover Days */
+            cover_days: string | null;
+            /** Lead Days */
+            lead_days: number;
+            /** Safety Days */
+            safety_days: number;
+            /** Reorder Point */
+            reorder_point: string | null;
+            /** Short By */
+            short_by: string | null;
+            /** Reorder Now */
+            reorder_now: boolean;
         };
         /** InvoiceCreate */
         InvoiceCreate: {
@@ -4077,6 +4305,10 @@ export interface components {
             grade?: string | null;
             /** Weight Per Piece Kg */
             weight_per_piece_kg?: number | string | null;
+            /** Lead Time Days */
+            lead_time_days?: number | null;
+            /** Safety Days */
+            safety_days?: number | null;
             /**
              * Min Margin
              * @default 0
@@ -4120,6 +4352,10 @@ export interface components {
             grade?: string | null;
             /** Weight Per Piece Kg */
             weight_per_piece_kg?: string | null;
+            /** Lead Time Days */
+            lead_time_days?: number | null;
+            /** Safety Days */
+            safety_days?: number | null;
             /** Id */
             id: number;
             /** Is Active */
@@ -4154,6 +4390,10 @@ export interface components {
             grade?: string | null;
             /** Weight Per Piece Kg */
             weight_per_piece_kg?: string | null;
+            /** Lead Time Days */
+            lead_time_days?: number | null;
+            /** Safety Days */
+            safety_days?: number | null;
             /** Id */
             id: number;
             /** Is Active */
@@ -4211,6 +4451,10 @@ export interface components {
             weight_per_piece_kg?: number | string | null;
             /** Min Margin */
             min_margin?: number | string | null;
+            /** Lead Time Days */
+            lead_time_days?: number | null;
+            /** Safety Days */
+            safety_days?: number | null;
             /** Units */
             units?: components["schemas"]["ItemUnitIn"][] | null;
             /** Is Active */
@@ -4476,6 +4720,53 @@ export interface components {
             sgst: string;
             /** Rates */
             rates: components["schemas"]["RateRow"][];
+        };
+        /** NrvReportOut */
+        NrvReportOut: {
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** Cost To Sell Pct */
+            cost_to_sell_pct: string;
+            /** Writedown Enabled */
+            writedown_enabled: boolean;
+            /** Stock Value */
+            stock_value: string;
+            /** Nrv Loss */
+            nrv_loss: string;
+            /** Holding Gain Loss */
+            holding_gain_loss: string;
+            /** Rows */
+            rows: components["schemas"]["NrvRowOut"][];
+        };
+        /** NrvRowOut */
+        NrvRowOut: {
+            /** Item Id */
+            item_id: number;
+            /** Item Name */
+            item_name: string;
+            /** Base Unit */
+            base_unit: string;
+            /** On Hand */
+            on_hand: string;
+            /** Avg Cost */
+            avg_cost: string;
+            /** Value */
+            value: string;
+            /** Market Rate */
+            market_rate: string | null;
+            /** Market Date */
+            market_date: string | null;
+            /** Nrv */
+            nrv: string | null;
+            /** Nrv Loss */
+            nrv_loss: string;
+            /** Replacement Cost */
+            replacement_cost: string | null;
+            /** Holding Gain Loss */
+            holding_gain_loss: string | null;
         };
         /** OpenBillOut */
         OpenBillOut: {
@@ -4857,6 +5148,8 @@ export interface components {
             credit_limit: string | null;
             /** Credit Days */
             credit_days: number | null;
+            /** Lead Time Days */
+            lead_time_days: number | null;
             /** Is Active */
             is_active: boolean;
             /**
@@ -4898,6 +5191,8 @@ export interface components {
             credit_limit?: number | string | null;
             /** Credit Days */
             credit_days?: number | null;
+            /** Lead Time Days */
+            lead_time_days?: number | null;
             /** Is Active */
             is_active?: boolean | null;
         };
@@ -5056,6 +5351,8 @@ export interface components {
             interest: string;
             /** Bad Debts */
             bad_debts: string;
+            /** Write Downs */
+            write_downs: string;
             /** Net Profit */
             net_profit: string;
             /** Net Margin Pct */
@@ -5960,6 +6257,31 @@ export interface components {
              * @default 50
              */
             provision_pct_over_60: string;
+            /**
+             * Default Lead Time Days
+             * @default 7
+             */
+            default_lead_time_days: number;
+            /**
+             * Default Safety Days
+             * @default 2
+             */
+            default_safety_days: number;
+            /**
+             * Fsn Fast Min Days
+             * @default 15
+             */
+            fsn_fast_min_days: number;
+            /**
+             * Nrv Selling Cost Pct
+             * @default 0
+             */
+            nrv_selling_cost_pct: string;
+            /**
+             * Nrv Writedown Enabled
+             * @default true
+             */
+            nrv_writedown_enabled: boolean;
             /** Id */
             id: number;
         };
@@ -6101,6 +6423,78 @@ export interface components {
              * @default 50
              */
             provision_pct_over_60: number | string;
+            /**
+             * Default Lead Time Days
+             * @default 7
+             */
+            default_lead_time_days: number;
+            /**
+             * Default Safety Days
+             * @default 2
+             */
+            default_safety_days: number;
+            /**
+             * Fsn Fast Min Days
+             * @default 15
+             */
+            fsn_fast_min_days: number;
+            /**
+             * Nrv Selling Cost Pct
+             * @default 0
+             */
+            nrv_selling_cost_pct: number | string;
+            /**
+             * Nrv Writedown Enabled
+             * @default true
+             */
+            nrv_writedown_enabled: boolean;
+        };
+        /** ShortageClaimOut */
+        ShortageClaimOut: {
+            /** Purchase Number */
+            purchase_number: string;
+            /** Bill No */
+            bill_no: string;
+            /**
+             * Bill Date
+             * Format: date
+             */
+            bill_date: string;
+            /** Party Name */
+            party_name: string;
+            /** Item Name */
+            item_name: string;
+            /** Base Unit */
+            base_unit: string;
+            /** Billed Qty */
+            billed_qty: string;
+            /** Received Qty */
+            received_qty: string;
+            /** Shortage Qty */
+            shortage_qty: string;
+            /** Loss Pct */
+            loss_pct: string;
+            /** Value */
+            value: string;
+        };
+        /** ShrinkageOut */
+        ShrinkageOut: {
+            /**
+             * Date From
+             * Format: date
+             */
+            date_from: string;
+            /**
+             * Date To
+             * Format: date
+             */
+            date_to: string;
+            /** Shortage Value */
+            shortage_value: string;
+            /** Suppliers */
+            suppliers: components["schemas"]["SupplierShortageOut"][];
+            /** Claims */
+            claims: components["schemas"]["ShortageClaimOut"][];
         };
         /** SiteCreate */
         SiteCreate: {
@@ -6238,6 +6632,23 @@ export interface components {
             name: string;
             /** Quantity */
             quantity: string;
+        };
+        /** SupplierShortageOut */
+        SupplierShortageOut: {
+            /** Party Id */
+            party_id: number;
+            /** Party Name */
+            party_name: string;
+            /** Lines */
+            lines: number;
+            /** Goods Value */
+            goods_value: string;
+            /** Shortage Value */
+            shortage_value: string;
+            /** Shortage Pct */
+            shortage_pct: string | null;
+            /** Short Lines */
+            short_lines: number;
         };
         /**
          * SupplyKind
@@ -6697,6 +7108,54 @@ export interface components {
             ccc_days: string | null;
             /** Cash Tied Up */
             cash_tied_up: string;
+        };
+        /** WritedownCreate */
+        WritedownCreate: {
+            /** Location Id */
+            location_id: number;
+            /** Item Ids */
+            item_ids: number[];
+            /** Note */
+            note?: string | null;
+        };
+        /** WritedownLineOut */
+        WritedownLineOut: {
+            /** Item Id */
+            item_id: number;
+            /** Item Name */
+            item_name: string;
+            /** Base Unit */
+            base_unit: string;
+            /** Quantity */
+            quantity: string;
+            /** Old Cost */
+            old_cost: string;
+            /** New Cost */
+            new_cost: string;
+            /** Market Rate */
+            market_rate: string;
+            /** Value */
+            value: string;
+        };
+        /** WritedownOut */
+        WritedownOut: {
+            /** Id */
+            id: number;
+            /** Number */
+            number: string;
+            /** Location Id */
+            location_id: number;
+            /**
+             * Writedown Date
+             * Format: date
+             */
+            writedown_date: string;
+            /** Note */
+            note: string | null;
+            /** Total */
+            total: string;
+            /** Lines */
+            lines: components["schemas"]["WritedownLineOut"][];
         };
         /** WriteoffCreate */
         WriteoffCreate: {
@@ -12755,6 +13214,433 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MarginOut"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    analytics_api_v1_inventory_analytics_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InventoryAnalyticsOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    nrv_api_v1_inventory_nrv_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NrvReportOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_writedowns_api_v1_inventory_writedowns_get: {
+        parameters: {
+            query?: {
+                date_from?: string | null;
+                date_to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WritedownOut"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_writedown_api_v1_inventory_writedowns_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WritedownCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WritedownOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    fifo_age_api_v1_inventory_fifo_age_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FifoAgeOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    shrinkage_api_v1_inventory_shrinkage_get: {
+        parameters: {
+            query?: {
+                date_from?: string | null;
+                date_to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShrinkageOut"];
                 };
             };
             /** @description Bad Request */

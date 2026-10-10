@@ -94,6 +94,8 @@ export function ItemEditor({
   const [grade, setGrade] = useState(item?.grade ?? "");
   const [weight, setWeight] = useState(item?.weight_per_piece_kg ?? "");
   const [margin, setMargin] = useState(trimDecimal(item?.min_margin ?? "0"));
+  const [leadDays, setLeadDays] = useState(item?.lead_time_days?.toString() ?? "");
+  const [safetyDays, setSafetyDays] = useState(item?.safety_days?.toString() ?? "");
   const [active, setActive] = useState(item?.is_active ?? true);
   const [units, setUnits] = useState<UnitRow[]>(
     item?.units.map((u) => ({
@@ -120,6 +122,10 @@ export function ItemEditor({
     if (weight && !/^\d+(\.\d{1,3})?$/.test(weight))
       found.weight_per_piece_kg = "Up to 3 decimals.";
     if (!/^\d+(\.\d{1,4})?$/.test(margin)) found.min_margin = "Enter an amount like 1.25.";
+    if (leadDays && (!/^\d{1,3}$/.test(leadDays) || Number(leadDays) > 365))
+      found.lead_time_days = "Enter whole days, 0 to 365.";
+    if (safetyDays && (!/^\d{1,3}$/.test(safetyDays) || Number(safetyDays) > 365))
+      found.safety_days = "Enter whole days, 0 to 365.";
     const names = units.map((u) => u.unit.trim().toLowerCase());
     if (
       units.some(
@@ -156,6 +162,8 @@ export function ItemEditor({
       grade: grade.trim() || null,
       weight_per_piece_kg: weight || null,
       min_margin: margin,
+      lead_time_days: leadDays ? Number(leadDays) : null,
+      safety_days: safetyDays ? Number(safetyDays) : null,
       units: unitBody,
       is_active: active,
     };
@@ -182,6 +190,8 @@ export function ItemEditor({
     "base_unit",
     "weight_per_piece_kg",
     "min_margin",
+    "lead_time_days",
+    "safety_days",
     "units",
   ];
   const general =
@@ -284,6 +294,26 @@ export function ItemEditor({
           onChange={(e) => setMargin(e.target.value)}
           error={fieldError("min_margin")}
           hint="Owner only. Never shown to counter staff."
+        />
+        <TextField
+          label="Lead time (days)"
+          rule="FM6"
+          inputMode="numeric"
+          className={styles.amount}
+          value={leadDays}
+          onChange={(e) => setLeadDays(e.target.value)}
+          error={fieldError("lead_time_days")}
+          hint="Days from ordering to delivery. Blank uses the supplier's, then the shop's (Settings)."
+        />
+        <TextField
+          label="Safety stock (days of sales)"
+          rule="FM6"
+          inputMode="numeric"
+          className={styles.amount}
+          value={safetyDays}
+          onChange={(e) => setSafetyDays(e.target.value)}
+          error={fieldError("safety_days")}
+          hint="Extra stock kept for a bad week. Blank uses the shop's (Settings)."
         />
         <fieldset className={styles.choices} aria-describedby={`${titleId}-units-error`}>
           <legend>Other units</legend>

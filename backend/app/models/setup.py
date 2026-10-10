@@ -86,6 +86,14 @@ class ShopSettings(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
     provision_pct_over_60: Mapped[Percent] = mapped_column(
         default=Decimal("50"), server_default="50"
     )
+    # FM6: replenishment defaults, and how stock is valued below cost (accountant to confirm AS 2).
+    default_lead_time_days: Mapped[int] = mapped_column(Integer, default=7, server_default="7")
+    default_safety_days: Mapped[int] = mapped_column(Integer, default=2, server_default="2")
+    fsn_fast_min_days: Mapped[int] = mapped_column(Integer, default=15, server_default="15")
+    nrv_selling_cost_pct: Mapped[Percent] = mapped_column(default=Decimal("0"), server_default="0")
+    nrv_writedown_enabled: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default="true"
+    )
 
     __audit_exclude__ = frozenset({"updated_at"})
 

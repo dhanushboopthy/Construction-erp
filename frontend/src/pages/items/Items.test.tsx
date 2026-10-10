@@ -62,6 +62,11 @@ describe("Items for the owner", () => {
     const margin = within(panel).getByLabelText(/Warn below margin/);
     await user.clear(margin);
     await user.type(margin, "1.25");
+    await user.type(within(panel).getByLabelText(/Lead time \(days\)/), "400");
+    await user.click(within(panel).getByRole("button", { name: "Create item" }));
+    expect(within(panel).getByText("Enter whole days, 0 to 365.")).toBeVisible();
+    await user.clear(within(panel).getByLabelText(/Lead time \(days\)/));
+    await user.type(within(panel).getByLabelText(/Lead time \(days\)/), "5");
     await user.click(within(panel).getByRole("button", { name: "Add unit" }));
     await user.type(within(panel).getByLabelText("Unit 1"), "ton");
     await user.type(within(panel).getByLabelText(/kg per unit/), "1000");
@@ -78,6 +83,8 @@ describe("Items for the owner", () => {
       gst_rate: "18",
       base_unit: "kg",
       min_margin: "1.25",
+      lead_time_days: 5,
+      safety_days: null,
       units: [{ unit: "ton", factor_to_base: "1000", whole_only: false }],
     });
   });

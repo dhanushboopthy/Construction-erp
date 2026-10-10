@@ -10,6 +10,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    Numeric,
     String,
     UniqueConstraint,
 )
@@ -136,3 +137,40 @@ class StockAdjustmentLine(Base, TenantMixin):
     direction: Mapped[Direction] = mapped_column(str_enum(Direction, "stock_direction"))
     quantity: Mapped[Quantity] = mapped_column()  # base units
     unit_cost: Mapped[UnitCost] = mapped_column()  # weighted average when posted
+
+
+class StockWritedown(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
+    """Stock written down to its net realisable value (FM6, docs/FINANCE_REVIEW.md F12).
+
+    A value-only change: no quantity moves and no input tax is reversed, because the goods are
+    still there. An issued document (migration 0020): never deleted, never edited; a later
+    write-down of the same item is a new document. Accountant to confirm the treatment (AS 2)."""
+
+    __tablename__ = "stock_writedown"
+    __table_args__ = (UniqueConstraint("tenant_id", "number"),)
+
+    id: Mapped[IntPK]
+    number: Mapped[str] = mapped_column(String(20))
+    location_id: Mapped[int] = mapped_column(ForeignKey("location.id", ondelete="RESTRICT"))
+    writedown_date: Mapped[date] = mapped_column(Date)
+    note: Mapped[str | None] = mapped_column(String(200))
+
+    lines: Mapped[list["StockWritedownLine"]] = relationship(
+        lazy="selectin", cascade="all, delete-orphan", order_by="StockWritedownLine.id"
+    )
+
+    __audit_exclude__ = frozenset({"updated_at"})
+
+
+class StockWritedownLine(Base, TenantMixin):
+    __tablename__ = "stock_writedown_line"
+    __table_args__ = (CheckConstraint("quantity > 0", name="positive_qty"),)
+
+    id: Mapped[IntPK]
+    writedown_id: Mapped[int] = mapped_column(ForeignKey("stock_writedown.id", ondelete="RESTRICT"))
+    item_id: Mapped[int] = mapped_column(ForeignKey("item.id", ondelete="RESTRICT"))
+    quantity: Mapped[Quantity] = mapped_column()  # all the stock of the item, base units
+    old_cost: Mapped[UnitCost] = mapped_column()  # the average cost before
+    new_cost: Mapped[UnitCost] = mapped_column()  # the NRV it was written down to
+    market_rate: Mapped[UnitCost] = mapped_column()  # the rate the NRV came from
+    value: Mapped[Decimal] = mapped_column(Numeric(14, 2))  # quantity x (old - new)

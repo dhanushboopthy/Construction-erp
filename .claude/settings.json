@@ -17,6 +17,14 @@
       "Bash(git log:*)",
       "Bash(python3 .claude/skills/ui-ux-pro-max/scripts/search.py:*)"
     ],
-    "deny": ["Read(./.env)", "Read(./.env.*)"]
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)"
+    ]
+  },
+  "includeCoAuthoredBy": false,
+  "attribution": {
+    "commit": "",
+    "pr": ""
   }
 }

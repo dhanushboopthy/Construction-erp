@@ -83,3 +83,10 @@
 | Contribution per ton | (Net sales - cost - freight - loading and other variable expenses - stock lost) ÷ tons. (₹5,60,000 - ₹5,50,000 - ₹4,000 - ₹1,000 - ₹500) ÷ 10 t = ₹450. |
 | ITC at risk | Input tax on supplier bills in the books that GSTR-2B does not show (plus the shortfall where the supplier reported less): cannot be claimed until the supplier files. ₹18,000 missing + ₹20 short = ₹18,020. |
 | GST payable estimate | The GSTR-3B net payable for the month so far, due on the 20th of the next month. A minus figure is credit carried forward. |
+| Purchase order | What you asked a supplier for and at what rate, numbered `S1O/26-27/00001`. 10 t TMT at ₹55,000 a ton. |
+| Goods receipt (GRN) | What actually arrived against an order, numbered `S1G/26-27/00001`. It moves no stock: stock enters with the supplier's bill. 9.8 t arrived. |
+| Three-way match | Checking a supplier's bill against the order and the goods received. A bill for 10 t when 9.8 t arrived is 2.04% over; with a 1% tolerance it needs the owner's PIN. |
+| PPV | Purchase price variance: (rate on the bill - rate on the order) x quantity. Bill ₹55,500 against order ₹55,000 on 10 t = ₹5,000 paid over. |
+| Lot (cement) | One delivery of cement, named by the manufacturing week printed on the bag. Sold oldest week first; a delivery with no week is ordered by the day it came in. |
+| Lost sale | A customer asked for something you did not have. Logged in one step; the owner sees it valued at the market rate. 10 bags x ₹380.45 = ₹3,804.50. |
+| Fill rate | Quantity supplied ÷ (supplied + asked for and not in stock) x 100. 90 bags sold and 10 asked for = 90%. |

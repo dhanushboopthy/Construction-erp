@@ -76,6 +76,14 @@ class Purchase(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
     charges_total: Mapped[Money] = mapped_column()
     supplier_payable: Mapped[Money] = mapped_column()
     note: Mapped[str | None] = mapped_column(Text)
+    # FM10: the order this bill is against, and the owner approval that let a bill that does not
+    # match its order through.
+    purchase_order_id: Mapped[int | None] = mapped_column(
+        ForeignKey("purchase_order.id", ondelete="RESTRICT")
+    )
+    match_approval_id: Mapped[int | None] = mapped_column(
+        ForeignKey("approval.id", ondelete="RESTRICT")
+    )
 
     lines: Mapped[list["PurchaseLine"]] = relationship(
         lazy="selectin", cascade="all, delete-orphan", order_by="PurchaseLine.line_no"
@@ -89,6 +97,11 @@ class PurchaseLine(Base, TenantMixin):
     __table_args__ = (
         UniqueConstraint("purchase_id", "line_no"),
         CheckConstraint("billed_qty > 0 AND received_qty > 0", name="positive_qty"),
+        CheckConstraint(
+            "(mfg_week IS NULL) = (mfg_year IS NULL) "
+            "AND (mfg_week IS NULL OR mfg_week BETWEEN 1 AND 53)",
+            name="lot_week_and_year",
+        ),
     )
 
     id: Mapped[IntPK]
@@ -113,6 +126,9 @@ class PurchaseLine(Base, TenantMixin):
     )
     weight_flagged: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     weight_note: Mapped[str | None] = mapped_column(String(300))
+    # FM10: the manufacturing week printed on the cement bags of this delivery (optional).
+    mfg_week: Mapped[int | None] = mapped_column(Integer)
+    mfg_year: Mapped[int | None] = mapped_column(Integer)
 
     costs: Mapped[list["PurchaseCost"]] = relationship(
         lazy="selectin", cascade="all, delete-orphan", order_by="PurchaseCost.id"

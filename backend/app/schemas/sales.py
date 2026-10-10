@@ -14,6 +14,7 @@ from app.models.enums import (
     SupplyType,
 )
 from app.schemas.common import Schema
+from app.schemas.orders import LotOut
 
 Qty = Annotated[Decimal, Field(gt=0, max_digits=14, decimal_places=3)]
 Amount = Annotated[Decimal, Field(ge=0, max_digits=14, decimal_places=2)]
@@ -136,6 +137,7 @@ class InvoiceLineOut(Schema):
     weight_variance_pct: Decimal = Decimal("0")
     weight_flagged: bool = False
     weight_note: str | None = None
+    lots: list[LotOut] = Field(default_factory=list)  # cement: which deliveries it came from
 
 
 class InvoiceLineOwnerOut(InvoiceLineOut):

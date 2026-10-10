@@ -195,3 +195,14 @@ export type Profitability = Schemas["ProfitabilityOut"];
 export type CutRow = Schemas["CutRow"];
 export type ItcAtRisk = Schemas["ItcAtRiskOut"];
 export type ItcRiskRow = Schemas["ItcRiskRow"];
+
+// FM10: orders, lots and demand
+export type PurchaseOrderRow = Schemas["OrderOut"] | Schemas["OrderOwnerOut"];
+export type PurchaseOrderOwner = Schemas["OrderOwnerOut"];
+export type OrderCreate = Schemas["OrderCreate"];
+export type ReceiptCreate = Schemas["ReceiptCreate"];
+export type MatchReport = Schemas["MatchReport"];
+export type OrderMatchRow = Schemas["OrderMatchRow"];
+export type LostSale = Schemas["LostSaleOut"] | Schemas["LostSaleOwnerOut"];
+export type LostSaleCreate = Schemas["LostSaleCreate"];
+export type FillRateReport = Schemas["FillRateReport"];

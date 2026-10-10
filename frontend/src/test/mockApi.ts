@@ -114,6 +114,8 @@ export const SETTINGS: ShopSettings = {
   exception_returns_days: 30,
   exception_cash_near_pct: "80.00",
   exception_shortage_count: 3,
+  po_qty_tolerance_pct: "1.00",
+  po_rate_tolerance_pct: "0.50",
   locked_through: null,
   timezone: "Asia/Kolkata",
 };

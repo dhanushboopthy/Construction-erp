@@ -17,11 +17,13 @@ from app.core.errors import (
 )
 from app.core.tenancy import TENANT_ID
 from app.domain import landed_cost as lc
+from app.domain import orders as order_rules
 from app.domain import weight_check as wc
 from app.domain.money import ZERO, money, qty
 from app.domain.units import UnitConversion, to_base
 from app.models.enums import (
     DocType,
+    ItemCategory,
     LedgerAccount,
     PartyRef,
     PartyType,
@@ -30,6 +32,7 @@ from app.models.enums import (
     StockRef,
 )
 from app.models.masters import Item, Party
+from app.models.orders import PurchaseOrder
 from app.models.purchasing import CostComponent, Purchase, PurchaseCost, PurchaseLine
 from app.models.setup import Location
 from app.schemas.purchases import (
@@ -45,9 +48,11 @@ from app.schemas.purchases import (
     PurchaseOwnerOut,
     PurchasePreview,
 )
+from app.services import approvals as approval_service
 from app.services import closing as closing_service
 from app.services import items as item_service
 from app.services import ledgers
+from app.services import orders as order_service
 from app.services.numbering import allocate_number
 from app.services.shop_settings import get_settings_row
 
@@ -291,7 +296,39 @@ def preview(db: Session, data: PurchaseCreate) -> PurchasePreview:
 # ---------------------------------------------------------------------------- posting
 
 
-def create(db: Session, data: PurchaseCreate, *, actor_id: int, can_access: bool) -> Purchase:
+def _check_lots(data: PurchaseCreate, priced: list[PricedLine]) -> None:
+    """A manufacturing week is for cement bags, and cannot be later than the bill date."""
+    for index, p in enumerate(priced):
+        if p.data.mfg_week is None or p.data.mfg_year is None:
+            continue
+        field = f"lines[{index}].mfg_week"
+        if p.item.category is not ItemCategory.CEMENT:
+            raise BusinessRuleError(
+                f"{p.item.name}: a manufacturing week is for cement only",
+                code="LOT_ONLY_CEMENT",
+                field=field,
+            )
+        try:
+            made = order_rules.lot_date(p.data.mfg_year, p.data.mfg_week)
+        except ValueError as exc:
+            raise BusinessRuleError(str(exc).capitalize(), code="BAD_LOT", field=field) from exc
+        if made > data.bill_date:
+            raise BusinessRuleError(
+                f"{p.item.name}: week {p.data.mfg_week} of {p.data.mfg_year} "
+                "is after the bill date",
+                code="BAD_LOT",
+                field=field,
+            )
+
+
+def create(
+    db: Session,
+    data: PurchaseCreate,
+    *,
+    actor_id: int,
+    can_access: bool,
+    is_owner: bool = False,
+) -> Purchase:
     if not can_access:
         raise PermissionDeniedError("You can only enter purchases for your own shop")
     supplier, location, items = _load_context(db, data)
@@ -323,6 +360,29 @@ def create(db: Session, data: PurchaseCreate, *, actor_id: int, can_access: bool
                 code="WEIGHT_NOTE_REQUIRED",
                 field=f"lines[{index}].weight_note",
             )
+
+    _check_lots(data, priced)
+    order = approval = None
+    if data.purchase_order_id is not None:
+        order, approval = order_service.check_bill(
+            db,
+            data.purchase_order_id,
+            supplier_id=supplier.id,
+            location_id=location.id,
+            lines=[
+                order_service.BillLine(
+                    p.item.id,
+                    p.item.name,
+                    p.billed_qty,
+                    p.data.rate * p.data.quantity / p.billed_qty,
+                )
+                for p in priced
+            ],
+            approval_ids=data.approval_ids,
+            actor_id=actor_id,
+            is_owner=is_owner,
+            settings=settings,
+        )
 
     number = allocate_number(
         db,
@@ -358,6 +418,8 @@ def create(db: Session, data: PurchaseCreate, *, actor_id: int, can_access: bool
         charges_total=charges,
         supplier_payable=payable,
         note=data.note,
+        purchase_order_id=order.id if order else None,
+        match_approval_id=approval.id if approval else None,
         lines=[
             PurchaseLine(
                 tenant_id=TENANT_ID,
@@ -378,6 +440,8 @@ def create(db: Session, data: PurchaseCreate, *, actor_id: int, can_access: bool
                 weight_variance_pct=p.weight.variance_pct,
                 weight_flagged=p.weight.flagged,
                 weight_note=(p.data.weight_note or "").strip() or None,
+                mfg_week=p.data.mfg_week,
+                mfg_year=p.data.mfg_year,
                 costs=[
                     PurchaseCost(
                         tenant_id=TENANT_ID,
@@ -396,6 +460,8 @@ def create(db: Session, data: PurchaseCreate, *, actor_id: int, can_access: bool
     )
     db.add(purchase)
     db.flush()
+    if approval is not None:
+        approval_service.mark_used([approval], number)
 
     if data.mode is PurchaseMode.STOCK:
         for line in purchase.lines:
@@ -444,6 +510,9 @@ def purchase_view(
     """Owner model with every money field, or staff model with quantities only (rule B4)."""
     supplier = db.get(Party, purchase.supplier_id)
     location = db.get(Location, purchase.location_id)
+    order = (
+        db.get(PurchaseOrder, purchase.purchase_order_id) if purchase.purchase_order_id else None
+    )
     items = {i.id: i for i in db.execute(select(Item)).scalars()}
     base = {
         "id": purchase.id,
@@ -458,6 +527,9 @@ def purchase_view(
         "mode": purchase.mode,
         "status": purchase.status,
         "note": purchase.note,
+        "purchase_order_id": purchase.purchase_order_id,
+        "purchase_order_number": order.number if order else None,
+        "match_approved": purchase.match_approval_id is not None,
     }
 
     def line_base(line: PurchaseLine) -> dict[str, object]:
@@ -476,6 +548,8 @@ def purchase_view(
             "weight_variance_pct": line.weight_variance_pct,
             "weight_flagged": line.weight_flagged,
             "weight_note": line.weight_note,
+            "mfg_week": line.mfg_week,
+            "mfg_year": line.mfg_year,
         }
 
     if not with_cost:

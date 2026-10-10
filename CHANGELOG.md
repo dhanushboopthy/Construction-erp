@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.10.0 (FM10): orders, lots and demand
+
+(FM9, the cash forecast and rebate accrual, was not built: the owner does not need it. This is the
+next version after 1.9.0.)
+
+- Purchases, Purchase orders: the owner places an order with a supplier at an agreed rate; the shop
+  records the goods that arrive against it (a goods receipt moves no stock, stock is added when the
+  supplier's bill is entered). Counter staff see quantities only, never the rate.
+- A supplier bill can be entered against an order. It is checked against the goods received and
+  the order rate: beyond the tolerances in Settings (1% on quantity, 0.5% on rate) a counter user
+  needs the owner's PIN ("save a bill that differs from its order"); the owner may go on. A
+  cheaper rate is always fine.
+- Reports, Order matches (owner): bills out of tolerance, who let them through, and the purchase
+  price variance (money paid above the order rate) on every bill that has an order.
+- Cement by manufacturing week: when a delivery has the week printed on the bags, key it in
+  (optional). A cement sale takes the oldest week first and the bill shows which weeks it came
+  from. A delivery with no week is ordered by the day it came in. Costing is unchanged.
+- Stock, Lost sales: one entry each time a customer asks for something out of stock (item,
+  quantity, note). The owner sees what the lost sales were worth at the market rate; counter staff
+  see quantities only. Fill rate per item = supplied ÷ (supplied + asked for and not in stock).
+
 ## 1.9.0 (FM8): profitability cuts and GST health
 
 - Reports, Profit per ton (owner): profit for a month by brand, shop, who made the bill, item or

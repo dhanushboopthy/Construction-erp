@@ -18,6 +18,7 @@ const TABS = [
     end: false,
     roles: ["owner", "counter", "accountant"],
   },
+  { to: "/stock/lost-sales", label: "Lost sales", end: false, roles: ["owner", "counter"] },
   { to: "/stock/analysis", label: "Analysis", end: false, roles: ["owner"] },
   { to: "/stock/value", label: "Stock value", end: false, roles: ["owner", "accountant"] },
   { to: "/stock/shortages", label: "Weight shortages", end: false, roles: ["owner", "accountant"] },

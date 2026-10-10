@@ -2331,6 +2331,132 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/purchase-orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Orders
+         * @description Orders with what has been received and billed. The owner sees rates and values; counter
+         *     staff (their own shop only) and the accountant see quantities.
+         */
+        get: operations["list_orders_api_v1_purchase_orders_get"];
+        put?: never;
+        /**
+         * Create Order
+         * @description Place an order with a supplier at an agreed rate (owner only: it carries rates).
+         */
+        post: operations["create_order_api_v1_purchase_orders_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-orders/{order_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Order */
+        get: operations["get_order_api_v1_purchase_orders__order_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-orders/{order_id}/receipts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Receive Goods
+         * @description Record what arrived against an order. It moves no stock: stock enters with the bill.
+         */
+        post: operations["receive_goods_api_v1_purchase_orders__order_id__receipts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/match-exceptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Match Exceptions
+         * @description Bills entered against an order that differ from it beyond the tolerances (or every line
+         *     with `all_lines`), with the purchase price variance (owner only).
+         */
+        get: operations["match_exceptions_api_v1_reports_match_exceptions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/lost-sales": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Lost Sales */
+        get: operations["list_lost_sales_api_v1_lost_sales_get"];
+        put?: never;
+        /**
+         * Log Lost Sale
+         * @description Log "asked for, out of stock": item, quantity, an optional note. Counter staff log for their
+         *     own shop, dated today, and see quantities only; the owner also sees the value.
+         */
+        post: operations["log_lost_sale_api_v1_lost_sales_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/fill-rate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Fill Rate
+         * @description Quantity supplied ÷ quantity asked for (bills plus the lost-sales log), per item. Counter
+         *     staff see their own shop, quantities only; the owner also sees the value lost.
+         */
+        get: operations["fill_rate_api_v1_reports_fill_rate_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2542,7 +2668,7 @@ export interface components {
          * @description What an owner PIN can approve at the counter (G18).
          * @enum {string}
          */
-        ApprovalAction: "credit_override" | "below_cost" | "discount" | "backdate" | "late_return" | "expense" | "stock_adjustment";
+        ApprovalAction: "credit_override" | "below_cost" | "discount" | "backdate" | "late_return" | "expense" | "stock_adjustment" | "po_mismatch";
         /** ApprovalOut */
         ApprovalOut: {
             /** Id */
@@ -2774,6 +2900,20 @@ export interface components {
             amount: number | string;
             /** Reference */
             reference?: string | null;
+        };
+        /** BillRef */
+        BillRef: {
+            /** Id */
+            id: number;
+            /** Number */
+            number: string;
+            /** Bill No */
+            bill_no: string;
+            /**
+             * Bill Date
+             * Format: date
+             */
+            bill_date: string;
         };
         /** Body_import_gstr2b_api_v1_gst_gstr2b_post */
         Body_import_gstr2b_api_v1_gst_gstr2b_post: {
@@ -4004,6 +4144,52 @@ export interface components {
             /** Age Days */
             age_days: number;
         };
+        /** FillRateReport */
+        FillRateReport: {
+            /** Period */
+            period: string;
+            /**
+             * Date From
+             * Format: date
+             */
+            date_from: string;
+            /**
+             * Date To
+             * Format: date
+             */
+            date_to: string;
+            /** Location Id */
+            location_id: number | null;
+            /** Rows */
+            rows: components["schemas"]["FillRateRow"][];
+            /** Lines Supplied */
+            lines_supplied: number;
+            /** Lines Lost */
+            lines_lost: number;
+            /** Line Fill Rate Pct */
+            line_fill_rate_pct: string | null;
+            /** Lost Value */
+            lost_value?: string | null;
+        };
+        /** FillRateRow */
+        FillRateRow: {
+            /** Item Id */
+            item_id: number;
+            /** Item Name */
+            item_name: string;
+            /** Base Unit */
+            base_unit: string;
+            /** Supplied Qty */
+            supplied_qty: string;
+            /** Lost Qty */
+            lost_qty: string;
+            /** Requested Qty */
+            requested_qty: string;
+            /** Fill Rate Pct */
+            fill_rate_pct: string | null;
+            /** Lost Value */
+            lost_value?: string | null;
+        };
         /**
          * FulfilmentSource
          * @enum {string}
@@ -4329,6 +4515,8 @@ export interface components {
             weight_flagged: boolean;
             /** Weight Note */
             weight_note?: string | null;
+            /** Lots */
+            lots?: components["schemas"]["LotOut"][];
         };
         /** InvoiceLineOwnerOut */
         InvoiceLineOwnerOut: {
@@ -4395,6 +4583,8 @@ export interface components {
             weight_flagged: boolean;
             /** Weight Note */
             weight_note?: string | null;
+            /** Lots */
+            lots?: components["schemas"]["LotOut"][];
             /** Cost Per Unit */
             cost_per_unit: string;
             /** Profit */
@@ -5045,6 +5235,107 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** LostSaleCreate */
+        LostSaleCreate: {
+            /** Location Id */
+            location_id: number;
+            /** Item Id */
+            item_id: number;
+            /** Quantity */
+            quantity: number | string;
+            /** Unit */
+            unit?: string | null;
+            /** Note */
+            note?: string | null;
+            /** Entry Date */
+            entry_date?: string | null;
+        };
+        /**
+         * LostSaleOut
+         * @description Quantities only: what counter staff see.
+         */
+        LostSaleOut: {
+            /** Id */
+            id: number;
+            /** Location Id */
+            location_id: number;
+            /** Location Code */
+            location_code: string;
+            /**
+             * Entry Date
+             * Format: date
+             */
+            entry_date: string;
+            /** Item Id */
+            item_id: number;
+            /** Item Name */
+            item_name: string;
+            /** Unit */
+            unit: string;
+            /** Quantity */
+            quantity: string;
+            /** Base Qty */
+            base_qty: string;
+            /** Base Unit */
+            base_unit: string;
+            /** Note */
+            note: string | null;
+            /** Entered By */
+            entered_by: string | null;
+            /**
+             * Entered At
+             * Format: date-time
+             */
+            entered_at: string;
+        };
+        /** LostSaleOwnerOut */
+        LostSaleOwnerOut: {
+            /** Id */
+            id: number;
+            /** Location Id */
+            location_id: number;
+            /** Location Code */
+            location_code: string;
+            /**
+             * Entry Date
+             * Format: date
+             */
+            entry_date: string;
+            /** Item Id */
+            item_id: number;
+            /** Item Name */
+            item_name: string;
+            /** Unit */
+            unit: string;
+            /** Quantity */
+            quantity: string;
+            /** Base Qty */
+            base_qty: string;
+            /** Base Unit */
+            base_unit: string;
+            /** Note */
+            note: string | null;
+            /** Entered By */
+            entered_by: string | null;
+            /**
+             * Entered At
+             * Format: date-time
+             */
+            entered_at: string;
+            /** Value */
+            value: string | null;
+        };
+        /** LotOut */
+        LotOut: {
+            /** Label */
+            label: string;
+            /** Mfg Week */
+            mfg_week: number | null;
+            /** Mfg Year */
+            mfg_year: number | null;
+            /** Quantity */
+            quantity: string;
+        };
         /** MarginOut */
         MarginOut: {
             /** Item Id */
@@ -5083,6 +5374,33 @@ export interface components {
             saved: number;
             /** Warnings */
             warnings: components["schemas"]["RateWarning"][];
+        };
+        /** MatchReport */
+        MatchReport: {
+            /**
+             * Date From
+             * Format: date
+             */
+            date_from: string;
+            /**
+             * Date To
+             * Format: date
+             */
+            date_to: string;
+            /** Qty Tolerance Pct */
+            qty_tolerance_pct: string;
+            /** Rate Tolerance Pct */
+            rate_tolerance_pct: string;
+            /** Rows */
+            rows: components["schemas"]["OrderMatchRow"][];
+            /** Bills Checked */
+            bills_checked: number;
+            /** Lines Checked */
+            lines_checked: number;
+            /** Exceptions */
+            exceptions: number;
+            /** Ppv Total */
+            ppv_total: string;
         };
         /** MatchRow */
         MatchRow: {
@@ -5351,6 +5669,197 @@ export interface components {
             amount?: number | string | null;
             /** Note */
             note?: string | null;
+        };
+        /** OrderCreate */
+        OrderCreate: {
+            /** Supplier Id */
+            supplier_id: number;
+            /** Location Id */
+            location_id: number;
+            /** Order Date */
+            order_date?: string | null;
+            /** Expected Date */
+            expected_date?: string | null;
+            /** Note */
+            note?: string | null;
+            /** Lines */
+            lines: components["schemas"]["OrderLineIn"][];
+        };
+        /** OrderLineIn */
+        OrderLineIn: {
+            /** Item Id */
+            item_id: number;
+            /** Unit */
+            unit: string;
+            /** Quantity */
+            quantity: number | string;
+            /** Rate */
+            rate: number | string;
+        };
+        /**
+         * OrderLineOut
+         * @description Quantities only: what counter staff and the accountant see (no rate, rule B4).
+         */
+        OrderLineOut: {
+            /** Id */
+            id: number;
+            /** Line No */
+            line_no: number;
+            /** Item Id */
+            item_id: number;
+            /** Item Name */
+            item_name: string;
+            /** Unit */
+            unit: string;
+            /** Quantity */
+            quantity: string;
+            /** Base Qty */
+            base_qty: string;
+            /** Base Unit */
+            base_unit: string;
+            /** Received Qty */
+            received_qty: string;
+            /** Billed Qty */
+            billed_qty: string;
+        };
+        /** OrderLineOwnerOut */
+        OrderLineOwnerOut: {
+            /** Id */
+            id: number;
+            /** Line No */
+            line_no: number;
+            /** Item Id */
+            item_id: number;
+            /** Item Name */
+            item_name: string;
+            /** Unit */
+            unit: string;
+            /** Quantity */
+            quantity: string;
+            /** Base Qty */
+            base_qty: string;
+            /** Base Unit */
+            base_unit: string;
+            /** Received Qty */
+            received_qty: string;
+            /** Billed Qty */
+            billed_qty: string;
+            /** Rate */
+            rate: string;
+            /** Value */
+            value: string;
+        };
+        /** OrderMatchRow */
+        OrderMatchRow: {
+            /** Purchase Id */
+            purchase_id: number;
+            /** Purchase Number */
+            purchase_number: string;
+            /** Bill No */
+            bill_no: string;
+            /**
+             * Bill Date
+             * Format: date
+             */
+            bill_date: string;
+            /** Order Number */
+            order_number: string;
+            /** Supplier Name */
+            supplier_name: string;
+            /** Item Name */
+            item_name: string;
+            /** Base Unit */
+            base_unit: string;
+            /** Ordered Qty */
+            ordered_qty: string;
+            /** Received Qty */
+            received_qty: string;
+            /** Billed Qty */
+            billed_qty: string;
+            /** Qty Over Received Pct */
+            qty_over_received_pct: string | null;
+            /** Order Rate */
+            order_rate: string | null;
+            /** Bill Rate */
+            bill_rate: string;
+            /** Rate Variance Pct */
+            rate_variance_pct: string | null;
+            /** Ppv */
+            ppv: string;
+            /** Ok */
+            ok: boolean;
+            /** Reasons */
+            reasons: string[];
+            /** Approved */
+            approved: boolean;
+            /** Entered By Owner */
+            entered_by_owner: boolean;
+        };
+        /** OrderOut */
+        OrderOut: {
+            /** Id */
+            id: number;
+            /** Number */
+            number: string;
+            /** Supplier Id */
+            supplier_id: number;
+            /** Supplier Name */
+            supplier_name: string;
+            /** Location Id */
+            location_id: number;
+            /** Location Code */
+            location_code: string;
+            /**
+             * Order Date
+             * Format: date
+             */
+            order_date: string;
+            /** Expected Date */
+            expected_date: string | null;
+            /** Note */
+            note: string | null;
+            /** Status */
+            status: string;
+            /** Lines */
+            lines: components["schemas"]["OrderLineOut"][];
+            /** Receipts */
+            receipts: components["schemas"]["ReceiptOut"][];
+            /** Bills */
+            bills: components["schemas"]["BillRef"][];
+        };
+        /** OrderOwnerOut */
+        OrderOwnerOut: {
+            /** Id */
+            id: number;
+            /** Number */
+            number: string;
+            /** Supplier Id */
+            supplier_id: number;
+            /** Supplier Name */
+            supplier_name: string;
+            /** Location Id */
+            location_id: number;
+            /** Location Code */
+            location_code: string;
+            /**
+             * Order Date
+             * Format: date
+             */
+            order_date: string;
+            /** Expected Date */
+            expected_date: string | null;
+            /** Note */
+            note: string | null;
+            /** Status */
+            status: string;
+            /** Lines */
+            lines: components["schemas"]["OrderLineOwnerOut"][];
+            /** Receipts */
+            receipts: components["schemas"]["ReceiptOut"][];
+            /** Bills */
+            bills: components["schemas"]["BillRef"][];
+            /** Value */
+            value: string;
         };
         /**
          * OverrideLineOut
@@ -6058,6 +6567,10 @@ export interface components {
             note?: string | null;
             /** Lines */
             lines: components["schemas"]["PurchaseLineIn"][];
+            /** Purchase Order Id */
+            purchase_order_id?: number | null;
+            /** Approval Ids */
+            approval_ids?: number[];
         };
         /** PurchaseLineIn */
         PurchaseLineIn: {
@@ -6077,6 +6590,10 @@ export interface components {
             charges?: components["schemas"]["ChargeIn"][];
             /** Weight Note */
             weight_note?: string | null;
+            /** Mfg Week */
+            mfg_week?: number | null;
+            /** Mfg Year */
+            mfg_year?: number | null;
         };
         /**
          * PurchaseLineOut
@@ -6115,6 +6632,10 @@ export interface components {
             weight_flagged: boolean;
             /** Weight Note */
             weight_note?: string | null;
+            /** Mfg Week */
+            mfg_week?: number | null;
+            /** Mfg Year */
+            mfg_year?: number | null;
         };
         /** PurchaseLineOwnerOut */
         PurchaseLineOwnerOut: {
@@ -6150,6 +6671,10 @@ export interface components {
             weight_flagged: boolean;
             /** Weight Note */
             weight_note?: string | null;
+            /** Mfg Week */
+            mfg_week?: number | null;
+            /** Mfg Year */
+            mfg_year?: number | null;
             /** Rate */
             rate: string;
             /** Gst Rate */
@@ -6204,6 +6729,15 @@ export interface components {
             status: components["schemas"]["PurchaseStatus"];
             /** Note */
             note: string | null;
+            /** Purchase Order Id */
+            purchase_order_id?: number | null;
+            /** Purchase Order Number */
+            purchase_order_number?: string | null;
+            /**
+             * Match Approved
+             * @default false
+             */
+            match_approved: boolean;
             /** Lines */
             lines: components["schemas"]["PurchaseLineOut"][];
         };
@@ -6234,6 +6768,15 @@ export interface components {
             status: components["schemas"]["PurchaseStatus"];
             /** Note */
             note: string | null;
+            /** Purchase Order Id */
+            purchase_order_id?: number | null;
+            /** Purchase Order Number */
+            purchase_order_number?: string | null;
+            /**
+             * Match Approved
+             * @default false
+             */
+            match_approved: boolean;
             /** Lines */
             lines: components["schemas"]["PurchaseLineOwnerOut"][];
             /** Goods Value */
@@ -6425,6 +6968,51 @@ export interface components {
          * @enum {string}
          */
         RebateRule: "percent" | "per_unit" | "flat";
+        /** ReceiptCreate */
+        ReceiptCreate: {
+            /** Receipt Date */
+            receipt_date?: string | null;
+            /** Note */
+            note?: string | null;
+            /** Lines */
+            lines: components["schemas"]["ReceiptLineIn"][];
+        };
+        /** ReceiptLineIn */
+        ReceiptLineIn: {
+            /** Order Line Id */
+            order_line_id: number;
+            /** Quantity */
+            quantity: number | string;
+        };
+        /** ReceiptLineOut */
+        ReceiptLineOut: {
+            /** Order Line Id */
+            order_line_id: number;
+            /** Item Name */
+            item_name: string;
+            /** Unit */
+            unit: string;
+            /** Quantity */
+            quantity: string;
+            /** Base Qty */
+            base_qty: string;
+        };
+        /** ReceiptOut */
+        ReceiptOut: {
+            /** Id */
+            id: number;
+            /** Number */
+            number: string;
+            /**
+             * Receipt Date
+             * Format: date
+             */
+            receipt_date: string;
+            /** Note */
+            note: string | null;
+            /** Lines */
+            lines: components["schemas"]["ReceiptLineOut"][];
+        };
         /** ReceivableRowOut */
         ReceivableRowOut: {
             /** Party Id */
@@ -6863,6 +7451,16 @@ export interface components {
              * @default 3
              */
             exception_shortage_count: number;
+            /**
+             * Po Qty Tolerance Pct
+             * @default 1
+             */
+            po_qty_tolerance_pct: string;
+            /**
+             * Po Rate Tolerance Pct
+             * @default 0.5
+             */
+            po_rate_tolerance_pct: string;
             /** Id */
             id: number;
             /** Locked Through */
@@ -7066,6 +7664,16 @@ export interface components {
              * @default 3
              */
             exception_shortage_count: number;
+            /**
+             * Po Qty Tolerance Pct
+             * @default 1
+             */
+            po_qty_tolerance_pct: number | string;
+            /**
+             * Po Rate Tolerance Pct
+             * @default 0.5
+             */
+            po_rate_tolerance_pct: number | string;
         };
         /** ShortageClaimOut */
         ShortageClaimOut: {
@@ -19894,6 +20502,626 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ExceptionReport"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_orders_api_v1_purchase_orders_get: {
+        parameters: {
+            query?: {
+                supplier_id?: number | null;
+                open_only?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": (components["schemas"]["OrderOwnerOut"] | components["schemas"]["OrderOut"])[];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_order_api_v1_purchase_orders_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrderCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderOwnerOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_order_api_v1_purchase_orders__order_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                order_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderOwnerOut"] | components["schemas"]["OrderOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    receive_goods_api_v1_purchase_orders__order_id__receipts_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                order_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReceiptCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceiptOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    match_exceptions_api_v1_reports_match_exceptions_get: {
+        parameters: {
+            query?: {
+                date_from?: string | null;
+                date_to?: string | null;
+                all_lines?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatchReport"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_lost_sales_api_v1_lost_sales_get: {
+        parameters: {
+            query?: {
+                date_from?: string | null;
+                date_to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": (components["schemas"]["LostSaleOwnerOut"] | components["schemas"]["LostSaleOut"])[];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    log_lost_sale_api_v1_lost_sales_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LostSaleCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LostSaleOwnerOut"] | components["schemas"]["LostSaleOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    fill_rate_api_v1_reports_fill_rate_get: {
+        parameters: {
+            query?: {
+                period?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FillRateReport"];
                 };
             };
             /** @description Bad Request */

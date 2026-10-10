@@ -40,6 +40,7 @@ export function PurchasesPage() {
         >
           New purchase
         </Button>
+        <Link to="/purchases/orders">Purchase orders</Link>
         {user?.role !== "counter" ? <Link to="/purchases/schemes">Supplier schemes</Link> : null}
         <p className={styles.keys}>Alt+N new purchase</p>
       </div>

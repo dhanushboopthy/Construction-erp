@@ -77,6 +77,7 @@ def create_purchase(
         body,
         actor_id=principal.user_id,
         can_access=principal.can_access_location(body.location_id),
+        is_owner=principal.is_owner,
     )
     return purchase_service.purchase_view(db, purchase, principal.sees_cost)
 

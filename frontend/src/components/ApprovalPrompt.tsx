@@ -15,6 +15,7 @@ const WHAT: Record<ApprovalAction, string> = {
   late_return: "take this return after the return window",
   expense: "pay this expense",
   stock_adjustment: "post this stock adjustment",
+  po_mismatch: "save a bill that differs from its order",
 };
 
 /** The counter hands the screen to the owner, who types a PIN and a reason (G18). One approval

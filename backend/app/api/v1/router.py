@@ -8,6 +8,7 @@ from app.api.v1 import (
     closing,
     compliance,
     controls,
+    demand,
     dues,
     finance,
     gst,
@@ -17,6 +18,7 @@ from app.api.v1 import (
     items,
     locations,
     opening,
+    orders,
     parties,
     payments,
     purchases,
@@ -67,3 +69,5 @@ api_router.include_router(gst.router)
 api_router.include_router(system.router)
 api_router.include_router(tally.router)
 api_router.include_router(controls.router)
+api_router.include_router(orders.router)
+api_router.include_router(demand.router)

@@ -32,6 +32,7 @@ from app.models.enums import (
     StockRef,
 )
 from app.models.ledgers import PartyLedger, StockLedger
+from app.models.orders import GoodsReceipt, PurchaseOrder
 from app.models.purchasing import Payment, Purchase, PurchaseLine
 from app.models.receivables import BadDebtWriteoff
 from app.models.returns import CreditNote, DebitNote
@@ -49,13 +50,16 @@ NO_DELETE = [
     "stock_transfer", "stock_transfer_line", "drop_ship_link", "eway_bill", "einvoice",
     "daily_closing", "attachment", "gstr2b_import", "cash_entry", "stock_adjustment",
     "stock_adjustment_line", "bad_debt_writeoff", "stock_writedown", "stock_writedown_line",
-    "bank_statement", "bank_statement_line",
+    "bank_statement", "bank_statement_line", "purchase_order", "purchase_order_line",
+    "goods_receipt", "goods_receipt_line", "sales_line_lot", "lost_sale",
 ]  # fmt: skip
 NO_EDIT = [
     "sales_invoice", "sales_line", "credit_note", "credit_note_line", "debit_note",
     "debit_note_line", "purchase_line", "purchase_cost", "payment", "attachment", "gstr2b_import",
     "cash_entry", "stock_adjustment", "stock_adjustment_line", "bad_debt_writeoff",
     "stock_writedown", "stock_writedown_line", "bank_statement", "bank_statement_line",
+    "purchase_order", "purchase_order_line", "goods_receipt", "goods_receipt_line",
+    "sales_line_lot", "lost_sale",
 ]  # fmt: skip
 BACKUP_MAX_AGE_HOURS = 30
 
@@ -123,6 +127,8 @@ def numbering_check(db: Session) -> Check:
         "stock adjustments": StockAdjustment.number,
         "bad-debt write-offs": BadDebtWriteoff.number,
         "stock write-downs": StockWritedown.number,
+        "purchase orders": PurchaseOrder.number,
+        "goods receipts": GoodsReceipt.number,
     }
     problems: list[str] = []
     total = 0

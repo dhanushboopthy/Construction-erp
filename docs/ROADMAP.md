@@ -38,7 +38,7 @@ From [FINANCE_REVIEW.md](FINANCE_REVIEW.md); one branch and PR each.
 | FM7 | Controls and exceptions | Bank CSV matching, exception report, period lock | **Done** (`feat/fm7-controls`) |
 | FM8 | Profitability cuts and GST health | Profit per ton by brand, shop, user; ITC at risk | **Done** (`feat/fm8-profitability-cuts`) |
 | FM9 | Forecast and accruals | 13-week cash forecast; rebate accrual | Skipped (owner decision, not needed) |
-| FM10 | Orders, lots and demand | PO → GRN → bill match; cement oldest week first; fill rate | To do |
+| FM10 | Orders, lots and demand | PO → GRN → bill match; cement oldest week first; fill rate | **Done** (`feat/fm10-orders-lots-demand`; smallest versions of lots and the log, see SPEC) |
 
 ## Already in place (Milestones 0–1)
 

@@ -83,6 +83,8 @@ const AMOUNT_KEYS = [
   "nrv_selling_cost_pct",
   "exception_round_amount",
   "exception_cash_near_pct",
+  "po_qty_tolerance_pct",
+  "po_rate_tolerance_pct",
 ] as const;
 const PROVISION_KEYS = [
   "provision_pct_current",
@@ -154,6 +156,8 @@ function validate(form: Form): Record<string, string> {
     "weight_variance_pct",
     "nrv_selling_cost_pct",
     "exception_cash_near_pct",
+    "po_qty_tolerance_pct",
+    "po_rate_tolerance_pct",
     ...PROVISION_KEYS,
   ] as const) {
     if (!errors[k] && Number(text(k)) > 100) errors[k] = "A percentage cannot be above 100.";
@@ -532,6 +536,28 @@ function ShopSettingsForm({ settings }: { settings: ShopSettings }) {
           inputMode="numeric"
           className={styles.amount}
           {...text("exception_shortage_count")}
+        />
+      </Group>
+
+      <Group
+        title="Orders and supplier bills"
+        note="A supplier bill entered against a purchase order is checked against the goods received and the order rate."
+      >
+        <TextField
+          label="Bill may exceed goods received or ordered by (%)"
+          rule="FM10"
+          inputMode="decimal"
+          className={styles.amount}
+          hint="Beyond this a counter user needs the owner's PIN. 0 means exactly."
+          {...text("po_qty_tolerance_pct")}
+        />
+        <TextField
+          label="Bill rate may exceed the order rate by (%)"
+          rule="FM10"
+          inputMode="decimal"
+          className={styles.amount}
+          hint="Beyond this a counter user needs the owner's PIN. A lower rate is always fine."
+          {...text("po_rate_tolerance_pct")}
         />
       </Group>
 

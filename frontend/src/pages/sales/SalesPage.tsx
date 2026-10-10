@@ -189,6 +189,14 @@ export function SalesPage() {
                   </span>
                   <span>{formatMoney(l.taxable)}</span>
                 </span>
+                {(l.lots ?? []).length > 0 ? (
+                  <span className={styles.sub}>
+                    Cement from:{" "}
+                    {(l.lots ?? [])
+                      .map((x) => `${x.label} (${trimDecimal(x.quantity)})`)
+                      .join(", ")}
+                  </span>
+                ) : null}
                 {"cost_per_unit" in l ? (
                   <span className={styles.kv}>
                     <span>

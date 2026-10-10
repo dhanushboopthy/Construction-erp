@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent, type KeyboardEvent } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 import { toFormError } from "@/api/errors";
 import { useItems, useParties } from "@/api/masters";
@@ -259,6 +259,7 @@ export function BillEntryPage() {
         <h1 id="bill-title" className={styles.title}>
           New bill
         </h1>
+        <Link to="/stock/lost-sales">Asked for, out of stock? Log it</Link>
         <p className={styles.keys}>Enter in Quantity adds a line · Ctrl+Enter saves · Tab moves</p>
       </div>
       <form

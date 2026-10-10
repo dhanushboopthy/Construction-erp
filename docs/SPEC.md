@@ -564,6 +564,51 @@ confirm AS 2).
 - Not built: profit cut by segment, a trend across months, a debit-note adjustment of the at-risk
   figure.
 
+**Built (FM10, finance review F25, F26):** `purchase_order`, `purchase_order_line`,
+`goods_receipt`, `goods_receipt_line`, `sales_line_lot`, `lost_sale`; `purchase.purchase_order_id`,
+`purchase.match_approval_id`, `purchase_line.mfg_week` and `mfg_year`; number series `O` (order) and
+`G` (receipt); approval action `po_mismatch`; `shop_settings.po_qty_tolerance_pct` (1) and
+`po_rate_tolerance_pct` (0.5). FM9 (forecast and rebate accrual) was dropped by the owner.
+
+- Orders (`services/orders.py`, owner places them; they carry rates). Order, receipt, lot and
+  lost-sale rows are permanent (triggers); a mistake is a new document. A goods receipt records
+  what arrived (counter staff, their shop, today; the owner may back-date) and moves no stock:
+  stock enters with the supplier's bill, as before. Order status is read, not stored: open until
+  every line is received, received until every item is billed, then billed.
+- Three-way match (`domain/orders.match_line`): for each item, billed (this bill and earlier bills
+  on the order) must not exceed goods received, nor ordered, by more than the quantity tolerance,
+  and the bill rate per base unit must not exceed the order rate by more than the rate tolerance;
+  an item not on the order, or a bill before anything is received, is an exception. Billing less,
+  or a lower rate, is fine. A zero tolerance means exactly. Out of tolerance: 409
+  `MATCH_EXCEPTION` for a counter user (owner approval `po_mismatch`, one use, 10 minutes, the
+  message carries no rupee value); the owner may save it, and it shows in the report as "entered
+  by the owner". Supplier and shop must match the order.
+- Match report (`GET /reports/match-exceptions`, owner): computed when read against the goods
+  received so far, so a late receipt clears an exception. PPV = (bill rate - order rate) x
+  quantity billed per line, totalled over every line checked (KPI `ppv`, owner only).
+- Cement lots (`services/lots.py`, `domain/orders.fifo_pick`) - the smallest version, built without
+  the owner's answer on whether the week is printed on the bag (FINANCE_REVIEW section 7, question
+  6): the week and year on a purchase line are optional and for cement only (409 `LOT_ONLY_CEMENT`,
+  `BAD_LOT` for a week that does not exist or is after the bill date). A cement sale takes the
+  oldest lot first and records the lots on the sale line (`sales_line_lot`). A delivery without a
+  week is ordered by its bill date (the fallback). Stock the lots do not account for (opening
+  stock, customer returns, transfers in) is treated as older and is sold first; if less is on hand
+  than the lots hold, the missing quantity comes off the oldest lots. Costing is unchanged (one
+  weighted-average cost); the bill PDF is unchanged; the lots show on the invoice screen.
+  Transfers carry no lot, and a lot is kept per shop of the purchase.
+- Lost-sales log (`services/lost_sales.py`), also the smallest version, built without the owner's
+  answer on whether counter staff will log (question 7): item, quantity (any unit of the item),
+  optional note, shop and user; counter staff log for their own shop, dated today; the owner may
+  back-date. The market rate on the day is stored with the entry so the owner sees its value
+  (counter staff and the accountant never do; the accountant has no access). Fill rate per item
+  = quantity supplied (all bill lines in the month) ÷ (supplied + logged), and a line count
+  (bill lines ÷ bill lines + entries) that works across units. KPI `fill_rate` (owner and counter).
+- Screens: Purchases, Purchase orders; "Against order" and week-made boxes on a purchase; Reports,
+  Order matches; Stock, Lost sales (and a link on the bill screen).
+- Not built: order cancellation or change (an order is permanent; place another), a GRN that moves
+  stock before the bill, matching a bill to several orders, lot-level stock report, TMT heat
+  numbers and test certificates, and PPV against the last purchase rate (the dropped FM9).
+
 **To build** (milestone in brackets):
 
 | Group | Table | Key columns |

@@ -134,6 +134,7 @@ class ApprovalAction(StrEnum):
     LATE_RETURN = "late_return"  # a return after the return window (B11)
     EXPENSE = "expense"  # a cash-book voucher above the shop's limit (FM1)
     STOCK_ADJUSTMENT = "stock_adjustment"  # a stock adjustment above the limit (FM2)
+    PO_MISMATCH = "po_mismatch"  # a supplier bill that does not match its order (FM10)
 
 
 class ComplianceStatus(StrEnum):
@@ -192,6 +193,8 @@ class DocType(StrEnum):
     STOCK_ADJUSTMENT = "stock_adjustment"  # breakage, theft, weighbridge, count fixes (FM2)
     BAD_DEBT_WRITEOFF = "bad_debt_writeoff"  # a customer debt given up, no GST effect (FM5)
     STOCK_WRITEDOWN = "stock_writedown"  # stock value lowered to NRV (FM6)
+    PURCHASE_ORDER = "purchase_order"  # an order to a supplier (FM10)
+    GOODS_RECEIPT = "goods_receipt"  # what arrived against an order (FM10)
 
 
 def str_enum(enum_cls: type[StrEnum], name: str) -> sa.Enum:

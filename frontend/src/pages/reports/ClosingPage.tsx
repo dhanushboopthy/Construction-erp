@@ -86,13 +86,15 @@ export function ClosingPage() {
   return (
     <div className={styles.stack}>
       <div className={styles.filters}>
-        <SelectField label="Shop" value={place} onChange={(e) => setShopId(e.target.value)}>
-          {shops.map((l) => (
-            <option key={l.id} value={l.id}>
-              {l.code} {l.name}
-            </option>
-          ))}
-        </SelectField>
+        {shops.length > 1 ? (
+          <SelectField label="Shop" value={place} onChange={(e) => setShopId(e.target.value)}>
+            {shops.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.code} {l.name}
+              </option>
+            ))}
+          </SelectField>
+        ) : null}
         <TextField
           label="Day"
           type="date"
@@ -144,9 +146,31 @@ export function ClosingPage() {
                   </td>
                 </tr>
                 <tr>
-                  <th scope="row">Cash paid out</th>
-                  <td className="num">₹{formatMoney(f.cash_out)}</td>
+                  <th scope="row">Paid to suppliers and transporters (cash)</th>
+                  <td className="num">₹{formatMoney(f.paid_to_parties)}</td>
                 </tr>
+                <tr>
+                  <th scope="row">Expenses paid in cash</th>
+                  <td className="num">₹{formatMoney(f.cash_expenses)}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Cash taken to the bank</th>
+                  <td className="num">₹{formatMoney(f.bank_deposits)}</td>
+                </tr>
+                {Number(f.bank_withdrawals) || Number(f.owner_capital) ? (
+                  <tr>
+                    <th scope="row">Cash from the bank / put in by the owner</th>
+                    <td className="num">
+                      ₹{formatMoney(f.bank_withdrawals)} / ₹{formatMoney(f.owner_capital)}
+                    </td>
+                  </tr>
+                ) : null}
+                {Number(f.owner_drawings) ? (
+                  <tr>
+                    <th scope="row">Taken by the owner</th>
+                    <td className="num">₹{formatMoney(f.owner_drawings)}</td>
+                  </tr>
+                ) : null}
                 {p.profit != null ? (
                   <tr>
                     <th scope="row">Profit (not on the PDF)</th>
@@ -169,6 +193,14 @@ export function ClosingPage() {
             <span className={styles.kv}>
               <span>Opening</span>
               <span>₹{formatMoney(p.opening_cash)}</span>
+            </span>
+            <span className={styles.kv}>
+              <span>+ Cash in</span>
+              <span>₹{formatMoney(f.cash_in)}</span>
+            </span>
+            <span className={styles.kv}>
+              <span>− Cash out</span>
+              <span>₹{formatMoney(f.cash_out)}</span>
             </span>
             <span className={styles.kv}>
               <strong>Should be</strong>

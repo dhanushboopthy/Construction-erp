@@ -6,6 +6,7 @@ import styles from "@/components/Ledger.module.css";
 const TABS = [
   { to: "/reports", label: "Daily closing", end: true, roles: ["owner", "counter", "accountant"] },
   { to: "/reports/profit", label: "Profit", end: false, roles: ["owner"] },
+  { to: "/reports/pnl", label: "Profit & loss", end: false, roles: ["owner"] },
   { to: "/reports/dues", label: "Dues", end: false, roles: ["owner", "accountant"] },
   {
     to: "/reports/segments",

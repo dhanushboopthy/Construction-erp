@@ -31,6 +31,7 @@ class ShopSettingsBase(Schema):
     einvoice_enabled: bool = False
     counter_can_enter_purchases: bool = True
     timezone: str = "Asia/Kolkata"
+    expense_approval_limit: Decimal = Field(default=Decimal("5000"), ge=0)
 
     @field_validator("gstin")
     @classmethod

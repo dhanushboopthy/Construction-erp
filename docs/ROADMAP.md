@@ -23,6 +23,23 @@ if time runs short. In Claude Code: `/milestone <n>`.
 | 13 | GST exports | GSTR-1, 3B data, 2B matching, accountant views | Accountant opens the export without errors | **Done** (`feat/m13-gst-exports`; layouts to be checked against the accountant's sample file) |
 | 14 | Hardening and go-live | Backups, restore drill, monitoring, training, parallel run on paper | Restore tested; owner signs off after a week in parallel | **Built** (`feat/m14-hardening-go-live`): backups, restore drill, integrity check, status page, runbook, go-live plan. The restore drill, off-site copy and the week of parallel running are done on the real machine ([GO_LIVE](GO_LIVE.md)) |
 
+## Finance milestones
+
+From [FINANCE_REVIEW.md](FINANCE_REVIEW.md); one branch and PR each.
+
+| # | Milestone | Acceptance test | Status |
+| --- | --- | --- | --- |
+| FM1 | Cash book, expenses, P&L, single-shop screens | A day with cash sales, ₹2,000 cash loading labour and a ₹1,50,000 bank deposit closes with zero difference; the month's P&L shows net profit and break-even; counter gets 403 on the P&L | **Done** (`feat/fm1-cash-book`) |
+| FM2 | Stock adjustments with reasons and approval, ITC reversal list | Theft above the limit needs the owner's PIN and appears in "ITC to reverse" | To do |
+| FM3 | Labelled rate overrides | An owner override saves `rate_source = override` with a reason | To do |
+| FM4 | Tally export | The accountant imports a month's day book into Tally | To do |
+| FM5 | Working capital and receivables | Hand-worked DIO, DSO, DPO, advance days and CCC | To do |
+| FM6 | Inventory analytics and replenishment | ABC, aging, cover days, reorder point by hand | To do |
+| FM7 | Controls and exceptions | Bank CSV matching, exception report, period lock | To do |
+| FM8 | Profitability cuts and GST health | Profit per ton by brand, shop, user; ITC at risk | To do |
+| FM9 | Forecast and accruals | 13-week cash forecast; rebate accrual | To do |
+| FM10 | Orders, lots and demand | PO → GRN → bill match; cement oldest week first; fill rate | To do |
+
 ## Already in place (Milestones 0–1)
 
 - Backend: FastAPI app factory, settings with production safety checks, JSON logs, request ids,

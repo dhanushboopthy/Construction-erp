@@ -94,6 +94,7 @@ export const SETTINGS: ShopSettings = {
   eway_threshold_intrastate: "100000.00",
   einvoice_enabled: false,
   counter_can_enter_purchases: true,
+  expense_approval_limit: "5000.00",
   timezone: "Asia/Kolkata",
 };
 

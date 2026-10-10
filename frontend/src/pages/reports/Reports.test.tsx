@@ -31,6 +31,13 @@ const FIGURES = {
   returns_count: 0,
   returns_total: "0.00",
   receipts: { cash: "1000.00", upi: "200.00", bank: "0.00", total: "1200.00" },
+  paid_to_parties: "300.00",
+  cash_expenses: "0.00",
+  bank_deposits: "0.00",
+  bank_withdrawals: "0.00",
+  owner_drawings: "0.00",
+  owner_capital: "0.00",
+  cash_in: "1000.00",
   cash_out: "300.00",
   purchases_count: 0,
   top_items: [
@@ -279,6 +286,7 @@ describe("Today", () => {
           we_owe: null,
           sales_today: "3409.00",
           returns_today: "0.00",
+          net_sales_today: "2663.15",
           profit_today: null,
         },
       }),
@@ -286,7 +294,9 @@ describe("Today", () => {
       "GET /locations": () => ({ body: [S1] }),
     });
     renderAt("/");
-    expect(await screen.findByText("₹3,409.00".replace("₹", ""))).toBeVisible();
+    // Net sales without GST: 3,409.00 billed is 2,663.15 before tax.
+    expect(await screen.findByText("2,663.15")).toBeVisible();
+    expect(screen.getByText("Net sales today")).toBeVisible();
     expect(screen.getByText("Items in stock")).toBeVisible();
     expect(screen.queryByText("We owe suppliers")).toBeNull();
     expect(screen.queryByText("Profit today")).toBeNull();

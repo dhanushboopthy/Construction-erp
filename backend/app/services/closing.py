@@ -149,6 +149,9 @@ def figures(db: Session, location_id: int, on: date) -> ClosingFigures:
             )
         ).scalar_one()
     )
+    from app.services.cashbook import drawer_moves
+
+    moves = drawer_moves(db, location_id, on)
     purchases = db.execute(
         select(func.count())
         .select_from(Purchase)
@@ -188,7 +191,14 @@ def figures(db: Session, location_id: int, on: date) -> ClosingFigures:
         returns_count=returns_count,
         returns_total=_sum(returns_total),
         receipts=ModeTotals(cash=cash, upi=upi, bank=bank, total=cash + upi + bank),
-        cash_out=cash_out,
+        paid_to_parties=cash_out,
+        cash_expenses=moves.expenses,
+        bank_deposits=moves.deposited,
+        bank_withdrawals=moves.withdrawn,
+        owner_drawings=moves.drawings,
+        owner_capital=moves.capital,
+        cash_in=money(cash + moves.cash_in),
+        cash_out=money(cash_out + moves.cash_out),
         purchases_count=purchases,
         top_items=[
             TopItem(description=d, base_unit=u, quantity=Decimal(q), taxable=_sum(t))
@@ -263,7 +273,7 @@ def preview(
     return ClosingPreview(
         figures=fig,
         opening_cash=opening,
-        expected_cash=rules.expected_cash(opening, fig.receipts.cash, fig.cash_out),
+        expected_cash=rules.expected_cash(opening, fig.cash_in, fig.cash_out),
         existing=view(db, existing) if existing else None,
         locked=bool(existing and existing.status is ClosingStatus.CLOSED),
         profit=profit(location_id, on) if profit else None,
@@ -299,6 +309,12 @@ def render_pdf(db: Session, fig: ClosingFigures, row: DailyClosing, closer: str)
         "opening_cash": inr(row.opening_cash),
         "cash_in": inr(row.cash_in),
         "cash_out": inr(row.cash_out),
+        "paid_to_parties": inr(fig.paid_to_parties),
+        "cash_expenses": inr(fig.cash_expenses),
+        "bank_deposits": inr(fig.bank_deposits),
+        "bank_withdrawals": inr(fig.bank_withdrawals),
+        "owner_drawings": inr(fig.owner_drawings),
+        "owner_capital": inr(fig.owner_capital),
         "expected_cash": inr(row.expected_cash),
         "counted_cash": inr(row.counted_cash),
         "difference": inr(row.difference),
@@ -356,7 +372,7 @@ def close_day(
             else _previous_counted(db, data.location_id, data.closing_date)
         )
     )
-    expected = rules.expected_cash(opening, fig.receipts.cash, fig.cash_out)
+    expected = rules.expected_cash(opening, fig.cash_in, fig.cash_out)
     difference = rules.cash_difference(data.counted_cash, expected)
     note = (data.note or "").strip() or None
     if rules.note_needed(difference) and note is None:
@@ -379,7 +395,7 @@ def close_day(
     row.sales_total = fig.sales_total
     row.returns_total = fig.returns_total
     row.opening_cash = opening
-    row.cash_in = fig.receipts.cash
+    row.cash_in = fig.cash_in
     row.cash_out = fig.cash_out
     row.expected_cash = expected
     row.counted_cash = money(data.counted_cash)

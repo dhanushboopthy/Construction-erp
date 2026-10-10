@@ -322,6 +322,29 @@ on issued documents (ADR 0010).
   answers are `Cache-Control: no-store`.
 - Operations documents: [RUNBOOK](RUNBOOK.md), [GO_LIVE](GO_LIVE.md).
 
+**Built (FM1, finance review F1, F2, F6):** `expense_category`, `cash_entry`;
+`shop_settings.expense_approval_limit` (default ₹5,000). See
+[FINANCE_REVIEW.md](FINANCE_REVIEW.md).
+
+- Cash book: vouchers `<location>V/<FY>/<seq>` for an expense (with a head), cash taken to the
+  bank, cash brought from the bank, the owner's drawing or capital. Mode cash, UPI or bank;
+  deposits and withdrawals are always cash. Vouchers are permanent (triggers); a mistake is
+  undone by an owner's reversal voucher dated today, which points at the original.
+- Counter staff record expenses and bank deposits at their own shop, dated today; an expense
+  above the limit needs the owner's PIN (`expense` approval). The owner records everything and
+  may back-date; closed shop-days refuse vouchers (G17). The accountant reads.
+- Daily closing: cash in = cash receipts + cash from the bank + owner's capital; cash out = cash
+  paid to parties + cash expenses + deposits + drawings. A normal day closes with no difference.
+- Expense heads have a nature: fixed, variable or interest (defaults seeded, owner edits).
+- Profit and loss per calendar month (owner): net sales, COGS, freight, gross profit, expenses
+  by head, EBITDA, interest, net profit, contribution and break-even sales
+  (`domain/finance.py`). Nothing is stored; with no data it says "Not enough data yet".
+- KPI catalogue (`domain/kpi_catalogue.py`, `GET /kpis/definitions`) drives the names,
+  formulas and "what this means" lines in the app.
+- Today shows net sales excluding GST and returns (was the GST-inclusive bill total).
+- One shop and the godown by default (`SEED_SHOPS=2` for two); shop pickers hide while there
+  is one shop and appear when a second is added.
+
 **To build** (milestone in brackets):
 
 | Group | Table | Key columns |

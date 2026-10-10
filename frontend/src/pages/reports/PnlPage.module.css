@@ -1,0 +1,19 @@
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+}
+
+.subtotal th,
+.subtotal td {
+  font-weight: 700;
+  background: var(--color-accent-softer);
+}
+
+.total th,
+.total td {
+  font-size: var(--text-md);
+  font-weight: 800;
+  background: var(--color-accent-soft);
+}

@@ -24,6 +24,7 @@ from app.models.enums import LocationKind, PartyType, Role
 from app.models.masters import Party
 from app.models.purchasing import CostComponent
 from app.models.setup import AppUser, Location, ShopSettings
+from app.services import cashbook
 
 DEV_PASSWORDS = {
     "owner": "owner-pass-123",
@@ -32,11 +33,13 @@ DEV_PASSWORDS = {
     "accounts": "accounts-pass-123",
 }
 
+# One shop and the godown today. The second shop (and its counter user) is created with
+# SEED_SHOPS=2, or added later in Settings: every screen adapts to the number of shops.
 LOCATIONS = [
     ("S1", "Shop 1", LocationKind.SHOP),
-    ("S2", "Shop 2", LocationKind.SHOP),
     ("G1", "Godown", LocationKind.GODOWN),
 ]
+SECOND_SHOP = ("S2", "Shop 2", LocationKind.SHOP)
 
 # Charge types offered on a purchase line; the amounts are only suggestions (owner interview).
 COST_COMPONENTS = [
@@ -51,9 +54,9 @@ COST_COMPONENTS = [
 USERS = [
     ("owner", "Shop Owner", Role.OWNER, []),
     ("counter1", "Counter, Shop 1", Role.COUNTER, ["S1"]),
-    ("counter2", "Counter, Shop 2", Role.COUNTER, ["S2"]),
     ("accounts", "Accountant", Role.ACCOUNTANT, []),
 ]
+SECOND_SHOP_USER = ("counter2", "Counter, Shop 2", Role.COUNTER, ["S2"])
 
 
 def _password(username: str) -> tuple[str, bool]:
@@ -66,8 +69,10 @@ def _password(username: str) -> tuple[str, bool]:
     return DEV_PASSWORDS[username], False
 
 
-def seed(db: Session) -> list[str]:
+def seed(db: Session, *, second_shop: bool | None = None) -> list[str]:
     notes: list[str] = []
+    if second_shop is None:
+        second_shop = os.environ.get("SEED_SHOPS", "1").strip() == "2"
     state_code = os.environ.get("SEED_STATE_CODE", "33")  # 33 = Tamil Nadu
 
     if db.execute(select(ShopSettings).where(ShopSettings.tenant_id == TENANT_ID)).first() is None:
@@ -85,7 +90,7 @@ def seed(db: Session) -> list[str]:
         loc.code: loc
         for loc in db.execute(select(Location).where(Location.tenant_id == TENANT_ID)).scalars()
     }
-    for code, name, kind in LOCATIONS:
+    for code, name, kind in LOCATIONS + ([SECOND_SHOP] if second_shop else []):
         if code not in by_code:
             by_code[code] = Location(
                 tenant_id=TENANT_ID, code=code, name=name, kind=kind, state_code=state_code
@@ -121,7 +126,9 @@ def seed(db: Session) -> list[str]:
         )
         notes.append("created party Walk-in customer")
 
-    for username, full_name, role, codes in USERS:
+    cashbook.ensure_default_categories(db)
+
+    for username, full_name, role, codes in USERS + ([SECOND_SHOP_USER] if second_shop else []):
         exists = db.execute(
             select(AppUser.id).where(AppUser.tenant_id == TENANT_ID, AppUser.username == username)
         ).first()

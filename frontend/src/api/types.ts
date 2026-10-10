@@ -124,3 +124,15 @@ export type Gstr2bResult = Schemas["Gstr2bResult"];
 export type SystemStatus = Schemas["StatusOut"];
 export type SystemCheck = Schemas["Check"];
 export type VerifyResult = Schemas["VerifyOut"];
+
+// FM1: cash book, expense heads, profit and loss, KPI catalogue.
+export type CashEntryKind = Schemas["CashEntryKind"];
+export type ExpenseNature = Schemas["ExpenseNature"];
+export type ExpenseCategory = Schemas["ExpenseCategoryOut"];
+export type ExpenseCategoryIn = Schemas["ExpenseCategoryIn"];
+export type ExpenseCategoryUpdate = Schemas["ExpenseCategoryUpdate"];
+export type CashEntry = Schemas["CashEntryOut"];
+export type CashEntryCreate = Schemas["CashEntryCreate"];
+export type CashBook = Schemas["CashBookOut"];
+export type Pnl = Schemas["PnlOut"];
+export type KpiDefinition = Schemas["KpiDefinitionOut"];

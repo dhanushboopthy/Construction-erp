@@ -38,6 +38,7 @@ import { PnlPage } from "@/pages/reports/PnlPage";
 import { ProfitPage } from "@/pages/reports/ProfitPage";
 import { ReportsLayout } from "@/pages/reports/ReportsLayout";
 import { CashBookPage } from "@/pages/cash/CashBookPage";
+import { TallyPage } from "@/pages/reports/TallyPage";
 import { SegmentsPage } from "@/pages/reports/SegmentsPage";
 import { SchemesPage } from "@/pages/purchases/SchemesPage";
 import { DirectSalesPage } from "@/pages/transport/DirectSalesPage";
@@ -213,6 +214,14 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
                   element={
                     <RequireRole roles={["owner"]}>
                       <PnlPage />
+                    </RequireRole>
+                  }
+                />
+                <Route
+                  path="tally"
+                  element={
+                    <RequireRole roles={["owner", "accountant"]}>
+                      <TallyPage />
                     </RequireRole>
                   }
                 />

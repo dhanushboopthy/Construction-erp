@@ -388,6 +388,34 @@ on issued documents (ADR 0010).
   `discount_leakage` and `price_realisation_pct` (owner only) are in the catalogue.
 - The rest of F24 (realisation on every line, per item and customer) stays in FM7.
 
+**Built (FM4, finance review F5):** `tally_ledger` (the accountant's ledger names, one row per
+changed purpose, plus `company`); audit action `export`.
+
+- Tally day-book export for a date range (at most 366 days), owner and accountant only
+  (`domain/tally.py`, `services/tally.py`). Each issued document becomes one balanced voucher
+  (debits equal credits, or the export is refused): bills (Sales), credit notes, supplier bills
+  (Purchase), debit notes, receipts and payments (Cash for cash, Bank for UPI and transfers),
+  cash-book entries (expenses are Payments, bank deposits and withdrawals are Contras, drawings
+  and capital are Payments and Receipts; a reversal is posted the other way round), and
+  supplier rebates and freight as Journals. Opening balances are not exported: Tally carries its
+  own. Stock is not exported: Tally holds accounts only, no items.
+- Bills post party, Sales, CGST, SGST or IGST and round off; purchases post Purchases (supplier
+  payable less input tax, so charges on the supplier's bill sit there), input tax and the supplier.
+  Input tax per head is worked out the same way as GSTR-3B.
+- Ledger names are settings (`GET/PUT /tally/ledgers`), with defaults the accountant confirms:
+  Sales, Purchases, Output and Input CGST, SGST, IGST, Round off, Cash, Bank, Owner's Drawings,
+  Owner's Capital, Rebate Received, Freight; the company name defaults to the shop's legal name.
+  Two ledgers may not share a name. Party ledgers use the party's name; expense heads use the head
+  names. The file starts with the ledger masters (optional) so Tally finds every ledger a voucher
+  uses, then the vouchers, each with a GUID built from type and number so a second import of the
+  same file adds nothing.
+- Checks, shown before the download and enforced by it (409 `EXPORT_MISMATCH`): the change in what
+  customers owe and what we owe equals the change in the dues reports (party ledger, opening rows
+  excluded); and, for ranges of whole months, sales taxable value and output tax equal GSTR-1, input
+  tax equals GSTR-3B 4(A) less 4(B).
+- Every export is audited. Real Tally has not been tried: the accountant imports one month into a
+  test company before relying on it (docs/GAP_ANALYSIS.md).
+
 **To build** (milestone in brackets):
 
 | Group | Table | Key columns |

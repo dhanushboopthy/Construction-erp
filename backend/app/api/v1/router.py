@@ -7,6 +7,7 @@ from app.api.v1 import (
     auth,
     closing,
     compliance,
+    controls,
     dues,
     finance,
     gst,
@@ -65,3 +66,4 @@ api_router.include_router(reports.router)
 api_router.include_router(gst.router)
 api_router.include_router(system.router)
 api_router.include_router(tally.router)
+api_router.include_router(controls.router)

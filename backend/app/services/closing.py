@@ -21,6 +21,7 @@ from app.core.errors import (
 )
 from app.core.tenancy import TENANT_ID
 from app.domain import closing as rules
+from app.domain import controls as control_rules
 from app.domain.money import ZERO, money
 from app.models.documents import DailyClosing
 from app.models.enums import (
@@ -67,8 +68,23 @@ def is_day_closed(db: Session, location_id: int, on: date) -> bool:
     )
 
 
+def ensure_period_open(db: Session, on: date) -> None:
+    """Refuse a document dated on or before the books' lock date (FM7, F18). The lock is the
+    owner's, set after a return is filed; a document dated inside it would put the books out of
+    step with that return."""
+    locked = get_settings_row(db).locked_through
+    if control_rules.is_locked(on, locked) and locked is not None:
+        raise BusinessRuleError(
+            f"The books up to {locked:%d-%m-%Y} are locked, so nothing can be dated "
+            f"{on:%d-%m-%Y}. Ask the owner to reopen them.",
+            code="PERIOD_LOCKED",
+        )
+
+
 def ensure_day_open(db: Session, location_id: int, on: date) -> None:
-    """Refuse a document dated on a closed shop-day (G17). The owner can reopen the day."""
+    """Refuse a document dated on a locked period (FM7) or on a closed shop-day (G17). The owner
+    can reopen either."""
+    ensure_period_open(db, on)
     if is_day_closed(db, location_id, on):
         place = db.get(Location, location_id)
         raise BusinessRuleError(

@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 
 from pydantic import Field, ValidationInfo, field_validator
@@ -44,6 +45,13 @@ class ShopSettingsBase(Schema):
     fsn_fast_min_days: int = Field(default=15, ge=1, le=90)
     nrv_selling_cost_pct: Decimal = Field(default=Decimal("0"), ge=0, le=100)
     nrv_writedown_enabled: bool = True
+    bank_match_days: int = Field(default=3, ge=0, le=30)
+    exception_round_amount: Decimal = Field(default=Decimal("1000"), ge=0)
+    exception_count_days: int = Field(default=2, ge=0, le=30)
+    exception_returns_count: int = Field(default=4, ge=0, le=100)
+    exception_returns_days: int = Field(default=30, ge=1, le=365)
+    exception_cash_near_pct: Decimal = Field(default=Decimal("80"), ge=0, le=100)
+    exception_shortage_count: int = Field(default=3, ge=0, le=100)
 
     @field_validator("gstin")
     @classmethod
@@ -57,6 +65,7 @@ class ShopSettingsBase(Schema):
 
 class ShopSettingsOut(ShopSettingsBase):
     id: int
+    locked_through: date | None = None  # read-only here: change it at /period-lock
 
 
 class ShopSettingsUpdate(ShopSettingsBase):

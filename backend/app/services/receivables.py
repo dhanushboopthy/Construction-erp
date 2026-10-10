@@ -33,6 +33,7 @@ from app.schemas.receivables import (
     WriteoffCreate,
     WriteoffOut,
 )
+from app.services import closing as closing_service
 from app.services import ledgers
 from app.services.numbering import allocate_number
 from app.services.shop_settings import get_settings_row
@@ -214,6 +215,7 @@ def create_writeoff(db: Session, data: WriteoffCreate, *, actor_id: int) -> Writ
         )
     settings = get_settings_row(db)
     today = today_ist()
+    closing_service.ensure_period_open(db, today)  # FM7: a write-off is dated, so it can be locked
     number = allocate_number(
         db,
         location_id=place.id,

@@ -2154,6 +2154,141 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/period-lock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Period Lock */
+        get: operations["get_period_lock_api_v1_period_lock_get"];
+        /**
+         * Set Period Lock
+         * @description Lock the books through a date, or reopen them. A reason is always recorded.
+         */
+        put: operations["set_period_lock_api_v1_period_lock_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/period-lock/checklist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Month End Checklist */
+        get: operations["month_end_checklist_api_v1_period_lock_checklist_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/bank/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Bank Accounts */
+        get: operations["list_bank_accounts_api_v1_bank_accounts_get"];
+        put?: never;
+        /** Create Bank Account */
+        post: operations["create_bank_account_api_v1_bank_accounts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/bank/accounts/{account_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Bank Account */
+        patch: operations["update_bank_account_api_v1_bank_accounts__account_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/bank/statements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Statements */
+        get: operations["list_statements_api_v1_bank_statements_get"];
+        put?: never;
+        /**
+         * Import Statement
+         * @description Upload a bank's CSV. Rows already imported from an overlapping file are skipped; a file
+         *     with any unreadable row is refused whole.
+         */
+        post: operations["import_statement_api_v1_bank_statements_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/bank/reconciliation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Reconciliation
+         * @description Bank lines matched to receipts and payments, with what is left over on each side.
+         */
+        get: operations["reconciliation_api_v1_bank_reconciliation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/exceptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Exception Report
+         * @description Entries that look like the usual ways money or stock goes missing (owner only).
+         */
+        get: operations["exception_report_api_v1_reports_exceptions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2502,6 +2637,91 @@ export interface components {
             /** Sgst */
             sgst: string;
         };
+        /** BankAccountCreate */
+        BankAccountCreate: {
+            /** Name */
+            name: string;
+            /** Account No Last4 */
+            account_no_last4?: string | null;
+        };
+        /** BankAccountOut */
+        BankAccountOut: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Account No Last4 */
+            account_no_last4: string | null;
+            /** Is Active */
+            is_active: boolean;
+        };
+        /** BankAccountUpdate */
+        BankAccountUpdate: {
+            /** Name */
+            name?: string | null;
+            /** Is Active */
+            is_active?: boolean | null;
+        };
+        /** BankLineOut */
+        BankLineOut: {
+            /** Id */
+            id: number;
+            /**
+             * Line Date
+             * Format: date
+             */
+            line_date: string;
+            /** Narration */
+            narration: string;
+            /** Reference */
+            reference: string;
+            /** Debit */
+            debit: string;
+            /** Credit */
+            credit: string;
+            /** Matched */
+            matched: boolean;
+            /** Matched Key */
+            matched_key?: string | null;
+            /** Matched Label */
+            matched_label?: string | null;
+            /** Matched How */
+            matched_how?: string | null;
+        };
+        /** BankStatementOut */
+        BankStatementOut: {
+            /** Id */
+            id: number;
+            /** Bank Account Id */
+            bank_account_id: number;
+            /** Bank Account Name */
+            bank_account_name: string;
+            /** Filename */
+            filename: string;
+            /**
+             * From Date
+             * Format: date
+             */
+            from_date: string;
+            /**
+             * To Date
+             * Format: date
+             */
+            to_date: string;
+            /** Row Count */
+            row_count: number;
+            /** Skipped Count */
+            skipped_count: number;
+            /** Closing Balance */
+            closing_balance: string | null;
+            /**
+             * Imported At
+             * Format: date-time
+             */
+            imported_at: string;
+            /** Imported By Name */
+            imported_by_name: string | null;
+        };
         /**
          * BillPaymentIn
          * @description Money taken at the counter with the bill (cash, UPI or bank; no cheques, B7).
@@ -2525,6 +2745,13 @@ export interface components {
             /** File */
             file: string;
         };
+        /** Body_import_statement_api_v1_bank_statements_post */
+        Body_import_statement_api_v1_bank_statements_post: {
+            /** Bank Account Id */
+            bank_account_id: number;
+            /** File */
+            file: string;
+        };
         /** Body_upload_file_api_v1_attachments_post */
         Body_upload_file_api_v1_attachments_post: {
             ref_type: components["schemas"]["AttachmentRef"];
@@ -2535,6 +2762,26 @@ export interface components {
             file: string;
             /** Note */
             note?: string | null;
+        };
+        /** BookEntryOut */
+        BookEntryOut: {
+            /** Key */
+            key: string;
+            /**
+             * Entry Date
+             * Format: date
+             */
+            entry_date: string;
+            /** Label */
+            label: string;
+            /** Mode */
+            mode: string;
+            /** Reference */
+            reference: string | null;
+            /** Amount */
+            amount: string;
+            /** Money In */
+            money_in: boolean;
         };
         /**
          * BucketsOut
@@ -2686,6 +2933,17 @@ export interface components {
              * @enum {string}
              */
             state: "ok" | "warn" | "fail";
+            /** Detail */
+            detail: string;
+        };
+        /** ChecklistItem */
+        ChecklistItem: {
+            /** Code */
+            code: string;
+            /** Label */
+            label: string;
+            /** State */
+            state: string;
             /** Detail */
             detail: string;
         };
@@ -3544,6 +3802,56 @@ export interface components {
             reason: string;
             /** From Place */
             from_place: string;
+        };
+        /** ExceptionCount */
+        ExceptionCount: {
+            /** Code */
+            code: string;
+            /** Title */
+            title: string;
+            /** Count */
+            count: number;
+        };
+        /** ExceptionReport */
+        ExceptionReport: {
+            /**
+             * Date From
+             * Format: date
+             */
+            date_from: string;
+            /**
+             * Date To
+             * Format: date
+             */
+            date_to: string;
+            /** Rows */
+            rows: components["schemas"]["ExceptionRow"][];
+            /** Counts */
+            counts: components["schemas"]["ExceptionCount"][];
+        };
+        /** ExceptionRow */
+        ExceptionRow: {
+            /** Code */
+            code: string;
+            /** Title */
+            title: string;
+            /**
+             * On
+             * Format: date
+             */
+            on: string;
+            /** Location Code */
+            location_code: string | null;
+            /** User Name */
+            user_name: string | null;
+            /** Document */
+            document: string | null;
+            /** Detail */
+            detail: string;
+            /** Value */
+            value: string | null;
+            /** Link */
+            link?: string | null;
         };
         /** ExpenseCategoryIn */
         ExpenseCategoryIn: {
@@ -5291,6 +5599,36 @@ export interface components {
             /** Inter State */
             inter_state: boolean;
         };
+        /** PeriodChecklist */
+        PeriodChecklist: {
+            /** Period */
+            period: string;
+            /** Items */
+            items: components["schemas"]["ChecklistItem"][];
+            /** Ready */
+            ready: boolean;
+        };
+        /** PeriodLockOut */
+        PeriodLockOut: {
+            /** Locked Through */
+            locked_through: string | null;
+            /** Changed At */
+            changed_at?: string | null;
+            /** Changed By Name */
+            changed_by_name?: string | null;
+            /** Reason */
+            reason?: string | null;
+        };
+        /**
+         * PeriodLockSet
+         * @description `locked_through` of null removes the lock.
+         */
+        PeriodLockSet: {
+            /** Locked Through */
+            locked_through: string | null;
+            /** Reason */
+            reason: string;
+        };
         /** PinSet */
         PinSet: {
             /** Current Password */
@@ -5977,6 +6315,41 @@ export interface components {
             provision: string;
             provision_pct: components["schemas"]["BucketsOut"];
         };
+        /** ReconciliationOut */
+        ReconciliationOut: {
+            /**
+             * Date From
+             * Format: date
+             */
+            date_from: string;
+            /**
+             * Date To
+             * Format: date
+             */
+            date_to: string;
+            /** Window Days */
+            window_days: number;
+            /** Lines */
+            lines: components["schemas"]["BankLineOut"][];
+            /** Line Count */
+            line_count: number;
+            /** Matched Count */
+            matched_count: number;
+            /** Unmatched Count */
+            unmatched_count: number;
+            /** Unmatched In */
+            unmatched_in: string;
+            /** Unmatched Out */
+            unmatched_out: string;
+            /** Not In Bank */
+            not_in_bank: components["schemas"]["BookEntryOut"][];
+            /** Not In Bank Total */
+            not_in_bank_total: string;
+            /** Last Balance */
+            last_balance: string | null;
+            /** Last Balance Date */
+            last_balance_date: string | null;
+        };
         /** ReopenIn */
         ReopenIn: {
             /** Reason */
@@ -6282,8 +6655,45 @@ export interface components {
              * @default true
              */
             nrv_writedown_enabled: boolean;
+            /**
+             * Bank Match Days
+             * @default 3
+             */
+            bank_match_days: number;
+            /**
+             * Exception Round Amount
+             * @default 1000
+             */
+            exception_round_amount: string;
+            /**
+             * Exception Count Days
+             * @default 2
+             */
+            exception_count_days: number;
+            /**
+             * Exception Returns Count
+             * @default 4
+             */
+            exception_returns_count: number;
+            /**
+             * Exception Returns Days
+             * @default 30
+             */
+            exception_returns_days: number;
+            /**
+             * Exception Cash Near Pct
+             * @default 80
+             */
+            exception_cash_near_pct: string;
+            /**
+             * Exception Shortage Count
+             * @default 3
+             */
+            exception_shortage_count: number;
             /** Id */
             id: number;
+            /** Locked Through */
+            locked_through?: string | null;
         };
         /**
          * ShopSettingsUpdate
@@ -6448,6 +6858,41 @@ export interface components {
              * @default true
              */
             nrv_writedown_enabled: boolean;
+            /**
+             * Bank Match Days
+             * @default 3
+             */
+            bank_match_days: number;
+            /**
+             * Exception Round Amount
+             * @default 1000
+             */
+            exception_round_amount: number | string;
+            /**
+             * Exception Count Days
+             * @default 2
+             */
+            exception_count_days: number;
+            /**
+             * Exception Returns Count
+             * @default 4
+             */
+            exception_returns_count: number;
+            /**
+             * Exception Returns Days
+             * @default 30
+             */
+            exception_returns_days: number;
+            /**
+             * Exception Cash Near Pct
+             * @default 80
+             */
+            exception_cash_near_pct: number | string;
+            /**
+             * Exception Shortage Count
+             * @default 3
+             */
+            exception_shortage_count: number;
         };
         /** ShortageClaimOut */
         ShortageClaimOut: {
@@ -18383,6 +18828,746 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_period_lock_api_v1_period_lock_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PeriodLockOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    set_period_lock_api_v1_period_lock_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PeriodLockSet"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PeriodLockOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    month_end_checklist_api_v1_period_lock_checklist_get: {
+        parameters: {
+            query: {
+                period: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PeriodChecklist"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_bank_accounts_api_v1_bank_accounts_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankAccountOut"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_bank_account_api_v1_bank_accounts_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BankAccountCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankAccountOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_bank_account_api_v1_bank_accounts__account_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                account_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BankAccountUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankAccountOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_statements_api_v1_bank_statements_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankStatementOut"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    import_statement_api_v1_bank_statements_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_import_statement_api_v1_bank_statements_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankStatementOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reconciliation_api_v1_bank_reconciliation_get: {
+        parameters: {
+            query?: {
+                date_from?: string | null;
+                date_to?: string | null;
+                bank_account_id?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReconciliationOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    exception_report_api_v1_reports_exceptions_get: {
+        parameters: {
+            query?: {
+                date_from?: string | null;
+                date_to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExceptionReport"];
+                };
             };
             /** @description Bad Request */
             400: {

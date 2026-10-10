@@ -3,6 +3,7 @@
 from app.models.approvals import Approval
 from app.models.audit import AuditLog
 from app.models.auth import AuthSession
+from app.models.banking import BankAccount, BankStatement, BankStatementLine
 from app.models.base import Base
 from app.models.cashbook import CashEntry, ExpenseCategory
 from app.models.compliance import EInvoice, EwayBill
@@ -38,6 +39,9 @@ __all__ = [
     "AuditLog",
     "AuthSession",
     "BadDebtWriteoff",
+    "BankAccount",
+    "BankStatement",
+    "BankStatementLine",
     "Base",
     "CashEntry",
     "CostComponent",

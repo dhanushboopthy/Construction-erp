@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.6.0 (FM5): working capital and receivables
+
+- Reports, Working capital (owner): days inventory outstanding, days sales outstanding, days
+  payables outstanding, supplier advance days and the cash conversion cycle for any month, with
+  cash tied up, working capital, inventory turnover, collection efficiency and a six-month
+  trend. With too little history it says "Not enough data yet", never a made-up number. The
+  Today screen shows cash tied up.
+- Reports, Receivables (owner and accountant): what customers owe aged from the due date (not yet
+  due, 1-15, 16-30, 31-60, over 60 days late), days late, credit used and days to pay per
+  customer. The owner also sees the provision for doubtful debts.
+- Bad-debt write-offs (owner only): a permanent, numbered document that clears a customer's oldest
+  bills with no GST effect and comes off the month's profit. It is exported to Tally.
+- Settings: the provision percentage for each overdue bucket (accountant to confirm).
+- Integrity check "Cost of goods": opening stock + purchases - cost of goods sold + other moves
+  must equal closing stock, for the last month and this month.
+- Metrics explained (owner): every figure in the app, with its formula, meaning and an example.
+
 ## 1.5.0 (FM4): Tally export
 
 - Reports, Tally export (owner and accountant): the day book for a date range as a Tally XML

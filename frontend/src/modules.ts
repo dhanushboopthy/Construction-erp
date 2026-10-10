@@ -100,6 +100,13 @@ export const MODULES: ModuleLink[] = [
     purpose: "Daily closing, profit, dues and sales by customer segment.",
   },
   {
+    path: "/metrics",
+    label: "Metrics explained",
+    shortcut: "m",
+    roles: ["owner"],
+    purpose: "What every figure means, how it is worked out, and an example.",
+  },
+  {
     path: "/settings",
     label: "Settings",
     shortcut: "9",

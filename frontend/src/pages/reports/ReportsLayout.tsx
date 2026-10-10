@@ -8,6 +8,13 @@ const TABS = [
   { to: "/reports/profit", label: "Profit", end: false, roles: ["owner"] },
   { to: "/reports/pnl", label: "Profit & loss", end: false, roles: ["owner"] },
   { to: "/reports/tally", label: "Tally export", end: false, roles: ["owner", "accountant"] },
+  {
+    to: "/reports/receivables",
+    label: "Receivables",
+    end: false,
+    roles: ["owner", "accountant"],
+  },
+  { to: "/reports/working-capital", label: "Working capital", end: false, roles: ["owner"] },
   { to: "/reports/overrides", label: "Price overrides", end: false, roles: ["owner"] },
   { to: "/reports/dues", label: "Dues", end: false, roles: ["owner", "accountant"] },
   {

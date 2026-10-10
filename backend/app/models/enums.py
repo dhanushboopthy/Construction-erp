@@ -67,6 +67,7 @@ class PartyRef(StrEnum):
     DEBIT_NOTE = "debit_note"
     REBATE = "rebate"
     FREIGHT = "freight"
+    WRITE_OFF = "write_off"  # a bad debt written off by the owner (FM5)
 
 
 class OpeningKind(StrEnum):
@@ -188,6 +189,7 @@ class DocType(StrEnum):
     PAYMENT_RECEIPT = "payment_receipt"
     CASH_VOUCHER = "cash_voucher"  # cash book: expenses, bank deposits and withdrawals (FM1)
     STOCK_ADJUSTMENT = "stock_adjustment"  # breakage, theft, weighbridge, count fixes (FM2)
+    BAD_DEBT_WRITEOFF = "bad_debt_writeoff"  # a customer debt given up, no GST effect (FM5)
 
 
 def str_enum(enum_cls: type[StrEnum], name: str) -> sa.Enum:

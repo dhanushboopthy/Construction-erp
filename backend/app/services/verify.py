@@ -5,7 +5,7 @@ a bad restore or a console slip shows up as a named failure. It is read-only. Th
 run after every restore drill (`python -m app.scripts.verify`) and from the owner's System page."""
 
 import hashlib
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 
@@ -23,11 +23,19 @@ from app.domain import stock_valuation as stock_rules
 from app.domain.money import ZERO
 from app.models.cashbook import CashEntry
 from app.models.documents import Attachment, DailyClosing
-from app.models.enums import ClosingStatus, LocationKind, PartyRef
+from app.models.enums import (
+    ClosingStatus,
+    FulfilmentSource,
+    LocationKind,
+    PartyRef,
+    PurchaseMode,
+    StockRef,
+)
 from app.models.ledgers import PartyLedger, StockLedger
-from app.models.purchasing import Payment, Purchase
+from app.models.purchasing import Payment, Purchase, PurchaseLine
+from app.models.receivables import BadDebtWriteoff
 from app.models.returns import CreditNote, DebitNote
-from app.models.sales import SalesInvoice
+from app.models.sales import SalesInvoice, SalesLine
 from app.models.setup import Location
 from app.models.stock_ops import StockAdjustment
 from app.schemas.system import Check, StatusOut, VerifyOut
@@ -40,12 +48,12 @@ NO_DELETE = [
     "debit_note_line", "purchase", "purchase_line", "purchase_cost", "payment",
     "stock_transfer", "stock_transfer_line", "drop_ship_link", "eway_bill", "einvoice",
     "daily_closing", "attachment", "gstr2b_import", "cash_entry", "stock_adjustment",
-    "stock_adjustment_line",
+    "stock_adjustment_line", "bad_debt_writeoff",
 ]  # fmt: skip
 NO_EDIT = [
     "sales_invoice", "sales_line", "credit_note", "credit_note_line", "debit_note",
     "debit_note_line", "purchase_line", "purchase_cost", "payment", "attachment", "gstr2b_import",
-    "cash_entry", "stock_adjustment", "stock_adjustment_line",
+    "cash_entry", "stock_adjustment", "stock_adjustment_line", "bad_debt_writeoff",
 ]  # fmt: skip
 BACKUP_MAX_AGE_HOURS = 30
 
@@ -111,6 +119,7 @@ def numbering_check(db: Session) -> Check:
         "receipts": Payment.number,
         "cash vouchers": CashEntry.number,
         "stock adjustments": StockAdjustment.number,
+        "bad-debt write-offs": BadDebtWriteoff.number,
     }
     problems: list[str] = []
     total = 0
@@ -191,6 +200,13 @@ def ledger_check(db: Session) -> Check:
             ),
             select(func.coalesce(func.sum(DebitNote.grand_total), 0)),
         ),
+        (
+            "bad-debt write-offs",
+            select(func.coalesce(func.sum(PartyLedger.credit), 0)).where(
+                PartyLedger.ref_type == PartyRef.WRITE_OFF
+            ),
+            select(func.coalesce(func.sum(BadDebtWriteoff.amount), 0)),
+        ),
     ]
     problems = []
     for label, ledger, documents in pairs:
@@ -231,6 +247,94 @@ def stock_check(db: Session) -> Check:
         return _fail("Stock", "Negative stock: " + "; ".join(negative[:10]))
     return _ok(
         "Stock", f"{len(by_item)} items replayed from the stock ledger; nothing is negative."
+    )
+
+
+COGS_TOLERANCE_PCT = Decimal("0.0001")  # 0.01 % of what moved: unit costs are kept to 4 places
+COGS_TOLERANCE_MIN = Decimal("10")
+
+
+def cogs_months(today: date) -> list[tuple[date, date]]:
+    """The month just finished and the month so far: the periods the cost check covers."""
+    first = today.replace(day=1)
+    last_end = first - timedelta(days=1)
+    return [(last_end.replace(day=1), last_end), (first, today)]
+
+
+def cogs_check(db: Session, today: date | None = None) -> Check:
+    """Opening stock + purchases - cost of goods sold +/- everything else that moved stock must
+    equal the closing stock (docs/FINANCE_REVIEW.md F28). Purchases and cost of goods come from
+    the bills; the rest, and the stock itself, from the stock ledger, so a costing bug in either
+    shows as a difference."""
+    from app.services.working_capital import stock_values  # function-level: avoids an import loop
+
+    today = today or today_ist()
+    problems: list[str] = []
+    checked = 0
+    for start, end in cogs_months(today):
+        rows = list(
+            db.execute(
+                select(StockLedger).where(
+                    StockLedger.tenant_id == TENANT_ID,
+                    StockLedger.entry_date >= start,
+                    StockLedger.entry_date <= end,
+                )
+            ).scalars()
+        )
+        try:
+            values = stock_values(db, [start - timedelta(days=1), end])
+        except stock_rules.NegativeStockError:
+            return _fail("Cost of goods", "Stock cannot be replayed; see the Stock check above.")
+        opening, closing = values[start - timedelta(days=1)], values[end]
+        if not rows and opening == ZERO and closing == ZERO:
+            continue
+        checked += 1
+        bought = _sum(
+            db,
+            select(func.coalesce(func.sum(PurchaseLine.total_cost), 0))
+            .join(Purchase, Purchase.id == PurchaseLine.purchase_id)
+            .where(
+                Purchase.tenant_id == TENANT_ID,
+                Purchase.mode == PurchaseMode.STOCK,
+                Purchase.bill_date >= start,
+                Purchase.bill_date <= end,
+            ),
+        )
+        cogs = _sum(
+            db,
+            select(func.coalesce(func.sum(SalesLine.base_qty * SalesLine.cost_per_unit), 0))
+            .join(SalesInvoice, SalesInvoice.id == SalesLine.invoice_id)
+            .where(
+                SalesInvoice.tenant_id == TENANT_ID,
+                SalesLine.fulfilment_source != FulfilmentSource.DIRECT,
+                SalesInvoice.invoice_date >= start,
+                SalesInvoice.invoice_date <= end,
+            ),
+        )
+        other = sum(
+            (
+                (r.qty_in - r.qty_out) * r.unit_cost
+                for r in rows
+                if r.ref_type not in (StockRef.PURCHASE, StockRef.SALE)
+            ),
+            ZERO,
+        )
+        expected = opening + bought - cogs + other
+        tolerance = max(COGS_TOLERANCE_MIN, (opening + bought) * COGS_TOLERANCE_PCT)
+        if abs(closing - expected) > tolerance:
+            problems.append(
+                f"{start:%b %Y}: opening {opening:,.2f} + purchases {bought:,.2f} - cost of goods "
+                f"sold {cogs:,.2f} + other stock moves {other:,.2f} = {expected:,.2f}, but the "
+                f"stock ledger shows {closing:,.2f}"
+            )
+    if problems:
+        return _fail("Cost of goods", "; ".join(problems))
+    if not checked:
+        return _ok("Cost of goods", "No stock moved in the last two months, so nothing to check.")
+    return _ok(
+        "Cost of goods",
+        "Opening stock + purchases - cost of goods sold + other moves equals closing stock "
+        f"for {checked} month{'s' if checked != 1 else ''}.",
     )
 
 
@@ -278,6 +382,7 @@ def run_checks(db: Session, *, full: bool = False) -> VerifyOut:
         totals_check(db),
         ledger_check(db),
         stock_check(db),
+        cogs_check(db),
         files_check(db, full=full),
     ]
     return VerifyOut(ok=all(c.state != "fail" for c in checks), checks=checks)

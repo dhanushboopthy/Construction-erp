@@ -526,6 +526,69 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reports/receivables": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Receivables
+         * @description What customers owe, aged from each bill's due date. The provision for doubtful debts is
+         *     shown to the owner only.
+         */
+        get: operations["receivables_api_v1_reports_receivables_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/working-capital": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Working Capital
+         * @description DIO, DSO, DPO, advance days, cash conversion cycle and cash tied up for a month.
+         */
+        get: operations["working_capital_api_v1_reports_working_capital_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/write-offs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Writeoffs */
+        get: operations["list_writeoffs_api_v1_write_offs_get"];
+        put?: never;
+        /**
+         * Create Writeoff
+         * @description Give up on money a customer owes. Owner only; no GST effect; the customer's account is
+         *     credited and the debt is a loss in the month's profit.
+         */
+        post: operations["create_writeoff_api_v1_write_offs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/expense-categories": {
         parameters: {
             query?: never;
@@ -2361,6 +2424,22 @@ export interface components {
             file: string;
             /** Note */
             note?: string | null;
+        };
+        /**
+         * BucketsOut
+         * @description An amount (or a percentage) for each overdue bucket, counted from the due date.
+         */
+        BucketsOut: {
+            /** Current */
+            current: string;
+            /** Days 1 15 */
+            days_1_15: string;
+            /** Days 16 30 */
+            days_16_30: string;
+            /** Days 31 60 */
+            days_31_60: string;
+            /** Over 60 */
+            over_60: string;
         };
         /** CashBookOut */
         CashBookOut: {
@@ -4793,7 +4872,7 @@ export interface components {
          * @description What created a party ledger row.
          * @enum {string}
          */
-        PartyRef: "opening" | "sale" | "purchase" | "payment" | "credit_note" | "debit_note" | "rebate" | "freight";
+        PartyRef: "opening" | "sale" | "purchase" | "payment" | "credit_note" | "debit_note" | "rebate" | "freight" | "write_off";
         /**
          * PartyType
          * @enum {string}
@@ -4975,6 +5054,8 @@ export interface components {
             ebitda: string;
             /** Interest */
             interest: string;
+            /** Bad Debts */
+            bad_debts: string;
             /** Net Profit */
             net_profit: string;
             /** Net Margin Pct */
@@ -5536,6 +5617,69 @@ export interface components {
          * @enum {string}
          */
         RebateRule: "percent" | "per_unit" | "flat";
+        /** ReceivableRowOut */
+        ReceivableRowOut: {
+            /** Party Id */
+            party_id: number;
+            /** Party Name */
+            party_name: string;
+            /** Balance */
+            balance: string;
+            /** Advance */
+            advance: string;
+            /** Overdue */
+            overdue: string;
+            buckets: components["schemas"]["BucketsOut"];
+            /** Oldest Due Date */
+            oldest_due_date: string | null;
+            /** Days Late */
+            days_late: number | null;
+            /** Credit Limit */
+            credit_limit: string | null;
+            /** Utilisation Pct */
+            utilisation_pct: string | null;
+            /** Dso Days */
+            dso_days: string | null;
+            /** Last Payment Date */
+            last_payment_date: string | null;
+        };
+        /** ReceivablesOut */
+        ReceivablesOut: {
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** Total */
+            total: string;
+            /** Advances */
+            advances: string;
+            /** Overdue */
+            overdue: string;
+            buckets: components["schemas"]["BucketsOut"];
+            /** Rows */
+            rows: components["schemas"]["ReceivableRowOut"][];
+        };
+        /** ReceivablesOwnerOut */
+        ReceivablesOwnerOut: {
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** Total */
+            total: string;
+            /** Advances */
+            advances: string;
+            /** Overdue */
+            overdue: string;
+            buckets: components["schemas"]["BucketsOut"];
+            /** Rows */
+            rows: components["schemas"]["ReceivableRowOut"][];
+            /** Provision */
+            provision: string;
+            provision_pct: components["schemas"]["BucketsOut"];
+        };
         /** ReopenIn */
         ReopenIn: {
             /** Reason */
@@ -5791,6 +5935,31 @@ export interface components {
              * @default true
              */
             itc_reverse_shortages: boolean;
+            /**
+             * Provision Pct Current
+             * @default 0
+             */
+            provision_pct_current: string;
+            /**
+             * Provision Pct 1 15
+             * @default 1
+             */
+            provision_pct_1_15: string;
+            /**
+             * Provision Pct 16 30
+             * @default 2
+             */
+            provision_pct_16_30: string;
+            /**
+             * Provision Pct 31 60
+             * @default 10
+             */
+            provision_pct_31_60: string;
+            /**
+             * Provision Pct Over 60
+             * @default 50
+             */
+            provision_pct_over_60: string;
             /** Id */
             id: number;
         };
@@ -5907,6 +6076,31 @@ export interface components {
              * @default true
              */
             itc_reverse_shortages: boolean;
+            /**
+             * Provision Pct Current
+             * @default 0
+             */
+            provision_pct_current: number | string;
+            /**
+             * Provision Pct 1 15
+             * @default 1
+             */
+            provision_pct_1_15: number | string;
+            /**
+             * Provision Pct 16 30
+             * @default 2
+             */
+            provision_pct_16_30: number | string;
+            /**
+             * Provision Pct 31 60
+             * @default 10
+             */
+            provision_pct_31_60: number | string;
+            /**
+             * Provision Pct Over 60
+             * @default 50
+             */
+            provision_pct_over_60: number | string;
         };
         /** SiteCreate */
         SiteCreate: {
@@ -6415,6 +6609,131 @@ export interface components {
             ok: boolean;
             /** Checks */
             checks: components["schemas"]["Check"][];
+        };
+        /**
+         * WorkingCapitalOut
+         * @description Working capital for one calendar month (owner only). Averages are of the balance at the
+         *     start and at the end of the period; a day count is None when there is nothing to divide by.
+         */
+        WorkingCapitalOut: {
+            /** Period */
+            period: string;
+            /**
+             * Date From
+             * Format: date
+             */
+            date_from: string;
+            /**
+             * Date To
+             * Format: date
+             */
+            date_to: string;
+            /** Days */
+            days: number;
+            /** Enough Data */
+            enough_data: boolean;
+            /** Data Note */
+            data_note: string | null;
+            /** Stock Start */
+            stock_start: string;
+            /** Stock End */
+            stock_end: string;
+            /** Receivables Start */
+            receivables_start: string;
+            /** Receivables End */
+            receivables_end: string;
+            /** Payables Start */
+            payables_start: string;
+            /** Payables End */
+            payables_end: string;
+            /** Advances Start */
+            advances_start: string;
+            /** Advances End */
+            advances_end: string;
+            /** Cogs */
+            cogs: string;
+            /** Credit Sales */
+            credit_sales: string;
+            /** Purchases */
+            purchases: string;
+            /** Collections */
+            collections: string;
+            /** Dio Days */
+            dio_days: string | null;
+            /** Dso Days */
+            dso_days: string | null;
+            /** Dpo Days */
+            dpo_days: string | null;
+            /** Advance Days */
+            advance_days: string | null;
+            /** Ccc Days */
+            ccc_days: string | null;
+            /** Inventory Turnover */
+            inventory_turnover: string | null;
+            /** Collection Efficiency Pct */
+            collection_efficiency_pct: string | null;
+            /** Cash Tied Up */
+            cash_tied_up: string;
+            /** Working Capital */
+            working_capital: string;
+            /** Trend */
+            trend: components["schemas"]["WorkingCapitalPoint"][];
+        };
+        /** WorkingCapitalPoint */
+        WorkingCapitalPoint: {
+            /** Period */
+            period: string;
+            /** Enough Data */
+            enough_data: boolean;
+            /** Dio Days */
+            dio_days: string | null;
+            /** Dso Days */
+            dso_days: string | null;
+            /** Dpo Days */
+            dpo_days: string | null;
+            /** Advance Days */
+            advance_days: string | null;
+            /** Ccc Days */
+            ccc_days: string | null;
+            /** Cash Tied Up */
+            cash_tied_up: string;
+        };
+        /** WriteoffCreate */
+        WriteoffCreate: {
+            /** Location Id */
+            location_id: number;
+            /** Party Id */
+            party_id: number;
+            /** Amount */
+            amount: number | string;
+            /** Reason */
+            reason: string;
+        };
+        /** WriteoffOut */
+        WriteoffOut: {
+            /** Id */
+            id: number;
+            /** Number */
+            number: string;
+            /** Location Id */
+            location_id: number;
+            /** Party Id */
+            party_id: number;
+            /** Party Name */
+            party_name: string;
+            /**
+             * Writeoff Date
+             * Format: date
+             */
+            writeoff_date: string;
+            /** Amount */
+            amount: string;
+            /** Balance Before */
+            balance_before: string;
+            /** Reason */
+            reason: string;
+            /** Created By Name */
+            created_by_name: string | null;
         };
     };
     responses: never;
@@ -9317,6 +9636,304 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DuesOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    receivables_api_v1_reports_receivables_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceivablesOut"] | components["schemas"]["ReceivablesOwnerOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    working_capital_api_v1_reports_working_capital_get: {
+        parameters: {
+            query?: {
+                period?: string | null;
+                trend?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkingCapitalOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_writeoffs_api_v1_write_offs_get: {
+        parameters: {
+            query?: {
+                party_id?: number | null;
+                date_from?: string | null;
+                date_to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WriteoffOut"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_writeoff_api_v1_write_offs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WriteoffCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WriteoffOut"];
                 };
             };
             /** @description Bad Request */

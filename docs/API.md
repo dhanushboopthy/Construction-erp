@@ -41,6 +41,21 @@ Endpoints that return cost, margin or profit use separate response models for ow
 staff (for example `ItemOwnerOut` and `ItemOut`). Choose the model with `principal.sees_cost`;
 never rely on the UI to hide fields. Test each such endpoint as a counter user.
 
+## Endpoints (FM5: working capital, receivables, write-offs)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| GET | `/reports/working-capital?period=2026-09&trend=true` | owner |
+| GET | `/reports/receivables` | owner (with `provision`, `provision_pct`), accountant (without); counter 403 |
+| GET | `/write-offs?party_id=&date_from=&date_to=` | owner, accountant |
+| POST | `/write-offs` (`location_id`, `party_id`, `amount`, `reason`) | owner only |
+
+Errors: `BAD_PERIOD`, `FUTURE_PERIOD`, `WRITEOFF_TOO_MUCH` (409, more than the customer owes),
+`NOT_A_CUSTOMER` (409). Working capital day counts are `null` when there is nothing to divide by
+and `enough_data` is false with fewer than 7 days of bills ("Not enough data yet"). The P&L gains
+`bad_debts`, taken off `net_profit`. Settings gain `provision_pct_current`, `provision_pct_1_15`,
+`provision_pct_16_30`, `provision_pct_31_60`, `provision_pct_over_60`.
+
 ## Endpoints (FM4: Tally export)
 
 | Method | Path | Who |

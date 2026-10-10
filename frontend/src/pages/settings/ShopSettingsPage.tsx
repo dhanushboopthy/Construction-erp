@@ -67,6 +67,18 @@ const AMOUNT_KEYS = [
   "eway_threshold_intrastate",
   "expense_approval_limit",
   "adjustment_approval_limit",
+  "provision_pct_current",
+  "provision_pct_1_15",
+  "provision_pct_16_30",
+  "provision_pct_31_60",
+  "provision_pct_over_60",
+] as const;
+const PROVISION_KEYS = [
+  "provision_pct_current",
+  "provision_pct_1_15",
+  "provision_pct_16_30",
+  "provision_pct_31_60",
+  "provision_pct_over_60",
 ] as const;
 const FLAG_KEYS = [
   "include_gst_in_cost",
@@ -118,8 +130,8 @@ function validate(form: Form): Record<string, string> {
   for (const k of AMOUNT_KEYS) {
     if (!isAmount(text(k))) errors[k] = "Enter an amount like 10000 or 10000.50.";
   }
-  if (!errors.weight_variance_pct && Number(text("weight_variance_pct")) > 100) {
-    errors.weight_variance_pct = "A percentage cannot be above 100.";
+  for (const k of ["weight_variance_pct", ...PROVISION_KEYS] as const) {
+    if (!errors[k] && Number(text(k)) > 100) errors[k] = "A percentage cannot be above 100.";
   }
   return errors;
 }
@@ -353,6 +365,47 @@ function ShopSettingsForm({ settings }: { settings: ShopSettings }) {
             {...flag("itc_reverse_shortages")}
           />
         </div>
+      </Group>
+
+      <Group
+        title="Doubtful debts"
+        note="The share of unpaid bills to set aside, by how long past the due date they are. It is a report, not a booking. Ask the accountant."
+      >
+        <TextField
+          label="Not yet due (%)"
+          rule="FM5"
+          inputMode="decimal"
+          className={styles.amount}
+          {...text("provision_pct_current")}
+        />
+        <TextField
+          label="1 to 15 days late (%)"
+          rule="FM5"
+          inputMode="decimal"
+          className={styles.amount}
+          {...text("provision_pct_1_15")}
+        />
+        <TextField
+          label="16 to 30 days late (%)"
+          rule="FM5"
+          inputMode="decimal"
+          className={styles.amount}
+          {...text("provision_pct_16_30")}
+        />
+        <TextField
+          label="31 to 60 days late (%)"
+          rule="FM5"
+          inputMode="decimal"
+          className={styles.amount}
+          {...text("provision_pct_31_60")}
+        />
+        <TextField
+          label="Over 60 days late (%)"
+          rule="FM5"
+          inputMode="decimal"
+          className={styles.amount}
+          {...text("provision_pct_over_60")}
+        />
       </Group>
 
       <Group

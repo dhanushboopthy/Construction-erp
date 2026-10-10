@@ -3,7 +3,8 @@ and what a cash-book entry does to the shop's drawer. Pure functions; worked exa
 tests/unit/test_finance.py. Names follow docs/GLOSSARY.md and domain/kpi_catalogue.py."""
 
 from dataclasses import dataclass
-from decimal import Decimal
+from datetime import date
+from decimal import ROUND_HALF_UP, Decimal
 from enum import StrEnum
 
 from app.domain.money import ZERO, Numberish, money, to_decimal
@@ -114,8 +115,11 @@ def ebitda(gross: Numberish, operating_expenses: Numberish) -> Decimal:
     return money(to_decimal(gross) - to_decimal(operating_expenses))
 
 
-def net_profit(ebitda_value: Numberish, interest: Numberish) -> Decimal:
-    return money(to_decimal(ebitda_value) - to_decimal(interest))
+def net_profit(
+    ebitda_value: Numberish, interest: Numberish, bad_debts: Numberish = ZERO
+) -> Decimal:
+    """EBITDA less interest and the bad debts written off in the period (FM5)."""
+    return money(to_decimal(ebitda_value) - to_decimal(interest) - to_decimal(bad_debts))
 
 
 def contribution(
@@ -187,3 +191,133 @@ def discount_leakage(rate_cuts: Numberish, discounts: Numberish) -> Decimal:
 def price_realisation_pct(billed_value: Numberish, list_value: Numberish) -> Decimal | None:
     """Billed value as a percentage of what the same goods were listed at; 100 means no leakage."""
     return margin_pct(billed_value, list_value)
+
+
+# ---------------------------------------------------------------------------- working capital
+
+
+def _days_ratio(balance: Numberish, flow: Numberish, days: int) -> Decimal | None:
+    """balance ÷ flow x days, to 1 place; None when there is no flow or no days to measure."""
+    base = to_decimal(flow)
+    if base <= ZERO or days <= 0:
+        return None
+    return (to_decimal(balance) / base * days).quantize(Decimal("0.1"), ROUND_HALF_UP)
+
+
+def dio_days(average_stock: Numberish, cogs: Numberish, days: int) -> Decimal | None:
+    """Days inventory outstanding: how long stock sits before it is sold."""
+    return _days_ratio(average_stock, cogs, days)
+
+
+def dso_days(average_receivables: Numberish, credit_sales: Numberish, days: int) -> Decimal | None:
+    """Days sales outstanding: how long customers take to pay."""
+    return _days_ratio(average_receivables, credit_sales, days)
+
+
+def dpo_days(average_payables: Numberish, purchases: Numberish, days: int) -> Decimal | None:
+    """Days payables outstanding: how long we take to pay suppliers."""
+    return _days_ratio(average_payables, purchases, days)
+
+
+def advance_days(average_advances: Numberish, purchases: Numberish, days: int) -> Decimal | None:
+    """Supplier advance days: how many days of purchases are paid before the goods arrive."""
+    return _days_ratio(average_advances, purchases, days)
+
+
+def ccc_days(
+    dio: Decimal | None, dso: Decimal | None, advance: Decimal | None, dpo: Decimal | None
+) -> Decimal | None:
+    """Cash conversion cycle: DIO + DSO + advance days - DPO, from the days as shown. None when
+    any part cannot be worked out, so a missing figure never looks like a good one."""
+    if dio is None or dso is None or advance is None or dpo is None:
+        return None
+    return dio + dso + advance - dpo
+
+
+def average(opening: Numberish, closing: Numberish) -> Decimal:
+    """The average of a balance at the start and the end of a period."""
+    return money((to_decimal(opening) + to_decimal(closing)) / 2)
+
+
+def inventory_turnover(cogs: Numberish, average_stock: Numberish) -> Decimal | None:
+    """Times the stock was sold through in the period: COGS ÷ average stock at cost."""
+    stock = to_decimal(average_stock)
+    if stock <= ZERO:
+        return None
+    return (to_decimal(cogs) / stock).quantize(Decimal("0.01"), ROUND_HALF_UP)
+
+
+def cash_tied_up(stock: Numberish, receivables: Numberish, supplier_advances: Numberish) -> Decimal:
+    """Money sitting in stock, in customers' hands and in suppliers' hands."""
+    return money(to_decimal(stock) + to_decimal(receivables) + to_decimal(supplier_advances))
+
+
+def working_capital(tied_up: Numberish, payables: Numberish) -> Decimal:
+    """Cash tied up less what we owe suppliers. Cash and bank balances are not counted."""
+    return money(to_decimal(tied_up) - to_decimal(payables))
+
+
+def collection_efficiency_pct(
+    collections: Numberish, opening_receivables: Numberish, credit_sales: Numberish
+) -> Decimal | None:
+    """Collections as a share of everything there was to collect: opening dues + credit sales."""
+    return margin_pct(collections, to_decimal(opening_receivables) + to_decimal(credit_sales))
+
+
+def credit_utilisation_pct(outstanding: Numberish, limit: Numberish) -> Decimal | None:
+    """How much of a customer's credit limit is used; None when they have no limit."""
+    if to_decimal(limit) <= ZERO:
+        return None
+    return margin_pct(outstanding, limit)
+
+
+class OverdueBucket(StrEnum):
+    """How late an unpaid bill is, counted from its due date, not its bill date."""
+
+    CURRENT = "current"  # not yet due, or due today
+    DAYS_1_15 = "1-15"
+    DAYS_16_30 = "16-30"
+    DAYS_31_60 = "31-60"
+    OVER_60 = "60+"
+
+
+@dataclass(frozen=True)
+class OverdueItem:
+    due_date: date
+    remaining: Decimal
+
+
+def overdue_bucket(due_date: date, today: date) -> OverdueBucket:
+    late = (today - due_date).days
+    if late <= 0:
+        return OverdueBucket.CURRENT
+    if late <= 15:
+        return OverdueBucket.DAYS_1_15
+    if late <= 30:
+        return OverdueBucket.DAYS_16_30
+    if late <= 60:
+        return OverdueBucket.DAYS_31_60
+    return OverdueBucket.OVER_60
+
+
+def overdue_aging(items: list[OverdueItem], today: date) -> dict[OverdueBucket, Decimal]:
+    totals = dict.fromkeys(OverdueBucket, ZERO)
+    for item in items:
+        totals[overdue_bucket(item.due_date, today)] += item.remaining
+    return {bucket: money(total) for bucket, total in totals.items()}
+
+
+def overdue_total(aged: dict[OverdueBucket, Decimal]) -> Decimal:
+    """Everything past its due date: all buckets except 'current'."""
+    return money(sum((v for b, v in aged.items() if b is not OverdueBucket.CURRENT), ZERO))
+
+
+def provision(aged: dict[OverdueBucket, Decimal], pct: dict[OverdueBucket, Decimal]) -> Decimal:
+    """Money to set aside for bills that may never be paid: each bucket x its percentage."""
+    return money(sum((aged[b] * pct[b] / 100 for b in OverdueBucket), ZERO))
+
+
+def can_write_off(balance: Numberish, amount: Numberish) -> bool:
+    """A write-off must be positive and no more than the customer owes."""
+    value = to_decimal(amount)
+    return value > ZERO and value <= to_decimal(balance)

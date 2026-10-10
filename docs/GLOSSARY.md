@@ -51,3 +51,15 @@
 | Contra | A Tally voucher that moves money between cash and bank, e.g. ₹1,50,000 taken to the bank: Dr Bank, Cr Cash. |
 | Ledger master | A ledger (account name) that must exist in Tally before a voucher can post to it; the export lists them first. |
 | Day book | Every voucher in date order. The export is the day book for a date range. |
+| DIO | Days inventory outstanding: average stock at cost ÷ COGS x days. ₹1.2 crore ÷ ₹1.93 crore x 30 = 18.7 days. |
+| DSO | Days sales outstanding: average receivables ÷ credit sales x days. ₹45,00,000 ÷ ₹60,00,000 x 30 = 22.5 days. |
+| DPO | Days payables outstanding: average payables ÷ purchases x days. ₹20,00,000 ÷ ₹1.95 crore x 30 = 3.1 days. |
+| Advance days | Average supplier advances ÷ purchases x days. ₹40,00,000 ÷ ₹1.95 crore x 30 = 6.2 days. |
+| Cash conversion cycle | DIO + DSO + advance days - DPO. 18.7 + 22.5 + 6.2 - 3.1 = 44.3 days. |
+| Cash tied up | Stock at cost + receivables + supplier advances. ₹1.2 crore + ₹45 lakh + ₹40 lakh = ₹2.05 crore. |
+| Working capital | Cash tied up less payables (cash and bank are not counted yet). ₹2.05 crore - ₹20 lakh = ₹1.85 crore. |
+| Overdue (by due date) | Days past a bill's due date, not its bill date; buckets not yet due, 1-15, 16-30, 31-60, over 60. |
+| Collection efficiency | Collections ÷ (opening receivables + credit sales). ₹90,000 ÷ (₹1,00,000 + ₹60,000) = 56.25 %. |
+| Credit utilisation | Outstanding ÷ credit limit. ₹4,00,000 ÷ ₹5,00,000 = 80 %. |
+| Provision for doubtful debts | Money set aside for bills that may never be paid: each overdue bucket x its percentage. ₹95,000 overdue in the example gives ₹23,400. A report, not booked. |
+| Bad-debt write-off | Giving up on money a customer owes; a numbered owner document (`S1W/26-27/00001`) with no GST effect that reduces profit. |

@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.3.0 (FM2): stock adjustments and ITC to reverse
+
+- Stock, Adjustments: breakage, rust or damage, theft, free samples, weighbridge differences
+  and count corrections, each with its own permanent document and a reason on the stock
+  ledger. Counter adjustments above ₹10,000 need the owner's PIN.
+- The owner sees the value lost this month by reason; the P&L takes stock lost off gross
+  profit.
+- Reports, ITC to reverse (owner and accountant): input tax on goods lost, for GSTR-3B.
+- Settings: approval limits for vouchers and adjustments, and whether unexplained shortages
+  reverse ITC. Fixed: saving Settings no longer resets the cash-book approval limit.
+
 ## 1.2.0 (FM1): cash book and profit and loss
 
 - Cash book per shop: expenses by head, cash taken to or brought from the bank, the owner's

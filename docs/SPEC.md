@@ -345,6 +345,30 @@ on issued documents (ADR 0010).
 - One shop and the godown by default (`SEED_SHOPS=2` for two); shop pickers hide while there
   is one shop and appear when a second is added.
 
+**Built (FM2, finance review F3, F15):** `stock_adjustment`, `stock_adjustment_line`;
+`stock_ledger.reason`; `shop_settings.adjustment_approval_limit` (default ₹10,000) and
+`itc_reverse_shortages` (default on, accountant to confirm).
+
+- Stock adjustment documents `<location>A/<FY>/<seq>`, one reason each: breakage, rust or
+  damage, theft, free sample, weighbridge loss (stock out), weighbridge gain (stock in), count
+  correction (either way, per line). Lines move stock at the weighted-average cost
+  (`ref_type = stock_adjustment`); out lines cannot take stock below zero (B13). Documents
+  and lines are permanent (triggers); a mistake is fixed by another adjustment.
+- Every adjustment ledger row carries its reason (a CHECK allows a reason only on adjustment
+  rows). Posting a stock count now writes `count_correction`; counts posted before FM2 have no
+  reason and are read as count corrections. No existing ledger row is changed.
+- Counter staff adjust their own shop, today only; above the limit (gross value of all lines)
+  they need the owner's PIN (`stock_adjustment` approval). The error never shows the value.
+  The owner adjusts any place and may back-date into open days. The accountant reads.
+- Values, totals by reason and ITC are owner-only on the adjustments screen.
+- ITC to reverse (owner, accountant), per month from the ledger: goods lost, stolen, damaged or
+  given as free samples (s.17(5)(h)) always; count and weighbridge shortages when
+  `itc_reverse_shortages` is on. Value at average cost × the item's GST rate. Advisory for
+  GSTR-3B 4(B)(1): the 3B figures are not changed, and the accountant splits it into heads.
+- Profit and loss: gross profit and contribution are after stock lost (adjustments and counts,
+  less gains) (`domain/inventory_analytics.py`).
+- Deferred: write-down to realisable value (value without quantity) moves to FM6 with NRV.
+
 **To build** (milestone in brackets):
 
 | Group | Table | Key columns |

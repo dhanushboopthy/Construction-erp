@@ -41,6 +41,22 @@ Endpoints that return cost, margin or profit use separate response models for ow
 staff (for example `ItemOwnerOut` and `ItemOut`). Choose the model with `principal.sees_cost`;
 never rely on the UI to hide fields. Test each such endpoint as a counter user.
 
+## Endpoints (FM2: stock adjustments, ITC to reverse)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| GET | `/stock-adjustments?location_id=&date_from=&date_to=` (this month by default) | all roles (counter: own shop); values, totals by reason and ITC only for the owner |
+| GET | `/stock-adjustments/{id}` | as above |
+| POST | `/stock-adjustments` (`reason`, `lines[{item_id, quantity, unit, direction}]`, `approval_ids`) | owner (any place, may back-date); counter: own shop, today; above `adjustment_approval_limit` needs a `stock_adjustment` approval (409 `ADJUSTMENT_NEEDS_OWNER`) |
+| GET | `/reports/itc-reversal?period=2026-10` | owner, accountant |
+
+Reasons: `breakage`, `damage`, `theft`, `free_sample`, `weighbridge_loss` (out only),
+`weighbridge_gain` (in only), `count_correction` (either; `direction` required). Errors:
+`WRONG_DIRECTION`, `DIRECTION_REQUIRED`, `DUPLICATE_ITEM`, `INSUFFICIENT_STOCK`,
+`UNIT_NOT_WHOLE`, `UNKNOWN_UNIT`, `BACKDATE_NEEDS_OWNER`, `FUTURE_DATE`, `DAY_CLOSED`. The P&L
+gains `stock_loss` (adjustments and counts, net), taken off gross profit and contribution.
+Settings gain `adjustment_approval_limit` (₹10,000) and `itc_reverse_shortages` (true).
+
 ## Endpoints (FM1: cash book, expenses, profit and loss)
 
 | Method | Path | Who |

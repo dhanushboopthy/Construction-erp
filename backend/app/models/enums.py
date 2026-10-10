@@ -52,7 +52,8 @@ class StockRef(StrEnum):
     SALE = "sale"
     SALE_RETURN = "sale_return"
     TRANSFER = "transfer"
-    ADJUSTMENT = "adjustment"
+    ADJUSTMENT = "adjustment"  # posting a stock count (ref_id is the count)
+    STOCK_ADJUSTMENT = "stock_adjustment"  # an adjustment document with a reason (FM2)
 
 
 class PartyRef(StrEnum):
@@ -130,6 +131,7 @@ class ApprovalAction(StrEnum):
     BACKDATE = "backdate"
     LATE_RETURN = "late_return"  # a return after the return window (B11)
     EXPENSE = "expense"  # a cash-book voucher above the shop's limit (FM1)
+    STOCK_ADJUSTMENT = "stock_adjustment"  # a stock adjustment above the limit (FM2)
 
 
 class ComplianceStatus(StrEnum):
@@ -184,6 +186,7 @@ class DocType(StrEnum):
     PURCHASE_ENTRY = "purchase_entry"
     PAYMENT_RECEIPT = "payment_receipt"
     CASH_VOUCHER = "cash_voucher"  # cash book: expenses, bank deposits and withdrawals (FM1)
+    STOCK_ADJUSTMENT = "stock_adjustment"  # breakage, theft, weighbridge, count fixes (FM2)
 
 
 def str_enum(enum_cls: type[StrEnum], name: str) -> sa.Enum:

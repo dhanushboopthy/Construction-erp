@@ -65,12 +65,15 @@ const AMOUNT_KEYS = [
   "cash_receipt_limit",
   "eway_threshold_interstate",
   "eway_threshold_intrastate",
+  "expense_approval_limit",
+  "adjustment_approval_limit",
 ] as const;
 const FLAG_KEYS = [
   "include_gst_in_cost",
   "rates_include_gst",
   "einvoice_enabled",
   "counter_can_enter_purchases",
+  "itc_reverse_shortages",
 ] as const;
 const OPTIONAL = new Set([
   "trade_name",
@@ -318,6 +321,36 @@ function ShopSettingsForm({ settings }: { settings: ShopSettings }) {
             rule="G28"
             hint="They key in the supplier's bill for their own shop but never see costs. Turn off to keep purchase entry with the owner."
             {...flag("counter_can_enter_purchases")}
+          />
+        </div>
+      </Group>
+
+      <Group
+        title="Owner approval"
+        note="Above these amounts, counter staff need your PIN. You never do."
+      >
+        <TextField
+          label="Cash-book voucher above (₹)"
+          rule="FM1"
+          inputMode="decimal"
+          className={styles.amount}
+          hint="Expenses only; bank deposits are checked against the bank statement."
+          {...text("expense_approval_limit")}
+        />
+        <TextField
+          label="Stock adjustment above (₹)"
+          rule="FM2"
+          inputMode="decimal"
+          className={styles.amount}
+          hint="Breakage, theft, weighbridge or count corrections, at average cost."
+          {...text("adjustment_approval_limit")}
+        />
+        <div className={styles.wide}>
+          <CheckField
+            label="Reverse ITC on unexplained shortages"
+            rule="FM2"
+            hint="Count and weighbridge shortages join the ITC to reverse list. Losses, theft, damage and free samples are always listed. Ask the accountant."
+            {...flag("itc_reverse_shortages")}
           />
         </div>
       </Group>

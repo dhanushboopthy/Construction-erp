@@ -1,7 +1,8 @@
 """Profit and loss for a calendar month (FM1, docs/FINANCE_REVIEW.md F1). Owner only.
 
 Sales, COGS and freight come from the same rows as the profit report (services/reports.py), so
-the two never disagree; expenses come from the cash book. Nothing is stored: every figure is
+the two never disagree; expenses come from the cash book; stock lost or gained through
+adjustments and counts (FM2) comes from the stock ledger. Nothing is stored: every figure is
 worked out from the documents on each request."""
 
 import calendar
@@ -20,7 +21,7 @@ from app.domain.finance import CashEntryKind
 from app.domain.money import ZERO, money
 from app.models.cashbook import CashEntry, ExpenseCategory
 from app.schemas.finance import PnlExpense, PnlOut
-from app.services import reports
+from app.services import adjustments, reports
 
 
 def month_bounds(period: str) -> tuple[date, date]:
@@ -74,13 +75,15 @@ def profit_and_loss(db: Session, period: str, location_id: int | None = None) ->
     cogs = money(sum((x.cost for x in lines), ZERO))
     freight = money(sum(reports._freight(db, {x.invoice_id for x in lines}).values(), ZERO))
 
+    lost = adjustments.stock_loss(db, date_from, date_to, location_id)
+
     net = finance.net_sales(sold, returned)
-    gross = finance.gross_profit(net, cogs, freight)
+    gross = finance.gross_profit(net, cogs, freight, lost)
     expense_lines = expenses_by_category(db, date_from, date_to, location_id)
     split = finance.split_expenses(expense_lines)
     ebitda = finance.ebitda(gross, split.operating)
     net_profit = finance.net_profit(ebitda, split.interest)
-    contribution = finance.contribution(net, cogs, freight, split.variable)
+    contribution = finance.contribution(net, cogs, freight, split.variable, lost)
 
     enough = bool(lines) or bool(expense_lines)
     note: str | None = None
@@ -101,6 +104,7 @@ def profit_and_loss(db: Session, period: str, location_id: int | None = None) ->
         net_sales=net,
         cogs=cogs,
         freight=freight,
+        stock_loss=lost,
         gross_profit=gross,
         gross_margin_pct=finance.margin_pct(gross, net),
         expenses=[

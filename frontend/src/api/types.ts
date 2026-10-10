@@ -136,3 +136,13 @@ export type CashEntryCreate = Schemas["CashEntryCreate"];
 export type CashBook = Schemas["CashBookOut"];
 export type Pnl = Schemas["PnlOut"];
 export type KpiDefinition = Schemas["KpiDefinitionOut"];
+
+// FM2: stock adjustments with reasons, ITC to reverse.
+export type AdjustmentReason = Schemas["AdjustmentReason"];
+export type StockDirection = Schemas["Direction"];
+export type AdjustmentCreate = Schemas["AdjustmentCreate"];
+export type Adjustment = Schemas["AdjustmentOut"];
+export type AdjustmentOwner = Schemas["AdjustmentOwnerOut"];
+export type AdjustmentBook = Schemas["AdjustmentBookOut"];
+export type AdjustmentBookOwner = Schemas["AdjustmentBookOwnerOut"];
+export type ItcReversal = Schemas["ItcReversalOut"];

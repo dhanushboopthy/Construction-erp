@@ -94,6 +94,7 @@ class PnlOut(Schema):
     net_sales: Decimal
     cogs: Decimal
     freight: Decimal
+    stock_loss: Decimal  # stock lost (+) or gained (-) through adjustments and counts
     gross_profit: Decimal
     gross_margin_pct: Decimal | None
     expenses: list[PnlExpense]

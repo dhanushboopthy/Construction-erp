@@ -14,6 +14,7 @@ const WHAT: Record<ApprovalAction, string> = {
   backdate: "back-date the bill",
   late_return: "take this return after the return window",
   expense: "pay this expense",
+  stock_adjustment: "post this stock adjustment",
 };
 
 /** The counter hands the screen to the owner, who types a PIN and a reason (G18). One approval

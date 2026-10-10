@@ -50,6 +50,10 @@ describe("Shop details", () => {
     const put = calls.find((c) => c.method === "PUT")?.body as Record<string, unknown>;
     expect(put.default_credit_limit).toBe("15000.50");
     expect(put.cash_receipt_limit).toBe("200000.00");
+    // Saving never resets the approval limits or the ITC setting to their defaults.
+    expect(put.expense_approval_limit).toBe("5000.00");
+    expect(put.adjustment_approval_limit).toBe("10000.00");
+    expect(put.itc_reverse_shortages).toBe(true);
     expect(put.gstin).toBeNull();
     expect(put.default_credit_days).toBe(7);
   });

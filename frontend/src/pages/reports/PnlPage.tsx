@@ -111,6 +111,13 @@ export function PnlPage() {
                   <th scope="row">Less freight on sales</th>
                   <td className="num">{rupees(p.freight)}</td>
                 </tr>
+                <tr>
+                  <th scope="row">
+                    {Number(p.stock_loss) < 0 ? "Add stock gained" : "Less stock lost"}{" "}
+                    <span className={styles.sub}>breakage, theft, shortages</span>
+                  </th>
+                  <td className="num">{rupees(String(Math.abs(Number(p.stock_loss))))}</td>
+                </tr>
                 <tr className={pnl.subtotal}>
                   <th scope="row">Gross profit</th>
                   <td className="num">{rupees(p.gross_profit)}</td>

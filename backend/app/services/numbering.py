@@ -26,6 +26,7 @@ SERIES_SUFFIX: dict[DocType, str] = {
     DocType.PURCHASE_ENTRY: "P",
     DocType.PAYMENT_RECEIPT: "R",
     DocType.CASH_VOUCHER: "V",
+    DocType.STOCK_ADJUSTMENT: "A",
 }
 
 

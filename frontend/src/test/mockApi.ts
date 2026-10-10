@@ -95,6 +95,8 @@ export const SETTINGS: ShopSettings = {
   einvoice_enabled: false,
   counter_can_enter_purchases: true,
   expense_approval_limit: "5000.00",
+  adjustment_approval_limit: "10000.00",
+  itc_reverse_shortages: true,
   timezone: "Asia/Kolkata",
 };
 

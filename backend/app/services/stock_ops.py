@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.core.clock import today_ist
 from app.core.errors import BusinessRuleError, NotFoundError, PermissionDeniedError
 from app.core.tenancy import TENANT_ID
+from app.domain.inventory_analytics import AdjustmentReason
 from app.domain.money import ZERO, money
 from app.domain.stock_valuation import NegativeStockError, count_variance, ensure_available
 from app.domain.units import to_base
@@ -40,6 +41,24 @@ def _location(db: Session, location_id: int, field: str) -> Location:
     if row is None or row.tenant_id != TENANT_ID or not row.is_active:
         raise NotFoundError("Location not found or inactive", field=field)
     return row
+
+
+def base_quantity(
+    db: Session, item_id: int, quantity: Decimal, unit: str | None
+) -> tuple[Item, Decimal]:
+    """An active item and the quantity in its base unit (a blank unit means the base unit)."""
+    item = db.get(Item, item_id)
+    if item is None or item.tenant_id != TENANT_ID or not item.is_active:
+        raise NotFoundError("Item not found or inactive", field="item_id")
+    conversion = item_service.conversions(item).get((unit or item.base_unit).lower())
+    if conversion is None:
+        raise BusinessRuleError(
+            f"{item.name} has no unit called {unit!r}", code="UNKNOWN_UNIT", field="unit"
+        )
+    try:
+        return item, to_base(quantity, conversion)
+    except ValueError as exc:
+        raise BusinessRuleError(str(exc), code="UNIT_NOT_WHOLE", field="quantity") from exc
 
 
 # ---------------------------------------------------------------------------- transfers
@@ -87,18 +106,8 @@ def create_transfer(
 
     wanted: dict[int, Decimal] = {}
     for line in data.lines:
-        item = db.get(Item, line.item_id)
-        if item is None or item.tenant_id != TENANT_ID or not item.is_active:
-            raise NotFoundError("Item not found or inactive", field="item_id")
-        conversion = item_service.conversions(item).get((line.unit or item.base_unit).lower())
-        if conversion is None:
-            raise BusinessRuleError(
-                f"{item.name} has no unit called {line.unit!r}", code="UNKNOWN_UNIT", field="unit"
-            )
-        try:
-            wanted[item.id] = wanted.get(item.id, ZERO) + to_base(line.quantity, conversion)
-        except ValueError as exc:
-            raise BusinessRuleError(str(exc), code="UNIT_NOT_WHOLE", field="quantity") from exc
+        item, base_qty = base_quantity(db, line.item_id, line.quantity, line.unit)
+        wanted[item.id] = wanted.get(item.id, ZERO) + base_qty
 
     # Rule B13: check the origin holds enough of every item before moving anything.
     ledgers.lock_items(db, set(wanted))
@@ -333,6 +342,7 @@ def post_count(db: Session, count_id: int, actor_id: int) -> StockCount:
                 ref_type=StockRef.ADJUSTMENT,
                 ref_id=row.id,
                 narration=f"Stock count {row.id}",
+                reason=AdjustmentReason.COUNT_CORRECTION,
                 actor_id=actor_id,
             )
     row.status = CountStatus.POSTED

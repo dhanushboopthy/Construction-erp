@@ -30,7 +30,7 @@ From [FINANCE_REVIEW.md](FINANCE_REVIEW.md); one branch and PR each.
 | # | Milestone | Acceptance test | Status |
 | --- | --- | --- | --- |
 | FM1 | Cash book, expenses, P&L, single-shop screens | A day with cash sales, ₹2,000 cash loading labour and a ₹1,50,000 bank deposit closes with zero difference; the month's P&L shows net profit and break-even; counter gets 403 on the P&L | **Done** (`feat/fm1-cash-book`) |
-| FM2 | Stock adjustments with reasons and approval, ITC reversal list | Theft above the limit needs the owner's PIN and appears in "ITC to reverse" | To do |
+| FM2 | Stock adjustments with reasons and approval, ITC reversal list | Theft above the limit needs the owner's PIN and appears in "ITC to reverse" | **Done** (`feat/fm2-stock-adjustments`) |
 | FM3 | Labelled rate overrides | An owner override saves `rate_source = override` with a reason | To do |
 | FM4 | Tally export | The accountant imports a month's day book into Tally | To do |
 | FM5 | Working capital and receivables | Hand-worked DIO, DSO, DPO, advance days and CCC | To do |

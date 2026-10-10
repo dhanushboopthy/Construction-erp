@@ -68,6 +68,15 @@ class ShopSettings(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
     expense_approval_limit: Mapped[Money] = mapped_column(
         default=Decimal("5000.00"), server_default="5000.00"
     )
+    # FM2: a counter user's stock adjustment worth more than this needs the owner's PIN.
+    adjustment_approval_limit: Mapped[Money] = mapped_column(
+        default=Decimal("10000.00"), server_default="10000.00"
+    )
+    # FM2 (accountant to confirm): also list unexplained shortages (count, weighbridge) as
+    # ITC to reverse. Losses, theft, damage and free samples are always listed.
+    itc_reverse_shortages: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default="true"
+    )
 
     __audit_exclude__ = frozenset({"updated_at"})
 

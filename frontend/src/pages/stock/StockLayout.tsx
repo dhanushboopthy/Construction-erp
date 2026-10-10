@@ -6,6 +6,7 @@ const TABS = [
   { to: "/stock", label: "Stock levels", end: true },
   { to: "/stock/transfers", label: "Transfers", end: false },
   { to: "/stock/counts", label: "Counts", end: false },
+  { to: "/stock/adjustments", label: "Adjustments", end: false },
 ];
 
 export function StockLayout() {

@@ -9,6 +9,12 @@ const TABS = [
   { to: "/reports/pnl", label: "Profit & loss", end: false, roles: ["owner"] },
   { to: "/reports/dues", label: "Dues", end: false, roles: ["owner", "accountant"] },
   {
+    to: "/reports/itc-reversal",
+    label: "ITC to reverse",
+    end: false,
+    roles: ["owner", "accountant"],
+  },
+  {
     to: "/reports/segments",
     label: "Sales by segment",
     end: false,

@@ -32,6 +32,8 @@ class ShopSettingsBase(Schema):
     counter_can_enter_purchases: bool = True
     timezone: str = "Asia/Kolkata"
     expense_approval_limit: Decimal = Field(default=Decimal("5000"), ge=0)
+    adjustment_approval_limit: Decimal = Field(default=Decimal("10000"), ge=0)
+    itc_reverse_shortages: bool = True
 
     @field_validator("gstin")
     @classmethod

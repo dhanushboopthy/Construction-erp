@@ -66,9 +66,12 @@ def net_sales(sold_taxable: Numberish, returned_taxable: Numberish) -> Decimal:
     return money(to_decimal(sold_taxable) - to_decimal(returned_taxable))
 
 
-def gross_profit(net: Numberish, cogs: Numberish, freight: Numberish) -> Decimal:
-    """Net sales less the cost of the goods sold and the freight paid to deliver them."""
-    return money(to_decimal(net) - to_decimal(cogs) - to_decimal(freight))
+def gross_profit(
+    net: Numberish, cogs: Numberish, freight: Numberish, stock_loss: Numberish = ZERO
+) -> Decimal:
+    """Net sales less the cost of the goods sold, the freight paid to deliver them and the
+    stock lost through adjustments (FM2: breakage, theft, shortages; gains reduce it)."""
+    return money(to_decimal(net) - to_decimal(cogs) - to_decimal(freight) - to_decimal(stock_loss))
 
 
 def margin_pct(part: Numberish, whole: Numberish) -> Decimal | None:
@@ -116,11 +119,20 @@ def net_profit(ebitda_value: Numberish, interest: Numberish) -> Decimal:
 
 
 def contribution(
-    net: Numberish, cogs: Numberish, freight: Numberish, variable_expenses: Numberish
+    net: Numberish,
+    cogs: Numberish,
+    freight: Numberish,
+    variable_expenses: Numberish,
+    stock_loss: Numberish = ZERO,
 ) -> Decimal:
-    """What each rupee of sales leaves to pay the fixed costs."""
+    """What each rupee of sales leaves to pay the fixed costs. Stock loss grows with the goods
+    handled, so it counts as variable."""
     return money(
-        to_decimal(net) - to_decimal(cogs) - to_decimal(freight) - to_decimal(variable_expenses)
+        to_decimal(net)
+        - to_decimal(cogs)
+        - to_decimal(freight)
+        - to_decimal(variable_expenses)
+        - to_decimal(stock_loss)
     )
 
 

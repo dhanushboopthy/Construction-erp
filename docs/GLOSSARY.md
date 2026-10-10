@@ -31,7 +31,7 @@
 | Voucher | One cash-book entry, numbered `S1V/26-27/00001`; reversed, never edited. |
 | Net sales | Bills less credit notes, excluding GST. Bills ₹20,00,000 − returns ₹50,000 = ₹19,50,000. |
 | COGS | Cost of goods sold: Σ (quantity issued × weighted-average cost at issue). |
-| Gross profit | Net sales − COGS − freight on sales. ₹19,50,000 − ₹18,60,000 − ₹20,000 = ₹70,000. |
+| Gross profit | Net sales − COGS − freight on sales − stock lost. ₹19,50,000 − ₹18,60,000 − ₹20,000 = ₹70,000 (no stock lost). |
 | Gross margin % | Gross profit ÷ net sales × 100. ₹70,000 ÷ ₹19,50,000 = 3.59 %. |
 | OPEX | Operating expenses from the cash book, excluding interest: rent, salaries, power, loading labour, vehicle. |
 | EBITDA | Gross profit − OPEX (before interest). ₹70,000 − ₹99,000 = −₹29,000. |
@@ -39,3 +39,7 @@
 | Contribution | Net sales − COGS − freight − variable expenses: what sales leave to pay fixed costs. |
 | Break-even sales | Fixed costs ÷ (contribution ÷ net sales). ₹1,03,000 ÷ (₹62,000 ÷ ₹19,50,000) = ₹32,39,516. |
 | Expense nature | Fixed (rent, salaries), variable (loading labour), or interest; decides EBITDA and break-even. |
+| Stock adjustment | Stock written up or down outside a bill, purchase or transfer, with a reason; numbered `S1A/26-27/00001`. |
+| Adjustment reason | Breakage, rust or damage, theft, free sample, weighbridge loss or gain, count correction. |
+| Stock lost | Adjustments out less adjustments in, at average cost, counts included. Breakage ₹760 + theft ₹15,000 + count short ₹1,140 − weighbridge gain ₹240 = ₹16,660. It reduces gross profit. |
+| ITC to reverse | Input tax already claimed on goods that were lost, stolen, destroyed or given away (CGST Act s.17(5)(h)); paid back in GSTR-3B 4(B)(1). Theft ₹15,000 × 18% = ₹2,700. |

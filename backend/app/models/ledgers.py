@@ -17,6 +17,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.domain.inventory_analytics import AdjustmentReason
 from app.models.base import Base, Money, Quantity, TenantMixin, UnitCost
 from app.models.enums import LedgerAccount, PartyRef, StockRef, str_enum
 
@@ -28,6 +29,10 @@ class StockLedger(Base, TenantMixin):
     __table_args__ = (
         CheckConstraint("qty_in >= 0 AND qty_out >= 0", name="non_negative"),
         CheckConstraint("(qty_in > 0) <> (qty_out > 0)", name="one_direction"),
+        CheckConstraint(
+            "reason IS NULL OR ref_type IN ('adjustment', 'stock_adjustment')",
+            name="reason_on_adjustments",
+        ),
         Index("ix_stock_ledger_item_location", "item_id", "location_id", "entry_date"),
         Index("ix_stock_ledger_ref", "ref_type", "ref_id"),
     )
@@ -42,6 +47,10 @@ class StockLedger(Base, TenantMixin):
     ref_type: Mapped[StockRef] = mapped_column(str_enum(StockRef, "stock_ref"))
     ref_id: Mapped[int | None] = mapped_column(Integer)
     narration: Mapped[str | None] = mapped_column(String(200))
+    # Why an adjustment moved stock (FM2). Blank on other rows and on counts posted before FM2.
+    reason: Mapped[AdjustmentReason | None] = mapped_column(
+        str_enum(AdjustmentReason, "adjustment_reason")
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     created_by: Mapped[int | None] = mapped_column(Integer)
 

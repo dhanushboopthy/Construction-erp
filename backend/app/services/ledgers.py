@@ -14,6 +14,7 @@ from app.core.errors import NotFoundError
 from app.core.tenancy import TENANT_ID
 from app.domain import ledger as ledger_rules
 from app.domain import stock_valuation
+from app.domain.inventory_analytics import AdjustmentReason
 from app.domain.ledger import Account, LedgerEntry
 from app.domain.money import ZERO, money
 from app.models.enums import LedgerAccount, PartyRef, PartyType, StockRef
@@ -45,6 +46,7 @@ def add_stock_move(
     ref_type: StockRef,
     ref_id: int | None,
     narration: str | None = None,
+    reason: AdjustmentReason | None = None,
     actor_id: int | None = None,
 ) -> StockLedger:
     row = StockLedger(
@@ -58,6 +60,7 @@ def add_stock_move(
         ref_type=ref_type,
         ref_id=ref_id,
         narration=narration,
+        reason=reason,
         created_by=actor_id,
     )
     db.add(row)

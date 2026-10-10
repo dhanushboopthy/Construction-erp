@@ -8,6 +8,7 @@ import {
   Landmark,
   NotebookPen,
   PackagePlus,
+  PackageX,
   ShieldCheck,
   Tag,
   UserPlus,
@@ -100,6 +101,15 @@ const ACTIONS: QuickAction[] = [
     module: "/stock",
     icon: ClipboardList,
     keywords: "audit physical",
+  },
+  {
+    id: "adjust",
+    label: "Record breakage or loss",
+    hint: "Stock adjustment with a reason",
+    path: "/stock/adjustments",
+    module: "/stock",
+    icon: PackageX,
+    keywords: "breakage theft damage weighbridge adjustment",
   },
   {
     id: "close",

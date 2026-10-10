@@ -27,10 +27,12 @@ import { LocationsPage } from "@/pages/settings/LocationsPage";
 import { SettingsLayout } from "@/pages/settings/SettingsLayout";
 import { ShopSettingsPage } from "@/pages/settings/ShopSettingsPage";
 import { UsersPage } from "@/pages/settings/UsersPage";
+import { AdjustmentsPage } from "@/pages/stock/AdjustmentsPage";
 import { CountsPage } from "@/pages/stock/CountsPage";
 import { ClosingPage } from "@/pages/reports/ClosingPage";
 import { DuesPage } from "@/pages/reports/DuesPage";
 import { GstPage } from "@/pages/reports/GstPage";
+import { ItcReversalPage } from "@/pages/reports/ItcReversalPage";
 import { PnlPage } from "@/pages/reports/PnlPage";
 import { ProfitPage } from "@/pages/reports/ProfitPage";
 import { ReportsLayout } from "@/pages/reports/ReportsLayout";
@@ -178,6 +180,7 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
                 <Route index element={<StockPage />} />
                 <Route path="transfers" element={<TransfersPage />} />
                 <Route path="counts" element={<CountsPage />} />
+                <Route path="adjustments" element={<AdjustmentsPage />} />
               </Route>
               <Route
                 path="/parties"
@@ -209,6 +212,14 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
                   element={
                     <RequireRole roles={["owner"]}>
                       <PnlPage />
+                    </RequireRole>
+                  }
+                />
+                <Route
+                  path="itc-reversal"
+                  element={
+                    <RequireRole roles={["owner", "accountant"]}>
+                      <ItcReversalPage />
                     </RequireRole>
                   }
                 />

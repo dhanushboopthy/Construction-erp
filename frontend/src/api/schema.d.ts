@@ -842,6 +842,67 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/stock-adjustments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Adjustment Book
+         * @description Adjustments for a period (this month by default). Values are the owner's only.
+         */
+        get: operations["adjustment_book_api_v1_stock_adjustments_get"];
+        put?: never;
+        /**
+         * Create Adjustment
+         * @description Breakage, rust, theft, a weighbridge difference, a free sample or a count correction.
+         */
+        post: operations["create_adjustment_api_v1_stock_adjustments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stock-adjustments/{adjustment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Adjustment */
+        get: operations["get_adjustment_api_v1_stock_adjustments__adjustment_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/itc-reversal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Itc Reversal
+         * @description Input tax to reverse in GSTR-3B for goods lost in the month (the accountant files it).
+         */
+        get: operations["itc_reversal_api_v1_reports_itc_reversal_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/rates/market": {
         parameters: {
             query?: never;
@@ -1862,6 +1923,162 @@ export interface components {
             /** Entries */
             entries: components["schemas"]["LedgerLineOut"][];
         };
+        /** AdjustmentBookOut */
+        AdjustmentBookOut: {
+            /**
+             * Date From
+             * Format: date
+             */
+            date_from: string;
+            /**
+             * Date To
+             * Format: date
+             */
+            date_to: string;
+            /** Location Id */
+            location_id: number | null;
+            /** Entries */
+            entries: components["schemas"]["AdjustmentOut"][];
+        };
+        /** AdjustmentBookOwnerOut */
+        AdjustmentBookOwnerOut: {
+            /**
+             * Date From
+             * Format: date
+             */
+            date_from: string;
+            /**
+             * Date To
+             * Format: date
+             */
+            date_to: string;
+            /** Location Id */
+            location_id: number | null;
+            /** Entries */
+            entries: components["schemas"]["AdjustmentOwnerOut"][];
+            /** By Reason */
+            by_reason: components["schemas"]["ReasonTotal"][];
+            /** Net Loss */
+            net_loss: string;
+            /** Itc To Reverse */
+            itc_to_reverse: string;
+        };
+        /** AdjustmentCreate */
+        AdjustmentCreate: {
+            /** Location Id */
+            location_id: number;
+            /** Adjustment Date */
+            adjustment_date?: string | null;
+            reason: components["schemas"]["AdjustmentReason"];
+            /** Note */
+            note?: string | null;
+            /** Lines */
+            lines: components["schemas"]["AdjustmentLineIn"][];
+            /** Approval Ids */
+            approval_ids?: number[];
+        };
+        /** AdjustmentLineIn */
+        AdjustmentLineIn: {
+            /** Item Id */
+            item_id: number;
+            /** Quantity */
+            quantity: number | string;
+            /** Unit */
+            unit?: string | null;
+            direction?: components["schemas"]["Direction"] | null;
+        };
+        /** AdjustmentLineOut */
+        AdjustmentLineOut: {
+            /** Item Id */
+            item_id: number;
+            /** Item Name */
+            item_name: string;
+            /** Base Unit */
+            base_unit: string;
+            direction: components["schemas"]["Direction"];
+            /** Quantity */
+            quantity: string;
+        };
+        /** AdjustmentLineOwnerOut */
+        AdjustmentLineOwnerOut: {
+            /** Item Id */
+            item_id: number;
+            /** Item Name */
+            item_name: string;
+            /** Base Unit */
+            base_unit: string;
+            direction: components["schemas"]["Direction"];
+            /** Quantity */
+            quantity: string;
+            /** Unit Cost */
+            unit_cost: string;
+            /** Value */
+            value: string;
+        };
+        /** AdjustmentOut */
+        AdjustmentOut: {
+            /** Id */
+            id: number;
+            /** Number */
+            number: string;
+            /** Location Id */
+            location_id: number;
+            /** Location Code */
+            location_code: string;
+            /**
+             * Adjustment Date
+             * Format: date
+             */
+            adjustment_date: string;
+            reason: components["schemas"]["AdjustmentReason"];
+            /** Reason Label */
+            reason_label: string;
+            /** Note */
+            note: string | null;
+            /** Approved */
+            approved: boolean;
+            /** Created By Name */
+            created_by_name: string | null;
+            /** Lines */
+            lines: components["schemas"]["AdjustmentLineOut"][];
+        };
+        /** AdjustmentOwnerOut */
+        AdjustmentOwnerOut: {
+            /** Id */
+            id: number;
+            /** Number */
+            number: string;
+            /** Location Id */
+            location_id: number;
+            /** Location Code */
+            location_code: string;
+            /**
+             * Adjustment Date
+             * Format: date
+             */
+            adjustment_date: string;
+            reason: components["schemas"]["AdjustmentReason"];
+            /** Reason Label */
+            reason_label: string;
+            /** Note */
+            note: string | null;
+            /** Approved */
+            approved: boolean;
+            /** Created By Name */
+            created_by_name: string | null;
+            /** Lines */
+            lines: components["schemas"]["AdjustmentLineOwnerOut"][];
+            /** Value */
+            value: string;
+            /** Itc To Reverse */
+            itc_to_reverse: string;
+        };
+        /**
+         * AdjustmentReason
+         * @description Why stock went up or down outside a bill, a purchase or a transfer.
+         * @enum {string}
+         */
+        AdjustmentReason: "weighbridge_gain" | "weighbridge_loss" | "breakage" | "damage" | "theft" | "free_sample" | "count_correction";
         /** AgingOut */
         AgingOut: {
             /** Up To 30 */
@@ -1893,7 +2110,7 @@ export interface components {
          * @description What an owner PIN can approve at the counter (G18).
          * @enum {string}
          */
-        ApprovalAction: "credit_override" | "below_cost" | "discount" | "backdate" | "late_return" | "expense";
+        ApprovalAction: "credit_override" | "below_cost" | "discount" | "backdate" | "late_return" | "expense" | "stock_adjustment";
         /** ApprovalOut */
         ApprovalOut: {
             /** Id */
@@ -2792,6 +3009,11 @@ export interface components {
             /** Supplier Bill No */
             supplier_bill_no: string;
         };
+        /**
+         * Direction
+         * @enum {string}
+         */
+        Direction: "in" | "out";
         /** DocRow */
         DocRow: {
             /** Nature */
@@ -3602,6 +3824,60 @@ export interface components {
             /** Grand Total */
             grand_total: string;
             status: components["schemas"]["InvoiceStatus"];
+        };
+        /** ItcReversalOut */
+        ItcReversalOut: {
+            /** Period */
+            period: string;
+            /**
+             * Date From
+             * Format: date
+             */
+            date_from: string;
+            /**
+             * Date To
+             * Format: date
+             */
+            date_to: string;
+            /** Includes Shortages */
+            includes_shortages: boolean;
+            /** Rows */
+            rows: components["schemas"]["ItcReversalRow"][];
+            /** Total Value */
+            total_value: string;
+            /** Total Itc */
+            total_itc: string;
+            /** Note */
+            note: string;
+        };
+        /** ItcReversalRow */
+        ItcReversalRow: {
+            /**
+             * Entry Date
+             * Format: date
+             */
+            entry_date: string;
+            /** Document */
+            document: string;
+            /** Location Code */
+            location_code: string;
+            /** Item Name */
+            item_name: string;
+            /** Hsn */
+            hsn: string;
+            reason: components["schemas"]["AdjustmentReason"];
+            /** Reason Label */
+            reason_label: string;
+            /** Quantity */
+            quantity: string;
+            /** Base Unit */
+            base_unit: string;
+            /** Value */
+            value: string;
+            /** Gst Rate */
+            gst_rate: string;
+            /** Itc */
+            itc: string;
         };
         /**
          * ItemCategory
@@ -4546,6 +4822,8 @@ export interface components {
             cogs: string;
             /** Freight */
             freight: string;
+            /** Stock Loss */
+            stock_loss: string;
             /** Gross Profit */
             gross_profit: string;
             /** Gross Margin Pct */
@@ -5066,6 +5344,14 @@ export interface components {
             /** Below Min Margin */
             below_min_margin: boolean;
         };
+        /** ReasonTotal */
+        ReasonTotal: {
+            reason: components["schemas"]["AdjustmentReason"];
+            /** Reason Label */
+            reason_label: string;
+            /** Value */
+            value: string;
+        };
         /**
          * RebateRule
          * @enum {string}
@@ -5316,6 +5602,16 @@ export interface components {
              * @default 5000
              */
             expense_approval_limit: string;
+            /**
+             * Adjustment Approval Limit
+             * @default 10000
+             */
+            adjustment_approval_limit: string;
+            /**
+             * Itc Reverse Shortages
+             * @default true
+             */
+            itc_reverse_shortages: boolean;
             /** Id */
             id: number;
         };
@@ -5422,6 +5718,16 @@ export interface components {
              * @default 5000
              */
             expense_approval_limit: number | string;
+            /**
+             * Adjustment Approval Limit
+             * @default 10000
+             */
+            adjustment_approval_limit: number | string;
+            /**
+             * Itc Reverse Shortages
+             * @default true
+             */
+            itc_reverse_shortages: boolean;
         };
         /** SiteCreate */
         SiteCreate: {
@@ -10499,6 +10805,314 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CountOwnerOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    adjustment_book_api_v1_stock_adjustments_get: {
+        parameters: {
+            query?: {
+                location_id?: number | null;
+                date_from?: string | null;
+                date_to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdjustmentBookOwnerOut"] | components["schemas"]["AdjustmentBookOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_adjustment_api_v1_stock_adjustments_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdjustmentCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdjustmentOwnerOut"] | components["schemas"]["AdjustmentOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_adjustment_api_v1_stock_adjustments__adjustment_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                adjustment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdjustmentOwnerOut"] | components["schemas"]["AdjustmentOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    itc_reversal_api_v1_reports_itc_reversal_get: {
+        parameters: {
+            query: {
+                period: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItcReversalOut"];
                 };
             };
             /** @description Bad Request */

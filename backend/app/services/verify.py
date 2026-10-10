@@ -29,6 +29,7 @@ from app.models.purchasing import Payment, Purchase
 from app.models.returns import CreditNote, DebitNote
 from app.models.sales import SalesInvoice
 from app.models.setup import Location
+from app.models.stock_ops import StockAdjustment
 from app.schemas.system import Check, StatusOut, VerifyOut
 from app.services.storage import StorageError, get_storage
 
@@ -38,12 +39,13 @@ NO_DELETE = [
     "sales_invoice", "sales_line", "credit_note", "credit_note_line", "debit_note",
     "debit_note_line", "purchase", "purchase_line", "purchase_cost", "payment",
     "stock_transfer", "stock_transfer_line", "drop_ship_link", "eway_bill", "einvoice",
-    "daily_closing", "attachment", "gstr2b_import", "cash_entry",
+    "daily_closing", "attachment", "gstr2b_import", "cash_entry", "stock_adjustment",
+    "stock_adjustment_line",
 ]  # fmt: skip
 NO_EDIT = [
     "sales_invoice", "sales_line", "credit_note", "credit_note_line", "debit_note",
     "debit_note_line", "purchase_line", "purchase_cost", "payment", "attachment", "gstr2b_import",
-    "cash_entry",
+    "cash_entry", "stock_adjustment", "stock_adjustment_line",
 ]  # fmt: skip
 BACKUP_MAX_AGE_HOURS = 30
 
@@ -108,6 +110,7 @@ def numbering_check(db: Session) -> Check:
         "purchases": Purchase.number,
         "receipts": Payment.number,
         "cash vouchers": CashEntry.number,
+        "stock adjustments": StockAdjustment.number,
     }
     problems: list[str] = []
     total = 0

@@ -5,8 +5,11 @@ import type {
   Closing,
   ClosingCreate,
   ClosingPreview,
+  Cut,
+  ItcAtRisk,
   Page,
   ProfitGroup,
+  Profitability,
   ProfitReport,
   SegmentReport,
   Today,
@@ -68,5 +71,24 @@ export function useSegments(startYear: number | null) {
       api<SegmentReport>(
         `/reports/sales-by-segment${startYear === null ? "" : `?start_year=${startYear}`}`,
       ),
+  });
+}
+
+/** FM8: profit for a month by brand, shop, user, item or customer (owner). */
+export function useProfitability(period: string, by: Cut, locationId: string) {
+  const where = locationId ? `&location_id=${locationId}` : "";
+  return useQuery({
+    queryKey: ["profitability", period, by, locationId],
+    enabled: /^\d{4}-\d{2}$/.test(period),
+    queryFn: () => api<Profitability>(`/reports/profitability?by=${by}&period=${period}${where}`),
+  });
+}
+
+/** FM8: input tax in our books that GSTR-2B does not show (owner, accountant). */
+export function useItcAtRisk(period: string) {
+  return useQuery({
+    queryKey: ["itc-at-risk", period],
+    enabled: /^\d{4}-\d{2}$/.test(period),
+    queryFn: () => api<ItcAtRisk>(`/gst/itc-at-risk?period=${period}`),
   });
 }

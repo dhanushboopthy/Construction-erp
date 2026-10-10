@@ -502,6 +502,61 @@ CATALOGUE: tuple[Kpi, ...] = (
         Direction.DOWN,
         "count",
     ),
+    # FM8: profitability cuts and GST health
+    Kpi(
+        "profit_per_ton",
+        "Profit per ton",
+        "Gross profit of the lines sold by weight (net sales - COGS - freight) ÷ tons sold. "
+        "Lines sold by the bag or piece are not counted in tons",
+        "What each ton of steel you sell earns before shop costs. Compare brands and counter "
+        "staff to see who sells at a poor price.",
+        "Brand A: ₹6,000 on 10 t = ₹600 a ton; brand B: ₹6,000 on 4 t = ₹1,500 a ton",
+        "sales_line.taxable, base_qty, cost_per_unit; trip.freight_amount; item.base_unit",
+        True,
+        Refresh.LIVE,
+        Direction.UP,
+        "₹",
+    ),
+    Kpi(
+        "itc_at_risk",
+        "ITC at risk",
+        "Input tax on supplier bills in our books that GSTR-2B does not show, plus the part of "
+        "bills where the supplier reported less tax than we booked",
+        "Input tax you cannot claim until the supplier files. Ask them, or the tax is paid twice.",
+        "Bill B-9 with ₹9,000 input tax missing from 2B, and a bill booked ₹99,000 vs 2B "
+        "₹98,980 = ₹9,020",
+        "purchase, purchase_line, gstr2b_import",
+        False,
+        Refresh.MONTHLY,
+        Direction.DOWN,
+        "₹",
+    ),
+    Kpi(
+        "contribution_per_ton",
+        "Contribution per ton",
+        "(Net sales - COGS - freight - variable expenses - stock lost) ÷ tons sold. Shown only "
+        "when every sale was by weight",
+        "What each ton leaves to pay rent and salaries, after loading and losses.",
+        "(₹5,60,000 - ₹5,50,000 - ₹4,000 - ₹1,000 - ₹500) ÷ 10 t = ₹450 a ton",
+        "sales_line, trip.freight_amount, cash_entry (variable heads), stock_ledger",
+        True,
+        Refresh.LIVE,
+        Direction.UP,
+        "₹",
+    ),
+    Kpi(
+        "gst_payable_estimate",
+        "GST payable estimate",
+        "Output tax - (input tax in the books - input tax reversed), from the GSTR-3B figures",
+        "What GST you would pay on the 20th of next month, to date. A minus figure is credit "
+        "carried forward.",
+        "Output ₹29,000 - input ₹49,500 + ₹9,900 reversed = -₹10,600",
+        "sales_invoice, credit_note, purchase, debit_note",
+        False,
+        Refresh.LIVE,
+        Direction.NONE,
+        "₹",
+    ),
 )
 
 

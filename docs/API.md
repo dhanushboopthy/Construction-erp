@@ -41,6 +41,25 @@ Endpoints that return cost, margin or profit use separate response models for ow
 staff (for example `ItemOwnerOut` and `ItemOut`). Choose the model with `principal.sees_cost`;
 never rely on the UI to hide fields. Test each such endpoint as a counter user.
 
+## Endpoints (FM8: profit cuts, ITC at risk)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| GET | `/reports/profitability?by=brand\|shop\|user\|item\|customer&period=2026-10&location_id=` | owner only |
+| GET | `/gst/itc-at-risk?period=2026-10` | owner, accountant |
+
+Counter staff get 403 on both; the accountant gets 403 on the profit cuts. Errors: `BAD_PERIOD`,
+`FUTURE_PERIOD`, 422 for an unknown `by`. Profit cuts: each row has `net_sales`, `cogs`, `freight`,
+`gross_profit`, `margin_pct`, `share_pct`, `tons` (items whose base unit is kg), `units` and
+`unit_label` (everything else), `profit_per_ton`, `profit_per_unit` and `margin_per_base_unit`
+(only when every line is in one base unit); a figure with nothing to divide by is `null`, never 0.
+The report foot has `gross_profit_before_loss` (the rows added up), `stock_lost` and `gross_profit`
+(equal to `/reports/pnl` for the same month and `location_id`), `profit_per_ton`, and
+`contribution_per_ton`, which is `null` when any sale was by the bag or piece. ITC at risk:
+`has_2b: false` with a `note` and `null` figures when no GSTR-2B is imported for the month;
+otherwise `missing` (in books, not in 2B), `mismatches` (supplier reported less), `at_risk_total`,
+`no_gstin_itc`, `payable_estimate`, `payable_if_unclaimed`, `payable_to_date` and `due_date`.
+
 ## Endpoints (FM7: period lock, bank statements, exceptions)
 
 | Method | Path | Who |

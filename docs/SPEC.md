@@ -532,6 +532,38 @@ confirm AS 2).
 - Not built: price realisation per item, customer and user on every line (the rest of F24);
   month-end snapshot; matching to a named bank account; reading PDF or Excel statements.
 
+**Built (FM8, finance review F19, F29):** no new tables or settings; two reports.
+
+- Profit cuts (`GET /reports/profitability`, owner; `services/profitability.py`): for a calendar
+  month and optional shop, grouped by brand (blank brand is "No brand"), shop, user (who saved the
+  bill; a credit note follows its bill), item or customer. Built from the same lines as the profit
+  and loss (`services/reports._lines`: sold lines, credit-note lines as negatives, drop-ship cost
+  from the link), with each bill's freight shared over its lines by taxable value
+  (`reports.freight_shares`). Quantity: items whose base unit is kg are counted in tons
+  (`finance.tons`), everything else in its base unit apart, so profit per ton uses only the lines
+  sold by weight and profit per bag only the others. Rows add up to gross profit before stock
+  lost (breakage, theft, shortages belong to no bill); the foot subtracts it once and equals the
+  P&L gross profit for the same month and shop (asserted for every cut and for each shop in
+  tests). `contribution_per_ton` (net sales - COGS - freight - variable expenses - stock lost, over
+  tons) is shown only when every sale was by weight; otherwise `null` with a note, because a
+  business-wide per-ton figure over mixed units would mislead. No quantity gives `null`, not 0.
+- Profit and loss fix: freight now counts only bills sold in the month, so a credit note for an
+  older bill no longer charges its freight twice.
+- ITC at risk (`GET /gst/itc-at-risk`, owner and accountant): bills from suppliers with a GSTIN in
+  the books (this month and the two before) are matched with `gstr.reconcile` against the latest
+  GSTR-2B imported for the month and the two before it. In books, not in 2B = `missing_in_2b`
+  (the bill's whole input tax); amounts differ = the books tax less the portal tax where positive.
+  The two are shown apart and added for `at_risk_total`. An older bill is judged only if its own
+  month has a 2B. Bills from suppliers with no GSTIN can never be in 2B and are shown as a note,
+  not added. With no GSTR-2B for the month: `has_2b: false`, "No GSTR-2B imported for this month",
+  no figure. The GST payable estimate is the GSTR-3B net payable for the month (to date while the
+  month is open) due on the 20th of the next month, with the payable if the at-risk input tax
+  cannot be claimed.
+- KPIs `profit_per_ton`, `contribution_per_ton` (owner only), `itc_at_risk` and
+  `gst_payable_estimate` (owner and accountant).
+- Not built: profit cut by segment, a trend across months, a debit-note adjustment of the at-risk
+  figure.
+
 **To build** (milestone in brackets):
 
 | Group | Table | Key columns |

@@ -4,8 +4,9 @@ from typing import Annotated
 from fastapi import APIRouter, File, Form, Response, UploadFile, status
 
 from app.api.deps import DbSession, OwnerOrAccountant
+from app.core.clock import today_ist
 from app.core.config import get_settings
-from app.schemas.gst import Gstr1, Gstr2bResult, Gstr3b, ImportOut
+from app.schemas.gst import Gstr1, Gstr2bResult, Gstr3b, ImportOut, ItcAtRiskOut
 from app.services import gst_returns as service
 
 router = APIRouter(prefix="/gst", tags=["gst"])
@@ -65,3 +66,10 @@ def import_gstr2b(
 def match_gstr2b(_: OwnerOrAccountant, db: DbSession, period: str) -> Gstr2bResult:
     """Our purchase bills matched to the latest GSTR-2B upload for the month."""
     return service.match_2b(db, period)
+
+
+@router.get("/itc-at-risk", response_model=ItcAtRiskOut)
+def itc_at_risk(_: OwnerOrAccountant, db: DbSession, period: str) -> ItcAtRiskOut:
+    """Input tax on supplier bills in our books that GSTR-2B does not show, and the GST payable
+    estimate from GSTR-3B. No figure is made up when no GSTR-2B is imported."""
+    return service.itc_at_risk(db, period, today_ist())

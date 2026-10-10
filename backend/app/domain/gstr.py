@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 
-from app.domain.money import Numberish, money, to_decimal
+from app.domain.money import ZERO, Numberish, money, to_decimal
 
 # An inter-state bill to an unregistered buyer above this is listed bill by bill (B2CL).
 B2CL_THRESHOLD = Decimal("100000")
@@ -168,3 +168,17 @@ def reconcile(
                 Match(row.gstin, row.number, "missing_in_2b", row, None, -row.taxable, -row.tax)
             )
     return out
+
+
+# ---------------------------------------------------------------------------- ITC at risk (FM8)
+
+
+def mismatch_itc_at_risk(books_tax: Numberish, portal_tax: Numberish) -> Decimal:
+    """Input tax we booked that the supplier's return does not support: books less 2B, never
+    below zero (the portal showing more than the books is not a risk to us)."""
+    return money(max(to_decimal(books_tax) - to_decimal(portal_tax), ZERO))
+
+
+def payable_if_unclaimed(payable: Numberish, at_risk: Numberish) -> Decimal:
+    """GST to pay if the at-risk input tax cannot be claimed: it comes back onto the payable."""
+    return money(to_decimal(payable) + to_decimal(at_risk))

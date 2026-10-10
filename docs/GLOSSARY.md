@@ -79,3 +79,7 @@
 | Bank reconciliation | Matching the bank's statement lines to what the shop recorded. 10 lines, 8 match a receipt, 2 do not: ₹18,750 cheque deposit and ₹590 bank charges. |
 | Recorded, not in the bank | A UPI or bank receipt in the books that the statement never shows: ₹8,000 receipt with reference 999999999999, no credit. A failed or fake payment until proved otherwise. |
 | Exception | An entry that looks like a usual way money or stock goes missing, such as 20 kg wire at ₹50 = exactly ₹1,000 adjusted the day before a count. A reason to ask, not proof. |
+| Profit per ton | Gross profit of the lines sold by weight ÷ tons sold. Brand A: ₹6,000 on 10 t = ₹600 a ton; brand B: ₹6,000 on 4 t = ₹1,500 a ton. Bags and pieces are counted apart. |
+| Contribution per ton | (Net sales - cost - freight - loading and other variable expenses - stock lost) ÷ tons. (₹5,60,000 - ₹5,50,000 - ₹4,000 - ₹1,000 - ₹500) ÷ 10 t = ₹450. |
+| ITC at risk | Input tax on supplier bills in the books that GSTR-2B does not show (plus the shortfall where the supplier reported less): cannot be claimed until the supplier files. ₹18,000 missing + ₹20 short = ₹18,020. |
+| GST payable estimate | The GSTR-3B net payable for the month so far, due on the 20th of the next month. A minus figure is credit carried forward. |

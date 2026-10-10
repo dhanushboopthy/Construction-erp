@@ -82,7 +82,14 @@ def profit_and_loss(db: Session, period: str, location_id: int | None = None) ->
     sold = money(sum((x.taxable for x in lines if x.taxable > ZERO), ZERO))
     returned = money(-sum((x.taxable for x in lines if x.taxable < ZERO), ZERO))
     cogs = money(sum((x.cost for x in lines), ZERO))
-    freight = money(sum(reports._freight(db, {x.invoice_id for x in lines}).values(), ZERO))
+    # Freight is the cost of the bills sold in the month; a credit note for an older bill must not
+    # charge that bill's freight a second time.
+    freight = money(
+        sum(
+            reports._freight(db, {x.invoice_id for x in lines if x.taxable > ZERO}).values(),
+            ZERO,
+        )
+    )
 
     lost = adjustments.stock_loss(db, date_from, date_to, location_id)
 

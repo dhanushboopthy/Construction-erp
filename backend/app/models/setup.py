@@ -64,6 +64,10 @@ class ShopSettings(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
         Boolean, default=True, server_default="true"
     )
     timezone: Mapped[str] = mapped_column(String(64), default="Asia/Kolkata")
+    # FM1: a counter user's cash-book voucher above this needs the owner's PIN.
+    expense_approval_limit: Mapped[Money] = mapped_column(
+        default=Decimal("5000.00"), server_default="5000.00"
+    )
 
     __audit_exclude__ = frozenset({"updated_at"})
 

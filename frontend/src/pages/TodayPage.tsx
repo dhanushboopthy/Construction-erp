@@ -49,8 +49,8 @@ export function TodayPage() {
 
   const kpis: Kpi[] = [
     {
-      label: "Sales today",
-      value: t?.sales_today ?? null,
+      label: "Net sales today",
+      value: t?.net_sales_today ?? null,
       money: true,
       tone: "accent",
       badge: t

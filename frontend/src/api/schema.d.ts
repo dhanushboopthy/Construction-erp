@@ -526,6 +526,125 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/expense-categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Categories */
+        get: operations["list_categories_api_v1_expense_categories_get"];
+        put?: never;
+        /** Create Category */
+        post: operations["create_category_api_v1_expense_categories_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/expense-categories/{category_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Category */
+        patch: operations["update_category_api_v1_expense_categories__category_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/cash-book": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Cash Book
+         * @description Vouchers for a period (today by default). Counter staff see their own shop's.
+         */
+        get: operations["cash_book_api_v1_cash_book_get"];
+        put?: never;
+        /**
+         * Create Entry
+         * @description An expense, a bank deposit or withdrawal, or the owner's drawing or capital.
+         */
+        post: operations["create_entry_api_v1_cash_book_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cash-book/{entry_id}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reverse Entry
+         * @description Cancel a voucher with a new one dated today. The original is never changed.
+         */
+        post: operations["reverse_entry_api_v1_cash_book__entry_id__reverse_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/pnl": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Profit And Loss
+         * @description Profit and loss for a calendar month (this month by default). Owner only.
+         */
+        get: operations["profit_and_loss_api_v1_reports_pnl_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/kpis/definitions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Kpi Definitions
+         * @description The metric catalogue behind every tooltip and the Metrics explained page.
+         */
+        get: operations["kpi_definitions_api_v1_kpis_definitions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/cost-components": {
         parameters: {
             query?: never;
@@ -1774,7 +1893,7 @@ export interface components {
          * @description What an owner PIN can approve at the counter (G18).
          * @enum {string}
          */
-        ApprovalAction: "credit_override" | "below_cost" | "discount" | "backdate" | "late_return";
+        ApprovalAction: "credit_override" | "below_cost" | "discount" | "backdate" | "late_return" | "expense";
         /** ApprovalOut */
         ApprovalOut: {
             /** Id */
@@ -1945,6 +2064,101 @@ export interface components {
             /** Note */
             note?: string | null;
         };
+        /** CashBookOut */
+        CashBookOut: {
+            /** Location Id */
+            location_id: number | null;
+            /**
+             * Date From
+             * Format: date
+             */
+            date_from: string;
+            /**
+             * Date To
+             * Format: date
+             */
+            date_to: string;
+            /** Entries */
+            entries: components["schemas"]["CashEntryOut"][];
+            /** Drawer In */
+            drawer_in: string;
+            /** Drawer Out */
+            drawer_out: string;
+            /** Expenses */
+            expenses: string;
+        };
+        /** CashEntryCreate */
+        CashEntryCreate: {
+            /** Location Id */
+            location_id: number;
+            /** Entry Date */
+            entry_date?: string | null;
+            kind: components["schemas"]["CashEntryKind"];
+            mode: components["schemas"]["PaymentMode"];
+            /** Amount */
+            amount: number | string;
+            /** Category Id */
+            category_id?: number | null;
+            /** Paid To */
+            paid_to?: string | null;
+            /** Reference */
+            reference?: string | null;
+            /** Note */
+            note?: string | null;
+            /** Approval Ids */
+            approval_ids?: number[];
+        };
+        /**
+         * CashEntryKind
+         * @description What a cash-book voucher records.
+         * @enum {string}
+         */
+        CashEntryKind: "expense" | "bank_deposit" | "bank_withdrawal" | "owner_drawing" | "owner_capital";
+        /** CashEntryOut */
+        CashEntryOut: {
+            /** Id */
+            id: number;
+            /** Number */
+            number: string;
+            /** Location Id */
+            location_id: number;
+            /** Location Code */
+            location_code: string;
+            /**
+             * Entry Date
+             * Format: date
+             */
+            entry_date: string;
+            kind: components["schemas"]["CashEntryKind"];
+            mode: components["schemas"]["PaymentMode"];
+            /** Amount */
+            amount: string;
+            /** Category Id */
+            category_id: number | null;
+            /** Category Name */
+            category_name: string | null;
+            /** Paid To */
+            paid_to: string | null;
+            /** Reference */
+            reference: string | null;
+            /** Note */
+            note: string | null;
+            /** Reverses Id */
+            reverses_id: number | null;
+            /** Reverses Number */
+            reverses_number: string | null;
+            /** Reversed By Number */
+            reversed_by_number: string | null;
+            /** Drawer Effect */
+            drawer_effect: string;
+            /** Created By Name */
+            created_by_name: string | null;
+        };
+        /** CashReverse */
+        CashReverse: {
+            /** Reason */
+            reason: string;
+        };
         /** ChangePasswordRequest */
         ChangePasswordRequest: {
             /** Current Password */
@@ -2042,6 +2256,20 @@ export interface components {
             /** Returns Total */
             returns_total: string;
             receipts: components["schemas"]["ModeTotals"];
+            /** Paid To Parties */
+            paid_to_parties: string;
+            /** Cash Expenses */
+            cash_expenses: string;
+            /** Bank Deposits */
+            bank_deposits: string;
+            /** Bank Withdrawals */
+            bank_withdrawals: string;
+            /** Owner Drawings */
+            owner_drawings: string;
+            /** Owner Capital */
+            owner_capital: string;
+            /** Cash In */
+            cash_in: string;
             /** Cash Out */
             cash_out: string;
             /** Purchases Count */
@@ -2824,6 +3052,36 @@ export interface components {
             /** From Place */
             from_place: string;
         };
+        /** ExpenseCategoryIn */
+        ExpenseCategoryIn: {
+            /** Name */
+            name: string;
+            nature: components["schemas"]["ExpenseNature"];
+        };
+        /** ExpenseCategoryOut */
+        ExpenseCategoryOut: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            nature: components["schemas"]["ExpenseNature"];
+            /** Is Active */
+            is_active: boolean;
+        };
+        /** ExpenseCategoryUpdate */
+        ExpenseCategoryUpdate: {
+            /** Name */
+            name?: string | null;
+            nature?: components["schemas"]["ExpenseNature"] | null;
+            /** Is Active */
+            is_active?: boolean | null;
+        };
+        /**
+         * ExpenseNature
+         * @description How an expense behaves: fixed costs decide break-even, interest sits below EBITDA.
+         * @enum {string}
+         */
+        ExpenseNature: "fixed" | "variable" | "interest";
         /**
          * FulfilmentSource
          * @enum {string}
@@ -3515,6 +3773,29 @@ export interface components {
             units?: components["schemas"]["ItemUnitIn"][] | null;
             /** Is Active */
             is_active?: boolean | null;
+        };
+        /** KpiDefinitionOut */
+        KpiDefinitionOut: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Formula */
+            formula: string;
+            /** Meaning */
+            meaning: string;
+            /** Example */
+            example: string;
+            /** Sources */
+            sources: string;
+            /** Owner Only */
+            owner_only: boolean;
+            /** Refresh */
+            refresh: string;
+            /** Good */
+            good: string;
+            /** Unit */
+            unit: string;
         };
         /**
          * LedgerAccount
@@ -4227,6 +4508,72 @@ export interface components {
             current_password: string;
             /** Pin */
             pin: string;
+        };
+        /** PnlExpense */
+        PnlExpense: {
+            /** Category */
+            category: string;
+            nature: components["schemas"]["ExpenseNature"];
+            /** Amount */
+            amount: string;
+        };
+        /**
+         * PnlOut
+         * @description Profit and loss for one calendar month (owner only).
+         */
+        PnlOut: {
+            /** Period */
+            period: string;
+            /**
+             * Date From
+             * Format: date
+             */
+            date_from: string;
+            /**
+             * Date To
+             * Format: date
+             */
+            date_to: string;
+            /** Location Id */
+            location_id: number | null;
+            /** Sales */
+            sales: string;
+            /** Returns */
+            returns: string;
+            /** Net Sales */
+            net_sales: string;
+            /** Cogs */
+            cogs: string;
+            /** Freight */
+            freight: string;
+            /** Gross Profit */
+            gross_profit: string;
+            /** Gross Margin Pct */
+            gross_margin_pct: string | null;
+            /** Expenses */
+            expenses: components["schemas"]["PnlExpense"][];
+            /** Opex */
+            opex: string;
+            /** Ebitda */
+            ebitda: string;
+            /** Interest */
+            interest: string;
+            /** Net Profit */
+            net_profit: string;
+            /** Net Margin Pct */
+            net_margin_pct: string | null;
+            /** Fixed Costs */
+            fixed_costs: string;
+            /** Variable Costs */
+            variable_costs: string;
+            /** Contribution */
+            contribution: string;
+            /** Break Even Sales */
+            break_even_sales: string | null;
+            /** Enough Data */
+            enough_data: boolean;
+            /** Data Note */
+            data_note: string | null;
         };
         /** PostRequest */
         PostRequest: {
@@ -4964,6 +5311,11 @@ export interface components {
              * @default Asia/Kolkata
              */
             timezone: string;
+            /**
+             * Expense Approval Limit
+             * @default 5000
+             */
+            expense_approval_limit: string;
             /** Id */
             id: number;
         };
@@ -5065,6 +5417,11 @@ export interface components {
              * @default Asia/Kolkata
              */
             timezone: string;
+            /**
+             * Expense Approval Limit
+             * @default 5000
+             */
+            expense_approval_limit: number | string;
         };
         /** SiteCreate */
         SiteCreate: {
@@ -5230,6 +5587,8 @@ export interface components {
             sales_today: string;
             /** Returns Today */
             returns_today: string;
+            /** Net Sales Today */
+            net_sales_today: string;
             /** Profit Today */
             profit_today: string | null;
         };
@@ -8444,6 +8803,618 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_categories_api_v1_expense_categories_get: {
+        parameters: {
+            query?: {
+                include_inactive?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseCategoryOut"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_category_api_v1_expense_categories_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExpenseCategoryIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseCategoryOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_category_api_v1_expense_categories__category_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                category_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExpenseCategoryUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseCategoryOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cash_book_api_v1_cash_book_get: {
+        parameters: {
+            query?: {
+                location_id?: number | null;
+                date_from?: string | null;
+                date_to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashBookOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_entry_api_v1_cash_book_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CashEntryCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashEntryOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reverse_entry_api_v1_cash_book__entry_id__reverse_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CashReverse"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashEntryOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    profit_and_loss_api_v1_reports_pnl_get: {
+        parameters: {
+            query?: {
+                period?: string | null;
+                location_id?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PnlOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    kpi_definitions_api_v1_kpis_definitions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KpiDefinitionOut"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };

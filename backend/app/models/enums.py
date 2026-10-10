@@ -129,6 +129,7 @@ class ApprovalAction(StrEnum):
     DISCOUNT = "discount"
     BACKDATE = "backdate"
     LATE_RETURN = "late_return"  # a return after the return window (B11)
+    EXPENSE = "expense"  # a cash-book voucher above the shop's limit (FM1)
 
 
 class ComplianceStatus(StrEnum):
@@ -182,6 +183,7 @@ class DocType(StrEnum):
     DELIVERY_CHALLAN = "delivery_challan"
     PURCHASE_ENTRY = "purchase_entry"
     PAYMENT_RECEIPT = "payment_receipt"
+    CASH_VOUCHER = "cash_voucher"  # cash book: expenses, bank deposits and withdrawals (FM1)
 
 
 def str_enum(enum_cls: type[StrEnum], name: str) -> sa.Enum:

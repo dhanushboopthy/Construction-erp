@@ -13,6 +13,7 @@ const WHAT: Record<ApprovalAction, string> = {
   discount: "give a discount or change the price",
   backdate: "back-date the bill",
   late_return: "take this return after the return window",
+  expense: "pay this expense",
 };
 
 /** The counter hands the screen to the owner, who types a PIN and a reason (G18). One approval

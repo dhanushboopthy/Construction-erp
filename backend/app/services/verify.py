@@ -21,6 +21,7 @@ from app.core.tenancy import TENANT_ID
 from app.domain import gstr
 from app.domain import stock_valuation as stock_rules
 from app.domain.money import ZERO
+from app.models.cashbook import CashEntry
 from app.models.documents import Attachment, DailyClosing
 from app.models.enums import ClosingStatus, LocationKind, PartyRef
 from app.models.ledgers import PartyLedger, StockLedger
@@ -37,11 +38,12 @@ NO_DELETE = [
     "sales_invoice", "sales_line", "credit_note", "credit_note_line", "debit_note",
     "debit_note_line", "purchase", "purchase_line", "purchase_cost", "payment",
     "stock_transfer", "stock_transfer_line", "drop_ship_link", "eway_bill", "einvoice",
-    "daily_closing", "attachment", "gstr2b_import",
+    "daily_closing", "attachment", "gstr2b_import", "cash_entry",
 ]  # fmt: skip
 NO_EDIT = [
     "sales_invoice", "sales_line", "credit_note", "credit_note_line", "debit_note",
     "debit_note_line", "purchase_line", "purchase_cost", "payment", "attachment", "gstr2b_import",
+    "cash_entry",
 ]  # fmt: skip
 BACKUP_MAX_AGE_HOURS = 30
 
@@ -105,6 +107,7 @@ def numbering_check(db: Session) -> Check:
         "debit notes": DebitNote.number,
         "purchases": Purchase.number,
         "receipts": Payment.number,
+        "cash vouchers": CashEntry.number,
     }
     problems: list[str] = []
     total = 0

@@ -10,8 +10,9 @@ class TodayOut(Schema):
     items_in_stock: int
     customers_owe: Decimal
     we_owe: Decimal | None  # not for counter staff
-    sales_today: Decimal
-    returns_today: Decimal
+    sales_today: Decimal  # billed today, GST included
+    returns_today: Decimal  # credit notes today, GST included
+    net_sales_today: Decimal  # bills less credit notes, excluding GST (FM1, F6)
     profit_today: Decimal | None  # owner only
 
 

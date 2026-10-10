@@ -37,7 +37,7 @@ def test_concurrent_saves_get_gapless_numbers_and_never_oversell(engine):
     _reset(engine)
     try:
         with Session(engine) as db:
-            seed(db)
+            seed(db, second_shop=True)
             s1 = db.execute(select(Location).where(Location.code == "S1")).scalar_one()
             item = Item(
                 tenant_id=1,

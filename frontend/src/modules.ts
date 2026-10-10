@@ -69,6 +69,13 @@ export const MODULES: ModuleLink[] = [
     purpose: "Cash, UPI and bank receipts, allocated to bills.",
   },
   {
+    path: "/cash",
+    label: "Cash book",
+    shortcut: "c",
+    roles: ALL,
+    purpose: "Expenses, cash taken to the bank, and the owner's money in and out.",
+  },
+  {
     path: "/rates",
     label: "Daily rates",
     shortcut: "7",

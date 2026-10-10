@@ -41,6 +41,25 @@ Endpoints that return cost, margin or profit use separate response models for ow
 staff (for example `ItemOwnerOut` and `ItemOut`). Choose the model with `principal.sees_cost`;
 never rely on the UI to hide fields. Test each such endpoint as a counter user.
 
+## Endpoints (FM1: cash book, expenses, profit and loss)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| GET | `/expense-categories` (`include_inactive` for the owner) | all roles |
+| POST · PATCH | `/expense-categories` · `/expense-categories/{id}` | owner |
+| GET | `/cash-book?location_id=&date_from=&date_to=` (today by default) | owner, accountant; counter: own shop |
+| POST | `/cash-book` | owner; counter: expenses and bank deposits at own shop, today only; expenses above `expense_approval_limit` need an `expense` approval (409 `EXPENSE_NEEDS_OWNER`) |
+| POST | `/cash-book/{id}/reverse` (`reason`) | owner |
+| GET | `/reports/pnl?period=2026-10&location_id=` | owner |
+| GET | `/kpis/definitions` | all roles (owner-only metrics only for the owner) |
+
+Errors: `CASH_ONLY` (deposit or withdrawal not in cash), `CATEGORY_REQUIRED`,
+`CATEGORY_NOT_ALLOWED`, `CATEGORY_INACTIVE`, `BACKDATE_NEEDS_OWNER`, `FUTURE_DATE`, `DAY_CLOSED`,
+`ALREADY_REVERSED`, `IS_REVERSAL`, `BAD_PERIOD`, `FUTURE_PERIOD`. `/reports/today` gains
+`net_sales_today` (excl. GST, net of returns); closing figures gain the cash-book lines
+(`cash_expenses`, `bank_deposits`, `bank_withdrawals`, `owner_drawings`, `owner_capital`,
+`paid_to_parties`, `cash_in`, `cash_out`).
+
 ## Endpoints (Milestone 14)
 
 | Method | Path | Who |

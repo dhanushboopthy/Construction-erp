@@ -1,6 +1,7 @@
 import {
   Boxes,
   ChartColumn,
+  HandCoins,
   Package,
   Receipt,
   Settings,
@@ -22,6 +23,7 @@ export const MODULE_ICONS: Record<string, LucideIcon> = {
   "/parties": Users,
   "/items": Package,
   "/payments": Wallet,
+  "/cash": HandCoins,
   "/rates": Tag,
   "/transport": Truck,
   "/reports": ChartColumn,

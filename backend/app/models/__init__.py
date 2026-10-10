@@ -4,6 +4,7 @@ from app.models.approvals import Approval
 from app.models.audit import AuditLog
 from app.models.auth import AuthSession
 from app.models.base import Base
+from app.models.cashbook import CashEntry, ExpenseCategory
 from app.models.compliance import EInvoice, EwayBill
 from app.models.documents import Attachment, DailyClosing, Gstr2bImport
 from app.models.ledgers import PartyLedger, StockLedger
@@ -26,6 +27,7 @@ __all__ = [
     "AuditLog",
     "AuthSession",
     "Base",
+    "CashEntry",
     "CostComponent",
     "CreditNote",
     "CreditNoteLine",
@@ -37,6 +39,7 @@ __all__ = [
     "DropShipLink",
     "EInvoice",
     "EwayBill",
+    "ExpenseCategory",
     "Gstr2bImport",
     "Item",
     "ItemMargin",

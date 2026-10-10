@@ -199,6 +199,12 @@ def today(
     returns = db.execute(
         select(func.coalesce(func.sum(CreditNote.grand_total), 0)).where(*notes)
     ).scalar_one()
+    taxable_sold = db.execute(
+        select(func.coalesce(func.sum(SalesInvoice.taxable_value), 0)).where(*scope)
+    ).scalar_one()
+    taxable_returned = db.execute(
+        select(func.coalesce(func.sum(CreditNote.taxable_value), 0)).where(*notes)
+    ).scalar_one()
     return TodayOut(
         as_of=on,
         items_in_stock=in_scope,
@@ -206,6 +212,7 @@ def today(
         we_owe=ledgers.dues_report(db, LedgerAccount.PAYABLE, on).total if see_payable else None,
         sales_today=money(sales),
         returns_today=money(returns),
+        net_sales_today=money(taxable_sold - taxable_returned),
         profit_today=profit_report(db, ProfitGroup.ITEM, on, on, location_ids).profit
         if see_profit
         else None,

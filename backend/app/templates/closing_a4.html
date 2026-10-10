@@ -56,8 +56,13 @@
     <h2>Cash drawer</h2>
     <table>
       <tr><td>Opening</td><td class="num">{{ m.opening_cash }}</td></tr>
-      <tr><td>Cash received</td><td class="num">{{ m.cash_in }}</td></tr>
-      <tr><td>Cash paid out</td><td class="num">{{ m.cash_out }}</td></tr>
+      <tr><td>+ Cash received from customers</td><td class="num">{{ m.receipts_cash }}</td></tr>
+      {% if f.bank_withdrawals %}<tr><td>+ Brought from the bank</td><td class="num">{{ m.bank_withdrawals }}</td></tr>{% endif %}
+      {% if f.owner_capital %}<tr><td>+ Put in by the owner</td><td class="num">{{ m.owner_capital }}</td></tr>{% endif %}
+      <tr><td>− Paid to suppliers and transporters</td><td class="num">{{ m.paid_to_parties }}</td></tr>
+      <tr><td>− Expenses paid in cash</td><td class="num">{{ m.cash_expenses }}</td></tr>
+      <tr><td>− Deposited to the bank</td><td class="num">{{ m.bank_deposits }}</td></tr>
+      {% if f.owner_drawings %}<tr><td>− Taken by the owner</td><td class="num">{{ m.owner_drawings }}</td></tr>{% endif %}
       <tr><td>Should be</td><td class="num">{{ m.expected_cash }}</td></tr>
       <tr><td>Counted</td><td class="num">{{ m.counted_cash }}</td></tr>
       <tr><th>Difference</th><th class="num">{{ m.difference }}</th></tr>

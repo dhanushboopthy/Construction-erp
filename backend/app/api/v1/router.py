@@ -8,6 +8,7 @@ from app.api.v1 import (
     closing,
     compliance,
     dues,
+    finance,
     gst,
     health,
     invoices,
@@ -41,6 +42,7 @@ api_router.include_router(parties.router)
 api_router.include_router(opening.router)
 api_router.include_router(stock.router)
 api_router.include_router(dues.router)
+api_router.include_router(finance.router)
 api_router.include_router(purchases.router)
 api_router.include_router(stock_ops.router)
 api_router.include_router(rates.router)

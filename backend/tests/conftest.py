@@ -58,7 +58,7 @@ def db(engine) -> Iterator:
 def seeded(db):
     from app.scripts.seed import seed
 
-    seed(db)
+    seed(db, second_shop=True)  # tests keep covering two shops
     return db
 
 

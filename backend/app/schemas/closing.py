@@ -40,6 +40,15 @@ class ClosingFigures(Schema):
     returns_count: int
     returns_total: Decimal
     receipts: ModeTotals
+    # The drawer (FM1): cash in = cash receipts + cash from the bank + owner's capital;
+    # cash out = cash paid to parties + cash expenses + deposits to the bank + drawings.
+    paid_to_parties: Decimal
+    cash_expenses: Decimal
+    bank_deposits: Decimal
+    bank_withdrawals: Decimal
+    owner_drawings: Decimal
+    owner_capital: Decimal
+    cash_in: Decimal
     cash_out: Decimal
     purchases_count: int
     top_items: list[TopItem]

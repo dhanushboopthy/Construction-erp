@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.2.0 (FM1): cash book and profit and loss
+
+- Cash book per shop: expenses by head, cash taken to or brought from the bank, the owner's
+  drawings and capital. Permanent vouchers, reversed by the owner; counter expenses above
+  ₹5,000 need the owner's PIN.
+- The daily closing counts every cash voucher, so a normal day closes with no difference.
+- Monthly profit and loss (owner): gross profit, expenses, EBITDA, net profit, break-even sales.
+- KPI catalogue (`/kpis/definitions`) with formulas and "what this means" on hover.
+- Today shows net sales without GST. One shop and the godown by default; shop pickers appear
+  when a second shop is added.
+- Finance and inventory review (`docs/FINANCE_REVIEW.md`).
+
 ## 1.1.0: new look
 
 - "Indigo works" design: lavender canvas, white rounded cards, indigo-to-violet gradient,

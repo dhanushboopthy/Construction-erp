@@ -363,3 +363,20 @@ def test_whole_months_finds_the_gst_periods_a_range_covers() -> None:
     assert t.whole_months(date(2026, 10, 2), date(2026, 10, 31)) is None  # starts part way
     assert t.whole_months(date(2026, 10, 1), date(2026, 10, 30)) is None  # ends part way
     assert t.whole_months(date(2026, 10, 31), date(2026, 10, 1)) is None  # backwards
+
+
+def test_a_bad_debt_write_off_credits_the_customer_with_no_tax() -> None:
+    # Larry will not pay ₹5,000: Dr Bad Debts Written Off, Cr Larry; his account shrinks.
+    v = t.journal(
+        "S1W/26-27/00001",
+        ON,
+        "Larry",
+        D("5000.00"),
+        t.Purpose.BAD_DEBT,
+        names=NAMES,
+        party_debit=False,
+        account=t.PartyAccount.RECEIVABLE,
+    )
+    assert amounts(v) == {"Larry": D("-5000.00"), "Bad Debts Written Off": D("5000.00")}
+    assert v.account is t.PartyAccount.RECEIVABLE and v.party_effect == D("-5000.00")
+    assert t.DEFAULTS[t.Purpose.BAD_DEBT][1] == "Indirect Expenses"

@@ -140,6 +140,14 @@ export function PnlPage() {
                   <th scope="row">Less interest and bank charges</th>
                   <td className="num">{rupees(p.interest)}</td>
                 </tr>
+                {Number(p.bad_debts) > 0 ? (
+                  <tr>
+                    <th scope="row">
+                      Less bad debts written off <span className={styles.sub}>no GST effect</span>
+                    </th>
+                    <td className="num">{rupees(p.bad_debts)}</td>
+                  </tr>
+                ) : null}
                 <tr className={pnl.total}>
                   <th scope="row">Net profit</th>
                   <td className="num">{rupees(p.net_profit)}</td>

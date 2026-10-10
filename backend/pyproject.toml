@@ -64,7 +64,7 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "S105", "S106", "PT018", "N817", "E501"]
 # The sales `world` fixture is imported into the later milestone test files.
-"tests/integration/test_{returns,transport,compliance,weight_schemes,closing_reports,gst_returns,system,finance,adjustments,rate_overrides,tally}.py" = ["F811", "E731"]
+"tests/integration/test_{returns,transport,compliance,weight_schemes,closing_reports,gst_returns,system,finance,adjustments,rate_overrides,tally,receivables,working_capital}.py" = ["F811", "E731"]
 "tests/*/test_tally.py" = ["S314"]
 "app/scripts/**" = ["T20"]
 

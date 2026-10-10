@@ -416,6 +416,44 @@ changed purpose, plus `company`); audit action `export`.
 - Every export is audited. Real Tally has not been tried: the accountant imports one month into a
   test company before relying on it (docs/GAP_ANALYSIS.md).
 
+**Built (FM5, finance review F7, F8, F9, F28):** `bad_debt_writeoff`; party ledger ref `write_off`;
+number series `W`; `shop_settings.provision_pct_*` (not yet due 0, 1-15 days 1, 16-30 days 2,
+31-60 days 10, over 60 days 50; accountant to confirm).
+
+- Working capital for a calendar month, owner only (`GET /reports/working-capital`). Averages are
+  of the balance at the end of the day before the month and at its end (today for this month).
+  Stock at cost is replayed from the stock ledger as at each date. Receivables and payables are
+  summed per party; a party in credit counts as an advance, not a negative due. DIO = average stock
+  ÷ COGS x days; DSO = average receivables ÷ credit sales x days (credit sales = bills less what
+  was paid with the bill, GST included); DPO = average payables ÷ purchases (net of debit notes);
+  advance days = average supplier advances ÷ purchases; CCC = DIO + DSO + advance days - DPO from
+  the days as shown (1 decimal). A day count is blank when there is nothing to divide by. With
+  fewer than 7 days of bills in the month nothing is calculated: "Not enough data yet".
+- Cash tied up = stock + receivables + supplier advances at month end. Working capital = that
+  less payables; it leaves out cash and bank balances until bank statements are imported (FM7).
+  Collection efficiency = collections ÷ (opening receivables + credit sales), where collections
+  exclude money taken with the bill. Inventory turnover = COGS ÷ average stock (per month).
+- Receivables aged from each bill's due date (`GET /reports/receivables`, owner and accountant):
+  not yet due, 1-15, 16-30, 31-60 and over 60 days late; opening balances are due the day they
+  start. Per customer: overdue, days late, credit used (outstanding ÷ credit limit; blank without
+  credit), days to pay over the last 90 days, last payment. The provision (each bucket x its
+  percentage) is owner only and is a report, not a booking: the P&L is not changed by it. The
+  existing dues report (aging from the bill date) is unchanged.
+- Bad-debt write-off (`POST /write-offs`, owner only): customer, shop, amount no more than the
+  customer owes (409 `WRITEOFF_TOO_MUCH`), reason. It credits the receivable account (so the
+  oldest bills clear first), has no GST effect and is not a credit note: GSTR-1 and GSTR-3B do not
+  change. It is permanent (triggers) and numbered `<shop>W/<FY>/<seq>`. It comes off net profit
+  in the month it is written off (`bad_debts` on the P&L; not in EBITDA, contribution or
+  break-even). A customer who pays later makes an ordinary receipt. The Tally export posts it as a
+  Journal: Dr "Bad Debts Written Off", Cr the customer.
+- Integrity check "Cost of goods" (F28): for last month and this month, opening stock + purchases
+  (bills) - cost of goods sold (bills, not direct sales) + other stock moves (ledger) must equal
+  the stock ledger's closing stock, within 0.01% of what moved (minimum ₹10) for unit-cost
+  rounding. Also checks write-offs against the party ledger and write-off numbers for gaps.
+- Metrics explained (owner): `/metrics`, built from `GET /kpis/definitions`.
+- Deferred: bank and cash balances in working capital (FM7); booking the provision; reversing a
+  write-off (a later payment covers it).
+
 **To build** (milestone in brackets):
 
 | Group | Table | Key columns |

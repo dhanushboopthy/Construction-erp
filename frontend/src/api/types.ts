@@ -137,6 +137,16 @@ export type CashBook = Schemas["CashBookOut"];
 export type Pnl = Schemas["PnlOut"];
 export type KpiDefinition = Schemas["KpiDefinitionOut"];
 
+// FM5: working capital, receivables by due date, bad-debt write-offs.
+export type WorkingCapital = Schemas["WorkingCapitalOut"];
+export type WorkingCapitalPoint = Schemas["WorkingCapitalPoint"];
+export type Receivables = Schemas["ReceivablesOut"];
+export type ReceivablesOwner = Schemas["ReceivablesOwnerOut"];
+export type ReceivableRow = Schemas["ReceivableRowOut"];
+export type OverdueBuckets = Schemas["BucketsOut"];
+export type Writeoff = Schemas["WriteoffOut"];
+export type WriteoffCreate = Schemas["WriteoffCreate"];
+
 // FM4: Tally export.
 export type TallyLedgers = Schemas["TallyLedgersOut"];
 export type TallyLedger = Schemas["TallyLedgerOut"];

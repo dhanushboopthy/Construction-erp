@@ -33,6 +33,9 @@ import { ClosingPage } from "@/pages/reports/ClosingPage";
 import { DuesPage } from "@/pages/reports/DuesPage";
 import { GstPage } from "@/pages/reports/GstPage";
 import { ItcReversalPage } from "@/pages/reports/ItcReversalPage";
+import { MetricsPage } from "@/pages/MetricsPage";
+import { ReceivablesPage } from "@/pages/reports/ReceivablesPage";
+import { WorkingCapitalPage } from "@/pages/reports/WorkingCapitalPage";
 import { OverridesPage } from "@/pages/reports/OverridesPage";
 import { PnlPage } from "@/pages/reports/PnlPage";
 import { ProfitPage } from "@/pages/reports/ProfitPage";
@@ -80,6 +83,14 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
               }
             >
               <Route index element={<TodayPage />} />
+              <Route
+                path="/metrics"
+                element={
+                  <RequireRole roles={["owner"]}>
+                    <MetricsPage />
+                  </RequireRole>
+                }
+              />
               <Route
                 path="/settings"
                 element={
@@ -214,6 +225,22 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
                   element={
                     <RequireRole roles={["owner"]}>
                       <PnlPage />
+                    </RequireRole>
+                  }
+                />
+                <Route
+                  path="receivables"
+                  element={
+                    <RequireRole roles={["owner", "accountant"]}>
+                      <ReceivablesPage />
+                    </RequireRole>
+                  }
+                />
+                <Route
+                  path="working-capital"
+                  element={
+                    <RequireRole roles={["owner"]}>
+                      <WorkingCapitalPage />
                     </RequireRole>
                   }
                 />

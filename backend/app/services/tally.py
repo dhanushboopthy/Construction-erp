@@ -25,6 +25,7 @@ from app.models.enums import AuditAction, LedgerAccount, PartyRef, PaymentDirect
 from app.models.ledgers import PartyLedger
 from app.models.masters import Party
 from app.models.purchasing import Payment
+from app.models.receivables import BadDebtWriteoff
 from app.models.returns import CreditNote, DebitNote
 from app.models.sales import SalesInvoice
 from app.models.tally import TallyLedger
@@ -58,6 +59,7 @@ LABELS: dict[Purpose, str] = {
     Purpose.CAPITAL: "Owner's capital",
     Purpose.REBATE: "Supplier rebates",
     Purpose.FREIGHT: "Freight payable to transporters",
+    Purpose.BAD_DEBT: "Bad debts written off",
 }
 
 _ORDER = {kind: i for i, kind in enumerate(VoucherKind)}
@@ -289,6 +291,27 @@ def build_vouchers(db: Session, date_from: date, date_to: date) -> list[rules.Vo
                     if x
                 ),
                 names=ledger,
+            )
+        )
+    for writeoff in db.execute(
+        select(BadDebtWriteoff).where(
+            BadDebtWriteoff.tenant_id == TENANT_ID,
+            BadDebtWriteoff.writeoff_date >= date_from,
+            BadDebtWriteoff.writeoff_date <= date_to,
+        )
+    ).scalars():
+        # No GST: Dr Bad debts, Cr the customer.
+        out.append(
+            rules.journal(
+                writeoff.number,
+                writeoff.writeoff_date,
+                people[writeoff.party_id],
+                writeoff.amount,
+                Purpose.BAD_DEBT,
+                names=ledger,
+                party_debit=False,
+                narration=f"Bad debt written off: {writeoff.reason}",
+                account=rules.PartyAccount.RECEIVABLE,
             )
         )
     out.extend(_party_journals(db, date_from, date_to, people, ledger))

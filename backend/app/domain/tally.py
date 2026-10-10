@@ -37,6 +37,7 @@ class Purpose(StrEnum):
     CAPITAL = "capital"
     REBATE = "rebate"
     FREIGHT = "freight"
+    BAD_DEBT = "bad_debt"
 
 
 # Sensible Tally defaults (accountant to confirm). Each: (ledger name, Tally group).
@@ -56,6 +57,7 @@ DEFAULTS: dict[Purpose, tuple[str, str]] = {
     Purpose.CAPITAL: ("Owner's Capital", "Capital Account"),
     Purpose.REBATE: ("Rebate Received", "Indirect Incomes"),
     Purpose.FREIGHT: ("Freight", "Direct Expenses"),
+    Purpose.BAD_DEBT: ("Bad Debts Written Off", "Indirect Expenses"),
 }
 DEBTORS, CREDITORS, EXPENSES = "Sundry Debtors", "Sundry Creditors", "Indirect Expenses"
 
@@ -263,9 +265,10 @@ def journal(
     names: Names,
     party_debit: bool,
     narration: str = "",
+    account: PartyAccount = PartyAccount.PAYABLE,
 ) -> Voucher:
-    """A supplier rebate or a freight payable: the party's payable account against an income or
-    expense ledger."""
+    """A supplier rebate, a freight payable or a bad debt written off: the party's account against
+    an income or expense ledger."""
     sign = 1 if party_debit else -1
     return Voucher(
         VoucherKind.JOURNAL,
@@ -274,7 +277,7 @@ def journal(
         party,
         narration,
         (Line(party, sign * amount), _line(names, other, -sign * amount)),
-        PartyAccount.PAYABLE,
+        account,
     )
 
 

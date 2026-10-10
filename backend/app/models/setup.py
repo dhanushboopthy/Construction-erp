@@ -77,6 +77,15 @@ class ShopSettings(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
     itc_reverse_shortages: Mapped[bool] = mapped_column(
         Boolean, default=True, server_default="true"
     )
+    # FM5 (accountant to confirm): the share of unpaid bills to set aside as a provision for
+    # doubtful debts, by how long past the due date they are. Conservative defaults.
+    provision_pct_current: Mapped[Percent] = mapped_column(default=Decimal("0"), server_default="0")
+    provision_pct_1_15: Mapped[Percent] = mapped_column(default=Decimal("1"), server_default="1")
+    provision_pct_16_30: Mapped[Percent] = mapped_column(default=Decimal("2"), server_default="2")
+    provision_pct_31_60: Mapped[Percent] = mapped_column(default=Decimal("10"), server_default="10")
+    provision_pct_over_60: Mapped[Percent] = mapped_column(
+        default=Decimal("50"), server_default="50"
+    )
 
     __audit_exclude__ = frozenset({"updated_at"})
 

@@ -101,6 +101,7 @@ class PnlOut(Schema):
     opex: Decimal  # excluding interest
     ebitda: Decimal
     interest: Decimal
+    bad_debts: Decimal  # written off in the month (no GST effect)
     net_profit: Decimal
     net_margin_pct: Decimal | None
     fixed_costs: Decimal
@@ -169,3 +170,48 @@ class RateOverridesOut(Schema):
     realisation_pct: Decimal | None
     by_user: list[OverrideUserOut]
     rows: list[OverrideLineOut]
+
+
+class WorkingCapitalOut(Schema):
+    """Working capital for one calendar month (owner only). Averages are of the balance at the
+    start and at the end of the period; a day count is None when there is nothing to divide by."""
+
+    period: str
+    date_from: date
+    date_to: date  # the month's end, or today for the current month
+    days: int
+    enough_data: bool
+    data_note: str | None
+    stock_start: Decimal
+    stock_end: Decimal
+    receivables_start: Decimal
+    receivables_end: Decimal
+    payables_start: Decimal
+    payables_end: Decimal
+    advances_start: Decimal  # supplier advances: we paid them before the goods came
+    advances_end: Decimal
+    cogs: Decimal
+    credit_sales: Decimal  # bills less what was paid with the bill, GST included
+    purchases: Decimal  # supplier bills less debit notes, GST included
+    collections: Decimal  # money received from customers
+    dio_days: Decimal | None
+    dso_days: Decimal | None
+    dpo_days: Decimal | None
+    advance_days: Decimal | None
+    ccc_days: Decimal | None
+    inventory_turnover: Decimal | None
+    collection_efficiency_pct: Decimal | None
+    cash_tied_up: Decimal  # at the end of the period
+    working_capital: Decimal
+    trend: list["WorkingCapitalPoint"]
+
+
+class WorkingCapitalPoint(Schema):
+    period: str
+    enough_data: bool
+    dio_days: Decimal | None
+    dso_days: Decimal | None
+    dpo_days: Decimal | None
+    advance_days: Decimal | None
+    ccc_days: Decimal | None
+    cash_tied_up: Decimal

@@ -97,6 +97,11 @@ export const SETTINGS: ShopSettings = {
   expense_approval_limit: "5000.00",
   adjustment_approval_limit: "10000.00",
   itc_reverse_shortages: true,
+  provision_pct_current: "0.00",
+  provision_pct_1_15: "1.00",
+  provision_pct_16_30: "2.00",
+  provision_pct_31_60: "10.00",
+  provision_pct_over_60: "50.00",
   timezone: "Asia/Kolkata",
 };
 

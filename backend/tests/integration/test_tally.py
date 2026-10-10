@@ -394,3 +394,39 @@ def test_a_reversed_voucher_is_exported_both_ways(client, month):
     assert signed[undone.json()["number"]]["Cash"] == Decimal(
         "-2000"
     )  # the reversal debits Cash again
+
+
+def test_a_bad_debt_write_off_is_exported_and_the_dues_still_agree(client, month):
+    owner = month["owner"]
+    # Ravi owes ₹3,040 (see the top of the file). The owner gives up ₹3,000 of it.
+    gone = client.post(
+        "/api/v1/write-offs",
+        headers=owner,
+        json={
+            "location_id": month["loc"]["S1"],
+            "party_id": month["ravi"]["id"],
+            "amount": "3000",
+            "reason": "Contractor untraceable",
+        },
+    )
+    assert gone.status_code == 201, gone.text
+    p = client.get(f"/api/v1/tally/preview?{RANGE}", headers=owner).json()
+    assert p["voucher_count"] == 14 and all(c["ok"] for c in p["checks"]), p["checks"]
+    assert {k["kind"]: k["count"] for k in p["kinds"]}["Journal"] == 3
+    assert {c["code"]: c["vouchers"] for c in p["checks"]}["receivable"] == "40.00"
+    root = ElementTree.fromstring(export(client, owner).text)
+    voucher = next(
+        v
+        for v in root.findall(".//VOUCHER")
+        if v.findtext("VOUCHERNUMBER") == gone.json()["number"]
+    )
+    entries = {
+        e.findtext("LEDGERNAME"): Decimal(e.findtext("AMOUNT") or "0")
+        for e in voucher.findall("ALLLEDGERENTRIES.LIST")
+    }
+    assert entries == {
+        "Ravi Builders": Decimal("3000.00"),
+        "Bad Debts Written Off": Decimal("-3000.00"),
+    }
+    masters = {m.findtext("NAME"): m.findtext("PARENT") for m in root.findall(".//LEDGER")}
+    assert masters["Bad Debts Written Off"] == "Indirect Expenses"

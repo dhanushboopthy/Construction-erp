@@ -13,6 +13,7 @@ from app.models.numbering import DocumentSequence
 from app.models.opening import OpeningBalance
 from app.models.purchasing import CostComponent, Payment, Purchase, PurchaseCost, PurchaseLine
 from app.models.rates import CustomerRate, ItemMargin, MarketRate
+from app.models.receivables import BadDebtWriteoff
 from app.models.returns import CreditNote, CreditNoteLine, DebitNote, DebitNoteLine
 from app.models.sales import SalesInvoice, SalesLine
 from app.models.schemes import SupplierScheme
@@ -34,6 +35,7 @@ __all__ = [
     "Attachment",
     "AuditLog",
     "AuthSession",
+    "BadDebtWriteoff",
     "Base",
     "CashEntry",
     "CostComponent",

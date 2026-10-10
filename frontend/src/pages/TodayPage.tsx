@@ -12,6 +12,7 @@ import { useMemo, useState, type CSSProperties } from "react";
 import { Link } from "react-router";
 
 import { useStockOverview } from "@/api/ledger";
+import { useWorkingCapital } from "@/api/receivables";
 import { useSegments, useToday } from "@/api/reports";
 import { useAuth } from "@/auth/AuthContext";
 import { formatMoney } from "@/lib/format";
@@ -43,6 +44,10 @@ export function TodayPage() {
   const today = useToday();
   const stock = useStockOverview();
   const t = today.data;
+  const tied = useWorkingCapital((t?.as_of ?? "").slice(0, 7), {
+    trend: false,
+    enabled: role === "owner" && Boolean(t),
+  });
 
   const outOfStock = (stock.data ?? []).filter((s) => Number(s.quantity) <= 0);
   const returns = t ? Number(t.returns_today) : 0;
@@ -89,6 +94,25 @@ export function TodayPage() {
             tone: "accent" as const,
             badge: { text: "To pay", tone: "accent" as const, icon: ArrowRight },
             to: "/reports/dues",
+          },
+        ]
+      : []),
+    ...(role === "owner" && tied.data
+      ? [
+          {
+            label: "Cash tied up",
+            value: tied.data.cash_tied_up,
+            money: true,
+            tone: "accent" as const,
+            badge: {
+              text:
+                tied.data.ccc_days == null
+                  ? "Cycle: not enough data yet"
+                  : `Cycle ${tied.data.ccc_days} days`,
+              tone: "accent" as const,
+              icon: ArrowRight,
+            },
+            to: "/reports/working-capital",
           },
         ]
       : []),

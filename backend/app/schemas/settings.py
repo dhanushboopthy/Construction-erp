@@ -34,6 +34,11 @@ class ShopSettingsBase(Schema):
     expense_approval_limit: Decimal = Field(default=Decimal("5000"), ge=0)
     adjustment_approval_limit: Decimal = Field(default=Decimal("10000"), ge=0)
     itc_reverse_shortages: bool = True
+    provision_pct_current: Decimal = Field(default=Decimal("0"), ge=0, le=100)
+    provision_pct_1_15: Decimal = Field(default=Decimal("1"), ge=0, le=100)
+    provision_pct_16_30: Decimal = Field(default=Decimal("2"), ge=0, le=100)
+    provision_pct_31_60: Decimal = Field(default=Decimal("10"), ge=0, le=100)
+    provision_pct_over_60: Decimal = Field(default=Decimal("50"), ge=0, le=100)
 
     @field_validator("gstin")
     @classmethod

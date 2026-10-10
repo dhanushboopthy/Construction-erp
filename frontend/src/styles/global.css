@@ -1,4 +1,4 @@
-@import "@fontsource-variable/inter";
+@import "@fontsource-variable/plus-jakarta-sans";
 @import "./tokens.css";
 
 *,
@@ -14,13 +14,18 @@ body,
   margin: 0;
 }
 
+html {
+  scrollbar-color: var(--color-fill-hover) transparent;
+  accent-color: var(--color-accent);
+}
+
 body {
   font-family: var(--font-sans);
   font-size: var(--text-md);
-  line-height: 1.47;
-  letter-spacing: -0.011em;
+  line-height: 1.5;
   color: var(--color-label);
   background: var(--color-bg);
+  caret-color: var(--color-accent);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizelegibility;
@@ -29,8 +34,8 @@ body {
 h1,
 h2,
 h3 {
-  font-family: var(--font-display);
   letter-spacing: var(--tracking-tight);
+  text-wrap: balance;
 }
 
 /* Money and quantities line up in columns. */
@@ -40,7 +45,7 @@ h3 {
   white-space: nowrap;
 }
 
-/* Apple-style focus: a soft blue halo, always visible for keyboard users. */
+/* A soft indigo halo, always visible for keyboard users. */
 :focus-visible {
   outline: none;
   box-shadow: 0 0 0 4px var(--color-focus);
@@ -48,6 +53,7 @@ h3 {
 
 a {
   color: var(--color-accent);
+  text-underline-offset: 3px;
 }
 
 button,
@@ -61,6 +67,12 @@ textarea {
 
 ::selection {
   background: var(--color-accent-soft);
+  color: var(--color-label);
+}
+
+::placeholder {
+  color: var(--color-secondary);
+  opacity: 1;
 }
 
 .visually-hidden {

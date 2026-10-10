@@ -29,7 +29,7 @@ export function ThemeToggle({ className }: { className?: string }) {
   return (
     <button
       type="button"
-      className={[styles.toggle, className].filter(Boolean).join(" ")}
+      className={className ?? styles.toggle}
       onClick={() => {
         setTheme(next);
         setState(next);
@@ -38,9 +38,9 @@ export function ThemeToggle({ className }: { className?: string }) {
       title={label}
     >
       {theme === "dark" ? (
-        <Sun size={16} strokeWidth={2} aria-hidden="true" />
+        <Sun size={18} strokeWidth={2} aria-hidden="true" />
       ) : (
-        <Moon size={16} strokeWidth={2} aria-hidden="true" />
+        <Moon size={18} strokeWidth={2} aria-hidden="true" />
       )}
     </button>
   );

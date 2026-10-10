@@ -1,43 +1,15 @@
-import {
-  Boxes,
-  Building2,
-  ChartColumn,
-  LogOut,
-  Package,
-  Receipt,
-  Settings,
-  ShoppingCart,
-  Sun,
-  Tag,
-  Truck,
-  Users,
-  Wallet,
-  type LucideIcon,
-} from "lucide-react";
+import { Factory, LogOut } from "lucide-react";
 import { NavLink, Outlet } from "react-router";
 
 import { useAuth } from "@/auth/AuthContext";
 import { useModuleShortcuts } from "@/hooks/useModuleShortcuts";
-import { modulesFor } from "@/modules";
+import { modulesFor, type ModuleLink } from "@/modules";
 
 import styles from "./AppShell.module.css";
-import { ThemeToggle } from "./ThemeToggle";
+import { iconFor } from "./moduleIcons";
+import { TopBar } from "./TopBar";
 
 const ROLE_LABEL = { owner: "Owner", counter: "Counter", accountant: "Accountant" } as const;
-
-const ICONS: Record<string, LucideIcon> = {
-  "/": Sun,
-  "/sales": Receipt,
-  "/purchases": ShoppingCart,
-  "/stock": Boxes,
-  "/parties": Users,
-  "/items": Package,
-  "/payments": Wallet,
-  "/rates": Tag,
-  "/transport": Truck,
-  "/reports": ChartColumn,
-  "/settings": Settings,
-};
 
 function initials(name: string) {
   const parts = name.trim().split(/\s+/);
@@ -46,62 +18,79 @@ function initials(name: string) {
   ).toUpperCase();
 }
 
+function NavItem({ module: m }: { module: ModuleLink }) {
+  const Icon = iconFor(m.path);
+  return (
+    <li>
+      <NavLink
+        to={m.path}
+        end={m.path === "/"}
+        className={({ isActive }) => (isActive ? styles.active : undefined)}
+      >
+        <Icon className={styles.icon} size={20} strokeWidth={1.9} aria-hidden="true" />
+        <span className={styles.label}>{m.label}</span>
+        <kbd className={styles.kbd} aria-label={`Alt ${m.shortcut}`}>
+          Alt {m.shortcut.toUpperCase()}
+        </kbd>
+      </NavLink>
+    </li>
+  );
+}
+
 export function AppShell() {
   const { user, signOut } = useAuth();
   const modules = user ? modulesFor(user.role) : [];
   useModuleShortcuts(modules);
   if (!user) return null;
 
-  const shopNames = user.locations.map((l) => l.name).join(", ") || "All locations";
+  const where = user.locations.map((l) => `${l.code} · ${l.name}`).join(", ") || "All locations";
+  const main = modules.filter((m) => m.path !== "/settings");
+  const settings = modules.find((m) => m.path === "/settings");
 
   return (
     <div className={styles.shell}>
       <aside className={styles.sidebar} aria-label="Modules">
         <div className={styles.brand}>
           <span className={styles.appIcon} aria-hidden="true">
-            <Building2 size={18} strokeWidth={2.2} />
+            <Factory size={22} strokeWidth={2} />
           </span>
-          <span className={styles.brandName}>Construction ERP</span>
+          <span className={styles.brandName}>
+            Construction<span className={styles.brandAccent}>ERP</span>
+          </span>
         </div>
-        <nav>
+        <nav className={styles.navArea}>
           <ul className={styles.nav}>
-            {modules.map((m) => {
-              const Icon = ICONS[m.path] ?? Package;
-              return (
-                <li key={m.path}>
-                  <NavLink
-                    to={m.path}
-                    end={m.path === "/"}
-                    className={({ isActive }) => (isActive ? styles.active : undefined)}
-                  >
-                    <Icon className={styles.icon} size={18} strokeWidth={1.8} aria-hidden="true" />
-                    <span className={styles.label}>{m.label}</span>
-                    <kbd className={styles.kbd} aria-label={`Alt ${m.shortcut}`}>
-                      ⌥{m.shortcut}
-                    </kbd>
-                  </NavLink>
-                </li>
-              );
-            })}
+            {main.map((m) => (
+              <NavItem key={m.path} module={m} />
+            ))}
           </ul>
+          {settings ? (
+            <ul className={`${styles.nav} ${styles.navFooter}`}>
+              <NavItem module={settings} />
+            </ul>
+          ) : null}
         </nav>
+        <div className={styles.userCard}>
+          <span className={styles.avatar} aria-hidden="true">
+            {initials(user.full_name)}
+          </span>
+          <span className={styles.userText}>
+            <span className={styles.userName}>{user.full_name}</span>
+            <span className={styles.userRole}>{ROLE_LABEL[user.role]}</span>
+          </span>
+          <button
+            type="button"
+            className={styles.signOut}
+            onClick={() => void signOut()}
+            aria-label="Sign out"
+            title="Sign out"
+          >
+            <LogOut size={18} strokeWidth={2} aria-hidden="true" />
+          </button>
+        </div>
       </aside>
       <div className={styles.main}>
-        <header className={styles.topbar}>
-          <span className={styles.where}>{shopNames}</span>
-          <span className={styles.who}>
-            <span className={styles.avatar} aria-hidden="true">
-              {initials(user.full_name)}
-            </span>
-            <span className={styles.name}>{user.full_name}</span>
-            <span className={styles.role}>{ROLE_LABEL[user.role]}</span>
-          </span>
-          <ThemeToggle />
-          <button type="button" className={styles.signOut} onClick={() => void signOut()}>
-            <LogOut size={15} strokeWidth={2} aria-hidden="true" />
-            Sign out
-          </button>
-        </header>
+        <TopBar role={user.role} where={where} onSignOut={() => void signOut()} />
         <main className={styles.content}>
           <Outlet />
         </main>

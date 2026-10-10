@@ -2,66 +2,79 @@
  * Design tokens. Source of truth: docs/DESIGN.md. Components use these variables only,
  * never raw hex values.
  *
- * Apple-style system: light grey grouped background, white rounded cards, one blue accent,
- * system semantic colours for status. Dark mode: `data-theme="dark"` on <html>, set before
- * paint by public/theme-init.js (saved choice, else the operating system) and by the toggle.
+ * "Indigo works": a lavender-tinted canvas, white cards with soft indigo-tinted shadows, an
+ * indigo-to-violet brand gradient for the few things that matter most (brand tile, active nav,
+ * the bill total, the user card, the current month's bar), semantic emerald / amber / rose for
+ * status. Dark mode: `data-theme="dark"` on <html>, set before paint by public/theme-init.js
+ * (saved choice, else the operating system) and by the toggle.
  */
 :root {
   color-scheme: light;
 
-  --color-bg: #f5f5f7;
+  --color-bg: #f4f5fb;
   --color-surface: #ffffff;
   --color-surface-raised: #ffffff;
-  --color-fill: #e8e8ed; /* segmented controls, grey buttons */
-  --color-fill-hover: #dcdce1;
-  --color-label: #1d1d1f;
-  --color-secondary: #6e6e73;
-  --color-separator: #e5e5ea;
-  /* Input and control borders: 3.3:1 on white, the non-text contrast floor is 3:1. */
-  --color-control-border: #8e8e93;
-  --color-accent: #0071e3;
-  --color-accent-strong: #0062c4;
-  --color-accent-soft: rgb(0 113 227 / 10%);
+  --color-sidebar: #ffffff;
+  --color-fill: #eef0f8;
+  --color-fill-hover: #e3e6f3;
+  --color-label: #1b1d3a;
+  --color-secondary: #5f6488;
+  --color-separator: #e8eaf4;
+  /* Input and control borders: 3.1:1 on white, the non-text contrast floor is 3:1. */
+  --color-control-border: #8c91b5;
+  --color-accent: #4f46e5;
+  --color-accent-strong: #4338ca;
+  --color-accent-soft: rgb(99 102 241 / 10%);
+  --color-accent-softer: rgb(99 102 241 / 5%);
+  --color-violet: #7c3aed;
   --color-on-accent: #ffffff;
-  /* The bill total card (dark, like an Apple Pay summary). */
-  --color-hero: #1d1d1f;
+  --color-on-accent-muted: rgb(255 255 255 / 80%);
+
+  /* Brand gradient: decorative fills. Action gradient: white text sits on it (≥4.5:1 both ends). */
+  --gradient-brand: linear-gradient(135deg, #6366f1 0%, #8b5cf6 55%, #a855f7 100%);
+  --gradient-action: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  --gradient-bar: linear-gradient(180deg, #818cf8 0%, rgb(129 140 248 / 22%) 100%);
+  --gradient-bar-current: linear-gradient(180deg, #a855f7 0%, #6366f1 100%);
+  --gradient-nav-active: linear-gradient(90deg, rgb(99 102 241 / 12%), rgb(99 102 241 / 2%));
+
+  --color-hero: #4f46e5; /* fallback for the bill total; the card itself uses --gradient-action */
   --color-on-hero: #ffffff;
-  --color-good: #1e7b34;
-  --color-good-soft: rgb(36 138 61 / 12%);
-  --color-warn: #b25000;
-  --color-warn-soft: rgb(255 149 0 / 14%);
-  --color-critical: #d70015;
-  --color-critical-soft: rgb(255 59 48 / 10%);
-  --color-focus: rgb(0 113 227 / 35%);
+  --color-good: #047857;
+  --color-good-soft: rgb(16 185 129 / 12%);
+  --color-warn: #b45309;
+  --color-warn-soft: rgb(245 158 11 / 14%);
+  --color-critical: #e11d48;
+  --color-critical-soft: rgb(244 63 94 / 10%);
+  --color-focus: rgb(99 102 241 / 35%);
 
-  /* Chart series (Apple system colours). */
-  --color-chart-1: #0071e3;
-  --color-chart-2: #ff9500;
-  --color-chart-3: #af52de;
-  --color-chart-4: #aeaeb2;
+  /* Chart series. */
+  --color-chart-1: #6366f1;
+  --color-chart-2: #f59e0b;
+  --color-chart-3: #a855f7;
+  --color-chart-4: #b4b8d4;
 
-  /* Sidebar: translucent, blurred over the page. */
-  --color-sidebar: rgb(246 246 248 / 78%);
-  --color-sidebar-hover: rgb(0 0 0 / 5%);
-  --color-bar: rgb(255 255 255 / 72%);
+  --color-sidebar-hover: rgb(99 102 241 / 6%);
+  --color-bar: rgb(244 245 251 / 82%);
+  --color-scrim: rgb(27 29 58 / 28%);
 
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 4%), 0 0 0 0.5px rgb(0 0 0 / 6%);
-  --shadow-raised: 0 4px 16px rgb(0 0 0 / 8%), 0 0 0 0.5px rgb(0 0 0 / 6%);
-  --shadow-thumb: 0 1px 3px rgb(0 0 0 / 12%), 0 0 0 0.5px rgb(0 0 0 / 4%);
+  --shadow-card: 0 1px 2px rgb(27 29 58 / 4%), 0 10px 30px -14px rgb(79 70 229 / 16%);
+  --shadow-raised: 0 2px 6px rgb(27 29 58 / 6%), 0 24px 48px -18px rgb(79 70 229 / 28%);
+  --shadow-thumb: 0 1px 3px rgb(27 29 58 / 12%);
+  --shadow-glow: 0 10px 24px -8px rgb(99 102 241 / 55%);
 
   --font-sans:
-    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter Variable", "Inter", "Segoe UI",
-    "Noto Sans Tamil", system-ui, sans-serif;
-  --font-display:
-    -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter Variable", "Inter", "Segoe UI",
-    "Noto Sans Tamil", system-ui, sans-serif;
+    "Plus Jakarta Sans Variable", "Plus Jakarta Sans", "Segoe UI", "Noto Sans Tamil", system-ui,
+    sans-serif;
+  --font-display: var(--font-sans);
+  --text-2xs: 0.6875rem;
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-md: 1rem;
   --text-lg: 1.25rem;
-  --text-xl: 2rem;
-  --text-figure: 2.5rem;
-  --tracking-tight: -0.022em;
+  --text-xl: 1.875rem;
+  --text-figure: 2.25rem;
+  --tracking-tight: -0.025em;
+  --tracking-caps: 0.08em;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -69,48 +82,55 @@
   --space-4: 16px;
   --space-5: 24px;
   --space-6: 32px;
+  --space-7: 48px;
 
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
-  --radius-pill: 980px;
-  --control-height: 40px;
-  --sidebar-width: 248px;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 999px;
+  --control-height: 42px;
+  --sidebar-width: 272px;
+  --topbar-height: 76px;
   --panel-width: 400px;
-  --duration-fast: 160ms;
-  --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --duration-fast: 180ms;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --color-bg: #000000;
-  --color-surface: #1c1c1e;
-  --color-surface-raised: #2c2c2e;
-  --color-fill: #2c2c2e;
-  --color-fill-hover: #3a3a3c;
-  --color-label: #f5f5f7;
-  --color-secondary: #98989d;
-  --color-separator: #38383a;
-  --color-control-border: #7c7c80;
-  --color-accent: #0a84ff;
-  --color-accent-strong: #409cff;
-  --color-accent-soft: rgb(10 132 255 / 18%);
-  --color-hero: #2c2c2e;
-  --color-good: #30d158;
-  --color-good-soft: rgb(48 209 88 / 16%);
-  --color-warn: #ff9f0a;
-  --color-warn-soft: rgb(255 159 10 / 16%);
-  --color-critical: #ff453a;
-  --color-critical-soft: rgb(255 69 58 / 16%);
-  --color-focus: rgb(10 132 255 / 50%);
-  --color-chart-1: #0a84ff;
-  --color-chart-2: #ff9f0a;
-  --color-chart-3: #bf5af2;
-  --color-chart-4: #636366;
-  --color-sidebar: rgb(28 28 30 / 78%);
-  --color-sidebar-hover: rgb(255 255 255 / 7%);
-  --color-bar: rgb(0 0 0 / 65%);
-  --shadow-card: 0 0 0 0.5px rgb(255 255 255 / 8%);
-  --shadow-raised: 0 4px 16px rgb(0 0 0 / 40%), 0 0 0 0.5px rgb(255 255 255 / 10%);
+  --color-bg: #0b0c1a;
+  --color-surface: #14162b;
+  --color-surface-raised: #1c1f3a;
+  --color-sidebar: #10122a;
+  --color-fill: #22254a;
+  --color-fill-hover: #2b2f5a;
+  --color-label: #ecedfb;
+  --color-secondary: #a3a7cf;
+  --color-separator: #262a4d;
+  --color-control-border: #6e73a6;
+  --color-accent: #8b8cf8;
+  --color-accent-strong: #a5a6fa;
+  --color-accent-soft: rgb(129 140 248 / 16%);
+  --color-accent-softer: rgb(129 140 248 / 7%);
+  --color-violet: #a78bfa;
+  --gradient-bar: linear-gradient(180deg, #818cf8 0%, rgb(129 140 248 / 14%) 100%);
+  --gradient-nav-active: linear-gradient(90deg, rgb(129 140 248 / 18%), rgb(129 140 248 / 3%));
+  --color-good: #34d399;
+  --color-good-soft: rgb(52 211 153 / 14%);
+  --color-warn: #fbbf24;
+  --color-warn-soft: rgb(251 191 36 / 14%);
+  --color-critical: #fb7185;
+  --color-critical-soft: rgb(251 113 133 / 14%);
+  --color-focus: rgb(129 140 248 / 50%);
+  --color-chart-1: #818cf8;
+  --color-chart-2: #fbbf24;
+  --color-chart-3: #c084fc;
+  --color-chart-4: #4b4f7a;
+  --color-sidebar-hover: rgb(129 140 248 / 9%);
+  --color-bar: rgb(11 12 26 / 78%);
+  --color-scrim: rgb(0 0 0 / 50%);
+  --shadow-card: 0 0 0 1px rgb(255 255 255 / 5%), 0 12px 32px -16px rgb(0 0 0 / 60%);
+  --shadow-raised: 0 0 0 1px rgb(255 255 255 / 7%), 0 24px 48px -18px rgb(0 0 0 / 70%);
   --shadow-thumb: 0 1px 3px rgb(0 0 0 / 40%);
+  --shadow-glow: 0 10px 24px -8px rgb(99 102 241 / 45%);
 }

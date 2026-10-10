@@ -157,6 +157,32 @@ CATALOGUE: tuple[Kpi, ...] = (
         Direction.DOWN,
         "₹",
     ),
+    # FM3: labelled rate overrides
+    Kpi(
+        "discount_leakage",
+        "Discount leakage",
+        "Σ (list rate - billed rate) x quantity on lines whose price was set by hand, where "
+        "positive, + bill discounts",
+        "Money given away by cutting a price at the counter instead of changing the rate.",
+        "1,000 kg TMT billed ₹60 against ₹62 listed = ₹2,000; + discount ₹500 = ₹2,500",
+        "sales_line.list_rate, rate, base_qty, discount (rate_source override)",
+        True,
+        Refresh.LIVE,
+        Direction.DOWN,
+        "₹",
+    ),
+    Kpi(
+        "price_realisation_pct",
+        "Price realisation",
+        "Billed value ÷ list value x 100, on lines whose price was set by hand",
+        "How much of the listed price you really collected on hand-priced lines.",
+        "₹60,000 billed ÷ ₹62,000 listed = 96.77 %",
+        "sales_line.list_rate, rate, base_qty (rate_source override)",
+        True,
+        Refresh.LIVE,
+        Direction.UP,
+        "%",
+    ),
 )
 
 

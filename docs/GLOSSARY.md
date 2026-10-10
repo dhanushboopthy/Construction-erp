@@ -43,3 +43,7 @@
 | Adjustment reason | Breakage, rust or damage, theft, free sample, weighbridge loss or gain, count correction. |
 | Stock lost | Adjustments out less adjustments in, at average cost, counts included. Breakage ₹760 + theft ₹15,000 + count short ₹1,140 − weighbridge gain ₹240 = ₹16,660. It reduces gross profit. |
 | ITC to reverse | Input tax already claimed on goods that were lost, stolen, destroyed or given away (CGST Act s.17(5)(h)); paid back in GSTR-3B 4(B)(1). Theft ₹15,000 × 18% = ₹2,700. |
+| Rate override | A price typed for one bill instead of the rate board's; saved as `override` with a reason. |
+| List rate | What the system would have charged a line (customer rate, else market rate) per base unit, excluding GST; kept on every bill line from FM3. |
+| Discount leakage | Rupees given away by hand: (list rate − billed rate) × quantity on override lines where positive, plus bill discounts. 1,000 kg billed ₹60 against ₹62 = ₹2,000; plus a ₹500 discount = ₹2,500. |
+| Price realisation | Billed value ÷ list value × 100 on hand-priced lines. ₹60,000 ÷ ₹62,000 = 96.77 %. |

@@ -145,3 +145,63 @@ def test_the_migration_seeds_the_same_heads_as_the_service() -> None:
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     assert [(n, nature.value) for n, nature in DEFAULT_CATEGORIES] == module.DEFAULT_HEADS
+
+
+# ---------------------------------------------------------------- FM3: rate overrides
+#
+# The owner cuts a TMT price by hand. List rate (what the system would have charged) is
+# ₹62 a kg; the owner bills ₹60 a kg.
+#   1,000 kg x (62 - 60)      = ₹2,000 given away
+#   500 kg raised 56 -> 57    = 500 x (56 - 57) = -₹500 (the owner charged more than the list)
+#   a cement bag, 100 bags 380 -> 372.50 = 100 x 7.50 = ₹750
+
+
+def test_override_effect_is_list_less_billed_times_quantity() -> None:
+    assert f.override_effect("62", "60", "1000") == Decimal("2000.00")
+    assert f.override_effect("56", "57", "500") == Decimal("-500.00")
+    assert f.override_effect("380", "372.50", "100") == Decimal("750.00")
+
+
+def test_override_effect_rounds_to_paise_and_knows_when_it_cannot_be_worked_out() -> None:
+    # 0.333333 x 3 kg = 0.999999 -> ₹1.00
+    assert f.override_effect("0.333333", "0", "3") == Decimal("1.00")
+    assert f.override_effect(None, "60", "1000") is None  # older bill: no list rate was kept
+    assert f.override_effect("62", "62", "1000") == Decimal("0.00")
+
+
+def test_override_summary_splits_cuts_from_raises_and_counts_unpriced_lines() -> None:
+    # 2,000 and 750 given away; 500 charged extra; one line with no list rate.
+    summary = f.summarise_overrides([Decimal("2000"), Decimal("-500"), None, Decimal("750")])
+    assert summary.cut == Decimal("2750.00")
+    assert summary.raised == Decimal("500.00")
+    assert summary.net == Decimal("2250.00")  # 2,750 - 500
+    assert summary.lines == 4 and summary.unpriced == 1
+
+
+def test_override_summary_of_nothing_is_zero_not_missing() -> None:
+    summary = f.summarise_overrides([])
+    assert (summary.cut, summary.raised, summary.net, summary.lines) == (
+        Decimal("0.00"),
+        Decimal("0.00"),
+        Decimal("0.00"),
+        0,
+    )
+
+
+def test_discount_leakage_adds_discounts_to_rate_cuts() -> None:
+    # Rate cuts ₹2,750 + bill discounts ₹500 = ₹3,250 given away this month.
+    assert f.discount_leakage("2750", "500") == Decimal("3250.00")
+
+
+def test_price_realisation_is_billed_over_list_value() -> None:
+    # Billed ₹60,000 of goods listed at ₹62,000: 60,000 ÷ 62,000 = 96.77 %.
+    assert f.price_realisation_pct("60000", "62000") == Decimal("96.77")
+    assert f.price_realisation_pct("60000", "0") is None  # nothing to divide by
+
+
+def test_the_override_kpis_are_in_the_catalogue_and_owner_only() -> None:
+    from app.domain import kpi_catalogue as cat
+
+    for code in ("discount_leakage", "price_realisation_pct"):
+        assert cat.get(code).owner_only is True
+        assert code not in {k.code for k in cat.definitions(owner=False)}

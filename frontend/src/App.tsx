@@ -33,6 +33,7 @@ import { ClosingPage } from "@/pages/reports/ClosingPage";
 import { DuesPage } from "@/pages/reports/DuesPage";
 import { GstPage } from "@/pages/reports/GstPage";
 import { ItcReversalPage } from "@/pages/reports/ItcReversalPage";
+import { OverridesPage } from "@/pages/reports/OverridesPage";
 import { PnlPage } from "@/pages/reports/PnlPage";
 import { ProfitPage } from "@/pages/reports/ProfitPage";
 import { ReportsLayout } from "@/pages/reports/ReportsLayout";
@@ -212,6 +213,14 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
                   element={
                     <RequireRole roles={["owner"]}>
                       <PnlPage />
+                    </RequireRole>
+                  }
+                />
+                <Route
+                  path="overrides"
+                  element={
+                    <RequireRole roles={["owner"]}>
+                      <OverridesPage />
                     </RequireRole>
                   }
                 />

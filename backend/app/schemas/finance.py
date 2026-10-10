@@ -122,3 +122,50 @@ class KpiDefinitionOut(Schema):
     refresh: str
     good: str
     unit: str
+
+
+class OverrideLineOut(Schema):
+    """One bill line whose price the owner set by hand (FM3). Owner only."""
+
+    invoice_id: int
+    invoice_number: str
+    invoice_date: date
+    location_id: int
+    item_name: str
+    user_id: int | None
+    user_name: str | None
+    base_qty: Decimal
+    base_unit: str
+    list_rate: Decimal | None  # blank on bills issued before FM3
+    billed_rate: Decimal
+    effect: Decimal | None  # rupees given away (+) or charged extra (-), excl. GST
+    reason: str | None
+
+
+class OverrideUserOut(Schema):
+    user_id: int | None
+    user_name: str | None
+    lines: int
+    cut: Decimal
+    raised: Decimal
+    net: Decimal
+    discounts: Decimal
+
+
+class RateOverridesOut(Schema):
+    """Who set prices by hand, and what it cost, for one calendar month (owner only)."""
+
+    period: str
+    date_from: date
+    date_to: date
+    location_id: int | None
+    lines: int
+    unpriced: int  # lines with no list rate to compare with
+    cut: Decimal
+    raised: Decimal
+    net: Decimal
+    discounts: Decimal  # bill discounts in the period (all lines)
+    leakage: Decimal  # cut + discounts
+    realisation_pct: Decimal | None
+    by_user: list[OverrideUserOut]
+    rows: list[OverrideLineOut]

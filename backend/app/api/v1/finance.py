@@ -19,6 +19,7 @@ from app.schemas.finance import (
     ExpenseCategoryUpdate,
     KpiDefinitionOut,
     PnlOut,
+    RateOverridesOut,
 )
 from app.services import cashbook as service
 from app.services import finance as finance_service
@@ -91,6 +92,14 @@ def profit_and_loss(
 ) -> PnlOut:
     """Profit and loss for a calendar month (this month by default). Owner only."""
     return finance_service.profit_and_loss(db, period or today_ist().strftime("%Y-%m"), location_id)
+
+
+@router.get("/reports/rate-overrides", response_model=RateOverridesOut)
+def rate_overrides(
+    _: OwnerOnly, db: DbSession, period: str | None = None, location_id: int | None = None
+) -> RateOverridesOut:
+    """Hand-set prices by user and their rupee effect against the list rate. Owner only."""
+    return finance_service.rate_overrides(db, period or today_ist().strftime("%Y-%m"), location_id)
 
 
 @router.get("/kpis/definitions", response_model=list[KpiDefinitionOut])

@@ -41,6 +41,18 @@ Endpoints that return cost, margin or profit use separate response models for ow
 staff (for example `ItemOwnerOut` and `ItemOut`). Choose the model with `principal.sees_cost`;
 never rely on the UI to hide fields. Test each such endpoint as a counter user.
 
+## Endpoints (FM3: labelled rate overrides)
+
+| Method | Path | Who |
+| --- | --- | --- |
+| POST | `/invoices` and `/invoices/preview`: line field `rate_override` (price per `unit`) now needs `rate_override_reason` | owner; counter only with a `discount` approval |
+| GET | `/reports/rate-overrides?period=2026-10&location_id=` | owner (403 for counter and accountant) |
+
+The saved line returns `rate_source: "override"` and `rate_override_reason`. Errors:
+`OVERRIDE_REASON` (409, no reason), `DISCOUNT_NEEDS_OWNER` (409, counter without approval),
+`BAD_PERIOD`, `FUTURE_PERIOD`. The report returns `lines`, `unpriced`, `cut`, `raised`, `net`,
+`discounts`, `leakage`, `realisation_pct` (null with no hand-priced bills), `by_user` and `rows`.
+
 ## Endpoints (FM2: stock adjustments, ITC to reverse)
 
 | Method | Path | Who |

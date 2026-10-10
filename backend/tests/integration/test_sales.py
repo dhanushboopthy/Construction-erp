@@ -429,7 +429,12 @@ def test_staff_cannot_discount_or_change_the_price_but_the_owner_can(client, wor
     assert too_big.json()["code"] == "DISCOUNT_TOO_BIG"
     # The owner may set a one-off price: 54,000 a ton -> 1,000 kg = 54,000 taxable.
     custom = post(
-        client, world, body(world, [line(world, "tmt", "1", "ton", rate_override="54000")])
+        client,
+        world,
+        body(
+            world,
+            [line(world, "tmt", "1", "ton", rate_override="54000", rate_override_reason="bulk")],
+        ),
     ).json()
     assert custom["taxable_value"] == "54000.00"
 

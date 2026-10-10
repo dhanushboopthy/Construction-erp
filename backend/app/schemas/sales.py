@@ -30,6 +30,7 @@ class InvoiceLineIn(Schema):
     discount: Amount | None = None
     discount_reason: str | None = Field(default=None, max_length=200)
     rate_override: Rate | None = None  # per `unit`
+    rate_override_reason: str | None = Field(default=None, max_length=200)  # required with it
     # A direct line may name the supplier purchase line that supplies it (B10, Milestone 9).
     purchase_line_id: int | None = None
     # B14: weight on the dispatch slip (base unit). A flagged difference needs a note.
@@ -118,6 +119,7 @@ class InvoiceLineOut(Schema):
     base_unit: str
     rate: Decimal
     rate_source: RateSource
+    rate_override_reason: str | None = None
     discount: Decimal
     discount_reason: str | None
     taxable: Decimal

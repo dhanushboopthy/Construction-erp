@@ -369,6 +369,25 @@ on issued documents (ADR 0010).
   less gains) (`domain/inventory_analytics.py`).
 - Deferred: write-down to realisable value (value without quantity) moves to FM6 with NRV.
 
+**Built (FM3, finance review F4, F24 in part):** `sales_line.list_rate`,
+`sales_line.rate_override_reason`; `rate_source` gains `override`.
+
+- A price typed on a bill (`rate_override`, owner, or counter staff with the owner's PIN
+  approval) is saved with `rate_source = override`, not `market`. A reason is required: the
+  bill is refused with 409 `OVERRIDE_REASON`, and a CHECK refuses an override line without a
+  reason, so no route round the service can save one. A reason is stored only on overrides.
+- Every new line keeps `list_rate`: what the system would have charged (the customer's rate, else
+  the market rate on the bill date), per base unit, excluding GST. Bills issued before FM3 have
+  it blank and are never edited, so their effect shows as "no rate to compare with".
+- The printed bill is unchanged: it shows the rate, never how it was chosen (tested by comparing
+  the bill HTML of a typed and a board-priced bill).
+- Price overrides report (owner only, per month and shop): rupees given away = (list rate −
+  billed rate) × base quantity per override line (`domain/finance.override_effect`); cuts and
+  raises are shown apart; discount leakage = cuts + bill discounts; price realisation = billed
+  value ÷ list value on hand-priced lines. By person means the user who saved the bill. KPIs
+  `discount_leakage` and `price_realisation_pct` (owner only) are in the catalogue.
+- The rest of F24 (realisation on every line, per item and customer) stays in FM7.
+
 **To build** (milestone in brackets):
 
 | Group | Table | Key columns |

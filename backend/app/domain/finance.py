@@ -145,3 +145,45 @@ def break_even_sales(
     if sales <= ZERO or contrib <= ZERO:
         return None
     return money(to_decimal(fixed_costs) * sales / contrib)
+
+
+def override_effect(
+    list_rate: Numberish | None, billed_rate: Numberish, base_qty: Numberish
+) -> Decimal | None:
+    """Rupees given away (+) or charged extra (-) by a hand-set price: (list rate - billed rate)
+    x quantity, both per base unit and excluding GST. None when the bill kept no list rate."""
+    if list_rate is None:
+        return None
+    return money((to_decimal(list_rate) - to_decimal(billed_rate)) * to_decimal(base_qty))
+
+
+@dataclass(frozen=True)
+class OverrideSummary:
+    cut: Decimal  # rupees given away on lines billed below the list rate
+    raised: Decimal  # rupees charged above the list rate
+    net: Decimal  # cut - raised
+    lines: int  # overridden lines, whether or not their effect is known
+    unpriced: int  # lines with no list rate to compare with
+
+
+def summarise_overrides(effects: list[Decimal | None]) -> OverrideSummary:
+    known = [e for e in effects if e is not None]
+    cut = sum((e for e in known if e > ZERO), ZERO)
+    raised = sum((-e for e in known if e < ZERO), ZERO)
+    return OverrideSummary(
+        cut=money(cut),
+        raised=money(raised),
+        net=money(cut - raised),
+        lines=len(effects),
+        unpriced=len(effects) - len(known),
+    )
+
+
+def discount_leakage(rate_cuts: Numberish, discounts: Numberish) -> Decimal:
+    """Everything the owner gave away at the counter: hand-set price cuts plus bill discounts."""
+    return money(to_decimal(rate_cuts) + to_decimal(discounts))
+
+
+def price_realisation_pct(billed_value: Numberish, list_value: Numberish) -> Decimal | None:
+    """Billed value as a percentage of what the same goods were listed at; 100 means no leakage."""
+    return margin_pct(billed_value, list_value)

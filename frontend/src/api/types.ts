@@ -137,6 +137,11 @@ export type CashBook = Schemas["CashBookOut"];
 export type Pnl = Schemas["PnlOut"];
 export type KpiDefinition = Schemas["KpiDefinitionOut"];
 
+// FM3: labelled rate overrides.
+export type RateOverrides = Schemas["RateOverridesOut"];
+export type RateOverrideLine = Schemas["OverrideLineOut"];
+export type RateOverrideUser = Schemas["OverrideUserOut"];
+
 // FM2: stock adjustments with reasons, ITC to reverse.
 export type AdjustmentReason = Schemas["AdjustmentReason"];
 export type StockDirection = Schemas["Direction"];

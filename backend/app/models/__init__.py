@@ -38,6 +38,7 @@ from app.models.stock_ops import (
     StockWritedownLine,
 )
 from app.models.tally import TallyLedger
+from app.models.tenancy import Tenant
 from app.models.transport import DropShipLink, Trip, Vehicle
 
 __all__ = [
@@ -98,6 +99,7 @@ __all__ = [
     "StockWritedownLine",
     "SupplierScheme",
     "TallyLedger",
+    "Tenant",
     "Trip",
     "UserLocation",
     "Vehicle",

@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 from app.core.clock import today_ist
 from app.core.errors import BusinessRuleError
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import finance
 from app.domain.finance import CashEntryKind
 from app.domain.money import ZERO, money
@@ -53,7 +53,7 @@ def expenses_by_category(
         select(CashEntry, ExpenseCategory)
         .join(ExpenseCategory, ExpenseCategory.id == CashEntry.category_id)
         .where(
-            CashEntry.tenant_id == TENANT_ID,
+            CashEntry.tenant_id == current_tenant_id(db),
             CashEntry.kind == CashEntryKind.EXPENSE,
             CashEntry.entry_date >= date_from,
             CashEntry.entry_date <= date_to,
@@ -151,13 +151,16 @@ def rate_overrides(db: Session, period: str, location_id: int | None = None) -> 
     if date_from > today_ist():
         raise BusinessRuleError("This month has not started yet", code="FUTURE_PERIOD")
     in_period = [
-        SalesInvoice.tenant_id == TENANT_ID,
+        SalesInvoice.tenant_id == current_tenant_id(db),
         SalesInvoice.invoice_date >= date_from,
         SalesInvoice.invoice_date <= date_to,
     ]
     if location_id is not None:
         in_period.append(SalesInvoice.location_id == location_id)
-    users = {u.id: u.full_name for u in db.execute(select(AppUser)).scalars()}
+    users = {
+        u.id: u.full_name
+        for u in db.scalars(select(AppUser).where(AppUser.tenant_id == current_tenant_id(db)))
+    }
 
     rows: list[OverrideLineOut] = []
     effects: dict[int | None, list[Decimal | None]] = defaultdict(list)

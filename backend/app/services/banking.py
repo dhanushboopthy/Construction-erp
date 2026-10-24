@@ -15,7 +15,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.errors import BusinessRuleError, ConflictError, NotFoundError
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import controls as rules
 from app.domain.finance import CashEntryKind
 from app.domain.money import ZERO, money
@@ -41,21 +41,23 @@ from app.services.shop_settings import get_settings_row
 
 def _account(db: Session, account_id: int) -> BankAccount:
     row = db.get(BankAccount, account_id)
-    if row is None or row.tenant_id != TENANT_ID:
+    if row is None or row.tenant_id != current_tenant_id(db):
         raise NotFoundError("Bank account not found", field="bank_account_id")
     return row
 
 
 def list_accounts(db: Session) -> list[BankAccountOut]:
     rows = db.scalars(
-        select(BankAccount).where(BankAccount.tenant_id == TENANT_ID).order_by(BankAccount.name)
+        select(BankAccount)
+        .where(BankAccount.tenant_id == current_tenant_id(db))
+        .order_by(BankAccount.name)
     )
     return [BankAccountOut.model_validate(r) for r in rows]
 
 
 def _name_free(db: Session, name: str, except_id: int | None = None) -> None:
     stmt = select(BankAccount.id).where(
-        BankAccount.tenant_id == TENANT_ID, BankAccount.name == name
+        BankAccount.tenant_id == current_tenant_id(db), BankAccount.name == name
     )
     if except_id is not None:
         stmt = stmt.where(BankAccount.id != except_id)
@@ -66,7 +68,7 @@ def _name_free(db: Session, name: str, except_id: int | None = None) -> None:
 def create_account(db: Session, data: BankAccountCreate, *, actor_id: int) -> BankAccountOut:
     _name_free(db, data.name)
     row = BankAccount(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         name=data.name,
         account_no_last4=data.account_no_last4,
         is_active=True,
@@ -132,7 +134,7 @@ def import_statement(
     digest = hashlib.sha256(content).hexdigest()
     again = db.execute(
         select(BankStatement.id).where(
-            BankStatement.tenant_id == TENANT_ID,
+            BankStatement.tenant_id == current_tenant_id(db),
             BankStatement.bank_account_id == account.id,
             BankStatement.file_sha256 == digest,
         )
@@ -179,7 +181,7 @@ def import_statement(
             fresh.append(r)
     last = max(parsed.rows, key=lambda r: (r.on, r.line_no))
     statement = BankStatement(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         bank_account_id=account.id,
         filename=filename[:200] or "statement.csv",
         file_sha256=digest,
@@ -195,7 +197,7 @@ def import_statement(
     for r in fresh:
         db.add(
             BankStatementLine(
-                tenant_id=TENANT_ID,
+                tenant_id=current_tenant_id(db),
                 statement_id=statement.id,
                 line_no=r.line_no,
                 line_date=r.on,
@@ -219,7 +221,7 @@ def import_statement(
 def list_statements(db: Session) -> list[BankStatementOut]:
     rows = db.scalars(
         select(BankStatement)
-        .where(BankStatement.tenant_id == TENANT_ID)
+        .where(BankStatement.tenant_id == current_tenant_id(db))
         .order_by(BankStatement.id.desc())
     )
     return [_view_statement(db, r) for r in rows]
@@ -239,7 +241,7 @@ def books_in_range(
         select(Payment, Party.name)
         .join(Party, Party.id == Payment.party_id)
         .where(
-            Payment.tenant_id == TENANT_ID,
+            Payment.tenant_id == current_tenant_id(db),
             Payment.mode != PaymentMode.CASH,
             Payment.payment_date >= date_from,
             Payment.payment_date <= date_to,
@@ -256,7 +258,7 @@ def books_in_range(
         )
     entries = db.scalars(
         select(CashEntry).where(
-            CashEntry.tenant_id == TENANT_ID,
+            CashEntry.tenant_id == current_tenant_id(db),
             CashEntry.entry_date >= date_from,
             CashEntry.entry_date <= date_to,
         )
@@ -265,7 +267,7 @@ def books_in_range(
     reversed_ids |= set(
         db.scalars(
             select(CashEntry.reverses_id).where(
-                CashEntry.tenant_id == TENANT_ID, CashEntry.reverses_id.is_not(None)
+                CashEntry.tenant_id == current_tenant_id(db), CashEntry.reverses_id.is_not(None)
             )
         )
     )
@@ -307,7 +309,7 @@ def reconciliation(
         select(BankStatementLine)
         .join(BankStatement, BankStatement.id == BankStatementLine.statement_id)
         .where(
-            BankStatement.tenant_id == TENANT_ID,
+            BankStatement.tenant_id == current_tenant_id(db),
             BankStatementLine.line_date >= date_from,
             BankStatementLine.line_date <= date_to,
         )
@@ -367,7 +369,7 @@ def reconciliation(
         select(BankStatementLine.balance, BankStatementLine.line_date)
         .join(BankStatement, BankStatement.id == BankStatementLine.statement_id)
         .where(
-            BankStatement.tenant_id == TENANT_ID,
+            BankStatement.tenant_id == current_tenant_id(db),
             BankStatementLine.balance.is_not(None),
             BankStatementLine.line_date <= date_to,
         )
@@ -396,7 +398,7 @@ def latest_balance(db: Session, on_or_before: date) -> tuple[Decimal, date] | No
     row = db.execute(
         select(BankStatementLine.balance, BankStatementLine.line_date)
         .where(
-            BankStatementLine.tenant_id == TENANT_ID,
+            BankStatementLine.tenant_id == current_tenant_id(db),
             BankStatementLine.balance.is_not(None),
             BankStatementLine.line_date <= on_or_before,
         )

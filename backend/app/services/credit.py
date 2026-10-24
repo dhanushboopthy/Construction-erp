@@ -6,7 +6,7 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import credit as credit_rules
 from app.domain import ledger as ledger_rules
 from app.domain.ledger import Account, LedgerEntry
@@ -24,7 +24,7 @@ def open_bills(
     rows = db.execute(
         select(PartyLedger)
         .where(
-            PartyLedger.tenant_id == TENANT_ID,
+            PartyLedger.tenant_id == current_tenant_id(db),
             PartyLedger.party_id == party.id,
             PartyLedger.account == LedgerAccount.RECEIVABLE,
         )
@@ -37,7 +37,7 @@ def open_bills(
     due_by_number = dict(
         db.execute(
             select(SalesInvoice.number, SalesInvoice.due_date).where(
-                SalesInvoice.tenant_id == TENANT_ID, SalesInvoice.party_id == party.id
+                SalesInvoice.tenant_id == current_tenant_id(db), SalesInvoice.party_id == party.id
             )
         ).all()
     )

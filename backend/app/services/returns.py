@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.core.clock import today_ist
 from app.core.errors import BusinessRuleError, NotFoundError
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import gst
 from app.domain import returns as return_rules
 from app.domain.compliance import return_window_open
@@ -96,7 +96,11 @@ def create_credit_note(
     can_access: Callable[[int], bool],
 ) -> CreditNote:
     invoice = db.get(SalesInvoice, data.invoice_id)
-    if invoice is None or invoice.tenant_id != TENANT_ID or not can_access(invoice.location_id):
+    if (
+        invoice is None
+        or invoice.tenant_id != current_tenant_id(db)
+        or not can_access(invoice.location_id)
+    ):
         raise NotFoundError("Invoice not found", field="invoice_id")
     _no_repeats(data.lines)
     today = today_ist()
@@ -143,7 +147,7 @@ def create_credit_note(
         (a.approved_by for a in approvals if a.action is ApprovalAction.LATE_RETURN), None
     )
     note = CreditNote(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         number=number,
         financial_year=fy_label(today, settings.financial_year_start_month),
         location_id=invoice.location_id,
@@ -167,7 +171,7 @@ def create_credit_note(
         approved_by=approver if approver is not None else (actor_id if is_owner else None),
         lines=[
             CreditNoteLine(
-                tenant_id=TENANT_ID,
+                tenant_id=current_tenant_id(db),
                 line_no=n,
                 sales_line_id=line.id,
                 item_id=line.item_id,
@@ -226,7 +230,7 @@ def create_credit_note(
 
 def get_credit_note(db: Session, note_id: int) -> CreditNote:
     row = db.get(CreditNote, note_id)
-    if row is None or row.tenant_id != TENANT_ID:
+    if row is None or row.tenant_id != current_tenant_id(db):
         raise NotFoundError("Credit note not found")
     return row
 
@@ -240,7 +244,7 @@ def list_credit_notes(
     limit: int,
     offset: int,
 ) -> tuple[list[CreditNote], int]:
-    filters = [CreditNote.tenant_id == TENANT_ID]
+    filters = [CreditNote.tenant_id == current_tenant_id(db)]
     if location_ids is not None:
         filters.append(CreditNote.location_id.in_(location_ids))
     if invoice_id is not None:
@@ -310,7 +314,7 @@ def returned_on_purchase(db: Session, purchase_id: int) -> dict[int, Decimal]:
 
 def create_debit_note(db: Session, data: DebitNoteCreate, *, actor_id: int) -> DebitNote:
     purchase = db.get(Purchase, data.purchase_id)
-    if purchase is None or purchase.tenant_id != TENANT_ID:
+    if purchase is None or purchase.tenant_id != current_tenant_id(db):
         raise NotFoundError("Purchase not found", field="purchase_id")
     supplier = db.get(Party, purchase.supplier_id)
     if supplier is None:
@@ -359,7 +363,7 @@ def create_debit_note(db: Session, data: DebitNoteCreate, *, actor_id: int) -> D
         fy_start_month=settings.financial_year_start_month,
     )
     note = DebitNote(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         number=number,
         financial_year=fy_label(today, settings.financial_year_start_month),
         location_id=purchase.location_id,
@@ -376,7 +380,7 @@ def create_debit_note(db: Session, data: DebitNoteCreate, *, actor_id: int) -> D
         grand_total=totals.grand_total,
         lines=[
             DebitNoteLine(
-                tenant_id=TENANT_ID,
+                tenant_id=current_tenant_id(db),
                 line_no=n,
                 purchase_line_id=line.id,
                 item_id=line.item_id,
@@ -430,7 +434,7 @@ def create_debit_note(db: Session, data: DebitNoteCreate, *, actor_id: int) -> D
 
 def get_debit_note(db: Session, note_id: int) -> DebitNote:
     row = db.get(DebitNote, note_id)
-    if row is None or row.tenant_id != TENANT_ID:
+    if row is None or row.tenant_id != current_tenant_id(db):
         raise NotFoundError("Debit note not found")
     return row
 
@@ -438,7 +442,7 @@ def get_debit_note(db: Session, note_id: int) -> DebitNote:
 def list_debit_notes(
     db: Session, *, purchase_id: int | None, party_id: int | None, limit: int, offset: int
 ) -> tuple[list[DebitNote], int]:
-    filters = [DebitNote.tenant_id == TENANT_ID]
+    filters = [DebitNote.tenant_id == current_tenant_id(db)]
     if purchase_id is not None:
         filters.append(DebitNote.purchase_id == purchase_id)
     if party_id is not None:

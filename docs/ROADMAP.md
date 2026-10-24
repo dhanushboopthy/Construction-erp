@@ -40,6 +40,15 @@ From [FINANCE_REVIEW.md](FINANCE_REVIEW.md); one branch and PR each.
 | FM9 | Forecast and accruals | 13-week cash forecast; rebate accrual | Skipped (owner decision, not needed) |
 | FM10 | Orders, lots and demand | PO → GRN → bill match; cement oldest week first; fill rate | **Done** (`feat/fm10-orders-lots-demand`; smallest versions of lots and the log, see SPEC) |
 
+## SaaS milestones
+
+Duolink hosts the ERP for many companies. One branch and PR each.
+
+| # | Milestone | Acceptance test | Status |
+| --- | --- | --- | --- |
+| 15 | Multi-tenancy foundation: `tenant` table, company by subdomain, tenant on the session, row-level security, `--tenant` on the scripts (ADR 0011) | A second company on `beta.localhost` signs in with the same usernames, sees none of the first company's rows on any screen, and the database refuses a cross-company row | **Done** (`feat/m15-multi-tenancy`) |
+| 16 | Duolink super admin on `admin.<domain>/admin`: companies, users across companies, activity, plans and limits | Create a company and sign in at its subdomain; suspend it and its users are signed out; the plan's user limit is enforced | Planned (`feat/m16-platform-admin`) |
+
 ## Already in place (Milestones 0–1)
 
 - Backend: FastAPI app factory, settings with production safety checks, JSON logs, request ids,

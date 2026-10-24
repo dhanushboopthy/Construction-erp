@@ -1,7 +1,31 @@
-"""Single tenant for now (ADR 0004).
+"""Which company (tenant) a database session works for (ADR 0011).
 
-Every table has tenant_id and every query filters on it, so going multi-tenant later means
-reading the tenant from the signed-in user and adding row-level security, not a rewrite.
+The tenant is read from the request's subdomain and the signed-in user (`api/deps.py`), then
+kept on `Session.info`, like the acting user. Services filter every query on
+`current_tenant_id(db)`, and PostgreSQL row-level security refuses rows of other companies even
+if a filter is forgotten (`app/services/tenancy.py` passes the tenant to the database).
 """
 
-TENANT_ID = 1
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
+
+TENANT_KEY = "tenant_id"
+
+
+class NoTenantError(RuntimeError):
+    """A service ran without a company set on its session: a programming error."""
+
+
+def set_tenant(db: Session, tenant_id: int) -> None:
+    db.info[TENANT_KEY] = tenant_id
+    if db.in_transaction():
+        # Already inside a transaction: tell the database now. New transactions are told by
+        # the after_begin listener.
+        db.execute(select(func.set_config("app.tenant_id", str(tenant_id), True)))
+
+
+def current_tenant_id(db: Session) -> int:
+    tenant_id = db.info.get(TENANT_KEY)
+    if tenant_id is None:
+        raise NoTenantError("No company is set on this database session")
+    return int(tenant_id)

@@ -1,4 +1,5 @@
-"""Request dependencies: database session, the signed-in user (principal) and role checks.
+"""Request dependencies: database session, the company (tenant), the signed-in user (principal)
+and role checks.
 
 Permissions are enforced here, in the API, not only in the screens (rule B4).
 """
@@ -15,8 +16,11 @@ from sqlalchemy.orm import Session
 from app.core.db import get_db
 from app.core.errors import AuthenticationError, PermissionDeniedError
 from app.core.security import decode_access_token
+from app.core.tenancy import set_tenant
 from app.models.enums import Role
 from app.models.setup import AppUser
+from app.models.tenancy import Tenant
+from app.services import tenants as tenant_service
 from app.services.audit import set_actor
 
 _bearer = HTTPBearer(auto_error=False)
@@ -47,9 +51,31 @@ class Principal:
         return self.role is not Role.COUNTER or location_id in self.location_ids
 
 
+def request_host(request: Request) -> str | None:
+    """The host the browser asked for. Behind nginx (or the Vite proxy) that is
+    X-Forwarded-Host when present, else Host."""
+    forwarded = request.headers.get("x-forwarded-host")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.headers.get("host")
+
+
+def get_tenant(request: Request, db: DbSession) -> Tenant:
+    """The company named by the subdomain (ADR 0011). Every later query on this session is for
+    that company, and the database refuses rows of any other."""
+    tenant = tenant_service.for_host(db, request_host(request))
+    set_tenant(db, tenant.id)
+    request.state.tenant_id = tenant.id
+    return tenant
+
+
+CurrentTenant = Annotated[Tenant, Depends(get_tenant)]
+
+
 def get_principal(
     request: Request,
     db: DbSession,
+    tenant: CurrentTenant,
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
 ) -> Principal:
     if credentials is None:
@@ -58,9 +84,12 @@ def get_principal(
         claims = decode_access_token(credentials.credentials)
     except jwt.InvalidTokenError as exc:
         raise AuthenticationError("Your session has expired. Sign in again.") from exc
+    if claims.tenant_id != tenant.id:
+        # A token from acme's address is no good at another company's address.
+        raise AuthenticationError("Sign in to continue")
 
     user = db.get(AppUser, claims.user_id)
-    if user is None or not user.is_active or user.tenant_id != claims.tenant_id:
+    if user is None or not user.is_active or user.tenant_id != tenant.id:
         raise AuthenticationError("This account is not active")
 
     set_actor(db, user.id)

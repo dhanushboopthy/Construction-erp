@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 
 from app.core.clock import today_ist
 from app.core.errors import BusinessRuleError, NotFoundError
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import orders as rules
 from app.domain.money import ZERO, money, qty
 from app.domain.units import to_base
@@ -51,21 +51,21 @@ from app.services.shop_settings import get_settings_row
 
 def get_order_row(db: Session, order_id: int) -> PurchaseOrder:
     row = db.get(PurchaseOrder, order_id)
-    if row is None or row.tenant_id != TENANT_ID:
+    if row is None or row.tenant_id != current_tenant_id(db):
         raise NotFoundError("Purchase order not found")
     return row
 
 
 def _place_and_supplier(db: Session, supplier_id: int, location_id: int) -> tuple[Party, Location]:
     supplier = db.get(Party, supplier_id)
-    if supplier is None or supplier.tenant_id != TENANT_ID or not supplier.is_active:
+    if supplier is None or supplier.tenant_id != current_tenant_id(db) or not supplier.is_active:
         raise NotFoundError("Supplier not found or inactive", field="supplier_id")
     if supplier.type is PartyType.CUSTOMER:
         raise BusinessRuleError(
             "This party is a customer, not a supplier", code="WRONG_PARTY_TYPE", field="supplier_id"
         )
     place = db.get(Location, location_id)
-    if place is None or place.tenant_id != TENANT_ID or not place.is_active:
+    if place is None or place.tenant_id != current_tenant_id(db) or not place.is_active:
         raise NotFoundError("Location not found or inactive", field="location_id")
     return supplier, place
 
@@ -85,7 +85,7 @@ def create_order(db: Session, data: OrderCreate, *, actor_id: int) -> PurchaseOr
     lines: list[PurchaseOrderLine] = []
     for index, line in enumerate(data.lines, start=1):
         item = db.get(Item, line.item_id)
-        if item is None or item.tenant_id != TENANT_ID or not item.is_active:
+        if item is None or item.tenant_id != current_tenant_id(db) or not item.is_active:
             raise NotFoundError("Item not found or inactive", field=f"lines[{index - 1}].item_id")
         conversion = item_service.conversions(item).get(line.unit.lower())
         if conversion is None:
@@ -102,7 +102,7 @@ def create_order(db: Session, data: OrderCreate, *, actor_id: int) -> PurchaseOr
             ) from exc
         lines.append(
             PurchaseOrderLine(
-                tenant_id=TENANT_ID,
+                tenant_id=current_tenant_id(db),
                 line_no=index,
                 item_id=item.id,
                 unit=line.unit.lower(),
@@ -119,7 +119,7 @@ def create_order(db: Session, data: OrderCreate, *, actor_id: int) -> PurchaseOr
         fy_start_month=settings.financial_year_start_month,
     )
     order = PurchaseOrder(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         number=number,
         supplier_id=supplier.id,
         location_id=place.id,
@@ -161,7 +161,9 @@ def _billed_by_item(
 def order_view(db: Session, order: PurchaseOrder, *, owner: bool) -> OrderOut | OrderOwnerOut:
     supplier = db.get(Party, order.supplier_id)
     place = db.get(Location, order.location_id)
-    items = {i.id: i for i in db.scalars(select(Item).where(Item.tenant_id == TENANT_ID))}
+    items = {
+        i.id: i for i in db.scalars(select(Item).where(Item.tenant_id == current_tenant_id(db)))
+    }
     received = _received_by_line(db, order.id)
     billed = _billed_by_item(db, order.id)
     lines: list[OrderLineOut] = []
@@ -247,7 +249,7 @@ def list_orders(
     supplier_id: int | None,
     open_only: bool,
 ) -> list[OrderOut | OrderOwnerOut]:
-    stmt = select(PurchaseOrder).where(PurchaseOrder.tenant_id == TENANT_ID)
+    stmt = select(PurchaseOrder).where(PurchaseOrder.tenant_id == current_tenant_id(db))
     if location_ids is not None:
         stmt = stmt.where(PurchaseOrder.location_id.in_(location_ids))
     if supplier_id is not None:
@@ -326,7 +328,7 @@ def create_receipt(
             ) from exc
         lines.append(
             GoodsReceiptLine(
-                tenant_id=TENANT_ID,
+                tenant_id=current_tenant_id(db),
                 order_line_id=line.id,
                 item_id=line.item_id,
                 unit=line.unit,
@@ -343,7 +345,7 @@ def create_receipt(
         fy_start_month=settings.financial_year_start_month,
     )
     receipt = GoodsReceipt(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         number=number,
         order_id=order.id,
         location_id=order.location_id,
@@ -494,12 +496,14 @@ def match_report(
             "The end date is before the start date", code="BAD_RANGE", field="date_to"
         )
     settings = get_settings_row(db)
-    items = {i.id: i for i in db.scalars(select(Item).where(Item.tenant_id == TENANT_ID))}
+    items = {
+        i.id: i for i in db.scalars(select(Item).where(Item.tenant_id == current_tenant_id(db)))
+    }
     owners = {u.id for u in db.scalars(select(AppUser).where(AppUser.role == Role.OWNER))}
     purchases = db.scalars(
         select(Purchase)
         .where(
-            Purchase.tenant_id == TENANT_ID,
+            Purchase.tenant_id == current_tenant_id(db),
             Purchase.purchase_order_id.is_not(None),
             Purchase.bill_date >= date_from,
             Purchase.bill_date <= date_to,

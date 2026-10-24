@@ -7,6 +7,7 @@ import type {
   LocationUpdate,
   ShopSettings,
   ShopSettingsUpdate,
+  TenantPublic,
   User,
   UserCreate,
   UserUpdate,
@@ -15,10 +16,21 @@ import type {
 /** Milestone 1 setup data: shop settings, users and locations (owner screens). */
 
 const keys = {
+  tenant: ["tenant"] as const,
   settings: ["settings"] as const,
   users: ["users"] as const,
   locations: (all: boolean) => ["locations", { all }] as const,
 };
+
+/** The company this address (subdomain) belongs to. Public: the sign-in page shows its name. */
+export function useTenant() {
+  return useQuery({
+    queryKey: keys.tenant,
+    queryFn: () => api<TenantPublic>("/tenant"),
+    retry: false,
+    staleTime: Infinity,
+  });
+}
 
 export function useShopSettings() {
   return useQuery({ queryKey: keys.settings, queryFn: () => api<ShopSettings>("/settings") });

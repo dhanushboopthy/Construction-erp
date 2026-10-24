@@ -30,7 +30,12 @@ Every error has the same body:
 
 ## Auth flow
 
+0. The address picks the company (ADR 0011): `acme.<BASE_DOMAIN>` is the company `acme`.
+   `GET /tenant` → `{slug, name, status}` for the sign-in page. An unknown address answers 404
+   `TENANT_NOT_FOUND`. A suspended or closed company answers 403 `TENANT_SUSPENDED` /
+   `TENANT_CANCELLED` on every route.
 1. `POST /auth/login {username, password}` → `{access_token, expires_in, user}` + refresh cookie.
+   The username is looked up in the address's company only.
 2. Send `Authorization: Bearer <access_token>`.
 3. On 401, `POST /auth/refresh` (cookie only) → new token + new cookie; retry once.
 4. `POST /auth/logout` revokes the session and clears the cookie.
@@ -212,8 +217,9 @@ Errors: `CASH_ONLY` (deposit or withdrawal not in cash), `CATEGORY_REQUIRED`,
 | GET | `/system/status` | owner |
 | POST | `/system/verify?full=true\|false` | owner |
 
-Every other route needs a sign-in; the only open ones are `/health`, `/health/ready`,
+Every other route needs a sign-in; the only open ones are `/health`, `/health/ready`, `/tenant`,
 `/auth/login`, `/auth/refresh` and `/auth/logout`. All `/api` answers are `Cache-Control: no-store`.
+A token is good only at its own company's address.
 
 ## Endpoints (Milestone 13)
 

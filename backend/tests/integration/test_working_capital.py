@@ -28,7 +28,7 @@ from sqlalchemy import text
 
 from app.core.clock import today_ist
 from app.services import verify
-from tests.conftest import login
+from tests.conftest import as_db_owner, login
 from tests.integration.test_sales import (  # noqa: F401 - the world fixture is shared
     ACCOUNTANT,
     COUNTER,
@@ -251,10 +251,11 @@ def test_the_cost_check_ties_opening_stock_purchases_and_cost_of_goods_to_closin
 
 
 def test_the_cost_check_catches_a_wrong_cost_on_a_bill(client, month, seeded):
-    seeded.execute(text("ALTER TABLE sales_line DISABLE TRIGGER sales_line_no_edit"))
-    # A costing bug: every line's cost recorded ₹5 a unit too low.
-    seeded.execute(text("UPDATE sales_line SET cost_per_unit = cost_per_unit - 5"))
-    seeded.execute(text("ALTER TABLE sales_line ENABLE TRIGGER sales_line_no_edit"))
+    with as_db_owner(seeded):
+        seeded.execute(text("ALTER TABLE sales_line DISABLE TRIGGER sales_line_no_edit"))
+        # A costing bug: every line's cost recorded ₹5 a unit too low.
+        seeded.execute(text("UPDATE sales_line SET cost_per_unit = cost_per_unit - 5"))
+        seeded.execute(text("ALTER TABLE sales_line ENABLE TRIGGER sales_line_no_edit"))
     check = next(c for c in verify.run_checks(seeded).checks if c.name == "Cost of goods")
     assert check.state == "fail" and "cost of goods sold" in check.detail
     assert "stock ledger shows" in check.detail
@@ -265,14 +266,15 @@ def test_the_cost_check_reports_unreplayable_stock_and_quiet_months(world, seede
 
     quiet = cogs_check(seeded, today=date(2001, 5, 15))  # no stock moved then
     assert quiet.state == "ok" and "nothing to check" in quiet.detail
-    seeded.execute(text("ALTER TABLE stock_ledger DISABLE TRIGGER stock_ledger_append_only"))
-    seeded.execute(
-        text(
-            "INSERT INTO stock_ledger (tenant_id, item_id, location_id, entry_date, qty_in, qty_out, "
-            "unit_cost, ref_type) SELECT 1, id, (SELECT id FROM location LIMIT 1), CURRENT_DATE, 0, 99999999, 1, "
-            "'adjustment' FROM item LIMIT 1"
+    with as_db_owner(seeded):
+        seeded.execute(text("ALTER TABLE stock_ledger DISABLE TRIGGER stock_ledger_append_only"))
+        seeded.execute(
+            text(
+                "INSERT INTO stock_ledger (tenant_id, item_id, location_id, entry_date, qty_in, "
+                "qty_out, unit_cost, ref_type) SELECT 1, id, (SELECT id FROM location LIMIT 1), "
+                "CURRENT_DATE, 0, 99999999, 1, 'adjustment' FROM item LIMIT 1"
+            )
         )
-    )
-    seeded.execute(text("ALTER TABLE stock_ledger ENABLE TRIGGER stock_ledger_append_only"))
+        seeded.execute(text("ALTER TABLE stock_ledger ENABLE TRIGGER stock_ledger_append_only"))
     broken = cogs_check(seeded)
     assert broken.state == "fail" and "cannot be replayed" in broken.detail

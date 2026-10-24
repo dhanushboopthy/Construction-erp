@@ -15,7 +15,7 @@ from app.core.errors import (
     NotFoundError,
     PermissionDeniedError,
 )
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import landed_cost as lc
 from app.domain import orders as order_rules
 from app.domain import weight_check as wc
@@ -60,7 +60,7 @@ from app.services.shop_settings import get_settings_row
 
 
 def list_components(db: Session, include_inactive: bool = False) -> list[CostComponent]:
-    stmt = select(CostComponent).where(CostComponent.tenant_id == TENANT_ID)
+    stmt = select(CostComponent).where(CostComponent.tenant_id == current_tenant_id(db))
     if not include_inactive:
         stmt = stmt.where(CostComponent.is_active.is_(True))
     return list(db.execute(stmt.order_by(CostComponent.name)).scalars())
@@ -68,7 +68,7 @@ def list_components(db: Session, include_inactive: bool = False) -> list[CostCom
 
 def _component(db: Session, component_id: int) -> CostComponent:
     row = db.get(CostComponent, component_id)
-    if row is None or row.tenant_id != TENANT_ID:
+    if row is None or row.tenant_id != current_tenant_id(db):
         raise NotFoundError("Charge type not found", field="component_id")
     return row
 
@@ -76,7 +76,7 @@ def _component(db: Session, component_id: int) -> CostComponent:
 def create_component(db: Session, data: CostComponentIn) -> CostComponent:
     taken = db.execute(
         select(CostComponent.id).where(
-            CostComponent.tenant_id == TENANT_ID,
+            CostComponent.tenant_id == current_tenant_id(db),
             func.lower(CostComponent.name) == data.name.lower(),
         )
     ).first()
@@ -84,7 +84,7 @@ def create_component(db: Session, data: CostComponentIn) -> CostComponent:
         raise ConflictError(
             "A charge type with this name exists", code="COMPONENT_EXISTS", field="name"
         )
-    row = CostComponent(tenant_id=TENANT_ID, **data.model_dump())
+    row = CostComponent(tenant_id=current_tenant_id(db), **data.model_dump())
     db.add(row)
     db.commit()
     return row
@@ -203,20 +203,20 @@ def _price_line(
 
 def _load_context(db: Session, data: PurchaseCreate) -> tuple[Party, Location, dict[int, Item]]:
     supplier = db.get(Party, data.supplier_id)
-    if supplier is None or supplier.tenant_id != TENANT_ID or not supplier.is_active:
+    if supplier is None or supplier.tenant_id != current_tenant_id(db) or not supplier.is_active:
         raise NotFoundError("Supplier not found or inactive", field="supplier_id")
     if supplier.type is PartyType.CUSTOMER:
         raise BusinessRuleError(
             "This party is a customer, not a supplier", code="WRONG_PARTY_TYPE", field="supplier_id"
         )
     location = db.get(Location, data.location_id)
-    if location is None or location.tenant_id != TENANT_ID or not location.is_active:
+    if location is None or location.tenant_id != current_tenant_id(db) or not location.is_active:
         raise NotFoundError("Location not found or inactive", field="location_id")
     ids = {line.item_id for line in data.lines}
     items = {
         i.id: i
         for i in db.execute(select(Item).where(Item.id.in_(ids))).scalars()
-        if i.tenant_id == TENANT_ID
+        if i.tenant_id == current_tenant_id(db)
     }
     return supplier, location, items
 
@@ -335,7 +335,7 @@ def create(
     closing_service.ensure_day_open(db, location.id, data.bill_date)
     duplicate = db.execute(
         select(Purchase.number).where(
-            Purchase.tenant_id == TENANT_ID,
+            Purchase.tenant_id == current_tenant_id(db),
             Purchase.supplier_id == supplier.id,
             func.lower(Purchase.bill_no) == data.bill_no.lower(),
         )
@@ -404,7 +404,7 @@ def create(
         )
     )
     purchase = Purchase(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         number=number,
         supplier_id=supplier.id,
         location_id=location.id,
@@ -422,7 +422,7 @@ def create(
         match_approval_id=approval.id if approval else None,
         lines=[
             PurchaseLine(
-                tenant_id=TENANT_ID,
+                tenant_id=current_tenant_id(db),
                 line_no=index,
                 item_id=p.item.id,
                 unit=p.data.unit.lower(),
@@ -444,7 +444,7 @@ def create(
                 mfg_year=p.data.mfg_year,
                 costs=[
                     PurchaseCost(
-                        tenant_id=TENANT_ID,
+                        tenant_id=current_tenant_id(db),
                         component_id=c.component_id,
                         name=c.name,
                         basis=c.basis,
@@ -496,7 +496,7 @@ def create(
 
 def get_purchase(db: Session, purchase_id: int) -> Purchase:
     row = db.get(Purchase, purchase_id)
-    if row is None or row.tenant_id != TENANT_ID:
+    if row is None or row.tenant_id != current_tenant_id(db):
         raise NotFoundError("Purchase not found")
     return row
 
@@ -513,7 +513,9 @@ def purchase_view(
     order = (
         db.get(PurchaseOrder, purchase.purchase_order_id) if purchase.purchase_order_id else None
     )
-    items = {i.id: i for i in db.execute(select(Item)).scalars()}
+    items = {
+        i.id: i for i in db.scalars(select(Item).where(Item.tenant_id == current_tenant_id(db)))
+    }
     base = {
         "id": purchase.id,
         "number": purchase.number,
@@ -592,7 +594,7 @@ def list_purchases(
     limit: int,
     offset: int,
 ) -> tuple[list[Purchase], int]:
-    filters = [Purchase.tenant_id == TENANT_ID]
+    filters = [Purchase.tenant_id == current_tenant_id(db)]
     if supplier_id is not None:
         filters.append(Purchase.supplier_id == supplier_id)
     if location_ids is not None:

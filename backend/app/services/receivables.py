@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.core.clock import today_ist
 from app.core.errors import BusinessRuleError, NotFoundError
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import finance
 from app.domain import ledger as ledger_rules
 from app.domain.finance import OverdueBucket
@@ -64,7 +64,10 @@ def provision_pct(settings: ShopSettings) -> dict[OverdueBucket, Decimal]:
 def receivable_entries(db: Session) -> dict[int, list[PartyLedger]]:
     rows = db.execute(
         select(PartyLedger)
-        .where(PartyLedger.tenant_id == TENANT_ID, PartyLedger.account == LedgerAccount.RECEIVABLE)
+        .where(
+            PartyLedger.tenant_id == current_tenant_id(db),
+            PartyLedger.account == LedgerAccount.RECEIVABLE,
+        )
         .order_by(PartyLedger.entry_date, PartyLedger.id)
     ).scalars()
     grouped: dict[int, list[PartyLedger]] = defaultdict(list)
@@ -82,20 +85,22 @@ def _entries(rows: list[PartyLedger]) -> list[LedgerEntry]:
 def receivables_report(db: Session, today: date, *, owner: bool) -> ReceivablesOut:
     settings = get_settings_row(db)
     parties = {
-        p.id: p for p in db.execute(select(Party).where(Party.tenant_id == TENANT_ID)).scalars()
+        p.id: p
+        for p in db.execute(select(Party).where(Party.tenant_id == current_tenant_id(db))).scalars()
     }
     # Bills carry their own due date; anything else (an opening balance) is due the day it starts.
     due = {
         i.number: i.due_date or i.invoice_date
         for i in db.execute(
-            select(SalesInvoice).where(SalesInvoice.tenant_id == TENANT_ID)
+            select(SalesInvoice).where(SalesInvoice.tenant_id == current_tenant_id(db))
         ).scalars()
     }
     window_start = today - timedelta(days=DSO_WINDOW_DAYS)
     credit_sales: dict[int, Decimal] = defaultdict(lambda: ZERO)
     for party_id, grand, paid in db.execute(
         select(SalesInvoice.party_id, SalesInvoice.grand_total, SalesInvoice.paid_at_billing).where(
-            SalesInvoice.tenant_id == TENANT_ID, SalesInvoice.invoice_date > window_start
+            SalesInvoice.tenant_id == current_tenant_id(db),
+            SalesInvoice.invoice_date > window_start,
         )
     ).all():
         credit_sales[party_id] += grand - paid
@@ -195,10 +200,10 @@ def _view(db: Session, row: BadDebtWriteoff) -> WriteoffOut:
 
 def create_writeoff(db: Session, data: WriteoffCreate, *, actor_id: int) -> WriteoffOut:
     place = db.get(Location, data.location_id)
-    if place is None or place.tenant_id != TENANT_ID or not place.is_active:
+    if place is None or place.tenant_id != current_tenant_id(db) or not place.is_active:
         raise NotFoundError("Shop not found", field="location_id")
     party = db.get(Party, data.party_id)
-    if party is None or party.tenant_id != TENANT_ID:
+    if party is None or party.tenant_id != current_tenant_id(db):
         raise NotFoundError("Customer not found", field="party_id")
     if party.type is PartyType.SUPPLIER:
         raise BusinessRuleError(
@@ -224,7 +229,7 @@ def create_writeoff(db: Session, data: WriteoffCreate, *, actor_id: int) -> Writ
         fy_start_month=settings.financial_year_start_month,
     )
     row = BadDebtWriteoff(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         number=number,
         location_id=place.id,
         party_id=party.id,
@@ -256,7 +261,7 @@ def create_writeoff(db: Session, data: WriteoffCreate, *, actor_id: int) -> Writ
 def list_writeoffs(
     db: Session, *, party_id: int | None, date_from: date | None, date_to: date | None
 ) -> list[WriteoffOut]:
-    stmt = select(BadDebtWriteoff).where(BadDebtWriteoff.tenant_id == TENANT_ID)
+    stmt = select(BadDebtWriteoff).where(BadDebtWriteoff.tenant_id == current_tenant_id(db))
     if party_id is not None:
         stmt = stmt.where(BadDebtWriteoff.party_id == party_id)
     if date_from is not None:
@@ -270,7 +275,7 @@ def list_writeoffs(
 def written_off(db: Session, date_from: date, date_to: date, location_id: int | None) -> Decimal:
     """Bad debts written off in a period, for the profit and loss."""
     stmt = select(BadDebtWriteoff.amount).where(
-        BadDebtWriteoff.tenant_id == TENANT_ID,
+        BadDebtWriteoff.tenant_id == current_tenant_id(db),
         BadDebtWriteoff.writeoff_date >= date_from,
         BadDebtWriteoff.writeoff_date <= date_to,
     )

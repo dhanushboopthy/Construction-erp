@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.core.clock import today_ist
 from app.core.errors import BusinessRuleError
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import closing as closing_rules
 from app.domain.fiscal import fy_label, fy_months, fy_start_year
 from app.domain.money import ZERO, money, split_pro_rata
@@ -55,7 +55,7 @@ def _lines(
     db: Session, date_from: date, date_to: date, location_ids: frozenset[int] | None
 ) -> list[_Line]:
     """One row per sold line, and a negative row per returned line, with its cost."""
-    scope = [SalesInvoice.tenant_id == TENANT_ID]
+    scope = [SalesInvoice.tenant_id == current_tenant_id(db)]
     if location_ids is not None:
         scope.append(SalesInvoice.location_id.in_(location_ids))
     links: dict[int, Decimal] = {
@@ -123,7 +123,7 @@ def _freight(db: Session, invoice_ids: set[int]) -> dict[int, Decimal]:
         return {}
     rows = db.execute(
         select(Trip.invoice_id, func.sum(Trip.freight_amount))
-        .where(Trip.tenant_id == TENANT_ID, Trip.invoice_id.in_(invoice_ids))
+        .where(Trip.tenant_id == current_tenant_id(db), Trip.invoice_id.in_(invoice_ids))
         .group_by(Trip.invoice_id)
     ).all()
     return {inv_id: money(total) for inv_id, total in rows if inv_id is not None}
@@ -215,8 +215,8 @@ def today(
         )
     else:
         in_scope = sum(1 for item in stock if item.quantity > ZERO)
-    scope = [SalesInvoice.tenant_id == TENANT_ID, SalesInvoice.invoice_date == on]
-    notes = [CreditNote.tenant_id == TENANT_ID, CreditNote.note_date == on]
+    scope = [SalesInvoice.tenant_id == current_tenant_id(db), SalesInvoice.invoice_date == on]
+    notes = [CreditNote.tenant_id == current_tenant_id(db), CreditNote.note_date == on]
     if location_ids is not None:
         scope.append(SalesInvoice.location_id.in_(location_ids))
         notes.append(CreditNote.location_id.in_(location_ids))
@@ -261,7 +261,7 @@ def sales_by_segment(db: Session, start_year: int | None) -> SegmentReport:
         select(SalesInvoice.invoice_date, SalesInvoice.taxable_value, Party.segment)
         .join(Party, Party.id == SalesInvoice.party_id)
         .where(
-            SalesInvoice.tenant_id == TENANT_ID,
+            SalesInvoice.tenant_id == current_tenant_id(db),
             SalesInvoice.invoice_date >= first,
             SalesInvoice.invoice_date <= end,
         )
@@ -270,7 +270,7 @@ def sales_by_segment(db: Session, start_year: int | None) -> SegmentReport:
         select(CreditNote.note_date, CreditNote.taxable_value, Party.segment)
         .join(Party, Party.id == CreditNote.party_id)
         .where(
-            CreditNote.tenant_id == TENANT_ID,
+            CreditNote.tenant_id == current_tenant_id(db),
             CreditNote.note_date >= first,
             CreditNote.note_date <= end,
         )

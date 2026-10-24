@@ -1,6 +1,7 @@
-"""Seed a fresh database with shop settings, two shops, a godown and starter users.
+"""Seed a company with shop settings, two shops, a godown and starter users.
 
-    python -m app.scripts.seed
+    python -m app.scripts.seed                  # the default company (DEFAULT_TENANT_SLUG)
+    python -m app.scripts.seed --tenant acme    # another company; created if it is new
 
 Safe to run twice: existing rows are left alone. In production every password must come from
 the environment (SEED_OWNER_PASSWORD, ...); the development defaults are refused there.
@@ -18,12 +19,14 @@ from app import services as _services  # noqa: F401 - registers audit listeners
 from app.core.config import get_settings
 from app.core.db import SessionLocal
 from app.core.security import hash_password
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import set_tenant
 from app.domain.landed_cost import ChargeBasis
-from app.models.enums import LocationKind, PartyType, Role
+from app.domain.tenancy import check_slug
+from app.models.enums import LocationKind, PartyType, Role, TenantPlan, TenantStatus
 from app.models.masters import Party
 from app.models.purchasing import CostComponent
 from app.models.setup import AppUser, Location, ShopSettings
+from app.models.tenancy import Tenant
 from app.services import cashbook
 
 DEV_PASSWORDS = {
@@ -69,17 +72,35 @@ def _password(username: str) -> tuple[str, bool]:
     return DEV_PASSWORDS[username], False
 
 
-def seed(db: Session, *, second_shop: bool | None = None) -> list[str]:
+def _tenant(db: Session, slug: str | None, shop_name: str, notes: list[str]) -> Tenant:
+    """The company to seed, created (active) if it does not exist yet."""
+    slug = check_slug(slug or get_settings().default_tenant_slug or "main")
+    tenant = db.execute(select(Tenant).where(Tenant.slug == slug)).scalar_one_or_none()
+    if tenant is None:
+        tenant = Tenant(slug=slug, name=shop_name, status=TenantStatus.ACTIVE, plan=TenantPlan.PRO)
+        db.add(tenant)
+        db.flush()
+        notes.append(f"created company {slug}")
+    return tenant
+
+
+def seed(
+    db: Session, *, tenant_slug: str | None = None, second_shop: bool | None = None
+) -> list[str]:
     notes: list[str] = []
     if second_shop is None:
         second_shop = os.environ.get("SEED_SHOPS", "1").strip() == "2"
     state_code = os.environ.get("SEED_STATE_CODE", "33")  # 33 = Tamil Nadu
+    shop_name = os.environ.get("SEED_SHOP_NAME", "Demo Construction Materials")
 
-    if db.execute(select(ShopSettings).where(ShopSettings.tenant_id == TENANT_ID)).first() is None:
+    tenant_id = _tenant(db, tenant_slug, shop_name, notes).id
+    set_tenant(db, tenant_id)
+
+    if db.execute(select(ShopSettings).where(ShopSettings.tenant_id == tenant_id)).first() is None:
         db.add(
             ShopSettings(
-                tenant_id=TENANT_ID,
-                legal_name=os.environ.get("SEED_SHOP_NAME", "Demo Construction Materials"),
+                tenant_id=tenant_id,
+                legal_name=shop_name,
                 state_code=state_code,
                 address="",
             )
@@ -88,36 +109,36 @@ def seed(db: Session, *, second_shop: bool | None = None) -> list[str]:
 
     by_code: dict[str, Location] = {
         loc.code: loc
-        for loc in db.execute(select(Location).where(Location.tenant_id == TENANT_ID)).scalars()
+        for loc in db.execute(select(Location).where(Location.tenant_id == tenant_id)).scalars()
     }
     for code, name, kind in LOCATIONS + ([SECOND_SHOP] if second_shop else []):
         if code not in by_code:
             by_code[code] = Location(
-                tenant_id=TENANT_ID, code=code, name=name, kind=kind, state_code=state_code
+                tenant_id=tenant_id, code=code, name=name, kind=kind, state_code=state_code
             )
             db.add(by_code[code])
             notes.append(f"created location {code} ({name})")
     db.flush()
 
     have = set(
-        db.execute(select(CostComponent.name).where(CostComponent.tenant_id == TENANT_ID)).scalars()
+        db.execute(select(CostComponent.name).where(CostComponent.tenant_id == tenant_id)).scalars()
     )
     for name, basis, amount in COST_COMPONENTS:
         if name not in have:
             db.add(
                 CostComponent(
-                    tenant_id=TENANT_ID, name=name, basis=basis, default_amount=Decimal(amount)
+                    tenant_id=tenant_id, name=name, basis=basis, default_amount=Decimal(amount)
                 )
             )
             notes.append(f"created charge type {name}")
 
     # Walk-in sales are normal B2C tax invoices to this party (ADR 0005).
     if not db.execute(
-        select(Party.id).where(Party.tenant_id == TENANT_ID, Party.name == "Walk-in customer")
+        select(Party.id).where(Party.tenant_id == tenant_id, Party.name == "Walk-in customer")
     ).first():
         db.add(
             Party(
-                tenant_id=TENANT_ID,
+                tenant_id=tenant_id,
                 name="Walk-in customer",
                 type=PartyType.CUSTOMER,
                 state_code=state_code,
@@ -130,14 +151,14 @@ def seed(db: Session, *, second_shop: bool | None = None) -> list[str]:
 
     for username, full_name, role, codes in USERS + ([SECOND_SHOP_USER] if second_shop else []):
         exists = db.execute(
-            select(AppUser.id).where(AppUser.tenant_id == TENANT_ID, AppUser.username == username)
+            select(AppUser.id).where(AppUser.tenant_id == tenant_id, AppUser.username == username)
         ).first()
         if exists:
             continue
         password, generated = _password(username)
         db.add(
             AppUser(
-                tenant_id=TENANT_ID,
+                tenant_id=tenant_id,
                 username=username,
                 full_name=full_name,
                 role=role,
@@ -152,9 +173,12 @@ def seed(db: Session, *, second_shop: bool | None = None) -> list[str]:
     return notes
 
 
-def main() -> int:
+def main(argv: list[str]) -> int:
+    if argv and (len(argv) != 2 or argv[0] != "--tenant"):
+        print("usage: python -m app.scripts.seed [--tenant <company code>]")
+        return 2
     with SessionLocal() as db:
-        notes = seed(db)
+        notes = seed(db, tenant_slug=argv[1] if argv else None)
     print("\n".join(notes) if notes else "Nothing to do: already seeded.")
     if get_settings().is_production and any("password:" in n for n in notes):
         print("Generated passwords are shown once. Store them safely and change them on first use.")
@@ -162,4 +186,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(sys.argv[1:]))

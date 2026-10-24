@@ -11,7 +11,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.errors import BusinessRuleError, ConflictError, NotFoundError, PermissionDeniedError
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import ledger as ledger_rules
 from app.domain.compliance import cash_receipt_blocked
 from app.domain.ledger import Account, LedgerEntry
@@ -49,7 +49,7 @@ def _open(db: Session, party_id: int, account: LedgerAccount) -> ledger_rules.Op
     rows = db.execute(
         select(PartyLedger)
         .where(
-            PartyLedger.tenant_id == TENANT_ID,
+            PartyLedger.tenant_id == current_tenant_id(db),
             PartyLedger.party_id == party_id,
             PartyLedger.account == account,
         )
@@ -64,7 +64,7 @@ def _open(db: Session, party_id: int, account: LedgerAccount) -> ledger_rules.Op
 def cash_received_on(db: Session, party_id: int, on: date) -> Decimal:
     total = db.execute(
         select(func.coalesce(func.sum(Payment.amount), 0)).where(
-            Payment.tenant_id == TENANT_ID,
+            Payment.tenant_id == current_tenant_id(db),
             Payment.party_id == party_id,
             Payment.direction == PaymentDirection.RECEIVED,
             Payment.mode == PaymentMode.CASH,
@@ -172,7 +172,8 @@ def create_payment(
     if idempotency_key:
         existing = db.execute(
             select(Payment).where(
-                Payment.tenant_id == TENANT_ID, Payment.idempotency_key == idempotency_key
+                Payment.tenant_id == current_tenant_id(db),
+                Payment.idempotency_key == idempotency_key,
             )
         ).scalar_one_or_none()
         if existing:
@@ -184,7 +185,7 @@ def create_payment(
             return _view(db, existing, [], ZERO), False
 
     party = db.get(Party, data.party_id)
-    if party is None or party.tenant_id != TENANT_ID:
+    if party is None or party.tenant_id != current_tenant_id(db):
         raise NotFoundError("Party not found", field="party_id")
     wrong = party.type is (PartyType.SUPPLIER if received else PartyType.CUSTOMER)
     if wrong:
@@ -196,7 +197,7 @@ def create_payment(
             field="party_id",
         )
     location = db.get(Location, data.location_id)
-    if location is None or location.tenant_id != TENANT_ID or not location.is_active:
+    if location is None or location.tenant_id != current_tenant_id(db) or not location.is_active:
         raise NotFoundError("Location not found or inactive", field="location_id")
     closing_service.ensure_day_open(db, location.id, data.payment_date)
     if data.site_id is not None:
@@ -237,7 +238,7 @@ def create_payment(
         fy_start_month=settings.financial_year_start_month,
     )
     payment = Payment(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         number=number,
         idempotency_key=idempotency_key,
         **data.model_dump(exclude={"allocations"}),
@@ -275,7 +276,7 @@ def receive_at_billing(
             fy_start_month=settings.financial_year_start_month,
         )
         payment = Payment(
-            tenant_id=TENANT_ID,
+            tenant_id=current_tenant_id(db),
             number=number,
             direction=PaymentDirection.RECEIVED,
             party_id=party.id,
@@ -303,7 +304,7 @@ def receive_at_billing(
 def list_payments(
     db: Session, party_id: int | None, location_ids: frozenset[int] | None
 ) -> list[PaymentOut]:
-    stmt = select(Payment).where(Payment.tenant_id == TENANT_ID)
+    stmt = select(Payment).where(Payment.tenant_id == current_tenant_id(db))
     if party_id is not None:
         stmt = stmt.where(Payment.party_id == party_id)
     if location_ids is not None:
@@ -319,7 +320,7 @@ def list_payments(
 
 def open_bills_view(db: Session, party_id: int, account: LedgerAccount) -> OpenBillsOut:
     party = db.get(Party, party_id)
-    if party is None or party.tenant_id != TENANT_ID:
+    if party is None or party.tenant_id != current_tenant_id(db):
         raise NotFoundError("Party not found")
     opened = _open(db, party_id, account)
     return OpenBillsOut(

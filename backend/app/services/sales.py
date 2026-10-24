@@ -19,7 +19,7 @@ from app.core.errors import (
     NotFoundError,
     PermissionDeniedError,
 )
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import credit as credit_rules
 from app.domain import dropship, gst, pricing
 from app.domain import ledger as ledger_rules
@@ -133,7 +133,7 @@ def _balance(db: Session, party_id: int) -> Decimal:
     rows = db.execute(
         select(PartyLedger)
         .where(
-            PartyLedger.tenant_id == TENANT_ID,
+            PartyLedger.tenant_id == current_tenant_id(db),
             PartyLedger.party_id == party_id,
             PartyLedger.account == LedgerAccount.RECEIVABLE,
         )
@@ -159,10 +159,10 @@ def price_invoice(
         raise PermissionDeniedError("You can only bill from your own shop")
     settings = get_settings_row(db)
     location = db.get(Location, data.location_id)
-    if location is None or location.tenant_id != TENANT_ID or not location.is_active:
+    if location is None or location.tenant_id != current_tenant_id(db) or not location.is_active:
         raise NotFoundError("Location not found or inactive", field="location_id")
     party = db.get(Party, data.party_id)
-    if party is None or party.tenant_id != TENANT_ID or not party.is_active:
+    if party is None or party.tenant_id != current_tenant_id(db) or not party.is_active:
         raise NotFoundError("Customer not found or inactive", field="party_id")
     if party.type is PartyType.SUPPLIER:
         raise BusinessRuleError(
@@ -207,7 +207,7 @@ def price_invoice(
     priced: list[PricedLine] = []
     for index, line in enumerate(data.lines):
         item = db.get(Item, line.item_id)
-        if item is None or item.tenant_id != TENANT_ID or not item.is_active:
+        if item is None or item.tenant_id != current_tenant_id(db) or not item.is_active:
             raise NotFoundError("Item not found or inactive", field="item_id")
         unit = (line.unit or item.base_unit).lower()
         conversion = item_service.conversions(item).get(unit)
@@ -328,7 +328,11 @@ def price_invoice(
                     )
                 )
             place_row = db.get(Location, where)
-            if place_row is None or place_row.tenant_id != TENANT_ID or not place_row.is_active:
+            if (
+                place_row is None
+                or place_row.tenant_id != current_tenant_id(db)
+                or not place_row.is_active
+            ):
                 raise NotFoundError("Stock location not found", field="source_location_id")
             row.source_location_id = where
             _, here = ledgers.stock_position(db, item.id, where)
@@ -494,7 +498,7 @@ def preview(
 def _existing(db: Session, key: str) -> SalesInvoice | None:
     return db.execute(
         select(SalesInvoice).where(
-            SalesInvoice.tenant_id == TENANT_ID, SalesInvoice.idempotency_key == key
+            SalesInvoice.tenant_id == current_tenant_id(db), SalesInvoice.idempotency_key == key
         )
     ).scalar_one_or_none()
 
@@ -553,7 +557,7 @@ def create(
     due = p.invoice_date + timedelta(days=credit_days) if p.party.credit_allowed else p.invoice_date
     t = p.totals
     invoice = SalesInvoice(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         number=number,
         financial_year=fy_label(p.invoice_date, p.settings.financial_year_start_month),
         location_id=p.location.id,
@@ -584,7 +588,7 @@ def create(
         status=InvoiceStatus.POSTED,
         lines=[
             SalesLine(
-                tenant_id=TENANT_ID,
+                tenant_id=current_tenant_id(db),
                 line_no=i,
                 item_id=r.item.id,
                 description=r.item.name,
@@ -686,7 +690,7 @@ def create(
 
 def get_invoice(db: Session, invoice_id: int) -> SalesInvoice:
     row = db.get(SalesInvoice, invoice_id)
-    if row is None or row.tenant_id != TENANT_ID:
+    if row is None or row.tenant_id != current_tenant_id(db):
         raise NotFoundError("Invoice not found")
     return row
 
@@ -702,7 +706,7 @@ def list_invoices(
     limit: int,
     offset: int,
 ) -> tuple[list[SalesInvoice], int]:
-    filters = [SalesInvoice.tenant_id == TENANT_ID]
+    filters = [SalesInvoice.tenant_id == current_tenant_id(db)]
     if location_ids is not None:
         filters.append(SalesInvoice.location_id.in_(location_ids))
     if party_id is not None:

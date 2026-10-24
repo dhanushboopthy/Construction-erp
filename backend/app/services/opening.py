@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.errors import BusinessRuleError, ConflictError, NotFoundError
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain.money import ZERO
 from app.models.enums import (
     LedgerAccount,
@@ -29,7 +29,7 @@ SUPPLIER_KINDS = {OpeningKind.PAYABLE, OpeningKind.SUPPLIER_ADVANCE}
 
 def _get(db: Session, row_id: int) -> OpeningBalance:
     row = db.get(OpeningBalance, row_id)
-    if row is None or row.tenant_id != TENANT_ID:
+    if row is None or row.tenant_id != current_tenant_id(db):
         raise NotFoundError("Opening entry not found")
     return row
 
@@ -54,14 +54,18 @@ def _validate_refs(
 ) -> None:
     if kind is OpeningKind.STOCK:
         item = db.get(Item, item_id) if item_id else None
-        if item is None or item.tenant_id != TENANT_ID or not item.is_active:
+        if item is None or item.tenant_id != current_tenant_id(db) or not item.is_active:
             raise NotFoundError("Item not found or inactive", field="item_id")
         location = db.get(Location, location_id) if location_id else None
-        if location is None or location.tenant_id != TENANT_ID or not location.is_active:
+        if (
+            location is None
+            or location.tenant_id != current_tenant_id(db)
+            or not location.is_active
+        ):
             raise NotFoundError("Location not found or inactive", field="location_id")
         return
     party = db.get(Party, party_id) if party_id else None
-    if party is None or party.tenant_id != TENANT_ID:
+    if party is None or party.tenant_id != current_tenant_id(db):
         raise NotFoundError("Party not found", field="party_id")
     wants_customer = kind in CUSTOMER_KINDS
     if wants_customer and party.type is PartyType.SUPPLIER:
@@ -105,7 +109,9 @@ def create_row(db: Session, data: OpeningCreate) -> OpeningBalance:
         party_id=data.party_id,
         site_id=data.site_id,
     )
-    row = OpeningBalance(tenant_id=TENANT_ID, status=OpeningStatus.DRAFT, **data.model_dump())
+    row = OpeningBalance(
+        tenant_id=current_tenant_id(db), status=OpeningStatus.DRAFT, **data.model_dump()
+    )
     db.add(row)
     _flush(db)
     db.commit()
@@ -153,16 +159,19 @@ def delete_row(db: Session, row_id: int) -> None:
 def list_rows(
     db: Session, *, kind: OpeningKind | None = None, status: OpeningStatus | None = None
 ) -> list[OpeningOut]:
-    stmt = select(OpeningBalance).where(OpeningBalance.tenant_id == TENANT_ID)
+    stmt = select(OpeningBalance).where(OpeningBalance.tenant_id == current_tenant_id(db))
     if kind:
         stmt = stmt.where(OpeningBalance.kind == kind)
     if status:
         stmt = stmt.where(OpeningBalance.status == status)
     rows = list(db.execute(stmt.order_by(OpeningBalance.id)).scalars())
 
-    items = {i.id: i for i in db.execute(select(Item)).scalars()}
-    locations = {loc.id: loc for loc in db.execute(select(Location)).scalars()}
-    parties = {p.id: p for p in db.execute(select(Party)).scalars()}
+    tenant_id = current_tenant_id(db)
+    items = {i.id: i for i in db.scalars(select(Item).where(Item.tenant_id == tenant_id))}
+    locations = {
+        loc.id: loc for loc in db.scalars(select(Location).where(Location.tenant_id == tenant_id))
+    }
+    parties = {p.id: p for p in db.scalars(select(Party).where(Party.tenant_id == tenant_id))}
     sites = {s.id: s for s in db.execute(select(Site)).scalars()}
     out: list[OpeningOut] = []
     for r in rows:
@@ -190,7 +199,7 @@ def post(db: Session, kinds: list[OpeningKind], actor_id: int) -> PostResult:
         db.execute(
             select(OpeningBalance)
             .where(
-                OpeningBalance.tenant_id == TENANT_ID,
+                OpeningBalance.tenant_id == current_tenant_id(db),
                 OpeningBalance.status == OpeningStatus.DRAFT,
                 OpeningBalance.kind.in_(kinds),
             )

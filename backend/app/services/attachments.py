@@ -20,7 +20,7 @@ from app.core.errors import (
     PayloadTooLargeError,
     PermissionDeniedError,
 )
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.models.documents import Attachment
 from app.models.enums import AttachmentKind, AttachmentRef, Role
 from app.models.purchasing import Purchase
@@ -68,7 +68,7 @@ def _location_of(db: Session, ref_type: AttachmentRef, ref_id: int) -> int:
         row = db.get(SalesInvoice, ref_id)
     else:
         row = db.get(Trip, ref_id)
-    if row is None or row.tenant_id != TENANT_ID:
+    if row is None or row.tenant_id != current_tenant_id(db):
         raise NotFoundError("The document to attach to was not found", field="ref_id")
     return row.location_id
 
@@ -122,7 +122,7 @@ def upload(
         select(func.count())
         .select_from(Attachment)
         .where(
-            Attachment.tenant_id == TENANT_ID,
+            Attachment.tenant_id == current_tenant_id(db),
             Attachment.ref_type == ref_type,
             Attachment.ref_id == ref_id,
         )
@@ -131,13 +131,13 @@ def upload(
         raise BusinessRuleError(
             f"A document can hold up to {MAX_PER_DOCUMENT} files", code="TOO_MANY_FILES"
         )
-    key = f"attachments/{TENANT_ID}/{uuid.uuid4().hex}.{EXTENSION[content_type]}"
+    key = f"attachments/{current_tenant_id(db)}/{uuid.uuid4().hex}.{EXTENSION[content_type]}"
     try:
         get_storage().put(key, data)
     except (StorageError, OSError) as exc:
         raise AppError("The file could not be stored. Try again.", code="STORAGE_FAILED") from exc
     row = Attachment(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         ref_type=ref_type,
         ref_id=ref_id,
         kind=kind,
@@ -167,7 +167,7 @@ def list_for(
     rows = db.execute(
         select(Attachment)
         .where(
-            Attachment.tenant_id == TENANT_ID,
+            Attachment.tenant_id == current_tenant_id(db),
             Attachment.ref_type == ref_type,
             Attachment.ref_id == ref_id,
         )
@@ -180,7 +180,7 @@ def read(
     db: Session, attachment_id: int, role: Role, can_access: Callable[[int], bool]
 ) -> tuple[Attachment, bytes]:
     row = db.get(Attachment, attachment_id)
-    if row is None or row.tenant_id != TENANT_ID:
+    if row is None or row.tenant_id != current_tenant_id(db):
         raise NotFoundError("File not found")
     _check_access(
         row.ref_type, _location_of(db, row.ref_type, row.ref_id), role, can_access, write=False

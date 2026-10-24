@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 from app.core.clock import today_ist
 from app.core.errors import BusinessRuleError, NotFoundError, PermissionDeniedError
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import inventory_analytics as ia
 from app.domain.finance import needs_approval
 from app.domain.inventory_analytics import AdjustmentReason, Direction
@@ -113,7 +113,7 @@ def create_adjustment(
     if not actor.can_access:
         raise PermissionDeniedError("You can only adjust the stock of your own shop")
     place = db.get(Location, data.location_id)
-    if place is None or place.tenant_id != TENANT_ID or not place.is_active:
+    if place is None or place.tenant_id != current_tenant_id(db) or not place.is_active:
         raise NotFoundError("Location not found or inactive", field="location_id")
 
     today = today_ist()
@@ -165,7 +165,7 @@ def create_adjustment(
         fy_start_month=settings.financial_year_start_month,
     )
     row = StockAdjustment(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         number=number,
         location_id=place.id,
         adjustment_date=on,
@@ -175,7 +175,7 @@ def create_adjustment(
         created_by=actor.user_id,
         lines=[
             StockAdjustmentLine(
-                tenant_id=TENANT_ID,
+                tenant_id=current_tenant_id(db),
                 item_id=x.item.id,
                 direction=x.direction,
                 quantity=x.quantity,
@@ -215,7 +215,10 @@ def _views(
 ) -> list[AdjustmentOut] | list[AdjustmentOwnerOut]:
     if not rows:
         return []
-    items = {i.id: i for i in db.execute(select(Item).where(Item.tenant_id == TENANT_ID)).scalars()}
+    items = {
+        i.id: i
+        for i in db.execute(select(Item).where(Item.tenant_id == current_tenant_id(db))).scalars()
+    }
     codes = dict(db.execute(select(Location.id, Location.code)).all())
     users = dict(db.execute(select(AppUser.id, AppUser.full_name)).all())
     reverse_shortages = get_settings_row(db).itc_reverse_shortages
@@ -281,7 +284,7 @@ def _views(
 
 def get_adjustment(db: Session, adjustment_id: int) -> StockAdjustment:
     row = db.get(StockAdjustment, adjustment_id)
-    if row is None or row.tenant_id != TENANT_ID:
+    if row is None or row.tenant_id != current_tenant_id(db):
         raise NotFoundError("Adjustment not found")
     return row
 
@@ -304,7 +307,7 @@ def adjustment_book(
     if date_to < date_from:
         raise BusinessRuleError("The end date is before the start date", code="BAD_RANGE")
     stmt = select(StockAdjustment).where(
-        StockAdjustment.tenant_id == TENANT_ID,
+        StockAdjustment.tenant_id == current_tenant_id(db),
         StockAdjustment.adjustment_date >= date_from,
         StockAdjustment.adjustment_date <= date_to,
     )
@@ -354,7 +357,7 @@ def adjustment_moves(
         select(StockLedger, Item.gst_rate)
         .join(Item, Item.id == StockLedger.item_id)
         .where(
-            StockLedger.tenant_id == TENANT_ID,
+            StockLedger.tenant_id == current_tenant_id(db),
             StockLedger.ref_type.in_(ADJUSTMENT_REFS),
             StockLedger.entry_date >= date_from,
             StockLedger.entry_date <= date_to,
@@ -389,12 +392,15 @@ def itc_reversal(db: Session, period: str) -> ItcReversalOut:
     date_from, date_to = month_bounds(period)
     settings = get_settings_row(db)
     shortages = settings.itc_reverse_shortages
-    items = {i.id: i for i in db.execute(select(Item).where(Item.tenant_id == TENANT_ID)).scalars()}
+    items = {
+        i.id: i
+        for i in db.execute(select(Item).where(Item.tenant_id == current_tenant_id(db))).scalars()
+    }
     codes = dict(db.execute(select(Location.id, Location.code)).all())
     numbers = dict(
         db.execute(
             select(StockAdjustment.id, StockAdjustment.number).where(
-                StockAdjustment.tenant_id == TENANT_ID
+                StockAdjustment.tenant_id == current_tenant_id(db)
             )
         ).all()
     )

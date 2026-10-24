@@ -8,6 +8,7 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from app.core.clock import today_ist
+from app.core.tenancy import set_tenant
 from app.domain.gst import SupplyKind  # noqa: F401 - registers nothing; keeps imports honest
 from app.models.enums import StockRef
 from app.models.masters import Item, Party
@@ -85,6 +86,7 @@ def test_concurrent_saves_get_gapless_numbers_and_never_oversell(engine):
             barrier.wait()
             for i in range(5):
                 with Session(engine) as session:
+                    set_tenant(session, 1)
                     try:
                         invoice, _ = sales.create(
                             session,
@@ -114,6 +116,7 @@ def test_concurrent_saves_get_gapless_numbers_and_never_oversell(engine):
         numbers = sorted(int(n.rsplit("/", 1)[1]) for n in results)
         assert numbers == list(range(1, 31)), numbers  # gapless: no skips, no repeats
         with Session(engine) as db:
+            set_tenant(db, 1)
             assert db.execute(select(SalesInvoice.id)).all().__len__() == 30
             _, left = ledgers.stock_position(db, ids[2], ids[0])
             assert left == 0

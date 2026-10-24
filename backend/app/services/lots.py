@@ -17,7 +17,7 @@ from decimal import Decimal
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import orders as rules
 from app.domain.money import ZERO
 from app.models.enums import ItemCategory, PurchaseMode
@@ -39,7 +39,7 @@ def _layers(db: Session, item_id: int, location_id: int) -> list[tuple[rules.Lay
         select(PurchaseLine, Purchase.bill_date)
         .join(Purchase, Purchase.id == PurchaseLine.purchase_id)
         .where(
-            Purchase.tenant_id == TENANT_ID,
+            Purchase.tenant_id == current_tenant_id(db),
             Purchase.location_id == location_id,
             Purchase.mode == PurchaseMode.STOCK,
             PurchaseLine.item_id == item_id,
@@ -92,7 +92,7 @@ def record_picks(db: Session, sales_line: SalesLine, item: Item, location_id: in
         source = by_id[pick.layer_id]
         db.add(
             SalesLineLot(
-                tenant_id=TENANT_ID,
+                tenant_id=current_tenant_id(db),
                 sales_line_id=sales_line.id,
                 purchase_line_id=source.id,
                 mfg_week=source.mfg_week,

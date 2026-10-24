@@ -19,7 +19,7 @@ from app.core.errors import (
     ConflictError,
     NotFoundError,
 )
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import closing as rules
 from app.domain import controls as control_rules
 from app.domain.money import ZERO, money
@@ -58,7 +58,7 @@ def is_day_closed(db: Session, location_id: int, on: date) -> bool:
     return (
         db.execute(
             select(DailyClosing.id).where(
-                DailyClosing.tenant_id == TENANT_ID,
+                DailyClosing.tenant_id == current_tenant_id(db),
                 DailyClosing.location_id == location_id,
                 DailyClosing.closing_date == on,
                 DailyClosing.status == ClosingStatus.CLOSED,
@@ -103,10 +103,10 @@ def _sum(value: object) -> Decimal:
 
 def figures(db: Session, location_id: int, on: date) -> ClosingFigures:
     place = db.get(Location, location_id)
-    if place is None or place.tenant_id != TENANT_ID:
+    if place is None or place.tenant_id != current_tenant_id(db):
         raise NotFoundError("Shop not found", field="location_id")
     inv = [
-        SalesInvoice.tenant_id == TENANT_ID,
+        SalesInvoice.tenant_id == current_tenant_id(db),
         SalesInvoice.location_id == location_id,
         SalesInvoice.invoice_date == on,
     ]
@@ -130,7 +130,7 @@ def figures(db: Session, location_id: int, on: date) -> ClosingFigures:
     ).scalar()
     returns_count, returns_total = db.execute(
         select(func.count(), func.coalesce(func.sum(CreditNote.grand_total), 0)).where(
-            CreditNote.tenant_id == TENANT_ID,
+            CreditNote.tenant_id == current_tenant_id(db),
             CreditNote.location_id == location_id,
             CreditNote.note_date == on,
         )
@@ -140,7 +140,7 @@ def figures(db: Session, location_id: int, on: date) -> ClosingFigures:
         return _sum(
             db.execute(
                 select(func.coalesce(func.sum(Payment.amount), 0)).where(
-                    Payment.tenant_id == TENANT_ID,
+                    Payment.tenant_id == current_tenant_id(db),
                     Payment.location_id == location_id,
                     Payment.payment_date == on,
                     Payment.direction == PaymentDirection.RECEIVED,
@@ -157,7 +157,7 @@ def figures(db: Session, location_id: int, on: date) -> ClosingFigures:
     cash_out = _sum(
         db.execute(
             select(func.coalesce(func.sum(Payment.amount), 0)).where(
-                Payment.tenant_id == TENANT_ID,
+                Payment.tenant_id == current_tenant_id(db),
                 Payment.location_id == location_id,
                 Payment.payment_date == on,
                 Payment.direction == PaymentDirection.PAID,
@@ -172,7 +172,7 @@ def figures(db: Session, location_id: int, on: date) -> ClosingFigures:
         select(func.count())
         .select_from(Purchase)
         .where(
-            Purchase.tenant_id == TENANT_ID,
+            Purchase.tenant_id == current_tenant_id(db),
             Purchase.location_id == location_id,
             Purchase.bill_date == on,
         )
@@ -227,7 +227,7 @@ def _previous_counted(db: Session, location_id: int, before: date) -> Decimal:
     row = db.execute(
         select(DailyClosing.counted_cash)
         .where(
-            DailyClosing.tenant_id == TENANT_ID,
+            DailyClosing.tenant_id == current_tenant_id(db),
             DailyClosing.location_id == location_id,
             DailyClosing.closing_date < before,
         )
@@ -240,7 +240,7 @@ def _previous_counted(db: Session, location_id: int, before: date) -> Decimal:
 def _existing(db: Session, location_id: int, on: date) -> DailyClosing | None:
     return db.execute(
         select(DailyClosing).where(
-            DailyClosing.tenant_id == TENANT_ID,
+            DailyClosing.tenant_id == current_tenant_id(db),
             DailyClosing.location_id == location_id,
             DailyClosing.closing_date == on,
         )
@@ -400,7 +400,7 @@ def close_day(
         )
     now = datetime.now(UTC)
     row = existing or DailyClosing(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         location_id=data.location_id,
         closing_date=data.closing_date,
         times_closed=0,
@@ -442,7 +442,7 @@ def close_day(
 
 def reopen_day(db: Session, closing_id: int, data: ReopenIn, *, actor_id: int) -> DailyClosing:
     row = db.get(DailyClosing, closing_id)
-    if row is None or row.tenant_id != TENANT_ID:
+    if row is None or row.tenant_id != current_tenant_id(db):
         raise NotFoundError("Closing not found")
     if row.status is not ClosingStatus.CLOSED:
         raise ConflictError("This day is not closed", code="NOT_CLOSED")
@@ -466,7 +466,7 @@ def reopen_day(db: Session, closing_id: int, data: ReopenIn, *, actor_id: int) -
 def list_closings(
     db: Session, *, location_ids: frozenset[int] | None, limit: int, offset: int
 ) -> tuple[list[DailyClosing], int]:
-    filters = [DailyClosing.tenant_id == TENANT_ID]
+    filters = [DailyClosing.tenant_id == current_tenant_id(db)]
     if location_ids is not None:
         filters.append(DailyClosing.location_id.in_(location_ids))
     total = db.execute(select(func.count()).select_from(DailyClosing).where(*filters)).scalar_one()
@@ -486,7 +486,7 @@ def get_pdf(
     row = db.get(DailyClosing, closing_id)
     if (
         row is None
-        or row.tenant_id != TENANT_ID
+        or row.tenant_id != current_tenant_id(db)
         or not can_access(row.location_id)
         or not row.pdf_key
     ):

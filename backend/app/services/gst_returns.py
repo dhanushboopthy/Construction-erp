@@ -18,7 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.errors import AppError, BusinessRuleError
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import gst as gst_rules
 from app.domain import gstr
 from app.domain.gst import SupplyKind
@@ -127,7 +127,7 @@ def gstr1(db: Session, period: str) -> Gstr1:
         db.execute(
             select(SalesInvoice)
             .where(
-                SalesInvoice.tenant_id == TENANT_ID,
+                SalesInvoice.tenant_id == current_tenant_id(db),
                 SalesInvoice.invoice_date >= first,
                 SalesInvoice.invoice_date <= last,
             )
@@ -138,7 +138,7 @@ def gstr1(db: Session, period: str) -> Gstr1:
         db.execute(
             select(CreditNote)
             .where(
-                CreditNote.tenant_id == TENANT_ID,
+                CreditNote.tenant_id == current_tenant_id(db),
                 CreditNote.note_date >= first,
                 CreditNote.note_date <= last,
             )
@@ -255,7 +255,10 @@ def _add_b2cs(
 
 
 def _hsn(db: Session, invoices: list[SalesInvoice], notes: list[CreditNote]) -> list[HsnRow]:
-    units = {i.id: i.base_unit for i in db.execute(select(Item)).scalars()}
+    units = {
+        i.id: i.base_unit
+        for i in db.scalars(select(Item).where(Item.tenant_id == current_tenant_id(db)))
+    }
     acc: dict[tuple[str, Decimal], dict[str, Any]] = {}
 
     def add(line: Any, sign: int, unit: str) -> None:
@@ -588,7 +591,7 @@ def _purchase_figures(db: Session, first: date, last: date) -> list[tuple[Purcha
     out = []
     for purchase in db.execute(
         select(Purchase).where(
-            Purchase.tenant_id == TENANT_ID,
+            Purchase.tenant_id == current_tenant_id(db),
             Purchase.bill_date >= first,
             Purchase.bill_date <= last,
         )
@@ -628,14 +631,14 @@ def gstr3b(db: Session, period: str) -> Gstr3b:
     taxed = _zero()
     invoices = db.execute(
         select(SalesInvoice).where(
-            SalesInvoice.tenant_id == TENANT_ID,
+            SalesInvoice.tenant_id == current_tenant_id(db),
             SalesInvoice.invoice_date >= first,
             SalesInvoice.invoice_date <= last,
         )
     ).scalars()
     notes = db.execute(
         select(CreditNote).where(
-            CreditNote.tenant_id == TENANT_ID,
+            CreditNote.tenant_id == current_tenant_id(db),
             CreditNote.note_date >= first,
             CreditNote.note_date <= last,
         )
@@ -662,7 +665,7 @@ def gstr3b(db: Session, period: str) -> Gstr3b:
     reversed_ = _zero()
     for note in db.execute(
         select(DebitNote).where(
-            DebitNote.tenant_id == TENANT_ID,
+            DebitNote.tenant_id == current_tenant_id(db),
             DebitNote.note_date >= first,
             DebitNote.note_date <= last,
         )
@@ -709,7 +712,7 @@ def gstr3b(db: Session, period: str) -> Gstr3b:
 def _latest_import(db: Session, period: str) -> Gstr2bImport | None:
     return db.execute(
         select(Gstr2bImport)
-        .where(Gstr2bImport.tenant_id == TENANT_ID, Gstr2bImport.period == period)
+        .where(Gstr2bImport.tenant_id == current_tenant_id(db), Gstr2bImport.period == period)
         .order_by(Gstr2bImport.id.desc())
         .limit(1)
     ).scalar_one_or_none()
@@ -787,7 +790,7 @@ def import_2b(
     _bounds(period)
     rows = parse_2b(file_name, data)
     row = Gstr2bImport(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         period=period,
         file_name=file_name[:150],
         sha256=hashlib.sha256(data).hexdigest(),

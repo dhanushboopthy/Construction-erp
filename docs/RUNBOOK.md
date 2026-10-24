@@ -29,6 +29,18 @@ whoever looks after the server. Commands run in the project folder on the server
    issued* shows no missing numbers.
 4. Confirm the **off-site copy** is current: `BACKUP_REMOTE=... ./scripts/offsite-sync.sh`.
 
+## Several companies on one server
+
+The scripts work for one company at a time. Without `--tenant` they use the default company:
+
+- `python -m app.scripts.seed --tenant acme` sets up a new company (or completes one).
+- `python -m app.scripts.verify --tenant acme [--full]` checks one company's books.
+- `python -m app.scripts.reset_password owner --tenant acme` resets a password.
+
+Backups and restores cover **every company at once**. Restoring a backup puts every company back
+to that night. A per-company export and restore is not built yet, so think before restoring a
+shared server for one company's mistake.
+
 ## Something went wrong
 
 ### The backup row says "Needs action"

@@ -13,8 +13,9 @@ Related: [ROADMAP.md](ROADMAP.md) (milestones and status) · [ARCHITECTURE.md](A
 ## 1. Overview
 
 A web ERP for a new construction-materials business that bills on paper today: **two shops and
-one godown**. Version 1 serves this single client and must go live fast. Multi-tenant SaaS
-comes later, so every table already carries `tenant_id` (ADR 0004).
+one godown**. Version 1 serves this single client and must go live fast. Since Milestone 15 the
+same server can host many companies (Duolink SaaS): each company has its own subdomain, and its
+rows are kept apart by `tenant_id` and PostgreSQL row-level security (ADR 0011).
 
 **Products:** TMT bars, MS square pipe, round pipe, cement, binding wire, angles and channels.
 
@@ -87,8 +88,14 @@ G17 day lock · G18 owner approvals · G19 idempotency.
 
 ## 4. Data model
 
-Every table: `id`, `tenant_id` (default 1), `created_at`, `updated_at`, `created_by`,
-`updated_by` (where it is a business record). Money `NUMERIC(14,2)`, quantity `NUMERIC(14,3)`,
+Every table: `id`, `tenant_id` (a foreign key to `tenant`, no default: set from the session),
+`created_at`, `updated_at`, `created_by`, `updated_by` (where it is a business record).
+
+**Built (Milestone 15):** `tenant` (slug = subdomain, name, status trial / active / suspended /
+cancelled, plan trial / basic / pro, trial end, user and location limits, suspension reason).
+Every table with `tenant_id` has row-level security, policy `tenant_isolation`. `user_location`
+takes its user's company in a trigger. Public `GET /api/v1/tenant` returns the company of the
+address for the sign-in page. Money `NUMERIC(14,2)`, quantity `NUMERIC(14,3)`,
 unit cost `NUMERIC(14,4)`. Stock, balances and average cost are **derived from ledgers**, never
 stored as editable numbers. Enums are `VARCHAR` + `CHECK`.
 

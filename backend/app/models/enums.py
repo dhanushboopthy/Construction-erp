@@ -11,6 +11,22 @@ class Role(StrEnum):
     ACCOUNTANT = "accountant"
 
 
+class TenantStatus(StrEnum):
+    """A company's account with Duolink (ADR 0011). Suspended and cancelled companies cannot
+    sign in; their books are kept."""
+
+    TRIAL = "trial"
+    ACTIVE = "active"
+    SUSPENDED = "suspended"
+    CANCELLED = "cancelled"
+
+
+class TenantPlan(StrEnum):
+    TRIAL = "trial"
+    BASIC = "basic"
+    PRO = "pro"
+
+
 class LocationKind(StrEnum):
     SHOP = "shop"
     GODOWN = "godown"

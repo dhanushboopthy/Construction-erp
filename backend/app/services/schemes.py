@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.core.clock import today_ist
 from app.core.errors import BusinessRuleError, ConflictError, NotFoundError
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import schemes as rules
 from app.domain.money import ZERO, money
 from app.models.enums import LedgerAccount, PartyRef, PartyType
@@ -25,23 +25,27 @@ from app.services import ledgers
 
 def _scheme(db: Session, scheme_id: int) -> SupplierScheme:
     row = db.get(SupplierScheme, scheme_id)
-    if row is None or row.tenant_id != TENANT_ID:
+    if row is None or row.tenant_id != current_tenant_id(db):
         raise NotFoundError("Scheme not found")
     return row
 
 
 def create(db: Session, data: SchemeCreate, *, actor_id: int) -> SupplierScheme:
     party = db.get(Party, data.party_id)
-    if party is None or party.tenant_id != TENANT_ID or party.type is PartyType.CUSTOMER:
+    if (
+        party is None
+        or party.tenant_id != current_tenant_id(db)
+        or party.type is PartyType.CUSTOMER
+    ):
         raise NotFoundError("Supplier not found", field="party_id")
     unit = data.unit or ""  # the schema guarantees one for a category scheme
     if data.item_id is not None:
         item = db.get(Item, data.item_id)
-        if item is None or item.tenant_id != TENANT_ID:
+        if item is None or item.tenant_id != current_tenant_id(db):
             raise NotFoundError("Item not found", field="item_id")
         unit = item.base_unit
     row = SupplierScheme(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         party_id=party.id,
         name=data.name,
         item_id=data.item_id,
@@ -72,7 +76,7 @@ def update(db: Session, scheme_id: int, data: SchemeUpdate, *, actor_id: int) ->
 def _bought(db: Session, scheme: SupplierScheme) -> tuple[Decimal, Decimal]:
     """(base quantity, goods value) bought from the supplier in the period, less what went back."""
     match = [
-        Purchase.tenant_id == TENANT_ID,
+        Purchase.tenant_id == current_tenant_id(db),
         Purchase.supplier_id == scheme.party_id,
         Purchase.bill_date >= scheme.period_start,
         Purchase.bill_date <= scheme.period_end,
@@ -142,7 +146,7 @@ def view(db: Session, scheme: SupplierScheme) -> SchemeOut:
 
 
 def list_schemes(db: Session, *, party_id: int | None, alerts_only: bool) -> list[SchemeOut]:
-    stmt = select(SupplierScheme).where(SupplierScheme.tenant_id == TENANT_ID)
+    stmt = select(SupplierScheme).where(SupplierScheme.tenant_id == current_tenant_id(db))
     if party_id is not None:
         stmt = stmt.where(SupplierScheme.party_id == party_id)
     rows = db.execute(stmt.order_by(SupplierScheme.period_end.desc(), SupplierScheme.id)).scalars()

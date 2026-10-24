@@ -4,7 +4,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Annotated
 
-from sqlalchemy import BigInteger, DateTime, Integer, MetaData, Numeric, func
+from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, MetaData, Numeric, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 # Stable constraint names make Alembic migrations predictable.
@@ -28,10 +28,11 @@ class Base(DeclarativeBase):
 
 
 class TenantMixin:
-    """Every business table carries tenant_id (default 1) so multi-tenant SaaS can be added
-    later without rewriting the schema. Do not build tenant logic yet (ADR 0004)."""
+    """Every business table carries tenant_id (ADR 0011). There is no default: new rows get the
+    session's company from the listener in app/services/tenancy.py, and row-level security in
+    PostgreSQL refuses rows of any other company."""
 
-    tenant_id: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    tenant_id: Mapped[int] = mapped_column(Integer, ForeignKey("tenant.id"), nullable=False)
 
 
 class TimestampMixin:

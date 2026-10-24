@@ -12,6 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
+from app.core.tenancy import current_tenant_id
 from app.domain.fiscal import format_doc_number, fy_label
 from app.models.enums import DocType
 from app.models.numbering import DocumentSequence
@@ -41,14 +42,13 @@ def allocate_number(
     doc_type: DocType,
     on: date,
     fy_start_month: int = 4,
-    tenant_id: int = 1,
 ) -> str:
     code = db.execute(select(Location.code).where(Location.id == location_id)).scalar_one()
     fy = fy_label(on, fy_start_month)
     stmt = (
         insert(DocumentSequence)
         .values(
-            tenant_id=tenant_id,
+            tenant_id=current_tenant_id(db),
             location_id=location_id,
             doc_type=doc_type,
             financial_year=fy,

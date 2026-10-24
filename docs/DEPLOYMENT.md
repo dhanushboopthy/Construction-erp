@@ -28,6 +28,25 @@ Passwords cross the network, so serve over HTTPS:
   Caddy with `tls internal` and install its root certificate on each PC.
 - Plain HTTP on a LAN only as a stop-gap: set `ALLOW_INSECURE_COOKIES=true`, `COOKIE_SECURE=false`.
 
+## Many companies on one server (Duolink SaaS, ADR 0011)
+
+- **DNS:** a wildcard record `*.duolink.app` (and `duolink.app`) pointing at the server. Each
+  company signs in at `<company code>.duolink.app`.
+- **TLS:** a wildcard certificate needs the DNS-01 challenge. For example, use Caddy with your
+  DNS provider's plugin: `*.duolink.app { tls { dns cloudflare {env.CF_API_TOKEN} }
+  reverse_proxy localhost:80 }`.
+- **.env:** `BASE_DOMAIN=duolink.app`, and `DEFAULT_TENANT_SLUG=` (blank) so that only real
+  subdomains reach a company. `CORS_ORIGINS=[]`, because the app and API share each origin.
+- **Database role:** the app's connections switch to `erp_app` (`DB_APP_ROLE`), which migration
+  0023 creates, so row-level security applies. The user in `DATABASE_URL` must be allowed to
+  switch to it: the database owner is, and so is a superuser. Never set `DB_APP_ROLE` blank in
+  production (the app refuses to start).
+- **A new company:** `docker compose -f docker-compose.prod.yml exec backend python -m
+  app.scripts.seed --tenant acme`, with `SEED_*` passwords set. From Milestone 16 the Duolink
+  admin creates companies instead.
+- A single-shop install needs none of this. Leave `DEFAULT_TENANT_SLUG=main`, and every address
+  reaches that company.
+
 ## Backups (G24)
 
 - The `backup` service writes, nightly at 02:30, `backups/erp-YYYYMMDD-HHMM.dump` (the database)

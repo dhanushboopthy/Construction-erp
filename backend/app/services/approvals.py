@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.core.clock import now_utc
 from app.core.errors import AccountLockedError, AuthenticationError, BusinessRuleError
 from app.core.security import hash_password, verify_password
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.models.approvals import Approval
 from app.models.audit import AuditLog
 from app.models.enums import AuditAction, Role
@@ -38,7 +38,7 @@ def _recent_failures(db: Session, user_id: int) -> int:
         select(func.count())
         .select_from(AuditLog)
         .where(
-            AuditLog.tenant_id == TENANT_ID,
+            AuditLog.tenant_id == current_tenant_id(db),
             AuditLog.entity == "approval",
             AuditLog.action == AuditAction.LOGIN_FAILED,
             AuditLog.user_id == user_id,
@@ -53,7 +53,7 @@ def grant(db: Session, requester_id: int, data: ApprovalRequest) -> ApprovalOut:
     owners = list(
         db.execute(
             select(AppUser).where(
-                AppUser.tenant_id == TENANT_ID,
+                AppUser.tenant_id == current_tenant_id(db),
                 AppUser.role == Role.OWNER,
                 AppUser.is_active.is_(True),
                 AppUser.pin_hash.is_not(None),
@@ -78,7 +78,7 @@ def grant(db: Session, requester_id: int, data: ApprovalRequest) -> ApprovalOut:
             field="pin",
         )
     approval = Approval(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         action=data.action,
         party_id=data.party_id,
         reason=data.reason,
@@ -119,7 +119,7 @@ def load_valid(db: Session, ids: list[int], requester_id: int, party_id: int) ->
         row = db.get(Approval, approval_id)
         ok = (
             row is not None
-            and row.tenant_id == TENANT_ID
+            and row.tenant_id == current_tenant_id(db)
             and row.used_at is None
             and row.expires_at > now
             and row.requested_by == requester_id

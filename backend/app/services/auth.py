@@ -18,7 +18,7 @@ from app.core.security import (
     hash_password,
     verify_password,
 )
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.models.auth import AuthSession
 from app.models.enums import AuditAction
 from app.models.setup import AppUser
@@ -70,7 +70,8 @@ def login(
     settings = get_settings()
     user = db.execute(
         select(AppUser).where(
-            AppUser.tenant_id == TENANT_ID, AppUser.username == username.strip().lower()
+            AppUser.tenant_id == current_tenant_id(db),
+            AppUser.username == username.strip().lower(),
         )
     ).scalar_one_or_none()
 
@@ -110,7 +111,7 @@ def refresh(
     session = db.execute(
         select(AuthSession).where(AuthSession.token_hash == _hash_token(refresh_token))
     ).scalar_one_or_none()
-    if session is None:
+    if session is None or session.tenant_id != current_tenant_id(db):
         raise AuthenticationError("Sign in to continue")
 
     if session.revoked_at is not None:
@@ -141,7 +142,7 @@ def logout(db: Session, refresh_token: str | None) -> None:
     session = db.execute(
         select(AuthSession).where(AuthSession.token_hash == _hash_token(refresh_token))
     ).scalar_one_or_none()
-    if session and session.revoked_at is None:
+    if session and session.revoked_at is None and session.tenant_id == current_tenant_id(db):
         session.revoked_at = _now()
         record_event(db, AuditAction.LOGOUT, "app_user", session.user_id, user_id=session.user_id)
         db.commit()

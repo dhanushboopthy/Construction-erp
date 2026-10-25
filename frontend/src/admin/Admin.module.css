@@ -1,0 +1,311 @@
+/* The Duolink admin console. Layout pieces shared with the company app (page, tables, panels,
+ * toolbar, tabs) come from components/Ledger.module.css; only what is new lives here. */
+
+/* The light/dark switch, where the company app's top bar has it. */
+.topRow {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-4) var(--space-6) 0;
+}
+
+@media (max-width: 900px) {
+  .topRow {
+    padding: var(--space-2) var(--space-4) 0;
+  }
+}
+
+/* ------------------------------------------------------------ badges: colour always with a word */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px var(--space-3);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badge::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentcolor;
+}
+
+.badge[data-tone="accent"] {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.badge[data-tone="good"] {
+  background: var(--color-good-soft);
+  color: var(--color-good);
+}
+
+.badge[data-tone="warn"] {
+  background: var(--color-warn-soft);
+  color: var(--color-warn);
+}
+
+.badge[data-tone="critical"] {
+  background: var(--color-critical-soft);
+  color: var(--color-critical);
+}
+
+.badge[data-tone="neutral"] {
+  background: var(--color-fill);
+  color: var(--color-secondary);
+}
+
+/* ------------------------------------------------------------ overview: the companies figure */
+.hero {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-5) var(--space-6);
+  align-items: center;
+  padding: var(--space-5) var(--space-6);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.heroFigure {
+  display: grid;
+  margin: 0;
+}
+
+.heroFigure dt {
+  color: var(--color-secondary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.heroFigure dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 3.5rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-tight);
+  line-height: 1;
+}
+
+.heroFigure .heroNote {
+  margin-top: var(--space-2);
+  color: var(--color-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+/* One bar split by status; each part also has its word and count in the legend. */
+.statusBar {
+  display: flex;
+  height: 14px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--color-fill);
+}
+
+.segment {
+  min-width: 6px;
+  transition: flex-grow var(--duration-fast) var(--ease);
+}
+
+.segment[data-tone="accent"] {
+  background: var(--gradient-action);
+}
+
+.segment[data-tone="good"] {
+  background: var(--color-good);
+}
+
+.segment[data-tone="critical"] {
+  background: var(--color-critical);
+}
+
+.segment[data-tone="neutral"] {
+  background: var(--color-chart-4);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+}
+
+.legend strong {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 700px) {
+  .hero {
+    grid-template-columns: 1fr;
+    padding: var(--space-5);
+  }
+}
+
+/* ------------------------------------------------------------ figures */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+}
+
+.stat {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.stat dt {
+  color: var(--color-secondary);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+.stat dd {
+  margin: 0;
+}
+
+.statValue {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-tight);
+  line-height: 1.1;
+}
+
+.stat[data-tone="critical"] .statValue {
+  color: var(--color-critical);
+}
+
+.statNote {
+  color: var(--color-secondary);
+  font-size: var(--text-xs);
+}
+
+/* ------------------------------------------------------------ usage against a limit */
+.usage {
+  display: grid;
+  gap: 4px;
+  min-width: 88px;
+}
+
+.usageText {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.usageTrack {
+  height: 5px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--color-fill);
+}
+
+.usageFill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--gradient-brand);
+}
+
+.usage[data-full="true"] .usageFill {
+  background: var(--color-warn);
+}
+
+/* ------------------------------------------------------------ company page */
+.heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+
+.address {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.facts dt {
+  color: var(--color-secondary);
+}
+
+.facts dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.twoColumns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-5);
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .twoColumns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* A destructive step asks once more, in place, saying what will happen. */
+.confirm {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-critical-soft);
+}
+
+.confirm p {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.danger {
+  background: var(--color-critical);
+  background-image: none;
+  box-shadow: none;
+}
+
+/* A password shown once: large, selectable, tabular. */
+.secret {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--color-fill);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  user-select: all;
+}
+
+.rowActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}

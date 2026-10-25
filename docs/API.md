@@ -46,6 +46,29 @@ Endpoints that return cost, margin or profit use separate response models for ow
 staff (for example `ItemOwnerOut` and `ItemOut`). Choose the model with `principal.sees_cost`;
 never rely on the UI to hide fields. Test each such endpoint as a counter user.
 
+## Endpoints (Milestone 16: Duolink admin, ADR 0012)
+
+Only at `admin.<BASE_DOMAIN>` (404 elsewhere), under `/admin`, with a Duolink admin's token (type
+`platform`; a company user's token answers 401). Answers carry counts and statuses, never amounts.
+
+| Method | Path | What |
+| --- | --- | --- |
+| POST | `/admin/auth/login {email, password}`, `/admin/auth/refresh`, `/admin/auth/logout` | Admin sign-in; cookie `duolink_admin_refresh` on `/api/v1/admin/auth` |
+| GET | `/admin/auth/me` · POST `/admin/auth/change-password` | The signed-in admin |
+| GET | `/admin/overview` | Companies by status, new this month, active users, open sessions, sign-ins and wrong passwords (24 h, 7 d), trials ending in 7 days |
+| GET | `/admin/tenants?q&status&plan` | Companies with users and shops against their limits, bills in 30 days, last sign-in |
+| POST | `/admin/tenants {name, slug, plan, state_code, owner_username, owner_full_name, owner_password}` | New company with starter data and its first owner. 409 `SLUG_TAKEN` / `SLUG_INVALID` |
+| GET / PATCH | `/admin/tenants/{id}` `{name?, plan?, max_users?, max_locations?, trial_ends_at?}` | Detail; null limits return to the plan's |
+| POST | `/admin/tenants/{id}/suspend {reason}`, `/admin/tenants/{id}/reactivate` | Suspend ends every session and blocks sign-in |
+| GET | `/admin/users?tenant_id&q&role&state=active\|inactive\|locked` | Users of every company |
+| POST | `/admin/users/{id}/deactivate`, `/activate`, `/unlock`, `/sign-out` | Support actions (409 `LAST_OWNER`, `PLAN_USER_LIMIT`) |
+| POST | `/admin/users/{id}/reset-password` | `{temporary_password}`, shown once |
+| GET | `/admin/activity?tenant_id&action` · `/admin/audit?tenant_id&action` | Sign-ins at companies · what admins did |
+
+Company side: `GET /tenant/plan` (owner) → `{plan, status, trial_ends_at, users, max_users,
+locations, max_locations}`. Adding a user or a shop beyond the plan answers 409
+`PLAN_USER_LIMIT` / `PLAN_LOCATION_LIMIT`.
+
 ## Endpoints (FM10: orders, receipts, match report, lost sales)
 
 | Method | Path | Who |
@@ -218,7 +241,8 @@ Errors: `CASH_ONLY` (deposit or withdrawal not in cash), `CATEGORY_REQUIRED`,
 | POST | `/system/verify?full=true\|false` | owner |
 
 Every other route needs a sign-in; the only open ones are `/health`, `/health/ready`, `/tenant`,
-`/auth/login`, `/auth/refresh` and `/auth/logout`. All `/api` answers are `Cache-Control: no-store`.
+`/auth/login`, `/auth/refresh` and `/auth/logout`, and at the admin address `/admin/auth/login`,
+`/admin/auth/refresh` and `/admin/auth/logout`. All `/api` answers are `Cache-Control: no-store`.
 A token is good only at its own company's address.
 
 ## Endpoints (Milestone 13)

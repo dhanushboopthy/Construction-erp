@@ -196,21 +196,24 @@ def test_every_company_table_has_row_level_security(seeded):
     rows = seeded.execute(
         text(
             "SELECT c.relname, c.relrowsecurity, c.relforcerowsecurity, "
-            "EXISTS (SELECT FROM pg_policy p WHERE p.polrelid = c.oid "
-            "AND p.polname = 'tenant_isolation') "
+            "(SELECT array_agg(p.polname::text ORDER BY p.polname) FROM pg_policy p "
+            "WHERE p.polrelid = c.oid) "
             "FROM pg_class c JOIN information_schema.columns col "
             "ON col.table_name = c.relname AND col.column_name = 'tenant_id' "
-            "WHERE col.table_schema = 'public' AND c.relkind = 'r'"
+            "WHERE col.table_schema = 'public' AND c.relkind = 'r' "
+            "AND c.relname <> 'platform_audit_log'"  # Duolink's own log, not a company's row
         )
     ).all()
     assert len(rows) > 50
-    unprotected = [name for name, rls, forced, policy in rows if not (rls and forced and policy)]
-    assert unprotected == []
+    expected = ["platform_admin", "tenant_isolation"]
+    unprotected = [name for name, rls, forced, _ in rows if not (rls and forced)]
+    wrong_policies = [name for name, _, _, pols in rows if pols != expected]
+    assert unprotected == [] and wrong_policies == []
 
 
 def test_every_table_belongs_to_a_company(seeded):
     """New tables must carry tenant_id (TenantMixin); only these are shared by all companies."""
-    shared = {"tenant", "alembic_version"}
+    shared = {"tenant", "alembic_version", "platform_admin", "platform_session"}
     missing = seeded.execute(
         text(
             "SELECT t.table_name FROM information_schema.tables t "

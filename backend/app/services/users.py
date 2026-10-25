@@ -9,6 +9,7 @@ from app.core.tenancy import current_tenant_id
 from app.models.enums import AuditAction, Role
 from app.models.setup import AppUser, Location
 from app.schemas.user import UserCreate, UserUpdate
+from app.services import tenants
 from app.services.audit import record_event
 from app.services.auth import revoke_all
 
@@ -64,6 +65,7 @@ def create_user(db: Session, data: UserCreate) -> AppUser:
         raise ConflictError("That username is taken", code="USERNAME_TAKEN", field="username")
     locations = _locations(db, data.location_ids)
     _check_counter_has_shop(data.role, locations)
+    tenants.ensure_can_add_user(db)
     user = AppUser(
         tenant_id=current_tenant_id(db),
         username=data.username,
@@ -96,6 +98,8 @@ def update_user(db: Session, user_id: int, data: UserUpdate, acting_user_id: int
         raise BusinessRuleError("There must always be at least one active owner", code="LAST_OWNER")
     if user_id == acting_user_id and data.is_active is False:
         raise BusinessRuleError("You cannot deactivate yourself", code="SELF_DEACTIVATION")
+    if data.is_active is True and not user.is_active:
+        tenants.ensure_can_add_user(db)
 
     if data.full_name is not None:
         user.full_name = data.full_name

@@ -95,7 +95,13 @@ Every table: `id`, `tenant_id` (a foreign key to `tenant`, no default: set from 
 cancelled, plan trial / basic / pro, trial end, user and location limits, suspension reason).
 Every table with `tenant_id` has row-level security, policy `tenant_isolation`. `user_location`
 takes its user's company in a trigger. Public `GET /api/v1/tenant` returns the company of the
-address for the sign-in page. Money `NUMERIC(14,2)`, quantity `NUMERIC(14,3)`,
+address for the sign-in page.
+
+**Built (Milestone 16, ADR 0012):** `platform_admin`, `platform_session` and `platform_audit_log`
+(append-only) for Duolink's own staff. Plans limit active users and active shops and godowns
+(trial 5 / 2 for 14 days, basic 10 / 3, pro 50 / 10; a company may have its own limit). Beyond a
+limit the API answers 409 `PLAN_USER_LIMIT` / `PLAN_LOCATION_LIMIT`. An ended trial never locks a
+company out. A suspended company cannot sign in, and its sessions end. Money `NUMERIC(14,2)`, quantity `NUMERIC(14,3)`,
 unit cost `NUMERIC(14,4)`. Stock, balances and average cost are **derived from ledgers**, never
 stored as editable numbers. Enums are `VARCHAR` + `CHECK`.
 

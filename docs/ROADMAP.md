@@ -47,7 +47,7 @@ Duolink hosts the ERP for many companies. One branch and PR each.
 | # | Milestone | Acceptance test | Status |
 | --- | --- | --- | --- |
 | 15 | Multi-tenancy foundation: `tenant` table, company by subdomain, tenant on the session, row-level security, `--tenant` on the scripts (ADR 0011) | A second company on `beta.localhost` signs in with the same usernames, sees none of the first company's rows on any screen, and the database refuses a cross-company row | **Done** (`feat/m15-multi-tenancy`) |
-| 16 | Duolink super admin on `admin.<domain>/admin`: companies, users across companies, activity, plans and limits | Create a company and sign in at its subdomain; suspend it and its users are signed out; the plan's user limit is enforced | Planned (`feat/m16-platform-admin`) |
+| 16 | Duolink super admin on `admin.<domain>/admin`: companies, users across companies, activity, plans and limits | Create a company and sign in at its subdomain; suspend it and its users are signed out; the plan's user limit is enforced | **Done** (`feat/m16-platform-admin`; ADR 0012) |
 
 ## Already in place (Milestones 0–1)
 

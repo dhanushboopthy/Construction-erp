@@ -10,6 +10,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 TENANT_KEY = "tenant_id"
+PLATFORM_KEY = "platform"
 
 
 class NoTenantError(RuntimeError):
@@ -22,6 +23,20 @@ def set_tenant(db: Session, tenant_id: int) -> None:
         # Already inside a transaction: tell the database now. New transactions are told by
         # the after_begin listener.
         db.execute(select(func.set_config("app.tenant_id", str(tenant_id), True)))
+
+
+def set_platform(db: Session) -> None:
+    """A Duolink admin's session (ADR 0012): the database shows rows of every company
+    (policy `platform_admin`, migration 0024). Only `api/deps.get_platform_admin` calls this."""
+    db.info[PLATFORM_KEY] = True
+    if db.in_transaction():
+        db.execute(select(func.set_config("app.platform", "on", True)))
+
+
+def clear_platform(db: Session) -> None:
+    """Back to one company's view (a company request never sees other companies' rows)."""
+    if db.info.pop(PLATFORM_KEY, None) and db.in_transaction():
+        db.execute(select(func.set_config("app.platform", "", True)))
 
 
 def current_tenant_id(db: Session) -> int:

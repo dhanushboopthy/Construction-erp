@@ -2,13 +2,14 @@
 
 - before_flush: a new row gets the session's company; a row for another company is refused.
 - after_begin: each transaction tells PostgreSQL the company (`app.tenant_id`), which the
-  row-level security policies of migration 0023 compare with every row read or written.
+  row-level security policies of migration 0023 compare with every row read or written, and
+  whether this is a Duolink admin's session (`app.platform`, migration 0024).
 """
 
 from sqlalchemy import Connection, event, func, select
 from sqlalchemy.orm import Session, SessionTransaction, UOWTransaction
 
-from app.core.tenancy import TENANT_KEY, NoTenantError
+from app.core.tenancy import PLATFORM_KEY, TENANT_KEY, NoTenantError
 from app.models.base import TenantMixin
 
 
@@ -38,3 +39,5 @@ def _tell_database(session: Session, _tx: SessionTransaction, connection: Connec
     tenant_id = session.info.get(TENANT_KEY)
     if tenant_id is not None:
         connection.execute(select(func.set_config("app.tenant_id", str(tenant_id), True)))
+    if session.info.get(PLATFORM_KEY):
+        connection.execute(select(func.set_config("app.platform", "on", True)))

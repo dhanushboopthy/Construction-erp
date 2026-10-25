@@ -7,6 +7,7 @@ from app.core.errors import ConflictError, NotFoundError
 from app.core.tenancy import current_tenant_id
 from app.models.setup import Location
 from app.schemas.location import LocationCreate, LocationUpdate
+from app.services import tenants
 
 
 def list_locations(db: Session, include_inactive: bool = False) -> list[Location]:
@@ -33,6 +34,7 @@ def create_location(db: Session, data: LocationCreate) -> Location:
     ).first()
     if taken:
         raise ConflictError("That code is already used", code="LOCATION_CODE_TAKEN", field="code")
+    tenants.ensure_can_add_location(db)
     location = Location(tenant_id=current_tenant_id(db), **data.model_dump())
     db.add(location)
     db.commit()
@@ -42,6 +44,8 @@ def create_location(db: Session, data: LocationCreate) -> Location:
 def update_location(db: Session, location_id: int, data: LocationUpdate) -> Location:
     # The code is fixed once created: it is printed inside issued document numbers.
     location = get_location(db, location_id)
+    if data.is_active is True and not location.is_active:
+        tenants.ensure_can_add_location(db)
     for key, value in data.model_dump(exclude_unset=True).items():
         setattr(location, key, value)
     db.commit()

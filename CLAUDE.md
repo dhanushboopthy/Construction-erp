@@ -36,6 +36,9 @@ docs/                  SPEC, ROADMAP, GAP_ANALYSIS, ARCHITECTURE, API, DESIGN, a
   `app/core/tenancy.py` (ADR 0011). A new table's migration must also enable and force row-level
   security and add the `tenant_isolation` policy (copy migration 0023). Scripts call
   `services.tenants.use_slug(db, slug)` before any query. Tests run as role `erp_app`.
+- The Duolink admin (`api/v1/admin/`, `services/platform/`, `src/admin/`) answers counts and
+  statuses only, never amounts, costs or document contents (ADR 0012). Only
+  `services/platform/` reads across companies.
 - Stock and balances are derived from append-only ledgers. Issued documents are never deleted
   or edited in place; use credit/debit notes. Numbers come from `services/numbering.py` inside
   the saving transaction.

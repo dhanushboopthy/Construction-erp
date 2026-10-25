@@ -7,6 +7,7 @@ import type {
   LocationUpdate,
   ShopSettings,
   ShopSettingsUpdate,
+  TenantPlanUsage,
   TenantPublic,
   User,
   UserCreate,
@@ -17,6 +18,7 @@ import type {
 
 const keys = {
   tenant: ["tenant"] as const,
+  plan: ["tenant", "plan"] as const,
   settings: ["settings"] as const,
   users: ["users"] as const,
   locations: (all: boolean) => ["locations", { all }] as const,
@@ -30,6 +32,11 @@ export function useTenant() {
     retry: false,
     staleTime: Infinity,
   });
+}
+
+/** The company's plan and how much of it is in use (owner only). */
+export function usePlanUsage() {
+  return useQuery({ queryKey: keys.plan, queryFn: () => api<TenantPlanUsage>("/tenant/plan") });
 }
 
 export function useShopSettings() {
@@ -53,7 +60,11 @@ export function useCreateUser() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (body: UserCreate) => api<User>("/users", { method: "POST", body: json(body) }),
-    onSuccess: () => client.invalidateQueries({ queryKey: keys.users }),
+    onSuccess: () =>
+      Promise.all([
+        client.invalidateQueries({ queryKey: keys.users }),
+        client.invalidateQueries({ queryKey: keys.plan }),
+      ]),
   });
 }
 
@@ -62,7 +73,11 @@ export function useUpdateUser() {
   return useMutation({
     mutationFn: ({ id, body }: { id: number; body: UserUpdate }) =>
       api<User>(`/users/${id}`, { method: "PATCH", body: json(body) }),
-    onSuccess: () => client.invalidateQueries({ queryKey: keys.users }),
+    onSuccess: () =>
+      Promise.all([
+        client.invalidateQueries({ queryKey: keys.users }),
+        client.invalidateQueries({ queryKey: keys.plan }),
+      ]),
   });
 }
 

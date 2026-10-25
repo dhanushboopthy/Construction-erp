@@ -1,13 +1,18 @@
-"""Finding the company a request is for, from its host name (ADR 0011)."""
+"""Finding the company a request is for, from its host name (ADR 0011), and its plan's limits
+(Milestone 16)."""
 
-from sqlalchemy import select
+from dataclasses import dataclass
+
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.core.errors import NotFoundError, PermissionDeniedError
-from app.core.tenancy import set_tenant
+from app.core.errors import BusinessRuleError, NotFoundError, PermissionDeniedError
+from app.core.tenancy import current_tenant_id, set_tenant
+from app.domain.plans import PlanLimits, can_add, limits_for
 from app.domain.tenancy import slug_from_host
 from app.models.enums import TenantStatus
+from app.models.setup import AppUser, Location
 from app.models.tenancy import Tenant
 
 
@@ -32,6 +37,50 @@ def check_open(tenant: Tenant) -> None:
     if tenant.status is TenantStatus.CANCELLED:
         raise PermissionDeniedError(
             "This company's account is closed. Contact Duolink support.", code="TENANT_CANCELLED"
+        )
+
+
+@dataclass(frozen=True)
+class Usage:
+    tenant: Tenant
+    limits: PlanLimits
+    users: int  # active
+    locations: int  # active
+
+
+def usage(db: Session) -> Usage:
+    """The session's company: its plan's limits and what is in use (Milestone 16)."""
+    tenant_id = current_tenant_id(db)
+    tenant = db.get(Tenant, tenant_id)
+    if tenant is None:
+        raise NotFoundError("Company not found", code="TENANT_NOT_FOUND")
+    users = db.execute(
+        select(func.count()).where(AppUser.tenant_id == tenant_id, AppUser.is_active.is_(True))
+    ).scalar_one()
+    locations = db.execute(
+        select(func.count()).where(Location.tenant_id == tenant_id, Location.is_active.is_(True))
+    ).scalar_one()
+    limits = limits_for(tenant.plan.value, tenant.max_users, tenant.max_locations)
+    return Usage(tenant, limits, users, locations)
+
+
+def ensure_can_add_user(db: Session) -> None:
+    used = usage(db)
+    if not can_add(used.users, used.limits.max_users):
+        raise BusinessRuleError(
+            f"Your plan allows {used.limits.max_users} active users. Deactivate one, or ask "
+            "Duolink to raise the limit.",
+            code="PLAN_USER_LIMIT",
+        )
+
+
+def ensure_can_add_location(db: Session) -> None:
+    used = usage(db)
+    if not can_add(used.locations, used.limits.max_locations):
+        raise BusinessRuleError(
+            f"Your plan allows {used.limits.max_locations} shops and godowns. Close one, or ask "
+            "Duolink to raise the limit.",
+            code="PLAN_LOCATION_LIMIT",
         )
 
 

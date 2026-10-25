@@ -19,6 +19,7 @@ export type ShopSettings = Schemas["ShopSettingsOut"];
 export type ShopSettingsUpdate = Schemas["ShopSettingsUpdate"];
 export type TokenResponse = Schemas["TokenResponse"];
 export type TenantPublic = Schemas["TenantPublicOut"];
+export type TenantPlanUsage = Schemas["TenantPlanOut"];
 export type Item = Schemas["ItemOut"];
 export type ItemOwner = Schemas["ItemOwnerOut"];
 export type ItemCreate = Schemas["ItemCreate"];

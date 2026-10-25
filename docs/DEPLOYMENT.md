@@ -41,9 +41,9 @@ Passwords cross the network, so serve over HTTPS:
   0023 creates, so row-level security applies. The user in `DATABASE_URL` must be allowed to
   switch to it: the database owner is, and so is a superuser. Never set `DB_APP_ROLE` blank in
   production (the app refuses to start).
-- **A new company:** `docker compose -f docker-compose.prod.yml exec backend python -m
-  app.scripts.seed --tenant acme`, with `SEED_*` passwords set. From Milestone 16 the Duolink
-  admin creates companies instead.
+- **The Duolink admin** lives at `admin.duolink.app/admin` (`ADMIN_SUBDOMAIN`). The wildcard
+  record and certificate cover it. Create the first admin as in [RUNBOOK](RUNBOOK.md). New
+  companies are added there. `app.scripts.seed --tenant acme` still works on the server.
 - A single-shop install needs none of this. Leave `DEFAULT_TENANT_SLUG=main`, and every address
   reaches that company.
 

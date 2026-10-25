@@ -13,11 +13,14 @@ from fastapi import Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.core.db import get_db
-from app.core.errors import AuthenticationError, PermissionDeniedError
-from app.core.security import decode_access_token
-from app.core.tenancy import set_tenant
+from app.core.errors import AuthenticationError, NotFoundError, PermissionDeniedError
+from app.core.security import decode_access_token, decode_platform_token
+from app.core.tenancy import TENANT_KEY, clear_platform, set_platform, set_tenant
+from app.domain.tenancy import slug_from_host
 from app.models.enums import Role
+from app.models.platform import PlatformAdmin
 from app.models.setup import AppUser
 from app.models.tenancy import Tenant
 from app.services import tenants as tenant_service
@@ -63,6 +66,7 @@ def request_host(request: Request) -> str | None:
 def get_tenant(request: Request, db: DbSession) -> Tenant:
     """The company named by the subdomain (ADR 0011). Every later query on this session is for
     that company, and the database refuses rows of any other."""
+    clear_platform(db)
     tenant = tenant_service.for_host(db, request_host(request))
     set_tenant(db, tenant.id)
     request.state.tenant_id = tenant.id
@@ -121,3 +125,46 @@ def require_roles(*roles: Role) -> Callable[[Principal], Principal]:
 OwnerOnly = Annotated[Principal, Depends(require_roles(Role.OWNER))]
 OwnerOrAccountant = Annotated[Principal, Depends(require_roles(Role.OWNER, Role.ACCOUNTANT))]
 OwnerOrCounter = Annotated[Principal, Depends(require_roles(Role.OWNER, Role.COUNTER))]
+
+
+# ------------------------------------------------------------------ Duolink admins (ADR 0012)
+
+
+def require_admin_host(request: Request) -> None:
+    """The admin API answers only at admin.<BASE_DOMAIN>; anywhere else it does not exist."""
+    settings = get_settings()
+    if slug_from_host(request_host(request), settings.base_domain) != settings.admin_subdomain:
+        raise NotFoundError("Not found")
+
+
+@dataclass(frozen=True)
+class PlatformPrincipal:
+    admin_id: int
+    email: str
+    session_id: str
+
+
+def get_platform_admin(
+    request: Request,
+    db: DbSession,
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
+) -> PlatformPrincipal:
+    """A signed-in Duolink admin. The session is put in platform mode: it reads every company."""
+    require_admin_host(request)
+    if credentials is None:
+        raise AuthenticationError("Sign in to continue")
+    try:
+        claims = decode_platform_token(credentials.credentials)
+    except jwt.InvalidTokenError as exc:
+        raise AuthenticationError("Your session has expired. Sign in again.") from exc
+    admin = db.get(PlatformAdmin, claims.admin_id)
+    if admin is None or not admin.is_active:
+        raise AuthenticationError("This account is not active")
+    db.info.pop(TENANT_KEY, None)
+    set_actor(db, None)  # company audit rows must not name a company user for an admin's act
+    set_platform(db)
+    request.state.user_id = f"admin:{admin.id}"
+    return PlatformPrincipal(admin_id=admin.id, email=admin.email, session_id=claims.session_id)
+
+
+PlatformAdminUser = Annotated[PlatformPrincipal, Depends(get_platform_admin)]

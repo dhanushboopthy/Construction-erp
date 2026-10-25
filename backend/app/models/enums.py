@@ -27,6 +27,24 @@ class TenantPlan(StrEnum):
     PRO = "pro"
 
 
+class PlatformAction(StrEnum):
+    """What a Duolink admin did (platform_audit_log, Milestone 16)."""
+
+    LOGIN = "login"
+    LOGIN_FAILED = "login_failed"
+    LOGOUT = "logout"
+    TOKEN_REUSE = "token_reuse"  # noqa: S105 - an audit action name, not a secret
+    TENANT_CREATE = "tenant_create"
+    TENANT_UPDATE = "tenant_update"
+    TENANT_SUSPEND = "tenant_suspend"
+    TENANT_REACTIVATE = "tenant_reactivate"
+    USER_ACTIVATE = "user_activate"
+    USER_DEACTIVATE = "user_deactivate"
+    USER_UNLOCK = "user_unlock"
+    USER_RESET_PASSWORD = "user_reset_password"  # noqa: S105 - an audit action name
+    USER_SIGN_OUT = "user_sign_out"
+
+
 class LocationKind(StrEnum):
     SHOP = "shop"
     GODOWN = "godown"

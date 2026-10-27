@@ -43,6 +43,7 @@ from app.schemas.returns import (
 )
 from app.services import approvals as approval_service
 from app.services import closing as closing_service
+from app.services import compliance as compliance_service
 from app.services import ledgers
 from app.services.numbering import allocate_number
 from app.services.shop_settings import get_settings_row
@@ -94,6 +95,7 @@ def create_credit_note(
     actor_id: int,
     is_owner: bool,
     can_access: Callable[[int], bool],
+    cancels_invoice: bool = False,
 ) -> CreditNote:
     invoice = db.get(SalesInvoice, data.invoice_id)
     if (
@@ -169,6 +171,7 @@ def create_credit_note(
         round_off=totals.round_off,
         grand_total=totals.grand_total,
         approved_by=approver if approver is not None else (actor_id if is_owner else None),
+        cancels_invoice=cancels_invoice,
         lines=[
             CreditNoteLine(
                 tenant_id=current_tenant_id(db),
@@ -228,6 +231,58 @@ def create_credit_note(
     return note
 
 
+def cancelling_note(db: Session, invoice_id: int) -> CreditNote | None:
+    """The credit note that cancelled this bill, if the owner cancelled it."""
+    return db.execute(
+        select(CreditNote).where(
+            CreditNote.tenant_id == current_tenant_id(db),
+            CreditNote.invoice_id == invoice_id,
+            CreditNote.cancels_invoice.is_(True),
+        )
+    ).scalar_one_or_none()
+
+
+def cancel_invoice(
+    db: Session,
+    invoice_id: int,
+    reason: str,
+    *,
+    actor_id: int,
+    can_access: Callable[[int], bool],
+) -> CreditNote:
+    """Cancel a whole bill (owner only). The bill stays on record, as B16 requires; a credit note
+    for every line puts the stock back and takes the amount off the customer's account. Money
+    taken with the bill stays on the customer's account as credit."""
+    invoice = db.get(SalesInvoice, invoice_id)
+    if (
+        invoice is None
+        or invoice.tenant_id != current_tenant_id(db)
+        or not can_access(invoice.location_id)
+    ):
+        raise NotFoundError("Invoice not found")
+    if cancelling_note(db, invoice.id) is not None:
+        raise BusinessRuleError("This bill is already cancelled.", code="ALREADY_CANCELLED")
+    if returned_on_invoice(db, invoice.id):
+        raise BusinessRuleError(
+            "Part of this bill was already returned. Return the rest with a credit note instead.",
+            code="BILL_HAS_RETURNS",
+        )
+    if compliance_service.live_eway(db, invoice.id) is not None:
+        raise BusinessRuleError(
+            "Cancel the e-way bill on this bill first.", code="CANCEL_EWAY_FIRST"
+        )
+    if compliance_service.live_einvoice(db, invoice.id) is not None:
+        raise BusinessRuleError("Cancel the IRN on this bill first.", code="CANCEL_IRN_FIRST")
+    data = CreditNoteCreate(
+        invoice_id=invoice.id,
+        reason=f"Bill cancelled: {reason}"[:300],
+        lines=[ReturnLineIn(line_id=x.id, quantity=x.quantity) for x in invoice.lines],
+    )
+    return create_credit_note(
+        db, data, actor_id=actor_id, is_owner=True, can_access=can_access, cancels_invoice=True
+    )
+
+
 def get_credit_note(db: Session, note_id: int) -> CreditNote:
     row = db.get(CreditNote, note_id)
     if row is None or row.tenant_id != current_tenant_id(db):
@@ -277,6 +332,7 @@ def credit_summary(db: Session, note: CreditNote) -> CreditNoteSummary:
         grand_total=note.grand_total,
         invoice_id=note.invoice_id,
         invoice_number=invoice.number if invoice else "",
+        cancels_invoice=note.cancels_invoice,
     )
 
 

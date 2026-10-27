@@ -335,4 +335,88 @@ describe("Billing", () => {
     expect(within(panel).getByRole("button", { name: "Print A4 bill" })).toBeVisible();
     expect(within(panel).getByText("Profit on this bill: ₹1,000.00")).toBeVisible();
   });
+
+  it("lets the owner cancel a bill with a reason; the bill then shows as cancelled", async () => {
+    const user = userEvent.setup();
+    let cancelledBy: string | null = null;
+    const detail = () => ({
+      ...SAVED,
+      cancelled_by: cancelledBy,
+      financial_year: "26-27",
+      site_id: null,
+      bill_to_name: "Walk-in customer",
+      bill_to_address: "",
+      bill_to_gstin: null,
+      ship_to_name: null,
+      ship_to_address: null,
+      ship_to_gstin: null,
+      place_of_supply: "33",
+      supply_kind: "intra_state",
+      due_date: null,
+      taxable_value: "56000.00",
+      cgst: "5040.00",
+      sgst: "5040.00",
+      igst: "0.00",
+      round_off: "0.00",
+      pending_balance_at_billing: "0.00",
+      paid_at_billing: "66080.00",
+      vehicle_no: null,
+      remark: null,
+      profit: "1000.00",
+      lines: [],
+    });
+    const { calls } = mockApi({
+      ...session(OWNER),
+      "GET /invoices": () => ({ body: page([{ ...SAVED, cancelled_by: cancelledBy }]) }),
+      "GET /credit-notes": () => ({ body: page([]) }),
+      "GET /invoices/7": () => ({ body: detail() }),
+      "POST /invoices/7/cancel": () => {
+        cancelledBy = "S1C/26-27/00001";
+        return { status: 201, body: { id: 3, number: cancelledBy } };
+      },
+    });
+    renderAt("/sales?open=7");
+
+    const panel = await screen.findByRole("complementary", { name: "S1/26-27/00001" });
+    await user.click(within(panel).getByRole("button", { name: "Cancel bill" }));
+    expect(within(panel).getByText(/stays on the customer's account as credit/)).toBeVisible();
+    await user.click(within(panel).getByRole("button", { name: "Cancel the bill" }));
+    expect(within(panel).getByText("Say why the bill is cancelled.")).toBeVisible();
+    await user.type(within(panel).getByLabelText("Why is it cancelled?"), "Wrong customer");
+    await user.click(within(panel).getByRole("button", { name: "Cancel the bill" }));
+
+    expect(
+      await within(panel).findByText(/Cancelled by credit note S1C\/26-27\/00001/),
+    ).toBeVisible();
+    expect(within(panel).queryByRole("button", { name: "Cancel bill" })).toBeNull();
+    expect(calls.find((c) => c.path === "/invoices/7/cancel")?.body).toEqual({
+      reason: "Wrong customer",
+    });
+    expect(await screen.findByText(/B2C · Cancelled/)).toBeVisible();
+  });
+
+  it("does not offer counter staff a way to cancel a bill", async () => {
+    mockApi({
+      ...session(COUNTER),
+      "GET /invoices": () => ({ body: page([SAVED]) }),
+      "GET /credit-notes": () => ({ body: page([]) }),
+      "GET /invoices/7": () => ({
+        body: {
+          ...SAVED,
+          bill_to_name: "Walk-in customer",
+          ship_to_name: null,
+          supply_kind: "intra_state",
+          taxable_value: "56000.00",
+          cgst: "5040.00",
+          sgst: "5040.00",
+          igst: "0.00",
+          paid_at_billing: "0.00",
+          lines: [],
+        },
+      }),
+    });
+    renderAt("/sales?open=7");
+    const panel = await screen.findByRole("complementary", { name: "S1/26-27/00001" });
+    expect(within(panel).queryByRole("button", { name: "Cancel bill" })).toBeNull();
+  });
 });

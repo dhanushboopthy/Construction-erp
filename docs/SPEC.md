@@ -227,6 +227,13 @@ line is the sum of its note lines.
   exactly); GST is worked out again per line with the invoice's supply kind; round-off per note.
   Stock goes back to the location it left at the cost it left at; lines delivered direct from a
   supplier restock nothing. The customer's receivable is credited against that invoice number.
+- Cancel a bill (owner only, `POST /invoices/{id}/cancel {reason}`): the bill is never deleted or
+  changed (B16). A credit note for every line, marked `cancels_invoice`, reverses all of it (stock
+  back, receivable credited, GST reversed in GSTR-1 as a credit note); the bill then reads
+  "Cancelled" with that note's number (`cancelled_by`). Refused when part was already returned
+  (409 `BILL_HAS_RETURNS`), when already cancelled (`ALREADY_CANCELLED`), or while a live e-way
+  bill or IRN is on it (`CANCEL_EWAY_FIRST`, `CANCEL_IRN_FIRST`). Money taken with the bill stays
+  on the customer's account as credit.
 - Debit note: owner only. Taxable value is pro rata to the billed quantity on the supplier line,
   GST by supplier state against shop state. Stock leaves at the line's landed cost and cannot
   exceed what is held (B13, 409 `INSUFFICIENT_STOCK`; direct purchases touch no stock). The

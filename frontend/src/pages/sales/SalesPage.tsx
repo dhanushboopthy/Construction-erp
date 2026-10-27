@@ -14,6 +14,7 @@ import styles from "@/components/Ledger.module.css";
 import { useAltKey } from "@/hooks/useKeys";
 import { formatMoney, plural, trimDecimal } from "@/lib/format";
 
+import { CancelBill } from "./CancelBill";
 import { DirectLink } from "./DirectLink";
 import { EwayPanel } from "./EwayPanel";
 import { InvoiceReturn } from "./InvoiceReturn";
@@ -134,7 +135,10 @@ export function SalesPage() {
                     </td>
                     <td>{r.invoice_date}</td>
                     <td>{r.party_name}</td>
-                    <td>{r.supply_type}</td>
+                    <td>
+                      {r.supply_type}
+                      {r.cancelled_by ? " · Cancelled" : ""}
+                    </td>
                     <td className="num">{formatMoney(r.grand_total)}</td>
                   </tr>
                 ))}
@@ -163,6 +167,11 @@ export function SalesPage() {
                 ? ` · deliver to ${inv.ship_to_name}`
                 : " · collected from the shop"}
             </p>
+            {inv.cancelled_by ? (
+              <p role="status" className={styles.callout}>
+                Cancelled by credit note {inv.cancelled_by}. The bill stays on record.
+              </p>
+            ) : null}
             <div className={styles.actions}>
               <Button variant="primary" onClick={() => void print(inv.id, "original")}>
                 Print A4 bill
@@ -242,7 +251,14 @@ export function SalesPage() {
             {canBill && inv.ship_to_name ? (
               <EwayPanel key={`e${inv.id}`} invoiceId={inv.id} owner={user?.role === "owner"} />
             ) : null}
-            {canBill ? <InvoiceReturn key={inv.id} inv={inv} /> : null}
+            {canBill && !inv.cancelled_by ? <InvoiceReturn key={inv.id} inv={inv} /> : null}
+            {user?.role === "owner" && !inv.cancelled_by ? (
+              <CancelBill
+                key={`c${inv.id}`}
+                invoiceId={inv.id}
+                paidAtBilling={inv.paid_at_billing}
+              />
+            ) : null}
           </aside>
         ) : null}
       </div>

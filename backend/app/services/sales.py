@@ -733,6 +733,7 @@ def list_invoices(
 
 def summary(db: Session, inv: SalesInvoice) -> InvoiceSummary:
     loc = db.get(Location, inv.location_id)
+    cancelled = returns_service.cancelling_note(db, inv.id)
     return InvoiceSummary(
         id=inv.id,
         number=inv.number,
@@ -744,6 +745,7 @@ def summary(db: Session, inv: SalesInvoice) -> InvoiceSummary:
         supply_type=inv.supply_type,
         grand_total=inv.grand_total,
         status=inv.status,
+        cancelled_by=cancelled.number if cancelled else None,
     )
 
 

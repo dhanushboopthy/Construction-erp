@@ -67,6 +67,7 @@ class NoteSummary(Schema):
 class CreditNoteSummary(NoteSummary):
     invoice_id: int
     invoice_number: str
+    cancels_invoice: bool = False  # the owner cancelled the whole bill with this note
 
 
 class DebitNoteSummary(NoteSummary):

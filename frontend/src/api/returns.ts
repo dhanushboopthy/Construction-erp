@@ -34,6 +34,20 @@ export function useCreateCreditNote() {
   });
 }
 
+/** The owner cancels a whole bill: the bill stays, and a full credit note reverses it. */
+export function useCancelInvoice() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: number; reason: string }) =>
+      api<CreditNote>(`/invoices/${id}/cancel`, { method: "POST", body: json({ reason }) }),
+    onSuccess: async () => {
+      for (const key of ["credit-notes", "invoice", "invoices", "stock", "statement", "dues"]) {
+        await client.invalidateQueries({ queryKey: [key] });
+      }
+    },
+  });
+}
+
 export function useDebitNotes(purchaseId: number | null, enabled: boolean) {
   return useQuery({
     queryKey: ["debit-notes", purchaseId],

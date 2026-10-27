@@ -209,6 +209,47 @@ def test_credit_note_roles_and_shop_scope(client, world, seeded):
     assert "cost" not in made.text
 
 
+def test_owner_cancels_a_whole_bill_without_deleting_it(client, world):
+    inv = sell(client, world)
+    url = f"/api/v1/invoices/{inv['id']}/cancel"
+    owner = world["owner"]
+    # Counter staff cannot cancel, and a reason is needed.
+    assert (
+        client.post(url, headers=login(client, *COUNTER), json={"reason": "typo"}).status_code
+        == 403
+    )
+    assert client.post(url, headers=owner, json={"reason": "x"}).status_code == 422
+
+    made = client.post(url, headers=owner, json={"reason": "Wrong customer"})
+    assert made.status_code == 201, made.text
+    cn = made.json()
+    assert cn["cancels_invoice"] is True and cn["reason"] == "Bill cancelled: Wrong customer"
+    assert cn["grand_total"] == inv["grand_total"]
+    # Everything is back: stock at the shop, nothing owed. The bill is still there, marked.
+    assert stock_at(client, world, "tmt", "S1") == "5000.000"
+    assert stock_at(client, world, "cement", "S1") == "100.000"
+    assert float(receivable(client, world)) == 0
+    again = client.get(f"/api/v1/invoices/{inv['id']}", headers=owner).json()
+    assert again["number"] == inv["number"] and again["cancelled_by"] == cn["number"]
+    listed = client.get("/api/v1/invoices", headers=owner).json()["items"]
+    assert next(x for x in listed if x["id"] == inv["id"])["cancelled_by"] == cn["number"]
+
+    twice = client.post(url, headers=owner, json={"reason": "Wrong customer"})
+    assert twice.status_code == 409 and twice.json()["code"] == "ALREADY_CANCELLED"
+
+
+def test_a_bill_with_a_return_cannot_be_cancelled(client, world):
+    inv = sell(client, world)
+    owner = world["owner"]
+    client.post("/api/v1/credit-notes", headers=owner, json=note_body(inv, [(1, "1")]))
+    refused = client.post(
+        f"/api/v1/invoices/{inv['id']}/cancel", headers=owner, json={"reason": "Wrong customer"}
+    )
+    assert refused.status_code == 409 and refused.json()["code"] == "BILL_HAS_RETURNS"
+    fine = client.get(f"/api/v1/invoices/{inv['id']}", headers=owner).json()
+    assert fine["cancelled_by"] is None
+
+
 def test_inter_state_credit_note_uses_igst_and_direct_lines_do_not_restock(client, world):
     inv = sell(client, world, [line(world, "cement", "4")], site="Hosur site")
     assert inv["supply_kind"] == "inter_state"

@@ -1633,6 +1633,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/invoices/{invoice_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel Invoice
+         * @description Cancel the whole bill. Nothing is deleted (B16): a credit note for every line reverses it.
+         */
+        post: operations["cancel_invoice_api_v1_invoices__invoice_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/invoices/{invoice_id}/pdf": {
         parameters: {
             query?: never;
@@ -3908,6 +3928,11 @@ export interface components {
             invoice_id: number;
             /** Invoice Number */
             invoice_number: string;
+            /**
+             * Cancels Invoice
+             * @default false
+             */
+            cancels_invoice: boolean;
             /** Financial Year */
             financial_year: string;
             /** Site Id */
@@ -3960,6 +3985,11 @@ export interface components {
             invoice_id: number;
             /** Invoice Number */
             invoice_number: string;
+            /**
+             * Cancels Invoice
+             * @default false
+             */
+            cancels_invoice: boolean;
         };
         /** CustomerRateCreate */
         CustomerRateCreate: {
@@ -4816,6 +4846,11 @@ export interface components {
             /** Reorder Now */
             reorder_now: boolean;
         };
+        /** InvoiceCancel */
+        InvoiceCancel: {
+            /** Reason */
+            reason: string;
+        };
         /** InvoiceCreate */
         InvoiceCreate: {
             /** Location Id */
@@ -5029,6 +5064,8 @@ export interface components {
             /** Grand Total */
             grand_total: string;
             status: components["schemas"]["InvoiceStatus"];
+            /** Cancelled By */
+            cancelled_by?: string | null;
             /** Financial Year */
             financial_year: string;
             /** Site Id */
@@ -5094,6 +5131,8 @@ export interface components {
             /** Grand Total */
             grand_total: string;
             status: components["schemas"]["InvoiceStatus"];
+            /** Cancelled By */
+            cancelled_by?: string | null;
             /** Financial Year */
             financial_year: string;
             /** Site Id */
@@ -5206,6 +5245,8 @@ export interface components {
             /** Grand Total */
             grand_total: string;
             status: components["schemas"]["InvoiceStatus"];
+            /** Cancelled By */
+            cancelled_by?: string | null;
         };
         /** ItcAtRiskOut */
         ItcAtRiskOut: {
@@ -17551,6 +17592,86 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InvoiceOwnerOut"] | components["schemas"]["InvoiceOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_invoice_api_v1_invoices__invoice_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InvoiceCancel"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreditNoteOut"];
                 };
             };
             /** @description Bad Request */

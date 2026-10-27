@@ -328,6 +328,7 @@ with `warnings` (cash above the daily limit to one person). New codes: `LINK_*`,
 | --- | --- | --- |
 | POST | `/credit-notes` `{invoice_id, reason, lines:[{line_id, quantity}], approval_ids}` | owner, counter (own shop); after the return window: owner or a `late_return` approval |
 | GET | `/credit-notes` (`invoice_id`, `party_id`) · `/credit-notes/{id}` · `/credit-notes/{id}/pdf` | owner, accountant; counter: own shop |
+| POST | `/invoices/{id}/cancel` `{reason}`: a full credit note with `cancels_invoice`; the bill shows `cancelled_by` | owner |
 | POST | `/debit-notes` `{purchase_id, reason, lines:[{line_id, quantity}]}` | owner |
 | GET | `/debit-notes` (`purchase_id`, `party_id`) · `/debit-notes/{id}` · `/debit-notes/{id}/pdf` | owner, accountant |
 

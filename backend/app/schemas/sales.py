@@ -157,6 +157,11 @@ class InvoiceSummary(Schema):
     supply_type: SupplyType
     grand_total: Decimal
     status: InvoiceStatus
+    cancelled_by: str | None = None  # number of the credit note that cancelled the whole bill
+
+
+class InvoiceCancel(Schema):
+    reason: str = Field(min_length=3, max_length=250)
 
 
 class InvoiceOut(InvoiceSummary):

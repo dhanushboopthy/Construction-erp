@@ -13,7 +13,13 @@ import { Button } from "@/components/Button";
 import { SelectField, TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
 import { formatMoney, trimDecimal } from "@/lib/format";
+import { ItemEditor } from "@/pages/items/ItemEditor";
 import { unitNames } from "@/pages/items/itemLabels";
+import { PartyEditor } from "@/pages/parties/PartyEditor";
+
+/** What the side column shows: the bill's totals, or a quick form to add a missing customer or
+ * item without leaving the bill. */
+type Side = { kind: "totals" } | { kind: "customer" } | { kind: "item" };
 
 interface PayRow {
   mode: PaymentMode;
@@ -110,6 +116,7 @@ export function BillEntryPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [focusLine, setFocusLine] = useState<number | null>(null);
   const [key, setKey] = useState(() => crypto.randomUUID());
+  const [side, setSide] = useState<Side>({ kind: "totals" });
 
   const itemList = useMemo(
     () => (items.data?.items ?? []).filter((i) => i.is_active),
@@ -120,6 +127,11 @@ export function BillEntryPage() {
   const party = customers.find((p) => String(p.id) === partyId);
   const sites = (party?.sites ?? []).filter((s) => s.is_active);
   const itemOf = (id: string) => itemList.find((i) => String(i.id) === id);
+  // The shops this user may bill from. With only one there is nothing to choose.
+  const shops = places.filter(
+    (l) => l.kind === "shop" && (owner || user?.locations.some((x) => x.id === l.id)),
+  );
+  const onlyShop = shops.length === 1 ? shops[0] : undefined;
 
   // Default to the walk-in customer once the list is there.
   useEffect(() => {
@@ -129,13 +141,15 @@ export function BillEntryPage() {
     }
   }, [customers, partyId]);
 
-  // The owner works at every shop, so start on the first one.
+  // A user with one shop always bills from it; the owner works at every shop, so start on the first.
   useEffect(() => {
-    if (!locationId) {
+    if (onlyShop && locationId !== String(onlyShop.id)) {
+      setLocationId(String(onlyShop.id));
+    } else if (!locationId) {
       const first = places.find((l) => l.kind === "shop");
       if (first) setLocationId(String(first.id));
     }
-  }, [places, locationId]);
+  }, [places, locationId, onlyShop]);
 
   function payload(): InvoiceCreate | null {
     if (!partyId || !locationId) return null;
@@ -168,7 +182,8 @@ export function BillEntryPage() {
       party_id: Number(partyId),
       site_id: siteId ? Number(siteId) : null,
       invoice_date: date === todayISO() ? null : date,
-      vehicle_no: vehicle.trim() || null,
+      // A vehicle is only asked for when we deliver; it can also be added later on the e-way bill.
+      vehicle_no: (siteId && vehicle.trim()) || null,
       remark: remark.trim() || null,
       lines: out,
       payments: pays
@@ -260,33 +275,43 @@ export function BillEntryPage() {
           New bill
         </h1>
         <Link to="/stock/lost-sales">Asked for, out of stock? Log it</Link>
+        {onlyShop ? (
+          <p className={styles.sub}>
+            Billing from {onlyShop.code} {onlyShop.name}
+          </p>
+        ) : null}
         <p className={styles.keys}>Enter in Quantity adds a line · Ctrl+Enter saves · Tab moves</p>
       </div>
-      <form
-        onSubmit={(e) => void onSubmit(e)}
-        onKeyDown={onKeyDown}
-        noValidate
-        className={styles.entryLayout}
-      >
-        <div className={styles.stack}>
+      <div className={styles.entryLayout}>
+        <form
+          onSubmit={(e) => void onSubmit(e)}
+          onKeyDown={onKeyDown}
+          noValidate
+          className={styles.stack}
+        >
           <div className={styles.headerGrid}>
-            <SelectField
-              label="Customer"
-              value={partyId}
-              error={errors.party}
-              onChange={(e) => {
-                setPartyId(e.target.value);
-                setSiteId("");
-              }}
-              autoFocus
-            >
-              <option value="">Choose a customer</option>
-              {customers.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </SelectField>
+            <div className={styles.stack}>
+              <SelectField
+                label="Customer"
+                value={partyId}
+                error={errors.party}
+                onChange={(e) => {
+                  setPartyId(e.target.value);
+                  setSiteId("");
+                }}
+                autoFocus
+              >
+                <option value="">Choose a customer</option>
+                {customers.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </SelectField>
+              <Button variant="quiet" onClick={() => setSide({ kind: "customer" })}>
+                New customer
+              </Button>
+            </div>
             <SelectField
               label="Deliver to"
               value={siteId}
@@ -300,23 +325,21 @@ export function BillEntryPage() {
                 </option>
               ))}
             </SelectField>
-            <SelectField
-              label="Bill from"
-              value={locationId}
-              error={errors.location}
-              onChange={(e) => setLocationId(e.target.value)}
-            >
-              <option value="">Choose a shop</option>
-              {places
-                .filter(
-                  (l) => l.kind === "shop" && (owner || user?.locations.some((x) => x.id === l.id)),
-                )
-                .map((l) => (
+            {onlyShop ? null : (
+              <SelectField
+                label="Bill from"
+                value={locationId}
+                error={errors.location}
+                onChange={(e) => setLocationId(e.target.value)}
+              >
+                <option value="">Choose a shop</option>
+                {shops.map((l) => (
                   <option key={l.id} value={l.id}>
                     {l.code} {l.name}
                   </option>
                 ))}
-            </SelectField>
+              </SelectField>
+            )}
             {owner ? (
               <TextField
                 label="Bill date"
@@ -326,11 +349,13 @@ export function BillEntryPage() {
                 onChange={(e) => setDate(e.target.value)}
               />
             ) : null}
-            <TextField
-              label="Vehicle no."
-              value={vehicle}
-              onChange={(e) => setVehicle(e.target.value.toUpperCase())}
-            />
+            {siteId ? (
+              <TextField
+                label="Vehicle no. (optional)"
+                value={vehicle}
+                onChange={(e) => setVehicle(e.target.value.toUpperCase())}
+              />
+            ) : null}
           </div>
 
           {lines.map((l, i) => {
@@ -478,6 +503,11 @@ export function BillEntryPage() {
           })}
           <div className={styles.actions}>
             <Button onClick={addLine}>Add line</Button>
+            {owner ? (
+              <Button variant="quiet" onClick={() => setSide({ kind: "item" })}>
+                New item
+              </Button>
+            ) : null}
           </div>
           <fieldset className={styles.lineBlock} style={{ margin: 0 }}>
             <legend className="visually-hidden">Money taken now</legend>
@@ -576,9 +606,40 @@ export function BillEntryPage() {
             </Button>
             <Button onClick={() => void navigate("/sales")}>Cancel</Button>
           </div>
-        </div>
+        </form>
 
-        <aside className={styles.preview} aria-labelledby="totals-title" aria-live="polite">
+        {side.kind === "customer" ? (
+          <PartyEditor
+            key="new-customer"
+            onClose={() => setSide({ kind: "totals" })}
+            onDone={(p) => {
+              setPartyId(String(p.id));
+              setSiteId("");
+              setSide({ kind: "totals" });
+            }}
+          />
+        ) : side.kind === "item" ? (
+          <ItemEditor
+            key="new-item"
+            onClose={() => setSide({ kind: "totals" })}
+            onDone={(it) => {
+              const empty = lines.findIndex((l) => !l.itemId);
+              if (empty >= 0) {
+                setLine(empty, { itemId: String(it.id), unit: "" });
+              } else {
+                setLines((rows) => [...rows, { ...emptyLine(), itemId: String(it.id) }]);
+              }
+              setSide({ kind: "totals" });
+            }}
+          />
+        ) : null}
+
+        <aside
+          className={styles.preview}
+          aria-labelledby="totals-title"
+          aria-live="polite"
+          hidden={side.kind !== "totals"}
+        >
           <h3 id="totals-title">Bill</h3>
           {previewError ? <p className={styles.formError}>{previewError}</p> : null}
           {!preview && !previewError ? (
@@ -648,7 +709,7 @@ export function BillEntryPage() {
             </>
           ) : null}
         </aside>
-      </form>
+      </div>
     </section>
   );
 }

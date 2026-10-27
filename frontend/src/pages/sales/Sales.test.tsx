@@ -193,6 +193,81 @@ describe("Billing", () => {
     );
   });
 
+  it("does not ask a one-shop user which shop, and asks for a vehicle only on delivery", async () => {
+    const user = userEvent.setup();
+    mockApi({
+      ...session(COUNTER),
+      ...routes(),
+      "GET /parties": () => ({
+        body: page([WALK_IN, { ...PARTY, sites: [{ id: 5, name: "Site A", is_active: true }] }]),
+      }),
+    });
+    renderAt("/sales/new");
+
+    expect(await screen.findByText("Billing from S1 Shop 1")).toBeVisible();
+    expect(screen.queryByLabelText("Bill from")).toBeNull();
+    expect(screen.queryByLabelText(/Vehicle no/)).toBeNull();
+    // Counter staff cannot add items to the master.
+    expect(screen.queryByRole("button", { name: "New item" })).toBeNull();
+
+    await user.selectOptions(screen.getByLabelText("Customer"), String(PARTY.id));
+    await user.selectOptions(screen.getByLabelText("Deliver to"), "5");
+    expect(screen.getByLabelText("Vehicle no. (optional)")).toBeVisible();
+  });
+
+  it("adds a new customer from the bill and picks them", async () => {
+    const user = userEvent.setup();
+    const NEW = { ...WALK_IN, id: 30, name: "Murugan Builders" };
+    let parties = [WALK_IN, PARTY];
+    const { calls } = mockApi({
+      ...session(COUNTER),
+      ...routes(),
+      "GET /parties": () => ({ body: page(parties) }),
+      "POST /parties": () => {
+        parties = [...parties, NEW];
+        return { status: 201, body: NEW };
+      },
+    });
+    renderAt("/sales/new");
+
+    await screen.findByRole("option", { name: "Walk-in customer" });
+    await user.click(screen.getByRole("button", { name: "New customer" }));
+    const panel = await screen.findByRole("complementary", { name: "New party" });
+    await user.type(within(panel).getByLabelText("Name"), "Murugan Builders");
+    await user.click(within(panel).getByRole("button", { name: "Create party" }));
+
+    await vi.waitFor(() => expect(screen.getByLabelText("Customer")).toHaveValue("30"));
+    expect(screen.queryByRole("complementary", { name: "New party" })).toBeNull();
+    const sent = calls.find((c) => c.method === "POST" && c.path === "/parties");
+    expect(sent?.body).toMatchObject({ name: "Murugan Builders", type: "customer" });
+  });
+
+  it("lets the owner add a new item from the bill onto the empty line", async () => {
+    const user = userEvent.setup();
+    const NEW = { ...TMT_ITEM, id: 11, name: "Binding wire 18 g" };
+    let items = [TMT_ITEM];
+    mockApi({
+      ...session(OWNER),
+      ...routes(),
+      "GET /items": () => ({ body: page(items) }),
+      "POST /items": () => {
+        items = [...items, NEW];
+        return { status: 201, body: NEW };
+      },
+    });
+    renderAt("/sales/new");
+
+    await screen.findByRole("option", { name: "TMT bar 12 mm Fe500D" });
+    await user.click(screen.getByRole("button", { name: "New item" }));
+    const panel = await screen.findByRole("complementary", { name: "New item" });
+    await user.type(within(panel).getByLabelText("Name"), "Binding wire 18 g");
+    await user.type(within(panel).getByLabelText("HSN"), "72171010");
+    await user.click(within(panel).getByRole("button", { name: "Create item" }));
+
+    await vi.waitFor(() => expect(screen.getByLabelText("Item 1")).toHaveValue("11"));
+    expect(screen.queryByRole("complementary", { name: "New item" })).toBeNull();
+  });
+
   it("lists bills and opens one with its print button", async () => {
     const user = userEvent.setup();
     mockApi({

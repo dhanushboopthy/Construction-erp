@@ -191,6 +191,11 @@ stock ledger moved here from Milestone 4 because opening stock is its first writ
 - A4 PDF: `GET /invoices/{id}/pdf?copy=` via WeasyPrint, template `app/templates/invoice_a4.html`
   behind the `InvoiceRenderer` interface (a thermal layout can be added). Outside production the PDF
   carries a TEST watermark (ADR 0005).
+- New-bill screen: a user with one shop is not asked which shop (the page says "Billing from …");
+  the vehicle number is asked only when the bill is delivered to a site (it can also be added on
+  the e-way bill). A missing customer is added from the bill (owner and counter); a missing item
+  is added from the bill by the owner only (item master stays owner-only) and lands on the first
+  empty line.
 
 **Built (Milestone 7):** `approval`; `app_user.pin_hash`; `party_ledger.applies_to`;
 `sales_invoice.paid_at_billing`. The planned `payment_allocation` table is not needed: a payment's

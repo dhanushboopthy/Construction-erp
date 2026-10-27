@@ -602,6 +602,11 @@ fieldset.choices legend {
   box-shadow: var(--shadow-raised);
 }
 
+/* The bill's totals step aside while a new customer or item is being added. */
+.preview[hidden] {
+  display: none;
+}
+
 .preview h3 {
   margin: 0;
   font-size: var(--text-md);

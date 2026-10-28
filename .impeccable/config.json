@@ -13,13 +13,13 @@
         "reason": "Claude: the faint TEST watermark on dev/staging PDFs is intentional (ADR 0005), pre-existing"
       },
       {
-        "rule": "oversized-h1",
-        "value": "*",
+        "rule": "overused-font",
+        "value": "arial",
         "files": [
           "backend/app/templates/invoice_a4.html"
         ],
-        "createdAt": "2026-10-28T11:16:50.143Z",
-        "reason": "Claude: the h1s are the shop name and TAX INVOICE/QUOTATION heading at 14pt on an A4 print PDF, not a web hero; pre-existing"
+        "createdAt": "2026-10-28T11:50:00.000Z",
+        "reason": "Claude: print PDF; Arial is the font in the owner's own Tally-style invoice template, kept on purpose"
       }
     ]
   }

@@ -6,6 +6,12 @@ import styles from "@/components/Ledger.module.css";
 const TABS = [
   { to: "/stock", label: "Stock levels", end: true, roles: ["owner", "counter", "accountant"] },
   {
+    to: "/stock/dashboard",
+    label: "Dashboard",
+    end: false,
+    roles: ["owner", "counter", "accountant"],
+  },
+  {
     to: "/stock/transfers",
     label: "Transfers",
     end: false,

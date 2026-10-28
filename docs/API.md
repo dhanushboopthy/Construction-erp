@@ -202,6 +202,7 @@ The saved line returns `rate_source: "override"` and `rate_override_reason`. Err
 
 | Method | Path | Who |
 | --- | --- | --- |
+| GET | `/stock/dashboard`: items in stock by place and category, out of stock, to reorder | all roles; stock value, dead stock and values per place and category only for the owner |
 | GET | `/stock-adjustments?location_id=&date_from=&date_to=` (this month by default) | all roles (counter: own shop); values, totals by reason and ITC only for the owner |
 | GET | `/stock-adjustments/{id}` | as above |
 | POST | `/stock-adjustments` (`reason`, `lines[{item_id, quantity, unit, direction}]`, `approval_ids`) | owner (any place, may back-date); counter: own shop, today; above `adjustment_approval_limit` needs a `stock_adjustment` approval (409 `ADJUSTMENT_NEEDS_OWNER`) |

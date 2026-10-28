@@ -495,6 +495,13 @@ number series `W`; `shop_settings.provision_pct_*` (not yet due 0, 1-15 days 1, 
 - Deferred: bank and cash balances in working capital (FM7); booking the provision; reversing a
   write-off (a later payment covers it).
 
+**Built (owner request R5):** stock dashboard, `GET /stock/dashboard` and the Stock → Dashboard
+tab. Active items in stock, by place and by category; active items with no stock; items at or
+below their reorder point (FM6 analytics, once there is enough sales history). The owner also
+sees the stock value, the dead stock (no movement for 180 days) and the value per place and
+category, at the weighted-average cost (`domain/stock_dashboard.py`). Everyone else sees counts
+and quantities only (B4).
+
 **Built (FM6, finance review F10 to F14):** `stock_writedown`, `stock_writedown_line`; stock ledger
 ref `stock_writedown`; number series `N`; `item.lead_time_days`, `item.safety_days`,
 `party.lead_time_days`; `shop_settings.default_lead_time_days` (7), `default_safety_days` (2),

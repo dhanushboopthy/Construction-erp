@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from app.core.errors import BusinessRuleError, NotFoundError
 from app.core.tenancy import current_tenant_id
 from app.domain import inventory_analytics as ia
+from app.domain import stock_dashboard as dashboard_rules
 from app.domain import stock_valuation as stock_rules
 from app.domain.inventory_analytics import Direction
 from app.domain.money import ZERO, money
@@ -28,6 +29,12 @@ from app.models.setup import Location
 from app.models.stock_ops import StockWritedown, StockWritedownLine
 from app.schemas.inventory import (
     AgeBucketOut,
+    DashboardCategoryOut,
+    DashboardCategoryOwnerOut,
+    DashboardItemOut,
+    DashboardPlaceOut,
+    DashboardPlaceOwnerOut,
+    DashboardReorderOut,
     FifoAgeOut,
     FifoItemOut,
     FifoLayerOut,
@@ -37,11 +44,14 @@ from app.schemas.inventory import (
     NrvRowOut,
     ShortageClaimOut,
     ShrinkageOut,
+    StockDashboardOut,
+    StockDashboardOwnerOut,
     SupplierShortageOut,
     WritedownCreate,
     WritedownLineOut,
     WritedownOut,
 )
+from app.schemas.stock import StockItemOwnerOut
 from app.services import closing as closing_service
 from app.services import ledgers, rates
 from app.services.numbering import allocate_number
@@ -247,6 +257,90 @@ def analytics(db: Session, today: date) -> InventoryAnalyticsOut:
 
 
 # ------------------------------------------------------------------------------ value (NRV)
+
+
+def stock_dashboard(
+    db: Session, today: date, with_cost: bool
+) -> StockDashboardOut | StockDashboardOwnerOut:
+    """One screen of stock (R5): what is in stock and where, what has run out, what needs
+    ordering. Values at cost only for the owner (B4)."""
+    active = {i.id: i for i in _active_items(db)}
+    held = {
+        r.item_id: r
+        for r in ledgers.stock_summary(db, with_cost=True, include_zero=True)
+        if r.item_id in active
+    }
+    locations = {
+        loc.code: loc
+        for loc in db.execute(
+            select(Location).where(Location.tenant_id == current_tenant_id(db))
+        ).scalars()
+    }
+    stocks: list[dashboard_rules.ItemStock] = []
+    for item in active.values():
+        row = held.get(item.id)
+        stocks.append(
+            dashboard_rules.ItemStock(
+                item.id,
+                item.name,
+                item.category.value,
+                row.avg_cost if isinstance(row, StockItemOwnerOut) else ZERO,
+                {x.code: x.quantity for x in row.locations} if row else {},
+            )
+        )
+    s = dashboard_rules.summarise(stocks)
+    analysed = analytics(db, today)
+    out_of_stock = [
+        DashboardItemOut(item_id=x.item_id, name=x.name, base_unit=active[x.item_id].base_unit)
+        for x in s.out_of_stock
+    ]
+    reorder = [
+        DashboardReorderOut(
+            item_id=r.item_id,
+            name=r.item_name,
+            base_unit=r.base_unit,
+            on_hand=r.on_hand,
+            reorder_point=r.reorder_point,
+            short_by=r.short_by,
+        )
+        for r in analysed.rows
+        if r.reorder_now and r.reorder_point is not None
+    ]
+    common = {
+        "as_of": today,
+        "items_in_stock": s.items_in_stock,
+        "out_of_stock": out_of_stock,
+        "reorder": reorder,
+        "enough_history": analysed.enough_data,
+    }
+    places = [(locations[p.code], p) for p in s.places if p.code in locations]
+    if not with_cost:
+        return StockDashboardOut(
+            **common,
+            places=[
+                DashboardPlaceOut(location_id=loc.id, code=loc.code, name=loc.name, items=p.items)
+                for loc, p in places
+            ],
+            categories=[
+                DashboardCategoryOut(category=ItemCategory(c.code), items=c.items)
+                for c in s.categories
+            ],
+        )
+    return StockDashboardOwnerOut(
+        **common,
+        stock_value=s.stock_value,
+        dead_stock_value=analysed.dead_stock_value,
+        places=[
+            DashboardPlaceOwnerOut(
+                location_id=loc.id, code=loc.code, name=loc.name, items=p.items, value=p.value
+            )
+            for loc, p in places
+        ],
+        categories=[
+            DashboardCategoryOwnerOut(category=ItemCategory(c.code), items=c.items, value=c.value)
+            for c in s.categories
+        ],
+    )
 
 
 def _replacement_costs(db: Session) -> dict[int, Decimal]:

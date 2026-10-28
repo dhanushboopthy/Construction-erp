@@ -57,7 +57,7 @@ Duolink hosts the ERP for many companies. One branch and PR each.
 | R2 | Cancel a bill (owner): a full credit note, never a delete (B16) | The cancelled bill keeps its number, shows "Cancelled", stock and dues are back | **Done** (`feat/bill-cancel`) |
 | R3 | Quotation (estimate) and proforma invoice, each with its own number series, billed once | A quotation moves no stock and owes nothing; its bill is linked and a second bill is refused | **Done** (`feat/quotations`) |
 | R4 | Cash book for a month, a year, any range or everything | The same entries and running balance whichever way the range is picked | **Done** (`feat/cash-book-periods`) |
-| R5 | Stock dashboard | Value by place and category, low stock and slow stock on one screen | Planned |
+| R5 | Stock dashboard | Value by place and category, low stock and slow stock on one screen | **Done** (`feat/stock-dashboard`) |
 | R6 | Batch (lot) on every purchase line | A purchase line keeps its batch; the batch shows on stock and on the bill | Planned |
 
 ## Already in place (Milestones 0–1)

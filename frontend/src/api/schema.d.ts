@@ -844,6 +844,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/stock/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Stock Dashboard
+         * @description Stock on one screen: in stock by place and category, run out, to reorder. Values: owner.
+         */
+        get: operations["stock_dashboard_api_v1_stock_dashboard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/stock": {
         parameters: {
             query?: never;
@@ -4174,6 +4194,68 @@ export interface components {
             profit_per_unit: string | null;
             /** Margin Per Base Unit */
             margin_per_base_unit: string | null;
+        };
+        /** DashboardCategoryOut */
+        DashboardCategoryOut: {
+            category: components["schemas"]["ItemCategory"];
+            /** Items */
+            items: number;
+        };
+        /** DashboardCategoryOwnerOut */
+        DashboardCategoryOwnerOut: {
+            category: components["schemas"]["ItemCategory"];
+            /** Items */
+            items: number;
+            /** Value */
+            value: string;
+        };
+        /** DashboardItemOut */
+        DashboardItemOut: {
+            /** Item Id */
+            item_id: number;
+            /** Name */
+            name: string;
+            /** Base Unit */
+            base_unit: string;
+        };
+        /** DashboardPlaceOut */
+        DashboardPlaceOut: {
+            /** Location Id */
+            location_id: number;
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Items */
+            items: number;
+        };
+        /** DashboardPlaceOwnerOut */
+        DashboardPlaceOwnerOut: {
+            /** Location Id */
+            location_id: number;
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Items */
+            items: number;
+            /** Value */
+            value: string;
+        };
+        /** DashboardReorderOut */
+        DashboardReorderOut: {
+            /** Item Id */
+            item_id: number;
+            /** Name */
+            name: string;
+            /** Base Unit */
+            base_unit: string;
+            /** On Hand */
+            on_hand: string;
+            /** Reorder Point */
+            reorder_point: string;
+            /** Short By */
+            short_by: string | null;
         };
         /** DebitNoteCreate */
         DebitNoteCreate: {
@@ -8663,6 +8745,53 @@ export interface components {
              * Format: date
              */
             as_of: string;
+        };
+        /**
+         * StockDashboardOut
+         * @description Everyone: quantities and counts only, no cost (B4).
+         */
+        StockDashboardOut: {
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** Items In Stock */
+            items_in_stock: number;
+            /** Out Of Stock */
+            out_of_stock: components["schemas"]["DashboardItemOut"][];
+            /** Reorder */
+            reorder: components["schemas"]["DashboardReorderOut"][];
+            /** Enough History */
+            enough_history: boolean;
+            /** Places */
+            places: components["schemas"]["DashboardPlaceOut"][];
+            /** Categories */
+            categories: components["schemas"]["DashboardCategoryOut"][];
+        };
+        /** StockDashboardOwnerOut */
+        StockDashboardOwnerOut: {
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** Items In Stock */
+            items_in_stock: number;
+            /** Out Of Stock */
+            out_of_stock: components["schemas"]["DashboardItemOut"][];
+            /** Reorder */
+            reorder: components["schemas"]["DashboardReorderOut"][];
+            /** Enough History */
+            enough_history: boolean;
+            /** Places */
+            places: components["schemas"]["DashboardPlaceOwnerOut"][];
+            /** Categories */
+            categories: components["schemas"]["DashboardCategoryOwnerOut"][];
+            /** Stock Value */
+            stock_value: string;
+            /** Dead Stock Value */
+            dead_stock_value: string;
         };
         /**
          * StockItemOut
@@ -13809,6 +13938,71 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stock_dashboard_api_v1_stock_dashboard_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockDashboardOwnerOut"] | components["schemas"]["StockDashboardOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };

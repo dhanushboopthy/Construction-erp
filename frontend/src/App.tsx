@@ -34,6 +34,7 @@ import { UsersPage } from "@/pages/settings/UsersPage";
 import { LostSalesPage } from "@/pages/stock/LostSalesPage";
 import { ShrinkagePage } from "@/pages/stock/ShrinkagePage";
 import { StockAnalysisPage } from "@/pages/stock/StockAnalysisPage";
+import { StockDashboardPage } from "@/pages/stock/StockDashboardPage";
 import { StockValuePage } from "@/pages/stock/StockValuePage";
 import { AdjustmentsPage } from "@/pages/stock/AdjustmentsPage";
 import { CountsPage } from "@/pages/stock/CountsPage";
@@ -222,6 +223,7 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
                 }
               >
                 <Route index element={<StockPage />} />
+                <Route path="dashboard" element={<StockDashboardPage />} />
                 <Route path="transfers" element={<TransfersPage />} />
                 <Route path="counts" element={<CountsPage />} />
                 <Route path="adjustments" element={<AdjustmentsPage />} />

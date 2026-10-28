@@ -1,9 +1,10 @@
-"""Cement lots by manufacturing week (FM10, docs/FINANCE_REVIEW.md F25) — the smallest version.
+"""Lots (FM10, docs/FINANCE_REVIEW.md F25) and batch numbers (R6) — the smallest version.
 
-A supplier delivery of cement may carry the manufacturing week printed on the bag (optional). A
-sale of cement takes the oldest lot first and records which lots it took on the sale line. A
-delivery with no week printed is ordered by the day it was received, so nothing is lost when the
-week is not marked. Costing is unchanged: the company-wide average cost still prices every bag.
+A supplier delivery may carry the supplier's batch, lot or heat number (any item) and, for cement,
+the manufacturing week printed on the bag; both are optional. A sale takes the oldest lot first
+and records which lots it took on the sale line, so a bill shows its batches. A delivery with no
+week printed is ordered by the day it was received, so nothing is lost when nothing is marked.
+Costing is unchanged: the company-wide average cost still prices every unit.
 
 Layers are the shop's stock-mode deliveries of the item, less what was sent back by debit note and
 less what earlier sales took. Opening stock, returns from customers and transfers in are not
@@ -20,7 +21,7 @@ from sqlalchemy.orm import Session
 from app.core.tenancy import current_tenant_id
 from app.domain import orders as rules
 from app.domain.money import ZERO
-from app.models.enums import ItemCategory, PurchaseMode
+from app.models.enums import PurchaseMode
 from app.models.masters import Item
 from app.models.orders import SalesLineLot
 from app.models.purchasing import Purchase, PurchaseLine
@@ -28,10 +29,6 @@ from app.models.returns import DebitNote, DebitNoteLine
 from app.models.sales import SalesLine
 from app.schemas.orders import LotOut
 from app.services import ledgers
-
-
-def tracks_lots(item: Item) -> bool:
-    return item.category is ItemCategory.CEMENT
 
 
 def _layers(db: Session, item_id: int, location_id: int) -> list[tuple[rules.Layer, PurchaseLine]]:
@@ -78,10 +75,8 @@ def _layers(db: Session, item_id: int, location_id: int) -> list[tuple[rules.Lay
 
 
 def record_picks(db: Session, sales_line: SalesLine, item: Item, location_id: int) -> None:
-    """Take the oldest lots for a cement sale line and record them. Call before the sale's stock
-    move is written, with the item locked, so the quantity on hand is what the sale started from."""
-    if not tracks_lots(item):
-        return
+    """Take the oldest lots for a sale line and record them. Call before the sale's stock move is
+    written, with the item locked, so the quantity on hand is what the sale started from."""
     layers = _layers(db, item.id, location_id)
     if not layers:
         return
@@ -108,19 +103,20 @@ def lots_for_lines(db: Session, line_ids: list[int]) -> dict[int, list[LotOut]]:
     if not line_ids:
         return {}
     rows = db.execute(
-        select(SalesLineLot, Purchase.bill_date)
+        select(SalesLineLot, Purchase.bill_date, PurchaseLine.batch_no)
         .join(PurchaseLine, PurchaseLine.id == SalesLineLot.purchase_line_id)
         .join(Purchase, Purchase.id == PurchaseLine.purchase_id)
         .where(SalesLineLot.sales_line_id.in_(line_ids))
         .order_by(SalesLineLot.id)
     ).all()
     out: dict[int, list[LotOut]] = defaultdict(list)
-    for lot, received_on in rows:
+    for lot, received_on, batch_no in rows:
         out[lot.sales_line_id].append(
             LotOut(
-                label=rules.lot_label(lot.mfg_week, lot.mfg_year, received_on),
+                label=rules.lot_label(lot.mfg_week, lot.mfg_year, received_on, batch_no),
                 mfg_week=lot.mfg_week,
                 mfg_year=lot.mfg_year,
+                batch_no=batch_no,
                 quantity=lot.base_qty,
             )
         )
@@ -134,6 +130,10 @@ def stock_by_lot(db: Session, item_id: int, location_id: int) -> list[tuple[str,
         purchase = db.get(Purchase, line.purchase_id)
         received_on = purchase.bill_date if purchase else layer.key
         out.append(
-            (rules.lot_label(line.mfg_week, line.mfg_year, received_on), layer.key, layer.remaining)
+            (
+                rules.lot_label(line.mfg_week, line.mfg_year, received_on, line.batch_no),
+                layer.key,
+                layer.remaining,
+            )
         )
     return out

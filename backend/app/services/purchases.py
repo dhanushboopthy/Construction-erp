@@ -442,6 +442,7 @@ def create(
                 weight_note=(p.data.weight_note or "").strip() or None,
                 mfg_week=p.data.mfg_week,
                 mfg_year=p.data.mfg_year,
+                batch_no=(p.data.batch_no or "").strip() or None,
                 costs=[
                     PurchaseCost(
                         tenant_id=current_tenant_id(db),
@@ -552,6 +553,7 @@ def purchase_view(
             "weight_note": line.weight_note,
             "mfg_week": line.mfg_week,
             "mfg_year": line.mfg_year,
+            "batch_no": line.batch_no,
         }
 
     if not with_cost:

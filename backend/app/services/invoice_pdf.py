@@ -19,6 +19,7 @@ from app.domain.words import amount_in_words
 from app.models.compliance import EInvoice
 from app.models.enums import QuoteKind
 from app.models.sales import SalesInvoice, SalesLine, SalesQuote, SalesQuoteLine
+from app.services import lots as lot_service
 from app.services.shop_settings import get_settings_row
 
 TEMPLATES = Path(__file__).resolve().parent.parent / "templates"
@@ -92,6 +93,11 @@ class A4HtmlRenderer:
         eway_no: str | None = None,
         irn: IrnPrint | None = None,
     ) -> bytes:
+        lots = lot_service.lots_for_lines(db, [x.id for x in invoice.lines])
+        batches = {
+            line_id: ", ".join(dict.fromkeys(x.batch_no for x in taken if x.batch_no))
+            for line_id, taken in lots.items()
+        }
         return _render(
             db,
             self.template,
@@ -99,6 +105,7 @@ class A4HtmlRenderer:
             invoice.lines,
             doc=TAX_INVOICE,
             figures=invoice,
+            batches=batches,
             copy_label=copy_label,
             eway_no=eway_no,
             irn=irn,
@@ -165,6 +172,7 @@ def _render(
     *,
     doc: dict[str, str],
     figures: SalesInvoice | SalesQuote,
+    batches: dict[int, str] | None = None,
     copy_label: str | None = None,
     eway_no: str | None = None,
     irn: IrnPrint | None = None,
@@ -187,6 +195,7 @@ def _render(
                 "hsn": line.hsn,
                 "base_unit": line.base_unit,
                 "stock_after": _plain(stock_after) if stock_after is not None else None,
+                "batch": (batches or {}).get(line.id) or None,
                 "qty_text": f"{_plain(line.quantity)} {line.unit}",
                 "rate_text": f"{inr(line.rate * factor)}/{line.unit}",
                 "discount_text": inr(line.discount) if line.discount else "—",

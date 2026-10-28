@@ -61,6 +61,8 @@ class PurchaseLineIn(Schema):
     # FM10: the manufacturing week printed on the bags (cement only, optional).
     mfg_week: int | None = Field(default=None, ge=1, le=53)
     mfg_year: int | None = Field(default=None, ge=2000, le=2100)
+    # R6: the supplier's batch, lot or heat number (any item, optional).
+    batch_no: str | None = Field(default=None, max_length=40)
 
     @model_validator(mode="after")
     def _week_with_year(self) -> Self:
@@ -113,6 +115,7 @@ class PurchaseLineOut(Schema):
     weight_note: str | None = None
     mfg_week: int | None = None
     mfg_year: int | None = None
+    batch_no: str | None = None
 
 
 class PurchaseCostOut(Schema):

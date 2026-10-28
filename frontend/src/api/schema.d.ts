@@ -5964,6 +5964,8 @@ export interface components {
             mfg_week: number | null;
             /** Mfg Year */
             mfg_year: number | null;
+            /** Batch No */
+            batch_no?: string | null;
             /** Quantity */
             quantity: string;
         };
@@ -7358,6 +7360,8 @@ export interface components {
             mfg_week?: number | null;
             /** Mfg Year */
             mfg_year?: number | null;
+            /** Batch No */
+            batch_no?: string | null;
         };
         /**
          * PurchaseLineOut
@@ -7400,6 +7404,8 @@ export interface components {
             mfg_week?: number | null;
             /** Mfg Year */
             mfg_year?: number | null;
+            /** Batch No */
+            batch_no?: string | null;
         };
         /** PurchaseLineOwnerOut */
         PurchaseLineOwnerOut: {
@@ -7439,6 +7445,8 @@ export interface components {
             mfg_week?: number | null;
             /** Mfg Year */
             mfg_year?: number | null;
+            /** Batch No */
+            batch_no?: string | null;
             /** Rate */
             rate: string;
             /** Gst Rate */

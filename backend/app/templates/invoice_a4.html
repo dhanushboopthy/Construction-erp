@@ -82,7 +82,7 @@
   {% for l in lines %}
     <tr>
       <td>{{ l.line_no }}</td>
-      <td>{{ l.description }}{% if l.stock_after is not none %}<div class="muted small">Stock left: {{ l.stock_after }} {{ l.base_unit }}</div>{% endif %}</td>
+      <td>{{ l.description }}{% if l.batch %}<div class="muted small">Batch: {{ l.batch }}</div>{% endif %}{% if l.stock_after is not none %}<div class="muted small">Stock left: {{ l.stock_after }} {{ l.base_unit }}</div>{% endif %}</td>
       <td>{{ l.hsn }}</td>
       <td class="num">{{ l.qty_text }}</td>
       <td class="num">{{ l.rate_text }}</td>

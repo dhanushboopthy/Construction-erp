@@ -354,6 +354,40 @@ def test_fm10_acceptance_cement_is_sold_oldest_week_first(client, world):
     assert lots_of(client, world, sell_bags(client, world, "5")) == [("Week 40, 2026", "5.000")]
 
 
+def test_any_item_carries_a_batch_number_onto_its_bill(client, world):
+    """R6: 5,000 kg of TMT opening stock (no lot), then 2 ton bought as heat H-2231. Selling
+    5.5 ton takes the 5,000 kg first and 500 kg of H-2231."""
+    owner = world["owner"]
+    bought = client.post(
+        "/api/v1/purchases",
+        headers=owner,
+        json={
+            "supplier_id": world["supplier"]["id"],
+            "location_id": world["loc"]["S1"],
+            "bill_no": "T-1",
+            "bill_date": day(3),
+            "lines": [
+                {
+                    "item_id": world["tmt"]["id"],
+                    "unit": "ton",
+                    "quantity": "2",
+                    "rate": "52000",
+                    "batch_no": " H-2231 ",
+                }
+            ],
+        },
+    )
+    assert bought.status_code == 201, bought.text
+    assert bought.json()["lines"][0]["batch_no"] == "H-2231"
+    sale = post(client, world, body(world, [line(world, "tmt", "5.5", "ton")]))
+    assert sale.status_code == 201, sale.text
+    assert lots_of(client, world, sale.json()) == [("Batch H-2231", "500.000")]
+    seen = client.get(f"/api/v1/invoices/{sale.json()['id']}", headers=owner).json()
+    assert seen["lines"][0]["lots"][0]["batch_no"] == "H-2231"
+    pdf = client.get(f"/api/v1/invoices/{sale.json()['id']}/pdf", headers=owner)
+    assert pdf.status_code == 200 and pdf.content.startswith(b"%PDF")
+
+
 def test_a_sale_without_lot_stock_records_no_lot(client, world):
     # Only the 100 opening bags exist: nothing to name.
     assert lots_of(client, world, sell_bags(client, world, "10")) == []

@@ -644,6 +644,12 @@ confirm AS 2).
   than the lots hold, the missing quantity comes off the oldest lots. Costing is unchanged (one
   weighted-average cost); the bill PDF is unchanged; the lots show on the invoice screen.
   Transfers carry no lot, and a lot is kept per shop of the purchase.
+- Batch numbers (owner request R6): any purchase line may carry the supplier's batch, lot or heat
+  number (`purchase_line.batch_no`, optional, up to 40 characters). Lots now apply to every item,
+  not only cement: every sale takes the oldest lot first and records it in `sales_line_lot`. A
+  lot reads "Batch H-2231" (with the week for cement when both are given), else the week, else
+  the receipt date. The batch numbers a bill line took print under its description on the A4
+  bill. Costing is still the one weighted-average cost.
 - Lost-sales log (`services/lost_sales.py`), also the smallest version, built without the owner's
   answer on whether counter staff will log (question 7): item, quantity (any unit of the item),
   optional note, shop and user; counter staff log for their own shop, dated today; the owner may

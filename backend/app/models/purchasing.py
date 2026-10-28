@@ -129,6 +129,8 @@ class PurchaseLine(Base, TenantMixin):
     # FM10: the manufacturing week printed on the cement bags of this delivery (optional).
     mfg_week: Mapped[int | None] = mapped_column(Integer)
     mfg_year: Mapped[int | None] = mapped_column(Integer)
+    # R6: the supplier's batch, lot or heat number, any item (optional).
+    batch_no: Mapped[str | None] = mapped_column(String(40))
 
     costs: Mapped[list["PurchaseCost"]] = relationship(
         lazy="selectin", cascade="all, delete-orphan", order_by="PurchaseCost.id"

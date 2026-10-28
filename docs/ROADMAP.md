@@ -58,7 +58,7 @@ Duolink hosts the ERP for many companies. One branch and PR each.
 | R3 | Quotation (estimate) and proforma invoice, each with its own number series, billed once | A quotation moves no stock and owes nothing; its bill is linked and a second bill is refused | **Done** (`feat/quotations`) |
 | R4 | Cash book for a month, a year, any range or everything | The same entries and running balance whichever way the range is picked | **Done** (`feat/cash-book-periods`) |
 | R5 | Stock dashboard | Value by place and category, low stock and slow stock on one screen | **Done** (`feat/stock-dashboard`) |
-| R6 | Batch (lot) on every purchase line | A purchase line keeps its batch; the batch shows on stock and on the bill | Planned |
+| R6 | Batch (lot) on every purchase line | A purchase line keeps its batch; the batch shows on the bill | **Done** (`feat/purchase-batches`; batch-wise stock report not built yet) |
 
 ## Already in place (Milestones 0–1)
 

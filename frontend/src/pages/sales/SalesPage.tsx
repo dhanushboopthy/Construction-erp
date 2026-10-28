@@ -203,7 +203,7 @@ export function SalesPage() {
                 </span>
                 {(l.lots ?? []).length > 0 ? (
                   <span className={styles.sub}>
-                    Cement from:{" "}
+                    From stock:{" "}
                     {(l.lots ?? [])
                       .map((x) => `${x.label} (${trimDecimal(x.quantity)})`)
                       .join(", ")}

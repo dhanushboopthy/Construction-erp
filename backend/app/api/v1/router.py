@@ -23,6 +23,7 @@ from app.api.v1 import (
     parties,
     payments,
     purchases,
+    quotes,
     rates,
     receivables,
     reports,
@@ -59,6 +60,7 @@ api_router.include_router(stock_ops.router)
 api_router.include_router(rates.router)
 api_router.include_router(inventory.router)
 api_router.include_router(invoices.router)
+api_router.include_router(quotes.router)
 api_router.include_router(payments.router)
 api_router.include_router(approvals.router)
 api_router.include_router(returns.credit_router)

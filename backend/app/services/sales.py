@@ -45,7 +45,7 @@ from app.models.enums import (
 from app.models.ledgers import PartyLedger
 from app.models.masters import Item, Party, Site
 from app.models.purchasing import Purchase, PurchaseLine
-from app.models.sales import SalesInvoice, SalesLine
+from app.models.sales import SalesInvoice, SalesLine, SalesQuote
 from app.models.setup import Location, ShopSettings
 from app.schemas.sales import (
     InvoiceCreate,
@@ -152,9 +152,13 @@ def price_invoice(
     is_owner: bool,
     can_access: bool,
     approved: frozenset[ApprovalAction] = frozenset(),
+    quote: bool = False,
 ) -> PricedInvoice:
     """Work out every figure on the bill. Hard errors raise; fixable ones are collected in
-    `problems` so the screen can show them while the bill is being keyed."""
+    `problems` so the screen can show them while the bill is being keyed.
+
+    `quote` prices a quotation or proforma invoice: the same rates, discounts and GST, but it
+    moves no stock and owes nothing, so the day lock, stock and credit checks do not apply."""
     if not can_access:
         raise PermissionDeniedError("You can only bill from your own shop")
     settings = get_settings_row(db)
@@ -182,7 +186,8 @@ def price_invoice(
         raise BusinessRuleError(
             "A bill cannot be dated in the future", code="FUTURE_DATE", field="invoice_date"
         )
-    closing_service.ensure_day_open(db, location.id, on)  # G17: a closed shop-day takes no bills
+    if not quote:
+        closing_service.ensure_day_open(db, location.id, on)  # G17: a closed day takes no bills
     # What the owner's PIN can clear: the same rights the owner has, for this one bill (G18).
     may_discount = is_owner or ApprovalAction.DISCOUNT in approved
     may_sell_below_cost = is_owner or ApprovalAction.BELOW_COST in approved
@@ -339,7 +344,8 @@ def price_invoice(
             already = used.get((item.id, where), ZERO)
             row.available = here - already
             try:
-                ensure_available(row.available, base_qty)
+                if not quote:
+                    ensure_available(row.available, base_qty)
             except NegativeStockError:
                 row.problems.append(
                     Problem(
@@ -397,7 +403,7 @@ def price_invoice(
         if message:
             problems.append(Problem(None, "CASH_LIMIT_REACHED", message, False, "payments"))
     unpaid = totals.grand_total - paid
-    if unpaid > ZERO and totals.grand_total > ZERO:
+    if unpaid > ZERO and totals.grand_total > ZERO and not quote:
         decision = credit_service.decide(db, party, settings, unpaid, on)
         messages = {
             credit_rules.CreditViolation.CREDIT_NOT_ALLOWED: (
@@ -439,7 +445,13 @@ def price_invoice(
 
 
 def preview(
-    db: Session, data: InvoiceCreate, *, is_owner: bool, can_access: bool, actor_id: int
+    db: Session,
+    data: InvoiceCreate,
+    *,
+    is_owner: bool,
+    can_access: bool,
+    actor_id: int,
+    quote: bool = False,
 ) -> InvoicePreview:
     approvals = approval_service.load_valid(db, data.approval_ids, actor_id, data.party_id)
     p = price_invoice(
@@ -448,6 +460,7 @@ def preview(
         is_owner=is_owner,
         can_access=can_access,
         approved=frozenset(a.action for a in approvals),
+        quote=quote,
     )
     lines = [
         PreviewLineOut(
@@ -503,6 +516,27 @@ def _existing(db: Session, key: str) -> SalesInvoice | None:
     ).scalar_one_or_none()
 
 
+def _quote_to_bill(db: Session, quote_id: int, party_id: int) -> SalesQuote:
+    """A quotation or proforma becomes one bill, for the same customer. Locked so two counters
+    cannot both bill it; checked before anything of the bill is written."""
+    quote = db.execute(
+        select(SalesQuote)
+        .where(SalesQuote.id == quote_id, SalesQuote.tenant_id == current_tenant_id(db))
+        .with_for_update()
+    ).scalar_one_or_none()
+    if quote is None:
+        raise NotFoundError("Quotation not found", field="quote_id")
+    if quote.party_id != party_id:
+        raise BusinessRuleError(
+            "This quotation is for another customer.", code="QUOTE_OTHER_CUSTOMER", field="quote_id"
+        )
+    if quote.invoice_id is not None:
+        raise BusinessRuleError(
+            "This quotation has already been billed.", code="QUOTE_ALREADY_BILLED", field="quote_id"
+        )
+    return quote
+
+
 def create(
     db: Session,
     data: InvoiceCreate,
@@ -543,6 +577,7 @@ def create(
             requires_owner_approval=first.approval,
             field=first.field,
         )
+    quote = _quote_to_bill(db, data.quote_id, data.party_id) if data.quote_id else None
 
     number = allocate_number(
         db,
@@ -671,6 +706,8 @@ def create(
             actor_id=actor_id,
         )
     approval_service.mark_used(approvals, number)
+    if quote is not None:
+        quote.invoice_id = invoice.id
     if p.overrides:
         # The owner waived a credit rule: leave a trail of who, which rule and for which bill.
         record_event(

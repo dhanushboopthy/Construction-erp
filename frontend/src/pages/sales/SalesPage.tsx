@@ -60,6 +60,9 @@ export function SalesPage() {
             New bill
           </Button>
         ) : null}
+        <Button variant="quiet" onClick={() => void navigate("/sales/quotes")}>
+          Quotations and proforma
+        </Button>
         <p className={styles.keys}>Alt+N new bill</p>
       </div>
       {canBill && pending.data && pending.data.length > 0 ? (

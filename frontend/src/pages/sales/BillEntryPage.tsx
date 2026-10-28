@@ -1,12 +1,20 @@
 import { useEffect, useMemo, useState, type FormEvent, type KeyboardEvent } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 
 import { toFormError } from "@/api/errors";
 import { useItems, useParties } from "@/api/masters";
+import { previewQuote, QUOTE_LABEL, useCreateQuote, useQuote } from "@/api/quotes";
 import { previewInvoice, useCreateInvoice } from "@/api/sales";
 import { useLocations } from "@/api/setup";
 import { useOpenDirectLines } from "@/api/transport";
-import type { FulfilmentSource, InvoiceCreate, InvoicePreview, PaymentMode } from "@/api/types";
+import type {
+  FulfilmentSource,
+  InvoiceCreate,
+  InvoicePreview,
+  PaymentMode,
+  QuoteCreate,
+  QuoteKind,
+} from "@/api/types";
 import { useAuth } from "@/auth/AuthContext";
 import { ApprovalPrompt } from "@/components/ApprovalPrompt";
 import { Button } from "@/components/Button";
@@ -20,6 +28,9 @@ import { PartyEditor } from "@/pages/parties/PartyEditor";
 /** What the side column shows: the bill's totals, or a quick form to add a missing customer or
  * item without leaving the bill. */
 type Side = { kind: "totals" } | { kind: "customer" } | { kind: "item" };
+
+/** What is being made: a tax invoice, or a quotation or proforma that is not one (ADR 0005). */
+type Doc = "invoice" | QuoteKind;
 
 interface PayRow {
   mode: PaymentMode;
@@ -96,6 +107,17 @@ export function BillEntryPage() {
   const parties = useParties("", "customer");
   const locations = useLocations();
   const create = useCreateInvoice();
+  const createQuote = useCreateQuote();
+  const [params] = useSearchParams();
+  // A bill made from a saved quotation or proforma (`?quote=`), or a new quotation (`?doc=`).
+  const fromQuoteId = params.get("quote") ? Number(params.get("quote")) : null;
+  const fromQuote = useQuote(fromQuoteId);
+  const [doc, setDoc] = useState<Doc>(() => {
+    const asked = params.get("doc");
+    return asked === "quotation" || asked === "proforma" ? asked : "invoice";
+  });
+  const isQuote = doc !== "invoice";
+  const [validUntil, setValidUntil] = useState("");
 
   const [partyId, setPartyId] = useState("");
   const [siteId, setSiteId] = useState("");
@@ -133,13 +155,33 @@ export function BillEntryPage() {
   );
   const onlyShop = shops.length === 1 ? shops[0] : undefined;
 
+  // Billing a quotation: start from its customer, shop and lines. Prices are worked out again at
+  // today's rates, the same as any bill.
+  const quote = fromQuote.data;
+  useEffect(() => {
+    if (!quote) return;
+    setPartyId(String(quote.party_id));
+    setSiteId(quote.site_id ? String(quote.site_id) : "");
+    setLocationId(String(quote.location_id));
+    setLines(
+      quote.lines.map((x) => ({
+        ...emptyLine(),
+        itemId: String(x.item_id),
+        unit: x.unit,
+        quantity: trimDecimal(x.quantity),
+        discount: Number(x.discount) > 0 ? trimDecimal(x.discount) : "",
+        reason: x.discount_reason ?? "",
+      })),
+    );
+  }, [quote]);
+
   // Default to the walk-in customer once the list is there.
   useEffect(() => {
-    if (!partyId && customers.length > 0) {
+    if (!partyId && !fromQuoteId && customers.length > 0) {
       const walkIn = customers.find((c) => c.name === "Walk-in customer");
       if (walkIn) setPartyId(String(walkIn.id));
     }
-  }, [customers, partyId]);
+  }, [customers, partyId, fromQuoteId]);
 
   // A user with one shop always bills from it; the owner works at every shop, so start on the first.
   useEffect(() => {
@@ -190,11 +232,34 @@ export function BillEntryPage() {
         .filter((p) => p.amount)
         .map((p) => ({ mode: p.mode, amount: p.amount, reference: p.reference.trim() || null })),
       approval_ids: approvalIds,
+      quote_id: fromQuoteId,
+    };
+  }
+
+  /** A quotation or proforma carries the same customer and lines, and nothing about payment,
+   * delivery vehicle or where the stock comes from. */
+  function asQuote(bill: InvoiceCreate, kind: QuoteKind): QuoteCreate {
+    return {
+      kind,
+      location_id: bill.location_id,
+      party_id: bill.party_id,
+      site_id: bill.site_id,
+      valid_until: validUntil || null,
+      remark: bill.remark,
+      lines: bill.lines.map((l) => ({
+        ...l,
+        source: "shop",
+        source_location_id: null,
+        purchase_line_id: null,
+        slip_weight: null,
+        weight_note: null,
+      })),
+      approval_ids: bill.approval_ids,
     };
   }
 
   const body = payload();
-  const bodyKey = JSON.stringify(body);
+  const bodyKey = JSON.stringify([doc, body]);
   useEffect(() => {
     if (!body) {
       setPreview(null);
@@ -202,7 +267,7 @@ export function BillEntryPage() {
       return;
     }
     const handle = setTimeout(() => {
-      previewInvoice(body)
+      (doc === "invoice" ? previewInvoice(body) : previewQuote(asQuote(body, doc)))
         .then((p) => {
           setPreview(p);
           setPreviewError(null);
@@ -243,6 +308,11 @@ export function BillEntryPage() {
     setServerError(null);
     if (Object.keys(found).length > 0 || !body) return;
     try {
+      if (doc !== "invoice") {
+        const saved = await createQuote.mutateAsync(asQuote(body, doc));
+        void navigate(`/sales/quotes?open=${saved.id}`);
+        return;
+      }
       const saved = await create.mutateAsync({ body, key });
       setKey(crypto.randomUUID());
       void navigate(`/sales?open=${saved.id}`);
@@ -272,7 +342,7 @@ export function BillEntryPage() {
     <section aria-labelledby="bill-title" className={styles.page}>
       <div className={styles.toolbar}>
         <h1 id="bill-title" className={styles.title}>
-          New bill
+          {doc === "invoice" ? "New bill" : `New ${QUOTE_LABEL[doc].toLowerCase()}`}
         </h1>
         <Link to="/stock/lost-sales">Asked for, out of stock? Log it</Link>
         {onlyShop ? (
@@ -282,6 +352,17 @@ export function BillEntryPage() {
         ) : null}
         <p className={styles.keys}>Enter in Quantity adds a line · Ctrl+Enter saves · Tab moves</p>
       </div>
+      {quote ? (
+        <p role="status" className={styles.callout}>
+          Billing {QUOTE_LABEL[quote.kind].toLowerCase()} {quote.number}. Prices are worked out at
+          today&apos;s rates.
+        </p>
+      ) : null}
+      {isQuote ? (
+        <p className={styles.sub}>
+          Not a tax invoice: it moves no stock and the customer owes nothing until it is billed.
+        </p>
+      ) : null}
       <div className={styles.entryLayout}>
         <form
           onSubmit={(e) => void onSubmit(e)}
@@ -290,6 +371,17 @@ export function BillEntryPage() {
           className={styles.stack}
         >
           <div className={styles.headerGrid}>
+            {fromQuoteId ? null : (
+              <SelectField
+                label="Document"
+                value={doc}
+                onChange={(e) => setDoc(e.target.value as Doc)}
+              >
+                <option value="invoice">Tax invoice</option>
+                <option value="quotation">Quotation (estimate)</option>
+                <option value="proforma">Proforma invoice</option>
+              </SelectField>
+            )}
             <div className={styles.stack}>
               <SelectField
                 label="Customer"
@@ -340,7 +432,16 @@ export function BillEntryPage() {
                 ))}
               </SelectField>
             )}
-            {owner ? (
+            {isQuote ? (
+              <TextField
+                label="Valid until (optional)"
+                type="date"
+                value={validUntil}
+                min={todayISO()}
+                onChange={(e) => setValidUntil(e.target.value)}
+              />
+            ) : null}
+            {owner && !isQuote ? (
               <TextField
                 label="Bill date"
                 type="date"
@@ -349,7 +450,7 @@ export function BillEntryPage() {
                 onChange={(e) => setDate(e.target.value)}
               />
             ) : null}
-            {siteId ? (
+            {siteId && !isQuote ? (
               <TextField
                 label="Vehicle no. (optional)"
                 value={vehicle}
@@ -399,16 +500,22 @@ export function BillEntryPage() {
                     error={errors[`${i}.qty`]}
                     onChange={(e) => setLine(i, { quantity: e.target.value })}
                   />
-                  <SelectField
-                    label="Taken from"
-                    value={l.source}
-                    onChange={(e) => setLine(i, { source: e.target.value as FulfilmentSource })}
-                  >
-                    <option value="shop">Shop</option>
-                    <option value="godown">Other place</option>
-                    <option value="direct">Supplier direct</option>
-                  </SelectField>
-                  {l.source === "godown" ? (
+                  {isQuote ? (
+                    <span />
+                  ) : (
+                    <SelectField
+                      label="Taken from"
+                      value={l.source}
+                      onChange={(e) => setLine(i, { source: e.target.value as FulfilmentSource })}
+                    >
+                      <option value="shop">Shop</option>
+                      <option value="godown">Other place</option>
+                      <option value="direct">Supplier direct</option>
+                    </SelectField>
+                  )}
+                  {isQuote ? (
+                    <span />
+                  ) : l.source === "godown" ? (
                     <SelectField
                       label="Which place"
                       value={l.sourceLocationId}
@@ -468,14 +575,16 @@ export function BillEntryPage() {
                       onChange={(e) => setLine(i, { priceReason: e.target.value })}
                     />
                   ) : null}
-                  <TextField
-                    label="Slip weight (optional)"
-                    inputMode="decimal"
-                    className={styles.amount}
-                    value={l.slipWeight}
-                    onChange={(e) => setLine(i, { slipWeight: e.target.value })}
-                  />
-                  {row?.weight_flagged ? (
+                  {isQuote ? null : (
+                    <TextField
+                      label="Slip weight (optional)"
+                      inputMode="decimal"
+                      className={styles.amount}
+                      value={l.slipWeight}
+                      onChange={(e) => setLine(i, { slipWeight: e.target.value })}
+                    />
+                  )}
+                  {row?.weight_flagged && !isQuote ? (
                     <TextField
                       label="Why the weight differs"
                       value={l.weightNote}
@@ -509,7 +618,7 @@ export function BillEntryPage() {
               </Button>
             ) : null}
           </div>
-          <fieldset className={styles.lineBlock} style={{ margin: 0 }}>
+          <fieldset className={styles.lineBlock} style={{ margin: 0 }} hidden={isQuote}>
             <legend className="visually-hidden">Money taken now</legend>
             <strong>Money taken now</strong>
             {pays.map((p, i) => (
@@ -600,9 +709,13 @@ export function BillEntryPage() {
             <Button
               type="submit"
               variant="primary"
-              disabled={create.isPending || preview?.can_save === false}
+              disabled={create.isPending || createQuote.isPending || preview?.can_save === false}
             >
-              {create.isPending ? "Saving…" : "Save bill"}
+              {create.isPending || createQuote.isPending
+                ? "Saving…"
+                : doc === "invoice"
+                  ? "Save bill"
+                  : `Save ${QUOTE_LABEL[doc].toLowerCase()}`}
             </Button>
             <Button onClick={() => void navigate("/sales")}>Cancel</Button>
           </div>

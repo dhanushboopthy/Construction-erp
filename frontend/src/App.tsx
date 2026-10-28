@@ -18,6 +18,7 @@ import { CustomerRatesPage } from "@/pages/rates/CustomerRatesPage";
 import { RateBoardPage } from "@/pages/rates/RateBoardPage";
 import { RatesLayout } from "@/pages/rates/RatesLayout";
 import { BillEntryPage } from "@/pages/sales/BillEntryPage";
+import { QuotesPage } from "@/pages/sales/QuotesPage";
 import { SalesPage } from "@/pages/sales/SalesPage";
 import { PaymentsPage } from "@/pages/payments/PaymentsPage";
 import { AuditLogPage } from "@/pages/settings/AuditLogPage";
@@ -134,6 +135,14 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
                 element={
                   <RequireRole roles={["owner", "counter", "accountant"]}>
                     <SalesPage />
+                  </RequireRole>
+                }
+              />
+              <Route
+                path="/sales/quotes"
+                element={
+                  <RequireRole roles={["owner", "counter", "accountant"]}>
+                    <QuotesPage />
                   </RequireRole>
                 }
               />

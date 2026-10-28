@@ -50,6 +50,8 @@ export function useCreateInvoice() {
       await client.invalidateQueries({ queryKey: ["stock"] });
       await client.invalidateQueries({ queryKey: ["statement"] });
       await client.invalidateQueries({ queryKey: ["dues"] });
+      await client.invalidateQueries({ queryKey: ["quotes"] });
+      await client.invalidateQueries({ queryKey: ["quote"] });
     },
   });
 }

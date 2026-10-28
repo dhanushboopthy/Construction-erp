@@ -229,6 +229,15 @@ class DocType(StrEnum):
     STOCK_WRITEDOWN = "stock_writedown"  # stock value lowered to NRV (FM6)
     PURCHASE_ORDER = "purchase_order"  # an order to a supplier (FM10)
     GOODS_RECEIPT = "goods_receipt"  # what arrived against an order (FM10)
+    QUOTATION = "quotation"  # an estimate for a customer: no stock, no account entry
+    PROFORMA = "proforma"  # a proforma invoice, asking for payment before the bill
+
+
+class QuoteKind(StrEnum):
+    """A priced offer that is not a tax invoice (ADR 0005 still holds: the bill is separate)."""
+
+    QUOTATION = "quotation"
+    PROFORMA = "proforma"
 
 
 def str_enum(enum_cls: type[StrEnum], name: str) -> sa.Enum:

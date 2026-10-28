@@ -602,8 +602,10 @@ fieldset.choices legend {
   box-shadow: var(--shadow-raised);
 }
 
-/* The bill's totals step aside while a new customer or item is being added. */
-.preview[hidden] {
+/* The bill's totals step aside while a new customer or item is being added; a quotation takes
+   no money, so its payment block is hidden. */
+.preview[hidden],
+.lineBlock[hidden] {
   display: none;
 }
 

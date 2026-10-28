@@ -196,6 +196,17 @@ stock ledger moved here from Milestone 4 because opening stock is its first writ
   the e-way bill). A missing customer is added from the bill (owner and counter); a missing item
   is added from the bill by the owner only (item master stays owner-only) and lands on the first
   empty line.
+- Quotations and proforma invoices (`sales_quote`, `sales_quote_line`): made on the same screen
+  ("Document"), by owner or counter. Priced by the same rules as a bill (rates, owner-only
+  discount and price, below-cost needs the owner, GST by place of supply) but with no day lock,
+  stock or credit check, because they move no stock and put nothing on the customer's account.
+  Own number series per shop and year: `S1Q/26-27/00001` (quotation), `S1PI/26-27/00001`
+  (proforma). Optional valid-until date (not in the past). The A4 print uses the bill layout
+  titled QUOTATION or PROFORMA INVOICE and says it is not a tax invoice (ADR 0005). "Make the
+  bill" opens a new bill with its customer, shop and lines; the bill is priced again at that
+  day's rates and saves `quote_id`, which links it (`invoice_id` on the quote). A quote is billed
+  once (409 `QUOTE_ALREADY_BILLED`) and only for its own customer (`QUOTE_OTHER_CUSTOMER`).
+  Not built: editing or withdrawing a quote (make a new one), holding the quoted price on the bill.
 
 **Built (Milestone 7):** `approval`; `app_user.pin_hash`; `party_ledger.applies_to`;
 `sales_invoice.paid_at_billing`. The planned `payment_allocation` table is not needed: a payment's

@@ -49,6 +49,17 @@ Duolink hosts the ERP for many companies. One branch and PR each.
 | 15 | Multi-tenancy foundation: `tenant` table, company by subdomain, tenant on the session, row-level security, `--tenant` on the scripts (ADR 0011) | A second company on `beta.localhost` signs in with the same usernames, sees none of the first company's rows on any screen, and the database refuses a cross-company row | **Done** (`feat/m15-multi-tenancy`) |
 | 16 | Duolink super admin on `admin.<domain>/admin`: companies, users across companies, activity, plans and limits | Create a company and sign in at its subdomain; suspend it and its users are signed out; the plan's user limit is enforced | **Done** (`feat/m16-platform-admin`; ADR 0012) |
 
+## Owner requests (October 2026)
+
+| # | Change | Acceptance test | Status |
+| --- | --- | --- | --- |
+| R1 | New bill: add a customer or (owner) an item without leaving it; no shop picker for a one-shop user; vehicle only on delivery | A counter user at one shop bills without choosing the shop; a new customer is picked on the bill | **Done** (`feat/bill-quick-add`) |
+| R2 | Cancel a bill (owner): a full credit note, never a delete (B16) | The cancelled bill keeps its number, shows "Cancelled", stock and dues are back | **Done** (`feat/bill-cancel`) |
+| R3 | Quotation (estimate) and proforma invoice, each with its own number series, billed once | A quotation moves no stock and owes nothing; its bill is linked and a second bill is refused | **Done** (`feat/quotations`) |
+| R4 | Cash book for a month, a year, any range or everything | The same entries and running balance whichever way the range is picked | Planned |
+| R5 | Stock dashboard | Value by place and category, low stock and slow stock on one screen | Planned |
+| R6 | Batch (lot) on every purchase line | A purchase line keeps its batch; the batch shows on stock and on the bill | Planned |
+
 ## Already in place (Milestones 0–1)
 
 - Backend: FastAPI app factory, settings with production safety checks, JSON logs, request ids,

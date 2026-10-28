@@ -25,7 +25,7 @@ from app.models.purchasing import CostComponent, Payment, Purchase, PurchaseCost
 from app.models.rates import CustomerRate, ItemMargin, MarketRate
 from app.models.receivables import BadDebtWriteoff
 from app.models.returns import CreditNote, CreditNoteLine, DebitNote, DebitNoteLine
-from app.models.sales import SalesInvoice, SalesLine
+from app.models.sales import SalesInvoice, SalesLine, SalesQuote, SalesQuoteLine
 from app.models.schemes import SupplierScheme
 from app.models.setup import AppUser, Location, ShopSettings, UserLocation
 from app.models.stock_ops import (
@@ -90,6 +90,8 @@ __all__ = [
     "SalesInvoice",
     "SalesLine",
     "SalesLineLot",
+    "SalesQuote",
+    "SalesQuoteLine",
     "ShopSettings",
     "Site",
     "StockAdjustment",

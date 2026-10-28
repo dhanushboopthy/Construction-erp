@@ -354,6 +354,9 @@ in the unit of the bill line. New error codes: `RETURN_WINDOW_CLOSED`, `RETURN_T
 | POST | `/invoices/preview` | owner, counter (own shop): prices, tax, stock and problems; nothing saved |
 | POST | `/invoices` (`Idempotency-Key`) | owner, counter (own shop) |
 | GET | `/invoices` (`q`, `party_id`, `date_from`, `date_to`) · `/invoices/{id}` · `/invoices/{id}/pdf` | owner, accountant; counter: own shop. Cost and profit: owner only |
+| POST | `/quotes/preview` · `/quotes` `{kind: quotation\|proforma, location_id, party_id, site_id?, valid_until?, remark?, lines, approval_ids}` | owner, counter (own shop) |
+| GET | `/quotes` (`kind`, `q`) · `/quotes/{id}` · `/quotes/{id}/pdf` | owner, accountant; counter: own shop |
+| POST | `/invoices` with `quote_id` bills that quotation once | owner, counter (own shop) |
 
 ## Endpoints (Milestone 5)
 

@@ -1673,6 +1673,81 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/quotes/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview Quote
+         * @description Prices and tax for a quotation or proforma being keyed. No stock or credit checks.
+         */
+        post: operations["preview_quote_api_v1_quotes_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quotes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Quotes */
+        get: operations["list_quotes_api_v1_quotes_get"];
+        put?: never;
+        /**
+         * Create Quote
+         * @description Save a quotation or proforma invoice. It moves no stock and owes nothing.
+         */
+        post: operations["create_quote_api_v1_quotes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quotes/{quote_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Quote */
+        get: operations["get_quote_api_v1_quotes__quote_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quotes/{quote_id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Quote Pdf File */
+        get: operations["quote_pdf_file_api_v1_quotes__quote_id__pdf_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/payments": {
         parameters: {
             query?: never;
@@ -4871,6 +4946,8 @@ export interface components {
             payments?: components["schemas"]["BillPaymentIn"][];
             /** Approval Ids */
             approval_ids?: number[];
+            /** Quote Id */
+            quote_id?: number | null;
         };
         /** InvoiceLineIn */
         InvoiceLineIn: {
@@ -6525,6 +6602,17 @@ export interface components {
             /** Offset */
             offset: number;
         };
+        /** Page[QuoteSummary] */
+        Page_QuoteSummary_: {
+            /** Items */
+            items: components["schemas"]["QuoteSummary"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+        };
         /** Page[SignInEvent] */
         Page_SignInEvent_: {
             /** Items */
@@ -7385,6 +7473,157 @@ export interface components {
          * @enum {string}
          */
         PurchaseStatus: "posted";
+        /**
+         * QuoteCreate
+         * @description A quotation or proforma invoice: priced like a bill, with no stock or account effect.
+         */
+        QuoteCreate: {
+            kind: components["schemas"]["QuoteKind"];
+            /** Location Id */
+            location_id: number;
+            /** Party Id */
+            party_id: number;
+            /** Site Id */
+            site_id?: number | null;
+            /** Valid Until */
+            valid_until?: string | null;
+            /** Remark */
+            remark?: string | null;
+            /** Lines */
+            lines: components["schemas"]["InvoiceLineIn"][];
+            /** Approval Ids */
+            approval_ids?: number[];
+        };
+        /**
+         * QuoteKind
+         * @description A priced offer that is not a tax invoice (ADR 0005 still holds: the bill is separate).
+         * @enum {string}
+         */
+        QuoteKind: "quotation" | "proforma";
+        /** QuoteLineOut */
+        QuoteLineOut: {
+            /** Id */
+            id: number;
+            /** Line No */
+            line_no: number;
+            /** Item Id */
+            item_id: number;
+            /** Description */
+            description: string;
+            /** Hsn */
+            hsn: string;
+            /** Unit */
+            unit: string;
+            /** Quantity */
+            quantity: string;
+            /** Base Qty */
+            base_qty: string;
+            /** Base Unit */
+            base_unit: string;
+            /** Rate */
+            rate: string;
+            rate_source: components["schemas"]["RateSource"];
+            /** Rate Override Reason */
+            rate_override_reason: string | null;
+            /** Discount */
+            discount: string;
+            /** Discount Reason */
+            discount_reason: string | null;
+            /** Taxable */
+            taxable: string;
+            /** Gst Rate */
+            gst_rate: string;
+            /** Cgst */
+            cgst: string;
+            /** Sgst */
+            sgst: string;
+            /** Igst */
+            igst: string;
+            /** Line Total */
+            line_total: string;
+        };
+        /** QuoteOut */
+        QuoteOut: {
+            /** Id */
+            id: number;
+            kind: components["schemas"]["QuoteKind"];
+            /** Number */
+            number: string;
+            /**
+             * Quote Date
+             * Format: date
+             */
+            quote_date: string;
+            /** Valid Until */
+            valid_until: string | null;
+            /** Party Id */
+            party_id: number;
+            /** Party Name */
+            party_name: string;
+            /** Location Id */
+            location_id: number;
+            /** Location Code */
+            location_code: string;
+            /** Grand Total */
+            grand_total: string;
+            /** Invoice Id */
+            invoice_id: number | null;
+            /** Invoice Number */
+            invoice_number: string | null;
+            /** Site Id */
+            site_id: number | null;
+            /** Bill To Gstin */
+            bill_to_gstin: string | null;
+            /** Ship To Name */
+            ship_to_name: string | null;
+            /** Place Of Supply */
+            place_of_supply: string;
+            supply_kind: components["schemas"]["SupplyKind"];
+            supply_type: components["schemas"]["SupplyType"];
+            /** Taxable Value */
+            taxable_value: string;
+            /** Cgst */
+            cgst: string;
+            /** Sgst */
+            sgst: string;
+            /** Igst */
+            igst: string;
+            /** Round Off */
+            round_off: string;
+            /** Remark */
+            remark: string | null;
+            /** Lines */
+            lines: components["schemas"]["QuoteLineOut"][];
+        };
+        /** QuoteSummary */
+        QuoteSummary: {
+            /** Id */
+            id: number;
+            kind: components["schemas"]["QuoteKind"];
+            /** Number */
+            number: string;
+            /**
+             * Quote Date
+             * Format: date
+             */
+            quote_date: string;
+            /** Valid Until */
+            valid_until: string | null;
+            /** Party Id */
+            party_id: number;
+            /** Party Name */
+            party_name: string;
+            /** Location Id */
+            location_id: number;
+            /** Location Code */
+            location_code: string;
+            /** Grand Total */
+            grand_total: string;
+            /** Invoice Id */
+            invoice_id: number | null;
+            /** Invoice Number */
+            invoice_number: string | null;
+        };
         /** RateEntry */
         RateEntry: {
             /** Item Id */
@@ -17738,6 +17977,391 @@ export interface operations {
             header?: never;
             path: {
                 invoice_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_quote_api_v1_quotes_preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuoteCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoicePreview"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_quotes_api_v1_quotes_get: {
+        parameters: {
+            query?: {
+                kind?: components["schemas"]["QuoteKind"] | null;
+                q?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_QuoteSummary_"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_quote_api_v1_quotes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuoteCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuoteOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_quote_api_v1_quotes__quote_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                quote_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuoteOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    quote_pdf_file_api_v1_quotes__quote_id__pdf_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                quote_id: number;
             };
             cookie?: never;
         };

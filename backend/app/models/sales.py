@@ -32,7 +32,7 @@ from app.models.base import (
     TimestampMixin,
     UnitCost,
 )
-from app.models.enums import FulfilmentSource, InvoiceStatus, SupplyType, str_enum
+from app.models.enums import FulfilmentSource, InvoiceStatus, QuoteKind, SupplyType, str_enum
 
 
 class SalesInvoice(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
@@ -135,3 +135,80 @@ class SalesLine(Base, TenantMixin):
     )
     weight_flagged: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     weight_note: Mapped[str | None] = mapped_column(String(300))
+
+
+class SalesQuote(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
+    """A quotation (estimate) or a proforma invoice. Priced and taxed like a bill, but it is not
+    a tax invoice: it moves no stock and puts nothing on the customer's account. It can become
+    a bill once; the bill is a separate, real invoice (ADR 0005)."""
+
+    __tablename__ = "sales_quote"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "number"),
+        Index("ix_sales_quote_date", "quote_date"),
+    )
+
+    id: Mapped[IntPK]
+    kind: Mapped[QuoteKind] = mapped_column(str_enum(QuoteKind, "quote_kind"))
+    number: Mapped[str] = mapped_column(String(16))
+    financial_year: Mapped[str] = mapped_column(String(5))
+    location_id: Mapped[int] = mapped_column(ForeignKey("location.id", ondelete="RESTRICT"))
+    party_id: Mapped[int] = mapped_column(ForeignKey("party.id", ondelete="RESTRICT"))
+    site_id: Mapped[int | None] = mapped_column(ForeignKey("site.id", ondelete="RESTRICT"))
+    bill_to_name: Mapped[str] = mapped_column(String(150))
+    bill_to_address: Mapped[str] = mapped_column(Text, default="")
+    bill_to_gstin: Mapped[str | None] = mapped_column(String(15))
+    ship_to_name: Mapped[str | None] = mapped_column(String(150))
+    ship_to_address: Mapped[str | None] = mapped_column(Text)
+    place_of_supply: Mapped[str] = mapped_column(String(2))
+    supply_kind: Mapped[SupplyKind] = mapped_column(str_enum(SupplyKind, "supply_kind"))
+    supply_type: Mapped[SupplyType] = mapped_column(str_enum(SupplyType, "supply_type"))
+    quote_date: Mapped[date] = mapped_column(Date)
+    valid_until: Mapped[date | None] = mapped_column(Date)
+    taxable_value: Mapped[Money] = mapped_column()
+    cgst: Mapped[Money] = mapped_column()
+    sgst: Mapped[Money] = mapped_column()
+    igst: Mapped[Money] = mapped_column()
+    round_off: Mapped[Money] = mapped_column()
+    grand_total: Mapped[Money] = mapped_column()
+    remark: Mapped[str | None] = mapped_column(String(300))
+    # The bill it became, if it did.
+    invoice_id: Mapped[int | None] = mapped_column(
+        ForeignKey("sales_invoice.id", ondelete="RESTRICT")
+    )
+
+    lines: Mapped[list["SalesQuoteLine"]] = relationship(
+        lazy="selectin", cascade="all, delete-orphan", order_by="SalesQuoteLine.line_no"
+    )
+
+    __audit_exclude__ = frozenset({"updated_at"})
+
+
+class SalesQuoteLine(Base, TenantMixin):
+    __tablename__ = "sales_quote_line"
+    __table_args__ = (
+        UniqueConstraint("quote_id", "line_no"),
+        CheckConstraint("base_qty > 0", name="positive_qty"),
+    )
+
+    id: Mapped[IntPK]
+    quote_id: Mapped[int] = mapped_column(ForeignKey("sales_quote.id", ondelete="CASCADE"))
+    line_no: Mapped[int] = mapped_column(Integer)
+    item_id: Mapped[int] = mapped_column(ForeignKey("item.id", ondelete="RESTRICT"))
+    description: Mapped[str] = mapped_column(String(150))
+    hsn: Mapped[str] = mapped_column(String(8))
+    unit: Mapped[str] = mapped_column(String(16))
+    quantity: Mapped[Decimal] = mapped_column(Numeric(14, 3))
+    base_qty: Mapped[Quantity] = mapped_column()
+    base_unit: Mapped[str] = mapped_column(String(16))
+    rate: Mapped[Decimal] = mapped_column(Numeric(14, 6))  # per base unit, excluding GST
+    rate_source: Mapped[RateSource] = mapped_column(str_enum(RateSource, "rate_source"))
+    rate_override_reason: Mapped[str | None] = mapped_column(String(200))
+    discount: Mapped[Money] = mapped_column()
+    discount_reason: Mapped[str | None] = mapped_column(String(200))
+    taxable: Mapped[Money] = mapped_column()
+    gst_rate: Mapped[Percent] = mapped_column()
+    cgst: Mapped[Money] = mapped_column()
+    sgst: Mapped[Money] = mapped_column()
+    igst: Mapped[Money] = mapped_column()
+    line_total: Mapped[Money] = mapped_column()

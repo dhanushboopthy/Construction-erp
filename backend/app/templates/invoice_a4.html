@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Tax invoice {{ inv.number }}</title>
+<title>{{ doc.title }} {{ inv.number }}</title>
 <style>
   @page { size: A4; margin: 12mm 12mm 14mm 12mm; }
   * { box-sizing: border-box; }
@@ -38,16 +38,16 @@
     <div><strong>GSTIN:</strong> {{ seller.gstin or "—" }} · <strong>State:</strong> {{ seller.state_code }} {{ seller.state_name }}</div>
   </div>
   <div class="right">
-    <h1>TAX INVOICE</h1>
-    <div><span class="copy">{{ copy_label }}</span></div>
+    <h1>{{ doc.heading }}</h1>
+    {% if copy_label %}<div><span class="copy">{{ copy_label }}</span></div>{% endif %}
     {% if irn %}<img src="{{ irn.qr_uri }}" alt="E-invoice QR" style="width: 24mm; height: 24mm; margin-top: 1mm">{% endif %}
   </div>
 </div>
 
 <div class="row" style="margin-top: 3mm">
   <div class="box grow">
-    <div><strong>Invoice no.</strong> {{ inv.number }}</div>
-    <div><strong>Date</strong> {{ inv.invoice_date.strftime("%d-%m-%Y") }}{% if inv.due_date and inv.due_date != inv.invoice_date %} · <strong>Due</strong> {{ inv.due_date.strftime("%d-%m-%Y") }}{% endif %}</div>
+    <div><strong>{{ doc.number_label }}</strong> {{ inv.number }}</div>
+    <div><strong>Date</strong> {{ inv.invoice_date.strftime("%d-%m-%Y") }}{% if inv.due_date and inv.due_date != inv.invoice_date %} · <strong>Due</strong> {{ inv.due_date.strftime("%d-%m-%Y") }}{% endif %}{% if inv.valid_until %} · <strong>Valid until</strong> {{ inv.valid_until.strftime("%d-%m-%Y") }}{% endif %}</div>
     <div><strong>Place of supply</strong> {{ inv.place_of_supply }} {{ place_name }} ({{ "Intra-state: CGST + SGST" if intra else "Inter-state: IGST" }})</div>
     {% if inv.vehicle_no %}<div><strong>Vehicle</strong> {{ inv.vehicle_no }}</div>{% endif %}
     {% if eway_no %}<div><strong>E-way bill</strong> {{ eway_no }}</div>{% endif %}
@@ -128,10 +128,10 @@
   </div>
 </div>
 
-<div class="total-band"><span>Bill total</span><span>₹ {{ totals.grand_total }}</span></div>
+<div class="total-band"><span>{{ doc.total_label }}</span><span>₹ {{ totals.grand_total }}</span></div>
 
 <div class="row sign">
-  <div class="small muted">Subject to the jurisdiction of the shop's city. This is a computer generated tax invoice.</div>
+  <div class="small muted">{{ doc.footer }}</div>
   <div class="right">For {{ seller.trade_name or seller.legal_name }}<br><br>Authorised signatory</div>
 </div>
 </body>

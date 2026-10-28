@@ -1,6 +1,7 @@
 """A4 tax invoice as a PDF. The renderer sits behind an interface so a thermal-printer layout
 can be added later without touching the invoice code (ROADMAP, printing)."""
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from decimal import Decimal
 from pathlib import Path
@@ -16,7 +17,8 @@ from app.domain.gst import STATE_NAMES, SupplyKind
 from app.domain.money import money
 from app.domain.words import amount_in_words
 from app.models.compliance import EInvoice
-from app.models.sales import SalesInvoice
+from app.models.enums import QuoteKind
+from app.models.sales import SalesInvoice, SalesLine, SalesQuote, SalesQuoteLine
 from app.services.shop_settings import get_settings_row
 
 TEMPLATES = Path(__file__).resolve().parent.parent / "templates"
@@ -90,73 +92,150 @@ class A4HtmlRenderer:
         eway_no: str | None = None,
         irn: IrnPrint | None = None,
     ) -> bytes:
-        settings = get_settings_row(db)
-        intra = invoice.supply_kind is SupplyKind.INTRA_STATE
-        lines = []
-        for line in invoice.lines:
-            factor = line.base_qty / line.quantity
-            lines.append(
-                {
-                    "line_no": line.line_no,
-                    "description": line.description,
-                    "hsn": line.hsn,
-                    "base_unit": line.base_unit,
-                    "stock_after": _plain(line.stock_after)
-                    if line.stock_after is not None
-                    else None,
-                    "qty_text": f"{_plain(line.quantity)} {line.unit}",
-                    "rate_text": f"{inr(line.rate * factor)}/{line.unit}",
-                    "discount_text": inr(line.discount) if line.discount else "—",
-                    "taxable_text": inr(line.taxable),
-                    "cgst_text": inr(line.cgst),
-                    "sgst_text": inr(line.sgst),
-                    "igst_text": inr(line.igst),
-                    "gst_rate": _plain(line.gst_rate),
-                    "half_rate": _plain(line.gst_rate / 2),
-                    "total_text": inr(line.line_total),
-                }
-            )
-        env = Environment(
-            loader=FileSystemLoader(TEMPLATES), autoescape=select_autoescape(["html"])
-        )
-        html = env.get_template(self.template).render(
-            inv=invoice,
-            seller={
-                "legal_name": settings.legal_name,
-                "trade_name": settings.trade_name,
-                "gstin": settings.gstin,
-                "address": settings.address,
-                "phone": settings.phone,
-                "email": settings.email,
-                "state_code": settings.state_code,
-                "state_name": STATES.get(settings.state_code, ""),
-                "bank_name": settings.bank_name,
-                "bank_account_no": settings.bank_account_no,
-                "bank_ifsc": settings.bank_ifsc,
-                "invoice_terms": settings.invoice_terms,
-            },
-            lines=lines,
-            intra=intra,
-            place_name=STATES.get(invoice.place_of_supply, ""),
+        return _render(
+            db,
+            self.template,
+            invoice,
+            invoice.lines,
+            doc=TAX_INVOICE,
+            figures=invoice,
             copy_label=copy_label,
             eway_no=eway_no,
             irn=irn,
-            words=amount_in_words(invoice.grand_total),
             pending_text=inr(invoice.pending_balance_at_billing),
             paid_text=inr(invoice.paid_at_billing),
             due_text=inr(invoice.grand_total - invoice.paid_at_billing),
-            totals={
-                "taxable": inr(invoice.taxable_value),
-                "cgst": inr(invoice.cgst),
-                "sgst": inr(invoice.sgst),
-                "igst": inr(invoice.igst),
-                "round_off": inr(invoice.round_off),
-                "grand_total": inr(invoice.grand_total),
-            },
-            # Test data never leaves dev or staging unmarked (ADR 0005).
-            test_mark=not get_settings().is_production,
         )
-        return HTML(string=html).write_pdf()  # type: ignore[no-any-return]
 
 
 DEFAULT_RENDERER: InvoiceRenderer = A4HtmlRenderer()
+
+TAX_INVOICE = {
+    "title": "Tax invoice",
+    "heading": "TAX INVOICE",
+    "number_label": "Invoice no.",
+    "total_label": "Bill total",
+    "footer": "Subject to the jurisdiction of the shop's city. "
+    "This is a computer generated tax invoice.",
+}
+QUOTE_DOCS = {
+    QuoteKind.QUOTATION: {
+        "title": "Quotation",
+        "heading": "QUOTATION",
+        "number_label": "Quotation no.",
+        "total_label": "Estimated total",
+        "footer": "This is a quotation, not a tax invoice. Prices are as on its date; "
+        "the tax invoice is issued when the goods are billed.",
+    },
+    QuoteKind.PROFORMA: {
+        "title": "Proforma invoice",
+        "heading": "PROFORMA INVOICE",
+        "number_label": "Proforma no.",
+        "total_label": "Amount payable",
+        "footer": "This is a proforma invoice, not a tax invoice. The GST shown is charged on "
+        "the tax invoice issued when the goods are billed.",
+    },
+}
+
+
+def render_quote(db: Session, quote: SalesQuote) -> bytes:
+    """A quotation or proforma invoice on the bill's A4 layout, plainly titled as not a tax
+    invoice (ADR 0005)."""
+    inv = {
+        "number": quote.number,
+        "invoice_date": quote.quote_date,
+        "valid_until": quote.valid_until,
+        "place_of_supply": quote.place_of_supply,
+        "bill_to_name": quote.bill_to_name,
+        "bill_to_address": quote.bill_to_address,
+        "bill_to_gstin": quote.bill_to_gstin,
+        "ship_to_name": quote.ship_to_name,
+        "ship_to_address": quote.ship_to_address,
+    }
+    return _render(
+        db, "invoice_a4.html", inv, quote.lines, doc=QUOTE_DOCS[quote.kind], figures=quote
+    )
+
+
+def _render(
+    db: Session,
+    template: str,
+    inv: object,
+    source_lines: Sequence[SalesLine] | Sequence[SalesQuoteLine],
+    *,
+    doc: dict[str, str],
+    figures: SalesInvoice | SalesQuote,
+    copy_label: str | None = None,
+    eway_no: str | None = None,
+    irn: IrnPrint | None = None,
+    pending_text: str | None = None,
+    paid_text: str | None = None,
+    due_text: str | None = None,
+) -> bytes:
+    """`inv` is what the template prints in the header: the invoice, or a dict with the same
+    names for a quotation. `figures` carries the totals and supply kind."""
+    settings = get_settings_row(db)
+    intra = figures.supply_kind is SupplyKind.INTRA_STATE
+    lines = []
+    for line in source_lines:
+        factor = line.base_qty / line.quantity
+        stock_after = getattr(line, "stock_after", None)
+        lines.append(
+            {
+                "line_no": line.line_no,
+                "description": line.description,
+                "hsn": line.hsn,
+                "base_unit": line.base_unit,
+                "stock_after": _plain(stock_after) if stock_after is not None else None,
+                "qty_text": f"{_plain(line.quantity)} {line.unit}",
+                "rate_text": f"{inr(line.rate * factor)}/{line.unit}",
+                "discount_text": inr(line.discount) if line.discount else "—",
+                "taxable_text": inr(line.taxable),
+                "cgst_text": inr(line.cgst),
+                "sgst_text": inr(line.sgst),
+                "igst_text": inr(line.igst),
+                "gst_rate": _plain(line.gst_rate),
+                "half_rate": _plain(line.gst_rate / 2),
+                "total_text": inr(line.line_total),
+            }
+        )
+    env = Environment(loader=FileSystemLoader(TEMPLATES), autoescape=select_autoescape(["html"]))
+    html = env.get_template(template).render(
+        inv=inv,
+        doc=doc,
+        seller={
+            "legal_name": settings.legal_name,
+            "trade_name": settings.trade_name,
+            "gstin": settings.gstin,
+            "address": settings.address,
+            "phone": settings.phone,
+            "email": settings.email,
+            "state_code": settings.state_code,
+            "state_name": STATES.get(settings.state_code, ""),
+            "bank_name": settings.bank_name,
+            "bank_account_no": settings.bank_account_no,
+            "bank_ifsc": settings.bank_ifsc,
+            "invoice_terms": settings.invoice_terms,
+        },
+        lines=lines,
+        intra=intra,
+        place_name=STATES.get(figures.place_of_supply, ""),
+        copy_label=copy_label,
+        eway_no=eway_no,
+        irn=irn,
+        words=amount_in_words(figures.grand_total),
+        pending_text=pending_text,
+        paid_text=paid_text,
+        due_text=due_text,
+        totals={
+            "taxable": inr(figures.taxable_value),
+            "cgst": inr(figures.cgst),
+            "sgst": inr(figures.sgst),
+            "igst": inr(figures.igst),
+            "round_off": inr(figures.round_off),
+            "grand_total": inr(figures.grand_total),
+        },
+        # Test data never leaves dev or staging unmarked (ADR 0005).
+        test_mark=not get_settings().is_production,
+    )
+    return HTML(string=html).write_pdf()  # type: ignore[no-any-return]

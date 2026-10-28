@@ -103,6 +103,44 @@ def line_tax(taxable: Numberish, rate: Numberish, kind: SupplyKind) -> LineTax:
     return LineTax(value, pct, cgst=ZERO, sgst=ZERO, igst=money(value * pct / 100))
 
 
+def pan_of(gstin: str | None) -> str | None:
+    """Characters 3 to 12 of a GSTIN are the holder's PAN."""
+    return gstin[2:12] if gstin else None
+
+
+@dataclass(frozen=True)
+class HsnTax:
+    hsn: str
+    rate: Decimal
+    taxable: Decimal
+    cgst: Decimal
+    sgst: Decimal
+    igst: Decimal
+
+    @property
+    def tax(self) -> Decimal:
+        return self.cgst + self.sgst + self.igst
+
+
+def hsn_summary(lines: list[tuple[str, LineTax]]) -> list[HsnTax]:
+    """The bill's tax per HSN and rate, in the order each first appears. Sums the tax already
+    rounded on each line, so the summary always adds up to the bill."""
+    groups: dict[tuple[str, Decimal], list[LineTax]] = {}
+    for hsn, tax in lines:
+        groups.setdefault((hsn, tax.rate), []).append(tax)
+    return [
+        HsnTax(
+            hsn=hsn,
+            rate=rate,
+            taxable=sum((x.taxable for x in taxes), ZERO),
+            cgst=sum((x.cgst for x in taxes), ZERO),
+            sgst=sum((x.sgst for x in taxes), ZERO),
+            igst=sum((x.igst for x in taxes), ZERO),
+        )
+        for (hsn, rate), taxes in groups.items()
+    ]
+
+
 @dataclass(frozen=True)
 class InvoiceTotals:
     taxable: Decimal

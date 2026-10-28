@@ -190,7 +190,18 @@ stock ledger moved here from Milestone 4 because opening stock is its first writ
   or shop is a conflict (G19).
 - A4 PDF: `GET /invoices/{id}/pdf?copy=` via WeasyPrint, template `app/templates/invoice_a4.html`
   behind the `InvoiceRenderer` interface (a thermal layout can be added). Outside production the PDF
-  carries a TEST watermark (ADR 0005).
+  carries a TEST watermark (ADR 0005). Layout is the owner's Tally-style template (October 2026):
+  title and copy label; e-invoice IRN, acknowledgement and QR when there is one; seller (with
+  GSTIN and state), consignee (ship to, or the buyer when collected) and buyer (bill to) with
+  GSTIN and state; the details grid (number, e-way bill no., date, mode/terms of payment, the
+  quotation it was made from, place of supply, destination, vehicle, terms of delivery; delivery
+  note, buyer's order, dispatch and LR boxes print empty for writing in); goods with HSN,
+  quantity, rate, per, discount (only when a line has one) and amount; OUTPUT CGST/SGST/IGST and
+  rounded off under the goods; Total pinned to the foot of the goods box; amount in words and the
+  customer's previous balance; HSN summary per HSN and rate (CGST + SGST or IGST); tax in words;
+  company PAN (characters 3-12 of the GSTIN), declaration, terms, bank (name, account, branch and
+  IFSC), signatory; "Subject to <jurisdiction> jurisdiction" from shop settings. A long bill runs
+  onto a second page with the column heads repeated.
 - New-bill screen: a user with one shop is not asked which shop (the page says "Billing from …");
   the vehicle number is asked only when the bill is delivered to a site (it can also be added on
   the e-way bill). A missing customer is added from the bill (owner and counter); a missing item
@@ -202,7 +213,8 @@ stock ledger moved here from Milestone 4 because opening stock is its first writ
   stock or credit check, because they move no stock and put nothing on the customer's account.
   Own number series per shop and year: `S1Q/26-27/00001` (quotation), `S1PI/26-27/00001`
   (proforma). Optional valid-until date (not in the past). The A4 print uses the bill layout
-  titled QUOTATION or PROFORMA INVOICE and says it is not a tax invoice (ADR 0005). "Make the
+  titled Estimate/Quotation or Proforma Invoice, with "Valid Until" in place of the terms of
+  delivery, and its declaration says it is not a tax invoice (ADR 0005). "Make the
   bill" opens a new bill with its customer, shop and lines; the bill is priced again at that
   day's rates and saves `quote_id`, which links it (`invoice_id` on the quote). A quote is billed
   once (409 `QUOTE_ALREADY_BILLED`) and only for its own customer (`QUOTE_OTHER_CUSTOMER`).

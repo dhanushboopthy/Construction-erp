@@ -8207,8 +8207,12 @@ export interface components {
             bank_account_no?: string | null;
             /** Bank Ifsc */
             bank_ifsc?: string | null;
+            /** Bank Branch */
+            bank_branch?: string | null;
             /** Invoice Terms */
             invoice_terms?: string | null;
+            /** Jurisdiction */
+            jurisdiction?: string | null;
             /**
              * Financial Year Start Month
              * @default 4
@@ -8420,8 +8424,12 @@ export interface components {
             bank_account_no?: string | null;
             /** Bank Ifsc */
             bank_ifsc?: string | null;
+            /** Bank Branch */
+            bank_branch?: string | null;
             /** Invoice Terms */
             invoice_terms?: string | null;
+            /** Jurisdiction */
+            jurisdiction?: string | null;
             /**
              * Financial Year Start Month
              * @default 4

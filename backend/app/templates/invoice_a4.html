@@ -2,137 +2,421 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>{{ doc.title }} {{ inv.number }}</title>
+<title>{{ doc.title }} {{ head.number }}</title>
+<!-- The owner's bill layout (tax invoice, proforma invoice and estimate/quotation share it; only
+     the title and the wording at the foot change). A4 portrait for WeasyPrint. -->
 <style>
-  @page { size: A4; margin: 12mm 12mm 14mm 12mm; }
+  @page { size: A4; margin: 5mm; }
   * { box-sizing: border-box; }
-  body { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 8.5pt; color: #1c2321; margin: 0; }
-  h1 { font-size: 14pt; margin: 0; }
-  .row { display: flex; justify-content: space-between; gap: 8mm; }
-  .box { border: 0.3mm solid #1c2321; padding: 2mm 3mm; }
-  .grow { flex: 1; }
-  .muted { color: #5b6661; }
-  .right { text-align: right; }
-  .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  table { width: 100%; border-collapse: collapse; margin-top: 3mm; }
-  th, td { border: 0.25mm solid #1c2321; padding: 1mm 1.5mm; vertical-align: top; }
-  th { background: #eceeec; font-weight: 600; text-align: left; }
-  th.num { text-align: right; }
-  .total-band { margin-top: 3mm; border: 0.5mm solid #1c2321; background: #f2c230; padding: 2.5mm 3mm;
-                display: flex; justify-content: space-between; font-size: 12pt; font-weight: 700; }
-  .small { font-size: 7.5pt; }
+  html, body { margin: 0; padding: 0; background: #fff; }
+  body {
+    font-family: Arial, "Liberation Sans", "DejaVu Sans", sans-serif;
+    font-size: 8.5pt; line-height: 1.18; color: #000;
+  }
+  /* min-height keeps a normal bill on one page and lets a long one run onto the next. */
+  .page { min-height: 286mm; display: flex; flex-direction: column; }
+
+  .blk + .blk { margin-top: -1px; }
+  table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+  td, th { vertical-align: top; padding: 0; }
+  .r { text-align: right; }
+  .nowrap { white-space: nowrap; }
+  .wrap { overflow-wrap: anywhere; }
+  .addr { white-space: pre-line; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+
   .mark { position: fixed; top: 38%; left: 8%; font-size: 90pt; color: rgba(180, 35, 24, 0.13);
           transform: rotate(-30deg); letter-spacing: 8mm; z-index: -1; }
-  .copy { font-size: 8pt; border: 0.3mm solid #1c2321; padding: 0.5mm 2mm; }
-  .sign { margin-top: 12mm; }
+
+  /* title strip */
+  .title-row { display: flex; align-items: flex-end; justify-content: space-between;
+               padding: 0 2mm 1.5mm 2mm; }
+  .title-row .t-side { width: 45mm; }
+  .title-row .t-mid { flex: 1; text-align: center; font-size: 11pt; font-weight: bold; }
+  .title-row .t-right { text-align: right; font-size: 8pt; font-style: italic; }
+
+  /* e-invoice: IRN and QR */
+  .irn-row { display: flex; align-items: flex-start; justify-content: space-between;
+             padding: 0 2mm 2mm 2mm; }
+  .irn-block { flex: 1; padding-right: 4mm; }
+  .irn-tag { font-weight: bold; font-size: 9pt; margin-bottom: 1mm; }
+  .irn-line { display: flex; margin-bottom: 0.8mm; }
+  .irn-line .k { width: 17mm; flex: none; }
+  .irn-line .s { width: 3mm; flex: none; }
+  .irn-line .v { flex: 1; font-weight: bold; overflow-wrap: anywhere; }
+  .qr-box { width: 24mm; height: 24mm; flex: none; }
+  .qr-box img { width: 24mm; height: 24mm; display: block; }
+
+  /* seller, consignee, buyer and the details grid */
+  .party { border: 1px solid #000; }
+  .party > tbody > tr > td.party-left { width: 108mm; border-right: 1px solid #000; }
+  .pl-block { padding: 1mm 2mm; border-bottom: 1px solid #000; }
+  .pl-block:last-child { border-bottom: 0; }
+  .pl-seller { min-height: 24mm; }
+  .pl-party { min-height: 17mm; }
+  .co-name { font-size: 10pt; font-weight: bold; line-height: 1.2; }
+  .co-line-sm { font-size: 7.5pt; }
+  .party-cap { font-size: 7.5pt; margin-bottom: 0.5mm; }
+  .party-name { font-size: 9pt; font-weight: bold; }
+  .kv { display: flex; }
+  .kv .k { width: 24mm; flex: none; }
+  .kv .s { width: 2.5mm; flex: none; }
+  .kv .v { flex: 1; overflow-wrap: anywhere; }
+
+  .meta td { border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 0.8mm 1.5mm;
+             height: 8mm; width: 50%; }
+  .meta td:last-child { border-right: 0; }
+  .meta tr:last-child td { border-bottom: 0; height: auto; }
+  .meta .lbl { display: block; font-size: 7.5pt; line-height: 1.15; }
+  .meta .val { display: block; font-size: 8.5pt; font-weight: bold; line-height: 1.2;
+               overflow-wrap: anywhere; }
+  .meta .split { display: flex; justify-content: space-between; gap: 2mm; }
+  .meta .split .val { display: inline-block; }
+
+  /* goods */
+  /* The goods box takes the page's spare height so the Total row sits at the bottom with one
+     line or twenty. WeasyPrint will not stretch table rows, so the spare height is a .gap
+     between the goods and the Total row that draws the column rules itself. */
+  .goods { flex: 1 0 auto; display: flex; flex-direction: column; }
+  .gap { flex: 1 0 auto; display: flex; }
+  .gap i { border-right: 1px solid #000; }
+  /* The table's collapsed outer border sits half outside it; 1px more keeps the rules in line. */
+  .gap i:first-child { border-left: 1px solid #000; width: calc(7mm + 1px); }
+  .gap .grow { flex: 1; }
+  .items th, .items td { padding: 1mm 1.5mm; border-left: 1px solid #000;
+                         border-right: 1px solid #000; }
+  .items thead th { border-top: 1px solid #000; border-bottom: 1px solid #000; height: 8mm;
+                    font-size: 8pt; font-weight: normal; text-align: center;
+                    vertical-align: middle; }
+  .items thead th.th-sl { font-size: 7pt; line-height: 1.05; }
+  .items tr.item-row td { height: 5.6mm; }
+  .items tr.item-row td.d-desc { font-weight: bold; }
+  .items .sub { font-weight: normal; font-size: 7.5pt; }
+  .items tr.tax-row td { height: 4.6mm; }
+  .items tr.tax-row td.d-desc { text-align: right; font-style: italic; font-weight: bold; }
+  .items tr.tax-row td.d-amount { font-style: italic; font-weight: bold; }
+  .items tr.tax-row .d-less { font-style: italic; font-weight: normal; float: left; }
+  .items.total td { border-top: 1px solid #000; border-bottom: 1px solid #000; height: 7.5mm; font-weight: bold;
+                    vertical-align: middle; }
+  .items.total td.d-amount { font-size: 10pt; }
+  /* Column widths: the same numbers size the table columns and the rules. */
+  .c-sl { width: 7mm; }
+  .c-hsn { width: 17mm; }
+  .c-qty { width: 19mm; }
+  .c-rate { width: 21mm; }
+  .c-per { width: 10mm; }
+  .c-disc { width: 17mm; }
+  .c-amt { width: 26mm; }
+  .d-sl { text-align: center; }
+  .d-per { text-align: center; }
+
+  /* words, HSN summary, footer */
+  .words { border: 1px solid #000; padding: 1mm 1.5mm; }
+  .words .top { display: flex; justify-content: space-between; }
+  .words .cap { font-size: 7.5pt; }
+  .words .eoe { font-size: 7.5pt; font-style: italic; }
+  .words .amt { font-size: 9pt; font-weight: bold; }
+  .words .prev { font-size: 7.5pt; margin-top: 0.8mm; }
+
+  .hsn { border: 1px solid #000; }
+  .hsn th, .hsn td { border-right: 1px solid #000; border-bottom: 1px solid #000;
+                     padding: 0.8mm 1.5mm; font-size: 8pt; }
+  .hsn th:last-child, .hsn td:last-child { border-right: 0; }
+  .hsn thead tr:last-child th:last-child { border-right: 1px solid #000; }
+  .hsn tfoot tr:last-child td { border-bottom: 0; }
+  .hsn thead th { font-weight: normal; text-align: center; vertical-align: middle; height: 5mm; }
+  .hsn tfoot td { font-weight: bold; }
+  .hsn .ctr { text-align: center; }
+
+  .taxwords { border: 1px solid #000; padding: 1mm 1.5mm; }
+  .taxwords .cap { font-size: 7.5pt; }
+  .taxwords .val { font-weight: bold; }
+
+  .bottom { border: 1px solid #000; }
+  .bottom td.b-left { width: 50%; border-right: 1px solid #000; padding: 1mm 1.5mm; }
+  .bottom td.b-right { width: 50%; padding: 1mm 1.5mm; }
+  .pan-line { display: flex; margin-bottom: 1mm; }
+  .pan-line .k { width: 30mm; flex: none; }
+  .pan-line .s { width: 2.5mm; flex: none; }
+  .pan-line .v { flex: 1; font-weight: bold; }
+  .decl { text-decoration: underline; font-size: 7.5pt; }
+  .decl-text { font-size: 7.5pt; margin-bottom: 1mm; }
+  .terms-head { font-size: 7.5pt; }
+  .terms { font-size: 7.5pt; white-space: pre-line; line-height: 1.3; }
+  .bank-cap { font-size: 7.5pt; margin-bottom: 0.5mm; }
+  .bank-line { display: flex; }
+  .bank-line .k { width: 25mm; flex: none; font-size: 7.5pt; }
+  .bank-line .s { width: 2.5mm; flex: none; font-size: 7.5pt; }
+  .bank-line .v { flex: 1; font-weight: bold; font-size: 7.5pt; overflow-wrap: anywhere; }
+  .sign-box { min-height: 15mm; display: flex; flex-direction: column; }
+  .sign-for { text-align: center; font-weight: bold; font-size: 8pt; margin-top: 2mm; }
+  .sign-line { margin-top: auto; text-align: right; font-size: 7.5pt; }
+
+  .foot { padding-top: 1.5mm; text-align: center; }
+  .foot .jur { font-size: 8pt; text-transform: uppercase; }
+  .foot .cgi { font-size: 7.5pt; margin-top: 1.5mm; }
+
+  tr, .words, .taxwords, .bottom { break-inside: avoid; }
 </style>
 </head>
 <body>
 {% if test_mark %}<div class="mark">TEST</div>{% endif %}
-<div class="row">
-  <div class="grow">
-    <h1>{{ seller.trade_name or seller.legal_name }}</h1>
-    {% if seller.trade_name %}<div class="muted">{{ seller.legal_name }}</div>{% endif %}
-    <div style="white-space: pre-line">{{ seller.address }}</div>
-    <div>{% if seller.phone %}Phone {{ seller.phone }}{% endif %}{% if seller.email %} · {{ seller.email }}{% endif %}</div>
-    <div><strong>GSTIN:</strong> {{ seller.gstin or "—" }} · <strong>State:</strong> {{ seller.state_code }} {{ seller.state_name }}</div>
-  </div>
-  <div class="right">
-    <h1>{{ doc.heading }}</h1>
-    {% if copy_label %}<div><span class="copy">{{ copy_label }}</span></div>{% endif %}
-    {% if irn %}<img src="{{ irn.qr_uri }}" alt="E-invoice QR" style="width: 24mm; height: 24mm; margin-top: 1mm">{% endif %}
-  </div>
-</div>
+<div class="page">
 
-<div class="row" style="margin-top: 3mm">
-  <div class="box grow">
-    <div><strong>{{ doc.number_label }}</strong> {{ inv.number }}</div>
-    <div><strong>Date</strong> {{ inv.invoice_date.strftime("%d-%m-%Y") }}{% if inv.due_date and inv.due_date != inv.invoice_date %} · <strong>Due</strong> {{ inv.due_date.strftime("%d-%m-%Y") }}{% endif %}{% if inv.valid_until %} · <strong>Valid until</strong> {{ inv.valid_until.strftime("%d-%m-%Y") }}{% endif %}</div>
-    <div><strong>Place of supply</strong> {{ inv.place_of_supply }} {{ place_name }} ({{ "Intra-state: CGST + SGST" if intra else "Inter-state: IGST" }})</div>
-    {% if inv.vehicle_no %}<div><strong>Vehicle</strong> {{ inv.vehicle_no }}</div>{% endif %}
-    {% if eway_no %}<div><strong>E-way bill</strong> {{ eway_no }}</div>{% endif %}
-    {% if irn %}<div class="small"><strong>IRN</strong> <span style="word-break: break-all">{{ irn.irn }}</span><br><strong>Ack no.</strong> {{ irn.ack_no }} · {{ irn.ack_date }}</div>{% endif %}
+  <div class="title-row">
+    <div class="t-side"></div>
+    <div class="t-mid">{{ doc.title }}</div>
+    <div class="t-side t-right">{{ copy_label or "" }}</div>
   </div>
-  <div class="box grow">
-    <div class="muted">Bill to</div>
-    <div><strong>{{ inv.bill_to_name }}</strong></div>
-    <div style="white-space: pre-line">{{ inv.bill_to_address }}</div>
-    <div>GSTIN: {{ inv.bill_to_gstin or "Unregistered (B2C)" }}</div>
-  </div>
-  <div class="box grow">
-    <div class="muted">Ship to</div>
-    {% if inv.ship_to_name %}
-      <div><strong>{{ inv.ship_to_name }}</strong></div>
-      <div style="white-space: pre-line">{{ inv.ship_to_address }}</div>
-      <div>GSTIN: {{ inv.ship_to_gstin or "URP" }}</div>
-    {% else %}<div>Collected from the shop</div>{% endif %}
-  </div>
-</div>
 
-<table>
-  <thead>
+  {% if irn %}
+  <div class="irn-row">
+    <div class="irn-block">
+      <div class="irn-tag">e-Invoice</div>
+      <div class="irn-line"><span class="k">IRN</span><span class="s">:</span><span class="v">{{ irn.irn }}</span></div>
+      <div class="irn-line"><span class="k">Ack No.</span><span class="s">:</span><span class="v">{{ irn.ack_no }}</span></div>
+      <div class="irn-line"><span class="k">Ack Date</span><span class="s">:</span><span class="v">{{ irn.ack_date }}</span></div>
+    </div>
+    <div class="qr-box"><img src="{{ irn.qr_uri }}" alt="e-Invoice QR"></div>
+  </div>
+  {% endif %}
+
+  <table class="party blk">
+    <tbody>
     <tr>
-      <th>#</th><th>Description</th><th>HSN</th><th class="num">Qty</th><th class="num">Rate</th>
-      <th class="num">Discount</th><th class="num">Taxable</th>
-      {% if intra %}<th class="num">CGST</th><th class="num">SGST</th>{% else %}<th class="num">IGST</th>{% endif %}
-      <th class="num">Amount</th>
-    </tr>
-  </thead>
-  <tbody>
-  {% for l in lines %}
-    <tr>
-      <td>{{ l.line_no }}</td>
-      <td>{{ l.description }}{% if l.batch %}<div class="muted small">Batch: {{ l.batch }}</div>{% endif %}{% if l.stock_after is not none %}<div class="muted small">Stock left: {{ l.stock_after }} {{ l.base_unit }}</div>{% endif %}</td>
-      <td>{{ l.hsn }}</td>
-      <td class="num">{{ l.qty_text }}</td>
-      <td class="num">{{ l.rate_text }}</td>
-      <td class="num">{{ l.discount_text }}</td>
-      <td class="num">{{ l.taxable_text }}</td>
-      {% if intra %}
-        <td class="num">{{ l.cgst_text }}<div class="muted small">{{ l.half_rate }}%</div></td>
-        <td class="num">{{ l.sgst_text }}<div class="muted small">{{ l.half_rate }}%</div></td>
-      {% else %}
-        <td class="num">{{ l.igst_text }}<div class="muted small">{{ l.gst_rate }}%</div></td>
-      {% endif %}
-      <td class="num">{{ l.total_text }}</td>
-    </tr>
-  {% endfor %}
-  </tbody>
-</table>
+      <td class="party-left">
+        <div class="pl-block pl-seller">
+          <div class="co-name">{{ seller.name }}</div>
+          {% if seller.legal_name %}<div class="co-line-sm">{{ seller.legal_name }}</div>{% endif %}
+          <div class="addr">{{ seller.address }}</div>
+          <div>GSTIN/UIN: {{ seller.gstin or "Not registered" }}</div>
+          <div class="co-line-sm">State Name : {{ seller.state_name }}, Code : {{ seller.state_code }}</div>
+          {% if seller.phone %}<div class="co-line-sm">Phone : {{ seller.phone }}</div>{% endif %}
+          {% if seller.email %}<div class="co-line-sm">E-Mail : {{ seller.email }}</div>{% endif %}
+        </div>
 
-<div class="row" style="margin-top: 3mm">
-  <div class="grow">
-    <div><strong>Amount in words:</strong> {{ words }}</div>
-    {% if inv.pending_balance_at_billing and inv.pending_balance_at_billing != "0.00" %}
-    <div style="margin-top: 2mm"><strong>Pending balance before this bill:</strong> ₹ {{ pending_text }}</div>
-    {% endif %}
-    {% if inv.paid_at_billing and inv.paid_at_billing > 0 %}
-    <div style="margin-top: 2mm"><strong>Paid at billing:</strong> ₹ {{ paid_text }} · <strong>Balance due:</strong> ₹ {{ due_text }}</div>
-    {% endif %}
-    {% if seller.bank_name %}
-    <div style="margin-top: 3mm" class="small"><strong>Bank:</strong> {{ seller.bank_name }} · A/c {{ seller.bank_account_no }} · IFSC {{ seller.bank_ifsc }}</div>
-    {% endif %}
-    {% if seller.invoice_terms %}<div class="small" style="white-space: pre-line; margin-top: 2mm"><strong>Terms</strong><br>{{ seller.invoice_terms }}</div>{% endif %}
-  </div>
-  <div style="width: 70mm">
-    <table style="margin-top: 0">
-      <tr><td>Taxable value</td><td class="num">{{ totals.taxable }}</td></tr>
-      {% if intra %}
-      <tr><td>CGST</td><td class="num">{{ totals.cgst }}</td></tr>
-      <tr><td>SGST</td><td class="num">{{ totals.sgst }}</td></tr>
-      {% else %}
-      <tr><td>IGST</td><td class="num">{{ totals.igst }}</td></tr>
+        <div class="pl-block pl-party">
+          <div class="party-cap">Consignee (Ship to)</div>
+          <div class="party-name">{{ consignee.name }}</div>
+          <div class="addr">{{ consignee.address }}</div>
+          <div class="kv"><span class="k">GSTIN/UIN</span><span class="s">:</span><span class="v">{{ consignee.gstin }}</span></div>
+          <div class="kv"><span class="k">State Name</span><span class="s">:</span><span class="v">{{ consignee.state_name }}, Code : {{ consignee.state_code }}</span></div>
+        </div>
+
+        <div class="pl-block pl-party">
+          <div class="party-cap">Buyer (Bill to)</div>
+          <div class="party-name">{{ buyer.name }}</div>
+          <div class="addr">{{ buyer.address }}</div>
+          <div class="kv"><span class="k">GSTIN/UIN</span><span class="s">:</span><span class="v">{{ buyer.gstin }}</span></div>
+          <div class="kv"><span class="k">State Name</span><span class="s">:</span><span class="v">{{ buyer.state_name }}, Code : {{ buyer.state_code }}</span></div>
+        </div>
+      </td>
+
+      <td>
+        <table class="meta">
+          <tbody>
+          <tr>
+            <td>
+              <div class="split"><span class="lbl">{{ doc.number_label }}</span>{% if head.eway_no %}<span class="lbl">e-Way Bill No.</span>{% endif %}</div>
+              <div class="split"><span class="val">{{ head.number }}</span>{% if head.eway_no %}<span class="val">{{ head.eway_no }}</span>{% endif %}</div>
+            </td>
+            <td><span class="lbl">Dated</span><span class="val">{{ head.date }}</span></td>
+          </tr>
+          <tr>
+            <td><span class="lbl">Delivery Note</span><span class="val"></span></td>
+            <td><span class="lbl">Mode/Terms of Payment</span><span class="val">{{ head.payment or "" }}</span></td>
+          </tr>
+          <tr>
+            <td><span class="lbl">Reference No. &amp; Date.</span><span class="val">{{ head.reference or "" }}</span></td>
+            <td><span class="lbl">Place of Supply</span><span class="val">{{ place_of_supply }}</span></td>
+          </tr>
+          <tr>
+            <td><span class="lbl">Buyer&#39;s Order No.</span><span class="val"></span></td>
+            <td><span class="lbl">Dated</span><span class="val"></span></td>
+          </tr>
+          <tr>
+            <td><span class="lbl">Dispatch Doc No.</span><span class="val"></span></td>
+            <td><span class="lbl">Delivery Note Date</span><span class="val"></span></td>
+          </tr>
+          <tr>
+            <td><span class="lbl">Dispatched through</span><span class="val"></span></td>
+            <td><span class="lbl">Destination</span><span class="val">{{ head.destination or "" }}</span></td>
+          </tr>
+          <tr>
+            <td><span class="lbl">Bill of Lading/LR-RR No.</span><span class="val"></span></td>
+            <td><span class="lbl">Motor Vehicle No.</span><span class="val">{{ head.vehicle or "" }}</span></td>
+          </tr>
+          <tr>
+            <td colspan="2"><span class="lbl">{{ head.terms_label }}</span><span class="val">{{ head.terms or "" }}</span></td>
+          </tr>
+          </tbody>
+        </table>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+
+  {% macro columns() %}
+      <colgroup>
+        <col class="c-sl"><col><col class="c-hsn"><col class="c-qty">
+        <col class="c-rate"><col class="c-per">{% if has_discount %}<col class="c-disc">{% endif %}<col class="c-amt">
+      </colgroup>
+  {% endmacro %}
+  <div class="goods blk">
+    <table class="items">
+      {{ columns() }}
+      <thead>
+      <tr>
+        <th class="th-sl">Sl<br>No.</th>
+        <th>Description of Goods</th>
+        <th>HSN/SAC</th>
+        <th>Quantity</th>
+        <th>Rate</th>
+        <th>per</th>
+        {% if has_discount %}<th>Discount</th>{% endif %}
+        <th>Amount</th>
+      </tr>
+      </thead>
+      <tbody>
+      {% for l in lines %}
+      <tr class="item-row">
+        <td class="d-sl">{{ l.line_no }}</td>
+        <td class="d-desc wrap">{{ l.description }}{% if l.batch %}<div class="sub">Batch: {{ l.batch }}</div>{% endif %}{% if l.stock_after is not none %}<div class="sub">Stock left: {{ l.stock_after }} {{ l.base_unit }}</div>{% endif %}</td>
+        <td>{{ l.hsn }}</td>
+        <td class="num nowrap"><b>{{ l.qty }} {{ l.unit }}</b></td>
+        <td class="num">{{ l.rate }}</td>
+        <td class="d-per">{{ l.unit }}</td>
+        {% if has_discount %}<td class="num">{{ l.discount }}</td>{% endif %}
+        <td class="num d-amount">{{ l.amount }}</td>
+      </tr>
+      {% endfor %}
+      {% for label, amount in taxes %}
+      <tr class="tax-row">
+        <td></td><td class="d-desc">{{ label }}</td><td></td><td></td><td></td><td></td>
+        {% if has_discount %}<td></td>{% endif %}
+        <td class="num d-amount">{{ amount }}</td>
+      </tr>
+      {% endfor %}
+      {% if round_off %}
+      <tr class="tax-row">
+        <td></td><td class="d-desc">{% if round_off_less %}<span class="d-less">Less :</span>{% endif %}ROUNDED OFF</td><td></td><td></td><td></td><td></td>
+        {% if has_discount %}<td></td>{% endif %}
+        <td class="num d-amount">{% if round_off_less %}(-){% endif %}{{ round_off }}</td>
+      </tr>
       {% endif %}
-      <tr><td>Round off</td><td class="num">{{ totals.round_off }}</td></tr>
+      </tbody>
+    </table>
+    <div class="gap">
+      <i class="c-sl"></i><i class="grow"></i><i class="c-hsn"></i><i class="c-qty"></i>
+      <i class="c-rate"></i><i class="c-per"></i>{% if has_discount %}<i class="c-disc"></i>{% endif %}<i class="c-amt"></i>
+    </div>
+    <table class="items total">
+      {{ columns() }}
+      <tr>
+        <td></td><td class="r">Total</td><td></td>
+        <td class="num nowrap">{{ total_qty }}</td><td></td><td></td>
+        {% if has_discount %}<td></td>{% endif %}
+        <td class="num d-amount nowrap">&#8377; {{ grand_total }}</td>
+      </tr>
     </table>
   </div>
-</div>
 
-<div class="total-band"><span>{{ doc.total_label }}</span><span>₹ {{ totals.grand_total }}</span></div>
+  <div class="words blk">
+    <div class="top">
+      <span class="cap">Amount Chargeable (in words)</span>
+      <span class="eoe">E. &amp; O.E</span>
+    </div>
+    <div class="amt">{{ words }}</div>
+    {% if previous_balance %}<div class="prev">Previous balance before this bill: &#8377; {{ previous_balance }}</div>{% endif %}
+  </div>
 
-<div class="row sign">
-  <div class="small muted">{{ doc.footer }}</div>
-  <div class="right">For {{ seller.trade_name or seller.legal_name }}<br><br>Authorised signatory</div>
+  <table class="hsn blk">
+    <colgroup>
+      <col style="width: 30mm"><col style="width: 26mm">
+      {% if intra %}<col style="width: 14mm"><col style="width: 25mm"><col style="width: 14mm"><col style="width: 25mm">
+      {% else %}<col style="width: 14mm"><col style="width: 25mm">{% endif %}
+      <col>
+    </colgroup>
+    <thead>
+    <tr>
+      <th rowspan="2">HSN/SAC</th>
+      <th rowspan="2">Taxable<br>Value</th>
+      {% if intra %}<th colspan="2">CGST</th><th colspan="2">SGST/UTGST</th>{% else %}<th colspan="2">IGST</th>{% endif %}
+      <th rowspan="2">Total<br>Tax Amount</th>
+    </tr>
+    <tr>
+      <th>Rate</th><th>Amount</th>{% if intra %}<th>Rate</th><th>Amount</th>{% endif %}
+    </tr>
+    </thead>
+    <tbody>
+    {% for h in hsn_rows %}
+    <tr>
+      <td>{{ h.hsn }}</td>
+      <td class="num">{{ h.taxable }}</td>
+      {% if intra %}
+      <td class="ctr">{{ h.half_rate }}</td><td class="num">{{ h.cgst }}</td>
+      <td class="ctr">{{ h.half_rate }}</td><td class="num">{{ h.sgst }}</td>
+      {% else %}
+      <td class="ctr">{{ h.rate }}</td><td class="num">{{ h.igst }}</td>
+      {% endif %}
+      <td class="num">{{ h.tax }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+    <tfoot>
+    <tr>
+      <td class="num">Total</td>
+      <td class="num">{{ hsn_total.taxable }}</td>
+      {% if intra %}
+      <td></td><td class="num">{{ hsn_total.cgst }}</td><td></td><td class="num">{{ hsn_total.sgst }}</td>
+      {% else %}
+      <td></td><td class="num">{{ hsn_total.igst }}</td>
+      {% endif %}
+      <td class="num">{{ hsn_total.tax }}</td>
+    </tr>
+    </tfoot>
+  </table>
+
+  <div class="taxwords blk">
+    <span class="cap">Tax Amount (in words) :</span>
+    <span class="val">{{ tax_words }}</span>
+  </div>
+
+  <table class="bottom blk">
+    <tbody>
+    <tr>
+      <td class="b-left">
+        {% if seller.pan %}
+        <div class="pan-line"><span class="k">Company&#39;s PAN</span><span class="s">:</span><span class="v">{{ seller.pan }}</span></div>
+        {% endif %}
+        <div class="decl">Declaration</div>
+        <div class="decl-text">{{ doc.declaration }}</div>
+        {% if seller.terms %}
+        <div class="terms-head">Terms &amp; Conditions:</div>
+        <div class="terms">{{ seller.terms }}</div>
+        {% endif %}
+      </td>
+      <td class="b-right">
+        {% if seller.bank_name %}
+        <div class="bank-cap">Company&#39;s Bank Details</div>
+        <div class="bank-line"><span class="k">Bank Name</span><span class="s">:</span><span class="v">{{ seller.bank_name }}</span></div>
+        <div class="bank-line"><span class="k">A/c No.</span><span class="s">:</span><span class="v">{{ seller.bank_account_no or "" }}</span></div>
+        <div class="bank-line"><span class="k">Branch &amp; IFS Code</span><span class="s">:</span><span class="v">{% if seller.bank_branch %}{{ seller.bank_branch }} &amp; {% endif %}{{ seller.bank_ifsc or "" }}</span></div>
+        {% endif %}
+        <div class="sign-box">
+          <div class="sign-for">for {{ seller.name }}</div>
+          <div class="sign-line">Authorised Signatory</div>
+        </div>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+
+  <div class="foot">
+    {% if seller.jurisdiction %}<div class="jur">Subject to {{ seller.jurisdiction }} Jurisdiction</div>{% endif %}
+    <div class="cgi">{{ doc.generated }}</div>
+  </div>
+
 </div>
 </body>
 </html>

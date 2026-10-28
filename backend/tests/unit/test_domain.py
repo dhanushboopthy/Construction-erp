@@ -63,6 +63,34 @@ class TestGst:
     def test_taxable_from_inclusive(self):
         assert gst.taxable_from_inclusive("118", "18") == D("100.00")
 
+    def test_pan_is_inside_the_gstin(self):
+        assert gst.pan_of("27AAPFU0939F1ZV") == "AAPFU0939F"
+        assert gst.pan_of(None) is None
+
+    def test_hsn_summary_groups_by_hsn_and_rate(self):
+        intra = gst.SupplyKind.INTRA_STATE
+        rows = gst.hsn_summary(
+            [
+                ("7214", gst.line_tax(D("1000.00"), D("18"), intra)),
+                ("2523", gst.line_tax(D("500.00"), D("28"), intra)),
+                ("7214", gst.line_tax(D("250.50"), D("18"), intra)),
+                ("7214", gst.line_tax(D("100.00"), D("12"), intra)),
+            ]
+        )
+        assert [(r.hsn, r.rate) for r in rows] == [
+            ("7214", D("18")),
+            ("2523", D("28")),
+            ("7214", D("12")),
+        ]
+        steel = rows[0]
+        assert (steel.taxable, steel.cgst, steel.sgst, steel.igst) == (
+            D("1250.50"),
+            D("112.55"),
+            D("112.55"),
+            D("0"),
+        )
+        assert steel.tax == D("225.10")
+
 
 class TestUnits:
     def test_ton_to_kg(self):

@@ -1,5 +1,6 @@
 """Milestone 6: sales invoices, GST maths, stock and balance effects, roles, PDF."""
 
+import re
 from datetime import timedelta
 
 import pytest
@@ -580,3 +581,68 @@ def test_list_filters_and_pdf(client, world):
     assert "S1-26-27-00001.pdf" in pdf.headers["content-disposition"]
     counter = login(client, *COUNTER)
     assert client.get(f"/api/v1/invoices/{first['id']}/pdf", headers=counter).status_code == 200
+
+
+def test_the_bill_prints_on_the_owners_layout(client, world, monkeypatch):
+    """Tally-style A4: seller with PAN, consignee and buyer, the details grid, tax lines under
+    the goods, the HSN summary and the tax in words; a quotation says what it is."""
+    from app.domain.gst import gstin_checksum
+    from app.services import invoice_pdf
+
+    seen: list[str] = []
+
+    class Capture:
+        def __init__(self, string: str) -> None:
+            seen.append(string)
+
+        def write_pdf(self) -> bytes:
+            return b"%PDF"
+
+    monkeypatch.setattr(invoice_pdf, "HTML", Capture)
+    owner = world["owner"]
+    gstin = "33AAPFU0939F1Z" + gstin_checksum("33AAPFU0939F1Z")
+    settings = client.get("/api/v1/settings", headers=owner).json()
+    saved = client.put(
+        "/api/v1/settings",
+        headers=owner,
+        json=settings
+        | {
+            "gstin": gstin,
+            "bank_name": "SBI",
+            "bank_branch": "Gandhipuram",
+            "jurisdiction": "Coimbatore",
+        },
+    )
+    assert saved.status_code == 200, saved.text
+    lines = [line(world, "tmt", "2.5", "ton"), line(world, "cement", "7"), line(world, "tmt", "1")]
+    inv = post(client, world, body(world, lines)).json()
+    assert client.get(f"/api/v1/invoices/{inv['id']}/pdf", headers=owner).status_code == 200
+    html = re.sub(r"\s+", " ", seen[-1])
+    for text in (
+        "Tax Invoice",
+        "Original for recipient",
+        "AAPFU0939F",  # PAN, from the GSTIN
+        "Consignee (Ship to)",
+        "Buyer (Bill to)",
+        "33 Tamil Nadu",
+        "OUTPUT CGST",
+        "OUTPUT SGST",
+        "Gandhipuram &amp; ",
+        "Subject to Coimbatore Jurisdiction",
+        "This is a Computer Generated Invoice",
+        "Tax Amount (in words)",
+    ):
+        assert text in html, text
+    assert "OUTPUT IGST" not in html
+    # Two TMT lines, one HSN summary row for them; half the rate as CGST and as SGST.
+    assert html.count("<td>72142090</td>") == 3 and "14%" in html and "9%" in html
+
+    quote = client.post(
+        "/api/v1/quotes",
+        headers=owner,
+        json=body(world, [line(world, "tmt", "1", "ton")]) | {"kind": "quotation"},
+    ).json()
+    assert client.get(f"/api/v1/quotes/{quote['id']}/pdf", headers=owner).status_code == 200
+    html = re.sub(r"\s+", " ", seen[-1])
+    assert "Estimate/Quotation" in html and "Quotation No." in html
+    assert "Tax Invoice" not in html and "not a tax invoice" in html

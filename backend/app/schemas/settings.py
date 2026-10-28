@@ -17,7 +17,9 @@ class ShopSettingsBase(Schema):
     bank_name: str | None = Field(default=None, max_length=100)
     bank_account_no: str | None = Field(default=None, max_length=30)
     bank_ifsc: str | None = Field(default=None, pattern=r"^[A-Z]{4}0[A-Z0-9]{6}$")
+    bank_branch: str | None = Field(default=None, max_length=100)
     invoice_terms: str | None = None
+    jurisdiction: str | None = Field(default=None, max_length=60)
 
     financial_year_start_month: int = Field(default=4, ge=1, le=12)
     return_window_days: int = Field(default=2, ge=0, le=30)

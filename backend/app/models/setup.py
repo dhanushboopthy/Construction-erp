@@ -47,7 +47,9 @@ class ShopSettings(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
     bank_name: Mapped[str | None] = mapped_column(String(100))
     bank_account_no: Mapped[str | None] = mapped_column(String(30))
     bank_ifsc: Mapped[str | None] = mapped_column(String(11))
+    bank_branch: Mapped[str | None] = mapped_column(String(100))
     invoice_terms: Mapped[str | None] = mapped_column(Text)
+    jurisdiction: Mapped[str | None] = mapped_column(String(60))  # "Subject to X jurisdiction"
 
     financial_year_start_month: Mapped[int] = mapped_column(Integer, default=4)
     return_window_days: Mapped[int] = mapped_column(Integer, default=2)

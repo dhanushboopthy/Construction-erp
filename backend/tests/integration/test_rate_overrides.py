@@ -128,11 +128,7 @@ def test_the_bill_pdf_looks_the_same_as_any_other_bill(client, listed, monkeypat
     def clean(html: str, number: str) -> str:
         html = html.replace(number.replace("/", "-"), "N").replace(number, "N")
         html = re.sub(r"stock left: [\d,.]+ kg", "stock left", html, flags=re.I)
-        html = re.sub(
-            r'<div style="margin-top: 2mm"><strong>Pending balance[^<]*</strong>[^<]*</div>',
-            "",
-            html,
-        )
+        html = re.sub(r'<div class="prev">Previous balance[^<]*</div>', "", html)
         return re.sub(r"\s+", " ", html)
 
     assert clean(seen[0], typed["number"]) == clean(seen[1], plain["number"])

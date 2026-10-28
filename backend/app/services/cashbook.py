@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, aliased
 
 from app.core.clock import today_ist
@@ -26,6 +26,7 @@ from app.schemas.finance import (
     CashBookOut,
     CashEntryCreate,
     CashEntryOut,
+    CashMonthOut,
     ExpenseCategoryIn,
     ExpenseCategoryOut,
     ExpenseCategoryUpdate,
@@ -330,20 +331,21 @@ def cash_book(
     *,
     location_ids: frozenset[int] | None,
     location_id: int | None,
-    date_from: date,
+    date_from: date | None,
     date_to: date,
 ) -> CashBookOut:
+    """Vouchers from `date_from` to `date_to`. No `date_from` means from the first voucher."""
+    where = [CashEntry.tenant_id == current_tenant_id(db), CashEntry.entry_date <= date_to]
+    if location_id is not None:
+        where.append(CashEntry.location_id == location_id)
+    if location_ids is not None:
+        where.append(CashEntry.location_id.in_(location_ids))
+    if date_from is None:
+        first = db.execute(select(func.min(CashEntry.entry_date)).where(*where)).scalar_one()
+        date_from = min(first or date_to, date_to)
     if date_to < date_from:
         raise BusinessRuleError("The end date is before the start date", code="BAD_RANGE")
-    stmt = select(CashEntry).where(
-        CashEntry.tenant_id == current_tenant_id(db),
-        CashEntry.entry_date >= date_from,
-        CashEntry.entry_date <= date_to,
-    )
-    if location_id is not None:
-        stmt = stmt.where(CashEntry.location_id == location_id)
-    if location_ids is not None:
-        stmt = stmt.where(CashEntry.location_id.in_(location_ids))
+    stmt = select(CashEntry).where(*where, CashEntry.entry_date >= date_from)
     rows = list(db.execute(stmt.order_by(CashEntry.entry_date, CashEntry.id)).scalars())
     views = _views(db, rows)
     drawer_in = sum((v.drawer_effect for v in views if v.drawer_effect > ZERO), ZERO)
@@ -364,6 +366,19 @@ def cash_book(
         drawer_in=money(drawer_in),
         drawer_out=money(drawer_out),
         expenses=money(expenses),
+        months=[
+            CashMonthOut(
+                month=m.month, drawer_in=m.drawer_in, drawer_out=m.drawer_out, expenses=m.expenses
+            )
+            for m in finance.monthly_cash(
+                [
+                    finance.CashMove(
+                        v.entry_date, v.kind, v.amount, v.drawer_effect, v.reverses_id is not None
+                    )
+                    for v in views
+                ]
+            )
+        ],
     )
 
 

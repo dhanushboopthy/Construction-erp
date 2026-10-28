@@ -1009,7 +1009,8 @@ export interface paths {
         };
         /**
          * Cash Book
-         * @description Vouchers for a period (today by default). Counter staff see their own shop's.
+         * @description Vouchers for a period (today by default), with totals per month. `all_time` starts at
+         *     the first voucher. Counter staff see their own shop's.
          */
         get: operations["cash_book_api_v1_cash_book_get"];
         put?: never;
@@ -3512,6 +3513,11 @@ export interface components {
             drawer_out: string;
             /** Expenses */
             expenses: string;
+            /**
+             * Months
+             * @default []
+             */
+            months: components["schemas"]["CashMonthOut"][];
         };
         /** CashEntryCreate */
         CashEntryCreate: {
@@ -3579,6 +3585,17 @@ export interface components {
             drawer_effect: string;
             /** Created By Name */
             created_by_name: string | null;
+        };
+        /** CashMonthOut */
+        CashMonthOut: {
+            /** Month */
+            month: string;
+            /** Drawer In */
+            drawer_in: string;
+            /** Drawer Out */
+            drawer_out: string;
+            /** Expenses */
+            expenses: string;
         };
         /** CashReverse */
         CashReverse: {
@@ -14566,6 +14583,7 @@ export interface operations {
                 location_id?: number | null;
                 date_from?: string | null;
                 date_to?: string | null;
+                all_time?: boolean;
             };
             header?: never;
             path?: never;

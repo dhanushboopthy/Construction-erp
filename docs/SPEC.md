@@ -369,6 +369,11 @@ on issued documents (ADR 0010).
 - Counter staff record expenses and bank deposits at their own shop, dated today; an expense
   above the limit needs the owner's PIN (`expense` approval). The owner records everything and
   may back-date; closed shop-days refuse vouchers (G17). The accountant reads.
+- Reading the cash book: one day, a calendar month, a financial year (April–March), any from–to
+  range, or everything (`all_time`, from the first voucher to today). Totals for the period plus
+  the same totals per calendar month (`months`, `domain/finance.monthly_cash`), so the months
+  add up to the period. Looking at one day files a new voucher on that day; longer views file it
+  today.
 - Daily closing: cash in = cash receipts + cash from the bank + owner's capital; cash out = cash
   paid to parties + cash expenses + deposits + drawings. A normal day closes with no difference.
 - Expense heads have a nature: fixed, variable or interest (defaults seeded, owner edits).

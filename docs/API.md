@@ -220,7 +220,7 @@ Settings gain `adjustment_approval_limit` (₹10,000) and `itc_reverse_shortages
 | --- | --- | --- |
 | GET | `/expense-categories` (`include_inactive` for the owner) | all roles |
 | POST · PATCH | `/expense-categories` · `/expense-categories/{id}` | owner |
-| GET | `/cash-book?location_id=&date_from=&date_to=` (today by default) | owner, accountant; counter: own shop |
+| GET | `/cash-book?location_id=&date_from=&date_to=` (today by default) or `?all_time=true`; returns totals and `months` | owner, accountant; counter: own shop |
 | POST | `/cash-book` | owner; counter: expenses and bank deposits at own shop, today only; expenses above `expense_approval_limit` need an `expense` approval (409 `EXPENSE_NEEDS_OWNER`) |
 | POST | `/cash-book/{id}/reverse` (`reason`) | owner |
 | GET | `/reports/pnl?period=2026-10&location_id=` | owner |

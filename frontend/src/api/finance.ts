@@ -41,12 +41,15 @@ export function useUpdateExpenseCategory() {
   });
 }
 
-export function useCashBook(locationId: string, dateFrom: string, dateTo: string) {
-  const params = new URLSearchParams({ date_from: dateFrom, date_to: dateTo });
+/** Vouchers from `dateFrom` to `dateTo`, or every voucher up to today with `allTime`. */
+export function useCashBook(locationId: string, dateFrom: string, dateTo: string, allTime = false) {
+  const params = new URLSearchParams(
+    allTime ? { all_time: "true" } : { date_from: dateFrom, date_to: dateTo },
+  );
   if (locationId) params.set("location_id", locationId);
   return useQuery({
-    queryKey: ["cash-book", locationId, dateFrom, dateTo],
-    enabled: dateFrom !== "" && dateTo !== "",
+    queryKey: ["cash-book", locationId, dateFrom, dateTo, allTime],
+    enabled: allTime || (dateFrom !== "" && dateTo !== "" && dateFrom <= dateTo),
     queryFn: () => api<CashBook>(`/cash-book?${params.toString()}`),
   });
 }

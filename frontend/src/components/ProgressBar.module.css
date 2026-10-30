@@ -1,0 +1,42 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.track {
+  flex: 1;
+  height: var(--bar-height);
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--color-fill);
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-accent);
+}
+
+.fill[data-tone="good"] {
+  background: var(--color-good);
+}
+
+.fill[data-tone="warn"] {
+  background: var(--color-warn);
+}
+
+.fill[data-tone="critical"] {
+  background: var(--color-critical);
+}
+
+.fill[data-tone="neutral"] {
+  background: var(--color-neutral-pill);
+}
+
+.percent {
+  color: var(--color-secondary);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}

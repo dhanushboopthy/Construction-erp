@@ -52,7 +52,7 @@ T5–T9 in any order.
 | T1 | Tokens and design doc | No raw hex outside `tokens.css`; every text pair ≥ 4.5:1 | **Done** (`style/ui-tokens`; contrast checked by `tokens.test.ts`) |
 | T2 | Shared components | `PageHeader`, `KpiCard`, `StatusPill`, `Avatar`, `DataTable`, `TableToolbar`, buttons and fields tested | **Done** (`style/ui-components`) |
 | T3 | App shell: sidebar and top bar | Every module per role, shortcuts kept, tenant name from the API | **Done** (`style/ui-shell`; adds `GET /tenant`) |
-| T4 | Today dashboard | KPI row and customer dues table; counter never requests receivables or profit | Planned |
+| T4 | Today dashboard | KPI row and customer dues table; counter never requests receivables or profit | **Done** (`style/ui-today`) |
 | T5 | List screens | Search, status filter and URL-kept filters on every list | Planned |
 | T6 | Entry forms | Bill entry takes no more keystrokes than today | Planned |
 | T7 | Reports and settings | Owner-only reports stay hidden from counter users | Planned |

@@ -11,9 +11,10 @@ import type {
 
 /** FM5: receivables by due date, bad-debt write-offs and working capital. */
 
-export function useReceivables() {
+export function useReceivables(enabled = true) {
   return useQuery({
     queryKey: ["receivables"],
+    enabled,
     queryFn: () => api<Receivables | ReceivablesOwner>("/reports/receivables"),
   });
 }

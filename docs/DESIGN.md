@@ -38,10 +38,26 @@ a scrolling strip of pills at the top, the current one in bright orange; the top
 avatar and chevron (name and role are hidden). On screens shorter than 820 px the nav rows are
 tighter so Settings stays in view.
 
-**Today.** KPI cards (each opens its detail screen) with a tinted corner disc and a status badge;
-the stock-levels card with orange bars and a reorder tip; the monthly sales chart (owner and
-accountant) whose bars grow in once on load, the current month in orange and the other months in
-slate, values on hover or focus. Counter staff see only their figures and the stock card.
+**Today.** `PageHeader` (the shop name as eyebrow, the date and "Sales, dues and stock at a
+glance." as subtitle), then a row of `KpiCard`s (four across at 1280 px and up, two across below
+that, one on a phone), each one link to its detail screen: Net sales today, Profit today (owner),
+Customers owe (with the share that is overdue as a bar), We owe suppliers, Cash tied up (owner),
+Items in stock (with the share that is out of stock as a bar). The accountant gets an Overdue card
+instead of profit. Counter staff get Net sales today, Items in stock and Waiting e-way bills, and
+nothing else: their screen never requests the receivables report or a profit figure.
+
+Below the cards (owner and accountant) the **Customer dues** table: top 8 customers who owe money,
+most overdue first, then most owed. Columns: customer (avatar, name, oldest bill due), owes,
+overdue with "N days late", credit used (bar and %, "Cash customer" when there is no limit), last
+payment, status pill, chevron. Search and the status filter live in the URL (`?q=&status=`); a row
+opens that customer (`/parties?party=ID`). Status comes from one tested function,
+`dueStatus` in `src/lib/dues.ts`, in this order: **Over limit** (credit used above 100%), **Overdue**
+(a bill is at least one day past its due date), **Near limit** (80% or more of the limit; the 80%
+is a proposal to confirm with the owner, constant `NEAR_LIMIT_PCT`), then **OK**, or **Cash**
+(neutral) when the customer has no credit limit. Under the table: the stock-levels card with
+orange bars and a reorder tip, and the monthly sales chart (owner and accountant) whose bars grow
+in once on load, the current month in orange and the other months in slate, values on hover or
+focus.
 
 **Light and dark.** A sun/moon button switches and remembers the choice per computer; until
 someone picks, the app follows the operating system (`public/theme-init.js` applies it before
@@ -143,6 +159,7 @@ Build screens from these; each has tests for its states, keyboard use and access
 | `KpiCard` | Label, big tabular value, icon tile coloured by tone, optional note, optional progress bar, optional link | With `href` the whole card is one link. The bar is `role="progressbar"` with `aria-valuenow/min/max` and the percentage written beside it. The value shrinks with the card so a long amount fits |
 | `StatusPill` | Icon and word on a tone: good, warn, critical, neutral, accent | `label` is required (a pill without text does not type-check). Solid in light, tinted in dark |
 | `Avatar` | Initials in a circle, navy or orange picked from the name, 32 or 40 px | Decorative next to a name; give `label` when it stands alone |
+| `ProgressBar` | A bar with its percentage beside it, `role="progressbar"` | Used by `KpiCard` and the credit-used column |
 | `DataTable` | The list pattern: 64 px rows, two-line first cell (`PrimaryCell`), right-aligned tabular figures, status column, chevron, sticky header | With `onOpen`: Up/Down between rows, Enter opens, click opens, the selected row has the accent marker. Draws loading, error (with retry) and empty states |
 | `TableToolbar` + `useTableFilters` | Search (waits for a pause in typing; `/` focuses it), status `<select>`, optional date range | Filters live in the URL (`?q=&status=&from=&to=`), so Back, reload and a pasted link keep them |
 | `Button` | `primary` (orange, one per screen), `secondary` (outlined), `ghost` (text only) | Radius 8; always `type="button"` unless it submits |

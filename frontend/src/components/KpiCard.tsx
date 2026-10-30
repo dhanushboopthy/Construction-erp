@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 
+import { ProgressBar } from "./ProgressBar";
 import type { PillTone } from "./StatusPill";
 import styles from "./KpiCard.module.css";
 
@@ -35,10 +36,6 @@ export function KpiCard({
   progress?: KpiProgress;
   href?: string;
 }) {
-  const max = progress?.max ?? 100;
-  const percent = progress
-    ? Math.round((Math.min(Math.max(progress.value, 0), max) / (max || 1)) * 100)
-    : 0;
   const body = (
     <>
       <div className={styles.top}>
@@ -52,19 +49,13 @@ export function KpiCard({
       <strong className={styles.value}>{value}</strong>
       {note ? <span className={styles.note}>{note}</span> : null}
       {progress ? (
-        <div className={styles.progressRow}>
-          <div
-            className={styles.track}
-            role="progressbar"
-            aria-label={progress.label}
-            aria-valuemin={0}
-            aria-valuemax={max}
-            aria-valuenow={Math.min(Math.max(progress.value, 0), max)}
-            aria-valuetext={`${percent}%`}
-          >
-            <span className={styles.fill} data-tone={tone} style={{ width: `${percent}%` }} />
-          </div>
-          <span className={`${styles.percent} num`}>{percent}%</span>
+        <div className={styles.progress}>
+          <ProgressBar
+            value={progress.value}
+            max={progress.max}
+            label={progress.label}
+            tone={tone}
+          />
         </div>
       ) : null}
     </>

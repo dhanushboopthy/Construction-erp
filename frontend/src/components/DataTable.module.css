@@ -8,6 +8,8 @@
 
 .table {
   width: 100%;
+  /* On a phone the card scrolls sideways instead of squeezing names to one letter. */
+  min-width: 640px;
   border-collapse: separate;
   border-spacing: 0;
   font-size: var(--text-sm);

@@ -129,7 +129,7 @@ async function runAxe(browser: Browser) {
 function animated(page: Page): Promise<string[]> {
   return page.evaluate(() => {
     const out: string[] = [];
-    for (const el of document.querySelectorAll("*")) {
+    for (const el of Array.from(document.querySelectorAll("*"))) {
       const s = getComputedStyle(el);
       const name = s.animationName;
       if (name !== "none")
@@ -159,7 +159,7 @@ async function runMotion(browser: Browser) {
   await settle(normal.page, false);
   const names = await normal.page.evaluate(() => {
     const set = new Set<string>();
-    for (const el of document.querySelectorAll("*")) {
+    for (const el of Array.from(document.querySelectorAll("*"))) {
       const n = getComputedStyle(el).animationName;
       if (n !== "none") set.add(n);
     }

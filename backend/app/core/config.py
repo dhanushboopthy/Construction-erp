@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     db_pool_size: int = 5
     db_max_overflow: int = 5
     # The app's connections switch to this role, which has no superuser rights, so PostgreSQL
-    # row-level security applies to them (migration 0023 creates it). Migrations keep running
+    # row-level security applies to them (migration 0024 creates it). Migrations keep running
     # as the owner. Blank turns the switch off (not for production).
     db_app_role: str = "erp_app"
 

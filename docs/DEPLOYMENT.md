@@ -38,7 +38,7 @@ Passwords cross the network, so serve over HTTPS:
 - **.env:** `BASE_DOMAIN=duolink.app`, and `DEFAULT_TENANT_SLUG=` (blank) so that only real
   subdomains reach a company. `CORS_ORIGINS=[]`, because the app and API share each origin.
 - **Database role:** the app's connections switch to `erp_app` (`DB_APP_ROLE`), which migration
-  0023 creates, so row-level security applies. The user in `DATABASE_URL` must be allowed to
+  0024 creates, so row-level security applies. The user in `DATABASE_URL` must be allowed to
   switch to it: the database owner is, and so is a superuser. Never set `DB_APP_ROLE` blank in
   production (the app refuses to start).
 - **The Duolink admin** lives at `admin.duolink.app/admin` (`ADMIN_SUBDOMAIN`). The wildcard

@@ -18,6 +18,7 @@ import { SelectField, TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
 import { formatMoney, trimDecimal } from "@/lib/format";
 import { unitNames } from "@/pages/items/itemLabels";
+import { scrollRegion } from "@/components/scrollRegion";
 
 const REASON: Record<AdjustmentReason, { label: string; hint: string }> = {
   breakage: { label: "Breakage", hint: "Torn cement bags, cracked pipes." },
@@ -209,7 +210,7 @@ export function AdjustmentsPage() {
                   )}
                 </SelectField>
                 <Button
-                  variant="quiet"
+                  variant="ghost"
                   aria-label={`Remove line ${i + 1}`}
                   disabled={rows.length === 1}
                   onClick={() => setRows((rs) => rs.filter((_, j) => j !== i))}
@@ -262,7 +263,7 @@ export function AdjustmentsPage() {
         </div>
       ) : null}
 
-      <div className={styles.tableWrap}>
+      <div className={styles.tableWrap} {...scrollRegion("Adjustments this month")}>
         <table className={styles.table} aria-label="Adjustments this month">
           <thead>
             <tr>

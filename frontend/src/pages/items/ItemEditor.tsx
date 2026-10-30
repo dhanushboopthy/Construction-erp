@@ -35,7 +35,7 @@ export function ItemDetail({ item, onClose }: { item: ItemRow; onClose: () => vo
     >
       <div className={styles.panelHead}>
         <h2 id="item-detail">{item.name}</h2>
-        <Button variant="quiet" onClick={onClose}>
+        <Button variant="ghost" onClick={onClose}>
           {T.close}
         </Button>
       </div>
@@ -205,7 +205,7 @@ export function ItemEditor({
     >
       <div className={styles.panelHead}>
         <h2 id={titleId}>{item ? item.name : T.newTitle}</h2>
-        <Button variant="quiet" onClick={onClose}>
+        <Button variant="ghost" onClick={onClose}>
           {T.close}
         </Button>
       </div>
@@ -340,7 +340,7 @@ export function ItemEditor({
                 }
               />
               <Button
-                variant="quiet"
+                variant="ghost"
                 aria-label={`Remove unit ${i + 1}`}
                 onClick={() => setUnits((rows) => rows.filter((_, j) => j !== i))}
               >

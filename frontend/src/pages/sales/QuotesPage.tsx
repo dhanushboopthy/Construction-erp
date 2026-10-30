@@ -58,7 +58,7 @@ export function QuotesPage() {
             </Button>
           </>
         ) : null}
-        <Button variant="quiet" onClick={() => void navigate("/sales")}>
+        <Button variant="ghost" onClick={() => void navigate("/sales")}>
           Sales bills
         </Button>
       </div>
@@ -143,7 +143,7 @@ export function QuotesPage() {
           >
             <div className={styles.panelHead}>
               <h2 id="quote-title">{quote.number}</h2>
-              <Button variant="quiet" onClick={() => setParams({})}>
+              <Button variant="ghost" onClick={() => setParams({})}>
                 Close
               </Button>
             </div>

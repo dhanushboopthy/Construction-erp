@@ -29,7 +29,7 @@ needs to see every company in one place.
   `tenant_id`. The policy `tenant_isolation` shows and accepts only rows whose `tenant_id` equals
   `app.tenant_id`, and each transaction sets that value from the session (`after_begin`). With no
   company set, no rows are visible. Superusers skip these policies, so the app's connections
-  switch to the role `erp_app` (`DB_APP_ROLE`, created by migration 0023, no login and no
+  switch to the role `erp_app` (`DB_APP_ROLE`, created by migration 0024, no login and no
   superuser). Migrations keep running as the owner.
 - **Closed companies stop.** A suspended or cancelled company gets 403 (`TENANT_SUSPENDED`,
   `TENANT_CANCELLED`) on every request, including sign-in and refresh.
@@ -40,7 +40,7 @@ needs to see every company in one place.
   `erp_app`, so they exercise the policies. `test_tenancy.py` fails if a table with `tenant_id`
   lacks the policy, or if a new table lacks `tenant_id`.
 - Every new table needs `TenantMixin`, and its migration must enable and force row-level security
-  and add the `tenant_isolation` policy (see migration 0023).
+  and add the `tenant_isolation` policy (see migration 0024).
 - Backups hold every company. Restoring one company alone needs a per-tenant export, which is not
   built yet.
 - Each company needs a DNS name: a wildcard record `*.duolink.app` and a wildcard certificate.

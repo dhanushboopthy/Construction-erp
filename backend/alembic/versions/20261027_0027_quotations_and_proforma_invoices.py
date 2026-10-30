@@ -1,15 +1,15 @@
 """quotations and proforma invoices
 
-Revision ID: 0026
-Revises: 0025
+Revision ID: 0027
+Revises: 0026
 Create Date: 2026-10-27 12:00:00.000000+00:00
 
 `sales_quote` and `sales_quote_line`: a quotation (estimate) or a proforma invoice, priced like
 a bill but not a tax invoice. No stock or account entries. Each kind has its own number series
 (`quotation`, `proforma` in `document_sequence`).
 
-Hand edits: row-level security and the `tenant_isolation` policy (as migration 0023), and the
-`platform_admin` policy (as migration 0024), on both tables.
+Hand edits: row-level security and the `tenant_isolation` policy (as migration 0024), and the
+`platform_admin` policy (as migration 0025), on both tables.
 """
 
 from collections.abc import Sequence
@@ -18,8 +18,8 @@ import sqlalchemy as sa
 
 from alembic import op
 
-revision: str = "0026"
-down_revision: str | None = "0025"
+revision: str = "0027"
+down_revision: str | None = "0026"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

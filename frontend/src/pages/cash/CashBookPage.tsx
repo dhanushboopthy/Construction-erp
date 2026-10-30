@@ -18,6 +18,7 @@ import styles from "@/components/Ledger.module.css";
 import { useShops } from "@/hooks/useShops";
 import { fyBounds, fyLabel, fyStartYear, monthBounds } from "@/lib/dates";
 import { formatMoney } from "@/lib/format";
+import { scrollRegion } from "@/components/scrollRegion";
 
 const KIND: Record<CashEntryKind, string> = {
   expense: "Expense",
@@ -344,7 +345,7 @@ export function CashBookPage() {
       ) : null}
 
       {b && b.months.length > 1 ? (
-        <div className={styles.tableWrap}>
+        <div className={styles.tableWrap} {...scrollRegion("Month by month")}>
           <table className={styles.table} aria-label="Month by month">
             <thead>
               <tr>
@@ -374,7 +375,7 @@ export function CashBookPage() {
         </div>
       ) : null}
 
-      <div className={styles.tableWrap}>
+      <div className={styles.tableWrap} {...scrollRegion("Vouchers")}>
         <table className={styles.table} aria-label="Vouchers">
           <thead>
             <tr>
@@ -418,7 +419,7 @@ export function CashBookPage() {
                 {owner ? (
                   <td>
                     {!e.reverses_id && !e.reversed_by_number ? (
-                      <Button variant="quiet" onClick={() => void onReverse(e)}>
+                      <Button variant="ghost" onClick={() => void onReverse(e)}>
                         Reverse
                       </Button>
                     ) : null}

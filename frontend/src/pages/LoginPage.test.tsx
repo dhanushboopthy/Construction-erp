@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 
 import { createQueryClient } from "@/api/queryClient";
 import { App } from "@/App";
@@ -24,9 +24,20 @@ describe("LoginPage", () => {
   afterEach(() => vi.unstubAllGlobals());
 
   it("shows the company this address belongs to", async () => {
-    stubApi({ status: 200, body: { slug: "acme", name: "Acme Steels", status: "active" } });
+    stubApi({
+      status: 200,
+      body: {
+        slug: "acme",
+        status: "active",
+        name: "Acme Steels",
+        tagline: "Bill fast. Close on time.",
+        logo_url: null,
+      },
+    });
     renderApp();
-    expect(await screen.findByText("Acme Steels")).toBeInTheDocument();
+    const brand = await screen.findByRole("complementary", { name: "About this shop" });
+    expect(await within(brand).findByText("Acme Steels")).toBeInTheDocument();
+    expect(within(brand).getByText("Bill fast. Close on time.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sign in" })).toBeEnabled();
   });
 

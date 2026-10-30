@@ -215,7 +215,7 @@ export function EwayPanel({ invoiceId, owner }: { invoiceId: number; owner: bool
               </Button>
             </div>
           ) : (
-            <Button variant="quiet" onClick={() => setShowManual(true)}>
+            <Button variant="ghost" onClick={() => setShowManual(true)}>
               The portal made it by hand? Enter the number
             </Button>
           )}

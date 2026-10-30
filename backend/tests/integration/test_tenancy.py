@@ -17,6 +17,7 @@ from app.models.enums import PartyType, TenantStatus
 from app.models.masters import Party
 from app.models.tenancy import Tenant
 from app.scripts.seed import seed
+from app.services.shop_settings import DEFAULT_TAGLINE
 from app.services.tenancy import CrossTenantWriteError
 from tests.conftest import login
 
@@ -60,7 +61,13 @@ def marked(client, beta):
 def test_each_address_names_its_company(client, beta):
     assert client.get("/api/v1/tenant").json()["slug"] == "main"
     named = client.get("/api/v1/tenant", headers={"host": BETA}).json()
-    assert named == {"slug": "beta", "name": "Demo Construction Materials", "status": "active"}
+    assert named == {
+        "slug": "beta",
+        "status": "active",
+        "name": "Demo Construction Materials",
+        "tagline": DEFAULT_TAGLINE,
+        "logo_url": None,
+    }
 
 
 @pytest.mark.parametrize("host", ["nobody.localhost", "admin.localhost"])

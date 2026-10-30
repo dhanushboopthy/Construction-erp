@@ -30,6 +30,7 @@ cd frontend
 npm install
 npm run dev     # proxies /api to :8000
 npm run gen:api # after an API change: regenerate src/api/schema.d.ts (API must be running)
+npm run shots   # screenshots of every screen, light/dark, 1440/1024/390 px (dev stack + seed)
 ```
 
 ## Workflow

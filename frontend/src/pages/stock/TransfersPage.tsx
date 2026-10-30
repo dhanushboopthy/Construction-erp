@@ -8,6 +8,10 @@ import { useAuth } from "@/auth/AuthContext";
 import { Button } from "@/components/Button";
 import { SelectField, TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
+import { DataTable, type Column } from "@/components/DataTable";
+import { TableToolbar } from "@/components/TableToolbar";
+import { useTableFilters } from "@/hooks/useTableFilters";
+import { includesText } from "@/lib/filters";
 import { trimDecimal } from "@/lib/format";
 import { unitNames } from "@/pages/items/itemLabels";
 
@@ -21,6 +25,22 @@ interface Row {
 export function TransfersPage() {
   const { user } = useAuth();
   const list = useTransfers();
+  const filters = useTableFilters();
+  const shown = (list.data ?? []).filter((t) =>
+    includesText(filters.q, t.number, t.from_code, t.to_code, ...t.lines.map((l) => l.item_name)),
+  );
+  const columns: Column<NonNullable<typeof list.data>[number]>[] = [
+    { id: "number", header: "Number", cell: (t) => t.number },
+    { id: "date", header: "Date", cell: (t) => t.transfer_date },
+    { id: "from", header: "From", cell: (t) => t.from_code },
+    { id: "to", header: "To", cell: (t) => t.to_code },
+    {
+      id: "items",
+      header: "Items",
+      cell: (t) =>
+        t.lines.map((l) => `${l.item_name} ${trimDecimal(l.quantity)} ${l.base_unit}`).join(", "),
+    },
+  ];
   const create = useCreateTransfer();
   const locations = useLocations();
   const items = useItems("", "");
@@ -132,7 +152,7 @@ export function TransfersPage() {
                 )}
               </SelectField>
               <Button
-                variant="quiet"
+                variant="ghost"
                 aria-label={`Remove line ${i + 1}`}
                 disabled={rows.length === 1}
                 onClick={() => setRows((rs) => rs.filter((_, j) => j !== i))}
@@ -162,39 +182,17 @@ export function TransfersPage() {
         </div>
       </form>
 
-      <div className={styles.tableWrap}>
-        {list.data && list.data.length === 0 ? (
-          <p className={styles.empty}>No transfers yet.</p>
-        ) : null}
-        {list.data && list.data.length > 0 ? (
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th scope="col">Number</th>
-                <th scope="col">Date</th>
-                <th scope="col">From</th>
-                <th scope="col">To</th>
-                <th scope="col">Items</th>
-              </tr>
-            </thead>
-            <tbody>
-              {list.data.map((t) => (
-                <tr key={t.id}>
-                  <td>{t.number}</td>
-                  <td>{t.transfer_date}</td>
-                  <td>{t.from_code}</td>
-                  <td>{t.to_code}</td>
-                  <td>
-                    {t.lines
-                      .map((l) => `${l.item_name} ${trimDecimal(l.quantity)} ${l.base_unit}`)
-                      .join(", ")}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : null}
-      </div>
+      <TableToolbar filters={filters} searchPlaceholder="Number, place or item" />
+      <DataTable
+        caption="Stock transfers"
+        columns={columns}
+        rows={shown}
+        rowKey={(t) => t.id}
+        loading={list.isPending}
+        error={list.isError ? "Transfers could not be loaded." : null}
+        onRetry={() => void list.refetch()}
+        empty={filters.q ? "No transfers match." : "No transfers yet."}
+      />
     </div>
   );
 }

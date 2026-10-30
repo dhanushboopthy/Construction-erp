@@ -116,7 +116,7 @@
 }
 
 .segment[data-tone="accent"] {
-  background: var(--gradient-action);
+  background: var(--color-accent);
 }
 
 .segment[data-tone="good"] {
@@ -128,7 +128,7 @@
 }
 
 .segment[data-tone="neutral"] {
-  background: var(--color-chart-4);
+  background: var(--color-neutral-pill);
 }
 
 .legend {
@@ -221,7 +221,7 @@
 .usageFill {
   height: 100%;
   border-radius: inherit;
-  background: var(--gradient-brand);
+  background: var(--color-accent);
 }
 
 .usage[data-full="true"] .usageFill {

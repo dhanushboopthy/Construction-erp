@@ -6,6 +6,7 @@ import { SelectField, TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
 import { Button } from "@/components/Button";
 import { formatDateTime } from "@/lib/format";
+import { scrollRegion } from "@/components/scrollRegion";
 
 const ACTIONS = [
   "insert",
@@ -91,7 +92,7 @@ export function AuditLogPage() {
       ) : null}
       {page ? (
         <>
-          <div className={styles.tableWrap}>
+          <div className={styles.tableWrap} {...scrollRegion("Audit log")}>
             <table className={styles.table} aria-label="Audit log">
               <thead>
                 <tr>

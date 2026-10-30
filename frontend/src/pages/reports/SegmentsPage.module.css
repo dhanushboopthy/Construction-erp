@@ -1,0 +1,38 @@
+.chart {
+  width: 100%;
+  max-width: 760px;
+  border: 1px solid var(--color-separator);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.month {
+  fill: var(--color-secondary);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+}
+
+.legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.swatch {
+  flex: none;
+}
+
+.rowHead {
+  color: inherit;
+  font-weight: 500;
+}

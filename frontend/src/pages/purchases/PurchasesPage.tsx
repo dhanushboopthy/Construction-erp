@@ -7,8 +7,14 @@ import type { PurchaseOwner } from "@/api/types";
 import { useAuth } from "@/auth/AuthContext";
 import { Attachments } from "@/components/Attachments";
 import { Button } from "@/components/Button";
+import { DataTable, type Column } from "@/components/DataTable";
+import { PageHeader } from "@/components/PageHeader";
+import { StatusPill } from "@/components/StatusPill";
+import { TableToolbar } from "@/components/TableToolbar";
 import styles from "@/components/Ledger.module.css";
 import { useAltKey } from "@/hooks/useKeys";
+import { useTableFilters } from "@/hooks/useTableFilters";
+import { includesText } from "@/lib/filters";
 import { formatMoney, plural, trimDecimal } from "@/lib/format";
 
 import { PurchaseReturn } from "./PurchaseReturn";
@@ -24,26 +30,65 @@ export function PurchasesPage() {
   const alerts = useSchemes(true, user?.role !== "counter");
   const [openId, setOpenId] = useState<number | null>(null);
   useAltKey("n", () => void navigate("/purchases/new"));
-  const rows = query.data?.items ?? [];
-  const selected = rows.find((r) => r.id === openId);
+  const filters = useTableFilters();
+  const all = query.data?.items ?? [];
+  const rows = all.filter(
+    (p) =>
+      includesText(filters.q, p.number, p.supplier_name, p.bill_no) &&
+      (!filters.status || p.mode === filters.status),
+  );
+  const selected = all.find((r) => r.id === openId);
+  const columns: Column<PurchaseRow>[] = [
+    { id: "number", header: "Number", cell: (p) => p.number },
+    { id: "date", header: "Date", cell: (p) => p.bill_date },
+    { id: "supplier", header: "Supplier", cell: (p) => p.supplier_name },
+    { id: "bill", header: "Bill no.", cell: (p) => p.bill_no },
+    { id: "at", header: "At", cell: (p) => p.location_code },
+    {
+      id: "goes",
+      header: "Goes to",
+      cell: (p) =>
+        p.mode === "stock" ? (
+          <StatusPill tone="neutral" label="Stock" />
+        ) : (
+          <StatusPill tone="accent" label="Customer's site" />
+        ),
+    },
+    ...(all.some(isOwnerRow)
+      ? [
+          {
+            id: "owe",
+            header: "We owe (₹)",
+            numeric: true,
+            cell: (p: PurchaseRow) => (isOwnerRow(p) ? formatMoney(p.supplier_payable) : ""),
+          },
+        ]
+      : []),
+  ];
 
   return (
     <section aria-labelledby="purchases-title" className={styles.page}>
-      <div className={styles.toolbar}>
-        <h1 id="purchases-title" className={styles.title}>
-          Purchases
-        </h1>
-        <Button
-          variant="primary"
-          onClick={() => void navigate("/purchases/new")}
-          aria-keyshortcuts="Alt+N"
-        >
-          New purchase
-        </Button>
-        <Link to="/purchases/orders">Purchase orders</Link>
-        {user?.role !== "counter" ? <Link to="/purchases/schemes">Supplier schemes</Link> : null}
-        <p className={styles.keys}>Alt+N new purchase</p>
-      </div>
+      <PageHeader
+        eyebrow="Purchases"
+        title="Purchases"
+        titleId="purchases-title"
+        subtitle="Supplier bills with landed cost. Alt+N new purchase"
+        actions={
+          <>
+            <Button
+              variant="primary"
+              onClick={() => void navigate("/purchases/new")}
+              aria-keyshortcuts="Alt+N"
+            >
+              New purchase
+            </Button>
+            <Link to="/purchases/orders">Purchase orders</Link>
+            {user?.role !== "counter" ? (
+              <Link to="/purchases/schemes">Supplier schemes</Link>
+            ) : null}
+          </>
+        }
+      />
       {alerts.data && alerts.data.length > 0 ? (
         <p role="status" className={styles.callout}>
           {alerts.data
@@ -60,68 +105,34 @@ export function PurchasesPage() {
           Saved as {saved}.
         </p>
       ) : null}
+      <TableToolbar
+        filters={filters}
+        searchPlaceholder="Number, supplier or bill no."
+        statusLabel="Goes to"
+        allStatusesLabel="Everything"
+        statusOptions={[
+          { value: "stock", label: "Stock" },
+          { value: "direct", label: "Customer's site" },
+        ]}
+      />
       <div className={styles.split}>
-        <div className={styles.tableWrap}>
-          {query.isPending ? (
-            <p role="status" className={styles.empty}>
-              Loading purchases…
-            </p>
-          ) : null}
-          {query.isError ? (
-            <p className={styles.formError}>Purchases could not be loaded.</p>
-          ) : null}
-          {query.isSuccess && rows.length === 0 ? (
-            <p className={styles.empty}>
-              No purchases yet. Press Alt+N to enter the first supplier bill.
-            </p>
-          ) : null}
-          {rows.length > 0 ? (
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th scope="col">Number</th>
-                  <th scope="col">Date</th>
-                  <th scope="col">Supplier</th>
-                  <th scope="col">Bill no.</th>
-                  <th scope="col">At</th>
-                  <th scope="col">Goes to</th>
-                  {rows.some(isOwnerRow) ? (
-                    <th scope="col" className="num">
-                      We owe (₹)
-                    </th>
-                  ) : null}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((p) => (
-                  <tr key={p.id} className={openId === p.id ? styles.selected : ""}>
-                    <td>
-                      <button
-                        type="button"
-                        className={styles.rowButton}
-                        onClick={() => setOpenId(p.id)}
-                        aria-current={openId === p.id ? "true" : undefined}
-                      >
-                        {p.number}
-                      </button>
-                    </td>
-                    <td>{p.bill_date}</td>
-                    <td>{p.supplier_name}</td>
-                    <td>{p.bill_no}</td>
-                    <td>{p.location_code}</td>
-                    <td>{p.mode === "stock" ? "Stock" : "Customer's site"}</td>
-                    {isOwnerRow(p) ? (
-                      <td className="num">{formatMoney(p.supplier_payable)}</td>
-                    ) : null}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : null}
-          {query.isSuccess ? (
-            <p className={styles.results}>{plural(rows.length, "purchase")}</p>
-          ) : null}
-        </div>
+        <DataTable
+          caption="Purchases"
+          columns={columns}
+          rows={rows}
+          rowKey={(p) => p.id}
+          selectedKey={openId}
+          onOpen={(p) => setOpenId(p.id)}
+          loading={query.isPending}
+          error={query.isError ? "Purchases could not be loaded." : null}
+          onRetry={() => void query.refetch()}
+          empty={
+            filters.q || filters.status
+              ? "No purchases match."
+              : "No purchases yet. Press Alt+N to enter the first supplier bill."
+          }
+          footer={query.isSuccess ? plural(rows.length, "purchase") : undefined}
+        />
         {selected ? (
           <aside
             className={styles.panel}
@@ -130,7 +141,7 @@ export function PurchasesPage() {
           >
             <div className={styles.panelHead}>
               <h2 id="purchase-detail">{selected.number}</h2>
-              <Button variant="quiet" onClick={() => setOpenId(null)}>
+              <Button variant="ghost" onClick={() => setOpenId(null)}>
                 Close
               </Button>
             </div>

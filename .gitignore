@@ -36,3 +36,6 @@ docker-compose.override.yml
 # Impeccable engine binary (per platform, ~20 MB); the launcher downloads it when missing.
 .claude/skills/impeccable/scripts/bin/
 .impeccable/config.local.json
+
+# UI comparison screenshots (npm run shots)
+frontend/screenshots/

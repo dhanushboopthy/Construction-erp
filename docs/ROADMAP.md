@@ -61,6 +61,26 @@ Duolink hosts the ERP for many companies. One branch and PR each.
 | R6 | Batch (lot) on every purchase line | A purchase line keeps its batch; the batch shows on the bill | **Done** (`feat/purchase-batches`; batch-wise stock report not built yet) |
 | R7 | Print the tax invoice, proforma and quotation on the owner's Tally-style template | The PDF has the consignee/buyer blocks, details grid, tax lines, HSN summary, tax in words, PAN, bank branch and jurisdiction; a 35-line bill runs to two pages | **Done** (`feat/bill-print-layout`; no logo or CIN yet) |
 
+## UI refresh ("Site navy")
+
+Restyle of the whole UI, from [UI_REFACTOR_PLAN](UI_REFACTOR_PLAN.md); one branch and PR per task
+(`style/ui-<name>`), no change to API responses, role checks or the printed bill. T1 and T2 first;
+T5–T9 in any order.
+
+| # | Task | Acceptance test | Status |
+| --- | --- | --- | --- |
+| T0 | Baseline screenshots | `npm run shots` covers every module route for owner, counter and accountant, light and dark, at 1440, 1024 and 390 px | **Done** (`style/ui-baseline`) |
+| T1 | Tokens and design doc | No raw hex outside `tokens.css`; every text pair ≥ 4.5:1 | **Done** (`style/ui-tokens`; contrast checked by `tokens.test.ts`) |
+| T2 | Shared components | `PageHeader`, `KpiCard`, `StatusPill`, `Avatar`, `DataTable`, `TableToolbar`, buttons and fields tested | **Done** (`style/ui-components`) |
+| T3 | App shell: sidebar and top bar | Every module per role, shortcuts kept, tenant name from the API | **Done** (`style/ui-shell`; adds `GET /tenant`) |
+| T4 | Today dashboard | KPI row and customer dues table; counter never requests receivables or profit | **Done** (`style/ui-today`) |
+| T5 | List screens | Search, status filter and URL-kept filters on every list | **Done** (`style/ui-lists`; cash book, rate board and counts picker are entry grids, left as they were) |
+| T6 | Entry forms | Bill entry takes no more keystrokes than today | **Done** (`style/ui-forms`; keystrokes checked by `BillKeys.test.tsx`) |
+| T7 | Reports and settings | Owner-only reports stay hidden from counter users | **Done** (`style/ui-reports`) |
+| T8 | Sign-in page | Tenant name shown before sign-in | **Done** (`style/ui-signin`; `GET /tenant` is now open; since M15 an unknown, suspended or cancelled company disables the form with its message) |
+| T9 | Polish and QA | No serious axe violations; printed bill unchanged | **Done** (`style/ui-polish`; `npm run qa` for axe, motion and keys; bill PDFs match `main`; there is no quotation to compare) |
+| T10 | Tenant logo (optional) | Owner-only upload; needs a migration | **Done** (`style/ui-logo`; migration 0023; `GET /tenant/logo` is open; stored per company; the Duolink admin never shows it) |
+
 ## Already in place (Milestones 0–1)
 
 - Backend: FastAPI app factory, settings with production safety checks, JSON logs, request ids,

@@ -1,11 +1,10 @@
 .page {
   position: relative;
-  min-height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
-  place-items: center;
-  padding: var(--space-4);
-  background:
-    radial-gradient(80% 60% at 50% 0%, var(--color-accent-soft), transparent 70%), var(--color-bg);
+  grid-template-rows: auto 1fr;
+  background: var(--color-bg);
 }
 
 .card {
@@ -15,21 +14,102 @@
   justify-items: stretch;
   padding: var(--space-6) var(--space-6) var(--space-5);
   background: var(--color-surface);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow-raised);
 }
 
+/* The shop's side: navy, with the business name and tagline, from 900 px. Below that it is a
+   slim banner above the form. */
+.brand {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0 var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-sidebar);
+  color: var(--color-on-sidebar);
+}
+
 .appIcon {
-  justify-self: center;
+  grid-row: span 2;
   display: grid;
   place-items: center;
-  width: 64px;
-  height: 64px;
-  border-radius: 15px;
-  border-radius: 20px;
-  background: var(--gradient-brand);
-  color: var(--color-on-accent);
-  box-shadow: var(--shadow-glow);
+  width: var(--avatar-md);
+  height: var(--avatar-md);
+  border-radius: var(--radius-sm);
+  background: var(--color-accent-bright);
+  color: var(--color-on-accent-bright);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  overflow: hidden;
+}
+
+.brandName {
+  margin: 0;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 800;
+  letter-spacing: var(--tracking-tight);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tagline {
+  margin: 0;
+  color: var(--color-on-sidebar-muted);
+  font-size: var(--text-xs);
+}
+
+.product {
+  display: none;
+}
+
+.formSide {
+  display: grid;
+  place-items: center;
+  padding: var(--space-5) var(--space-4);
+}
+
+@media (min-width: 900px) {
+  .page {
+    grid-template-columns: minmax(320px, 5fr) minmax(0, 7fr);
+    grid-template-rows: 1fr;
+    place-items: stretch;
+    padding: 0;
+  }
+
+  .brand {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: var(--space-3);
+    padding: var(--space-7);
+  }
+
+  .appIcon {
+    width: 64px;
+    height: 64px;
+    font-size: var(--text-xl);
+  }
+
+  .brandName {
+    overflow: visible;
+    font-size: var(--text-xl);
+    white-space: normal;
+  }
+
+  .tagline {
+    font-size: var(--text-lg);
+  }
+
+  .product {
+    display: block;
+    margin: var(--space-6) 0 0;
+    color: var(--color-on-sidebar-muted);
+    font-size: var(--text-sm);
+  }
 }
 
 .title {
@@ -43,6 +123,7 @@
 
 .subtitle {
   margin: 0 0 var(--space-3);
+  overflow-wrap: anywhere;
   color: var(--color-secondary);
   font-size: var(--text-sm);
   text-align: center;
@@ -52,7 +133,7 @@
   display: grid;
   gap: 6px;
   font-size: var(--text-sm);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .field input {
@@ -71,7 +152,7 @@
 .field input:focus {
   outline: none;
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 4px var(--color-focus);
+  box-shadow: 0 0 0 3px var(--color-focus);
 }
 
 .error {
@@ -86,17 +167,16 @@
   padding: 0 var(--space-4);
   border: 0;
   border-radius: var(--radius-pill);
-  background: var(--gradient-action);
+  background: var(--color-accent);
   color: var(--color-on-accent);
-  box-shadow: var(--shadow-glow);
   font-size: var(--text-md);
   font-weight: 700;
   cursor: pointer;
   transition: background-color var(--duration-fast) var(--ease);
 }
 
-.submit:hover {
-  filter: brightness(1.08);
+.submit:hover:not(:disabled) {
+  background: var(--color-accent-strong);
 }
 
 .submit:disabled {
@@ -118,9 +198,10 @@
   height: 44px;
   padding: 0;
   border: 0;
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   background: var(--color-surface);
   box-shadow: var(--shadow-card);
   color: var(--color-accent);
   cursor: pointer;
+  z-index: 1;
 }

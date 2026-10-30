@@ -2,8 +2,8 @@
 
 - before_flush: a new row gets the session's company; a row for another company is refused.
 - after_begin: each transaction tells PostgreSQL the company (`app.tenant_id`), which the
-  row-level security policies of migration 0023 compare with every row read or written, and
-  whether this is a Duolink admin's session (`app.platform`, migration 0024).
+  row-level security policies of migration 0024 compare with every row read or written, and
+  whether this is a Duolink admin's session (`app.platform`, migration 0025).
 """
 
 from sqlalchemy import Connection, event, func, select

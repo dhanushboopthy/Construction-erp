@@ -9,6 +9,7 @@ import { Button } from "@/components/Button";
 import { SelectField, TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
 import { formatMoney, trimDecimal } from "@/lib/format";
+import { scrollRegion } from "@/components/scrollRegion";
 
 function todayISO(): string {
   const d = new Date();
@@ -110,7 +111,7 @@ export function ClosingPage() {
       ) : null}
       {f && p ? (
         <div className={styles.split}>
-          <div className={styles.tableWrap}>
+          <div className={styles.tableWrap} {...scrollRegion("The day's figures")}>
             <table className={styles.table} aria-label="The day's figures">
               <tbody>
                 <tr>
@@ -264,7 +265,7 @@ export function ClosingPage() {
         <p className={styles.empty}>No day has been closed yet.</p>
       ) : null}
       {closings.data && closings.data.items.length > 0 ? (
-        <div className={styles.tableWrap}>
+        <div className={styles.tableWrap} {...scrollRegion("Daily closings")}>
           <table className={styles.table}>
             <thead>
               <tr>
@@ -291,14 +292,14 @@ export function ClosingPage() {
                   <td>
                     {c.has_pdf ? (
                       <Button
-                        variant="quiet"
+                        variant="ghost"
                         onClick={() => void openFile(`/closings/${c.id}/pdf`)}
                       >
                         Print {c.closing_date}
                       </Button>
                     ) : null}
                     {owner && c.status === "closed" ? (
-                      <Button variant="quiet" onClick={() => void onReopen(c.id)}>
+                      <Button variant="ghost" onClick={() => void onReopen(c.id)}>
                         Reopen {c.closing_date}
                       </Button>
                     ) : null}

@@ -18,7 +18,7 @@ read them.
   type `access`, and each side refuses the other. `/api/v1/admin` answers 404 on any host except
   the admin subdomain. The admin refresh cookie is scoped to `/api/v1/admin/auth`.
 - **Reading across companies is explicit.** Only `get_platform_admin` puts a session in platform
-  mode (`set_platform`), which sets `app.platform = on` for its transactions. Migration 0024 adds
+  mode (`set_platform`), which sets `app.platform = on` for its transactions. Migration 0025 adds
   a second, permissive policy, `platform_admin`, that shows rows of every company in that mode. A
   company request always clears platform mode (`get_tenant`).
 - **Counts and statuses only.** Admin responses carry companies, users, sign-in events and

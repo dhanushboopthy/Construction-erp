@@ -7,6 +7,7 @@ import { Button } from "@/components/Button";
 import { TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
 import { formatMoney } from "@/lib/format";
+import { scrollRegion } from "@/components/scrollRegion";
 
 function thisMonth(): string {
   const d = new Date();
@@ -194,7 +195,7 @@ export function GstPage() {
 
       <h2 style={{ margin: 0 }}>GSTR-3B</h2>
       {r3.data ? (
-        <div className={styles.tableWrap}>
+        <div className={styles.tableWrap} {...scrollRegion("GSTR-3B figures")}>
           <table className={styles.table} aria-label="GSTR-3B figures">
             <thead>
               <tr>
@@ -308,7 +309,7 @@ function Table({
   numeric: number;
 }) {
   return (
-    <div className={styles.tableWrap}>
+    <div className={styles.tableWrap} {...scrollRegion(title)}>
       <table className={styles.table} aria-label={title}>
         <caption style={{ textAlign: "left", padding: "8px 12px", fontWeight: 600 }}>
           {title}

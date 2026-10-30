@@ -169,7 +169,7 @@ function SupportPanel({ user, onClose }: { user: PlatformUser; onClose: () => vo
     >
       <div className={styles.panelHead}>
         <h2 id={`support-${user.id}`}>{user.full_name}</h2>
-        <Button variant="quiet" onClick={onClose}>
+        <Button variant="ghost" onClick={onClose}>
           Close
         </Button>
       </div>

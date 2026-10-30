@@ -17,7 +17,7 @@ import pytest
 TEST_DATABASE_URL = os.environ.get(
     "TEST_DATABASE_URL", "postgresql+psycopg://erp:erp@localhost:5432/erp_test"
 )
-APP_ROLE = "erp_app"  # created by migration 0023
+APP_ROLE = "erp_app"  # created by migration 0024
 os.environ["DATABASE_URL"] = TEST_DATABASE_URL
 os.environ.setdefault("APP_ENV", "test")
 os.environ.setdefault("STORAGE_DIR", tempfile.mkdtemp(prefix="erp-files-"))

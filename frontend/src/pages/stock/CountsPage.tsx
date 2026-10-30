@@ -15,6 +15,7 @@ import { Button } from "@/components/Button";
 import { SelectField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
 import { formatMoney, trimDecimal } from "@/lib/format";
+import { scrollRegion } from "@/components/scrollRegion";
 
 const isOwnerCount = (c: CountRow): c is StockCountOwner => "total_variance_value" in c;
 
@@ -70,7 +71,7 @@ function CountSheet({ count, canPost }: { count: CountRow; canPost: boolean }) {
       <h3 style={{ margin: 0 }}>
         Count of {count.location_code} · {count.count_date} · {posted ? "Posted" : "Draft"}
       </h3>
-      <div className={styles.tableWrap}>
+      <div className={styles.tableWrap} {...scrollRegion("Stock count")}>
         <table className={styles.table}>
           <thead>
             <tr>

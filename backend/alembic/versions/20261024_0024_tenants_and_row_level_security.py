@@ -1,7 +1,7 @@
 """tenants and row level security
 
-Revision ID: 0023
-Revises: 0022
+Revision ID: 0024
+Revises: 0023
 Create Date: 2026-10-24 09:00:00.000000+00:00
 
 M15 (ADR 0011): many companies in one database.
@@ -30,8 +30,8 @@ import sqlalchemy as sa
 from alembic import op
 
 
-revision: str = "0023"
-down_revision: str | None = "0022"
+revision: str = "0024"
+down_revision: str | None = "0023"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

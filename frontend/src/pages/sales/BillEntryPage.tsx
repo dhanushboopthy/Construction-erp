@@ -400,7 +400,7 @@ export function BillEntryPage() {
                   </option>
                 ))}
               </SelectField>
-              <Button variant="quiet" onClick={() => setSide({ kind: "customer" })}>
+              <Button variant="ghost" onClick={() => setSide({ kind: "customer" })}>
                 New customer
               </Button>
             </div>
@@ -540,7 +540,7 @@ export function BillEntryPage() {
                     <span />
                   )}
                   <Button
-                    variant="quiet"
+                    variant="ghost"
                     aria-label={`Remove line ${i + 1}`}
                     disabled={lines.length === 1}
                     onClick={() => setLines((rows) => rows.filter((_, j) => j !== i))}
@@ -613,7 +613,7 @@ export function BillEntryPage() {
           <div className={styles.actions}>
             <Button onClick={addLine}>Add line</Button>
             {owner ? (
-              <Button variant="quiet" onClick={() => setSide({ kind: "item" })}>
+              <Button variant="ghost" onClick={() => setSide({ kind: "item" })}>
                 New item
               </Button>
             ) : null}
@@ -659,7 +659,7 @@ export function BillEntryPage() {
                   }
                 />
                 <Button
-                  variant="quiet"
+                  variant="ghost"
                   aria-label={`Remove payment ${i + 1}`}
                   onClick={() => setPays((r) => r.filter((_, j) => j !== i))}
                 >

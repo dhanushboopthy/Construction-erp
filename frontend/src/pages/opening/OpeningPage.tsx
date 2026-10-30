@@ -10,6 +10,7 @@ import { formatMoney, plural, trimDecimal } from "@/lib/format";
 
 import { BalanceEntry } from "./BalanceEntry";
 import { StockEntry } from "./StockEntry";
+import { scrollRegion } from "@/components/scrollRegion";
 
 type Step = "stock" | "customers" | "suppliers";
 
@@ -120,7 +121,7 @@ export function OpeningPage() {
 
       {query.isPending ? <p role="status">Loading…</p> : null}
       {rows.length > 0 ? (
-        <div className={styles.tableWrap}>
+        <div className={styles.tableWrap} {...scrollRegion("Opening balances")}>
           <table className={styles.table}>
             <thead>
               <tr>
@@ -167,7 +168,7 @@ export function OpeningPage() {
                   <td>
                     {r.status === "draft" ? (
                       <Button
-                        variant="quiet"
+                        variant="ghost"
                         aria-label={`Remove ${r.item_name ?? r.party_name ?? "entry"}`}
                         onClick={() => void remove.mutateAsync(r.id)}
                       >

@@ -8,6 +8,7 @@ import { Metric } from "@/components/Metric";
 import { formatMoney } from "@/lib/format";
 
 import tiles from "./PnlPage.module.css";
+import { scrollRegion } from "@/components/scrollRegion";
 
 const rupees = (value: string) => `₹${formatMoney(value)}`;
 const days = (value: string | null | undefined) => (value == null ? "—" : value);
@@ -92,7 +93,7 @@ export function WorkingCapitalPage() {
             />
           </dl>
 
-          <div className={styles.tableWrap}>
+          <div className={styles.tableWrap} {...scrollRegion("Balances and flows")}>
             <table className={styles.table} aria-label="Balances and flows">
               <thead>
                 <tr>
@@ -137,7 +138,7 @@ export function WorkingCapitalPage() {
           </p>
 
           <h2 style={{ margin: 0 }}>Last six months</h2>
-          <div className={styles.tableWrap}>
+          <div className={styles.tableWrap} {...scrollRegion("Trend by month")}>
             <table className={styles.table} aria-label="Trend by month">
               <thead>
                 <tr>

@@ -12,7 +12,9 @@ pytestmark = pytest.mark.integration
 PUBLIC = {
     ("GET", "/api/v1/health"),
     ("GET", "/api/v1/health/ready"),
-    ("GET", "/api/v1/tenant"),  # the company's name for the sign-in page
+    # The company, its business name, tagline and logo, for the sign-in page (ADR 0011; T8, T10).
+    ("GET", "/api/v1/tenant"),
+    ("GET", "/api/v1/tenant/logo"),
     ("POST", "/api/v1/auth/login"),
     ("POST", "/api/v1/auth/refresh"),
     ("POST", "/api/v1/auth/logout"),

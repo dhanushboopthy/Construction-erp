@@ -50,7 +50,7 @@
   height: 44px;
   padding: 0;
   border: 0;
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   background: var(--color-surface);
   box-shadow: var(--shadow-card);
   color: var(--color-accent);
@@ -71,9 +71,8 @@
 }
 
 .iconButton[aria-expanded="true"] {
-  background: var(--gradient-action);
+  background: var(--color-accent);
   color: var(--color-on-accent);
-  box-shadow: var(--shadow-glow);
 }
 
 .dot {
@@ -84,11 +83,14 @@
   height: 8px;
   border: 2px solid var(--color-surface);
   border-radius: 50%;
-  background: var(--color-critical);
+  background: var(--color-accent-bright);
 }
 
-.phoneOnly {
-  display: none;
+.divider {
+  align-self: stretch;
+  width: 1px;
+  margin: var(--space-2) var(--space-1);
+  background: var(--color-separator);
 }
 
 /* ------------------------------------------------------------ menus */
@@ -162,7 +164,7 @@
 }
 
 .alert:hover {
-  background: var(--color-sidebar-hover);
+  background: var(--color-hover);
 }
 
 .alert strong {
@@ -182,7 +184,7 @@
   flex: none;
   width: 34px;
   height: 34px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
 }
 
 .critical {
@@ -224,7 +226,7 @@
 }
 
 .action:hover {
-  background: var(--color-sidebar-hover);
+  background: var(--color-hover);
 }
 
 .actionIcon {
@@ -232,7 +234,7 @@
   place-items: center;
   width: 40px;
   height: 40px;
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   background: var(--color-accent-soft);
   color: var(--color-accent);
   transition:
@@ -241,7 +243,7 @@
 }
 
 .action:hover .actionIcon {
-  background: var(--gradient-action);
+  background: var(--color-accent);
   color: var(--color-on-accent);
 }
 
@@ -259,9 +261,6 @@
   }
   .where {
     display: none;
-  }
-  .phoneOnly {
-    display: grid;
   }
   .menu {
     position: fixed;

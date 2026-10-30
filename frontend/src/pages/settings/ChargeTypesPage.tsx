@@ -7,6 +7,7 @@ import { Button } from "@/components/Button";
 import { SelectField, TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
 import { trimDecimal } from "@/lib/format";
+import { scrollRegion } from "@/components/scrollRegion";
 
 const BASIS: { value: ChargeBasis; label: string; hint: string }[] = [
   { value: "per_ton", label: "Per ton", hint: "Unloading at ₹250 a ton" },
@@ -86,7 +87,7 @@ export function ChargeTypesPage() {
           {error.message}
         </p>
       ) : null}
-      <div className={styles.tableWrap}>
+      <div className={styles.tableWrap} {...scrollRegion("Charge types")}>
         {query.isPending ? (
           <p role="status" className={styles.empty}>
             Loading…
@@ -123,7 +124,7 @@ export function ChargeTypesPage() {
                   </td>
                   <td>
                     <Button
-                      variant="quiet"
+                      variant="ghost"
                       aria-label={`${c.is_active ? "Hide" : "Show"} ${c.name}`}
                       onClick={() =>
                         void update.mutateAsync({ id: c.id, body: { is_active: !c.is_active } })

@@ -10,6 +10,7 @@ import { Button } from "@/components/Button";
 import { SelectField, TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
 import { formatMoney, trimDecimal } from "@/lib/format";
+import { scrollRegion } from "@/components/scrollRegion";
 
 const RULE_LABEL = {
   percent: "% of goods bought",
@@ -205,7 +206,7 @@ export function SchemesPage() {
         <p className={styles.empty}>No schemes yet.</p>
       ) : null}
       {rows.length > 0 ? (
-        <div className={styles.tableWrap}>
+        <div className={styles.tableWrap} {...scrollRegion("Schemes")}>
           <table className={styles.table}>
             <thead>
               <tr>
@@ -246,7 +247,7 @@ export function SchemesPage() {
                       <>
                         ₹{formatMoney(s.projected_rebate)} earned{" "}
                         {owner ? (
-                          <Button variant="quiet" onClick={() => void bookRebate(s.id)}>
+                          <Button variant="ghost" onClick={() => void bookRebate(s.id)}>
                             Book rebate for {s.name}
                           </Button>
                         ) : null}

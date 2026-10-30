@@ -1,57 +1,47 @@
-import { Bell, CheckCircle2, LayoutGrid, LogOut, PackageX, Truck } from "lucide-react";
+import { Bell, CheckCircle2, LayoutGrid, PackageX, Truck } from "lucide-react";
 import { Link } from "react-router";
 
 import { actionsFor } from "@/actions";
-import { usePendingEway } from "@/api/compliance";
-import { useStockOverview } from "@/api/ledger";
-import type { Role } from "@/api/types";
+import type { Role, User } from "@/api/types";
+import type { Alerts } from "@/hooks/useAlerts";
 import { formatMoney } from "@/lib/format";
 
 import { CommandSearch } from "./CommandSearch";
-import { ThemeToggle } from "./ThemeToggle";
 import styles from "./TopBar.module.css";
-import { usePopover } from "./usePopover";
+import { UserMenu } from "./UserMenu";
+import { usePopover, type Popover } from "./usePopover";
 
 interface Props {
-  role: Role;
+  user: User;
   where: string;
   onSignOut: () => void;
+  /** The alerts panel is opened from here and from the sidebar, so the shell owns its state. */
+  alerts: Alerts;
+  alertsMenu: Popover;
 }
 
-export function TopBar({ role, where, onSignOut }: Props) {
+export function TopBar({ user, where, onSignOut, alerts, alertsMenu }: Props) {
   return (
     <header className={styles.topbar}>
-      <CommandSearch role={role} />
+      <CommandSearch role={user.role} />
       <div className={styles.tools}>
         <span className={styles.where} title={`Signed in for ${where}`}>
           <span className={styles.live} aria-hidden="true" />
           {where}
         </span>
-        <Alerts />
-        <QuickActions role={role} />
-        <ThemeToggle className={styles.iconButton} />
-        <button
-          type="button"
-          className={`${styles.iconButton} ${styles.phoneOnly}`}
-          onClick={onSignOut}
-          aria-label="Sign out"
-        >
-          <LogOut size={18} strokeWidth={2} aria-hidden="true" />
-        </button>
+        <AlertsBell alerts={alerts} menu={alertsMenu} />
+        <QuickActions role={user.role} />
+        <span className={styles.divider} aria-hidden="true" />
+        <UserMenu user={user} onSignOut={onSignOut} />
       </div>
     </header>
   );
 }
 
-/** What needs attention now. Loads when opened; the dot shows once the figures are known. */
-function Alerts() {
-  const menu = usePopover();
-  const stock = useStockOverview(menu.open);
-  const eway = usePendingEway(menu.open);
-  const outOfStock = (stock.data ?? []).filter((s) => Number(s.quantity) <= 0);
-  const pending = eway.data ?? [];
-  const count = outOfStock.length + pending.length;
-  const loading = menu.open && (stock.isLoading || eway.isLoading);
+/** The bell and its panel: out-of-stock items and e-way bills still to be made. */
+function AlertsBell({ alerts, menu }: { alerts: Alerts; menu: Popover }) {
+  const { outOfStock, pending, count, failed } = alerts;
+  const loading = menu.open && alerts.loading;
 
   return (
     <div className={styles.menuRoot} ref={menu.rootRef}>
@@ -70,10 +60,10 @@ function Alerts() {
         <div className={styles.menu} role="dialog" aria-label="Alerts">
           <p className={styles.menuTitle}>Needs attention</p>
           {loading ? <p className={styles.menuNote}>Checking stock and e-way bills…</p> : null}
-          {!loading && stock.isError && eway.isError ? (
+          {!loading && failed ? (
             <p className={styles.menuNote}>Alerts could not be loaded. Try again in a moment.</p>
           ) : null}
-          {!loading && count === 0 && !(stock.isError && eway.isError) ? (
+          {!loading && count === 0 && !failed ? (
             <p className={styles.allClear}>
               <CheckCircle2 size={18} aria-hidden="true" /> All clear: nothing is out of stock and
               no e-way bill is waiting.

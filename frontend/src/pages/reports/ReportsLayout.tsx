@@ -2,6 +2,8 @@ import { NavLink, Outlet } from "react-router";
 
 import { useAuth } from "@/auth/AuthContext";
 import styles from "@/components/Ledger.module.css";
+import { PageHeader } from "@/components/PageHeader";
+import { purposeOf } from "@/modules";
 
 const TABS = [
   { to: "/reports", label: "Daily closing", end: true, roles: ["owner", "counter", "accountant"] },
@@ -40,9 +42,7 @@ export function ReportsLayout() {
   const { user } = useAuth();
   return (
     <section aria-labelledby="reports-title" className={styles.page}>
-      <h1 id="reports-title" className={styles.title}>
-        Reports
-      </h1>
+      <PageHeader title="Reports" titleId="reports-title" subtitle={purposeOf("/reports")} />
       <nav aria-label="Report sections">
         <ul className={styles.tabs}>
           {TABS.filter((t) => user && t.roles.includes(user.role)).map((t) => (

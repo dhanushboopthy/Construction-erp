@@ -45,10 +45,10 @@ h3 {
   white-space: nowrap;
 }
 
-/* A soft indigo halo, always visible for keyboard users. */
+/* A solid orange ring (3:1 or better on every surface), always visible for keyboard users. */
 :focus-visible {
   outline: none;
-  box-shadow: 0 0 0 4px var(--color-focus);
+  box-shadow: 0 0 0 3px var(--color-focus);
 }
 
 a {
@@ -85,8 +85,11 @@ textarea {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * {
-    transition-duration: 0ms !important;
-    animation-duration: 0ms !important;
+  /* Off, not just instant: a zero-length animation with a delay would still hold bars hidden. */
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
   }
 }

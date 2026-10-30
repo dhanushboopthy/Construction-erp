@@ -1,41 +1,47 @@
 import {
   AlertTriangle,
   ArrowRight,
+  Boxes,
   CheckCircle2,
+  Clock,
+  HandCoins,
   Lightbulb,
-  Lock,
+  PiggyBank,
+  Receipt,
   RotateCcw,
   TrendingUp,
-  type LucideIcon,
+  Truck,
+  Wallet,
 } from "lucide-react";
-import { useMemo, useState, type CSSProperties } from "react";
+import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router";
 
+import { usePendingEway } from "@/api/compliance";
 import { useStockOverview } from "@/api/ledger";
-import { useWorkingCapital } from "@/api/receivables";
+import { useReceivables, useWorkingCapital } from "@/api/receivables";
 import { useSegments, useToday } from "@/api/reports";
 import { useAuth } from "@/auth/AuthContext";
+import { KpiCard } from "@/components/KpiCard";
+import { PageHeader } from "@/components/PageHeader";
 import { formatMoney } from "@/lib/format";
 import { modulesFor } from "@/modules";
 
+import { DuesTable } from "./DuesTable";
 import styles from "./TodayPage.module.css";
-
-type Tone = "accent" | "good" | "warn" | "critical";
-
-interface Kpi {
-  label: string;
-  value: string | null;
-  money: boolean;
-  tone: Tone;
-  badge: { text: string; tone: Tone; icon: LucideIcon } | null;
-  to: string | null;
-}
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
+const money = (value: string) => (
+  <>
+    <span className={styles.rupee}>₹</span>
+    <span className="num">{formatMoney(value)}</span>
+  </>
+);
+
 /**
  * The owner's "10-second questions" (interview Q25): today's sales and profit, what customers
- * owe, what we owe, and what has run out. Counter staff see their own shop's sales.
+ * owe, what we owe, and what has run out. Counter staff see their own shop's sales and stock
+ * only: they are never sent the receivables report or a profit figure.
  */
 export function TodayPage() {
   const { user } = useAuth();
@@ -43,92 +49,165 @@ export function TodayPage() {
   const allowed = new Set(modulesFor(role).map((m) => m.path));
   const today = useToday();
   const stock = useStockOverview();
+  const eway = usePendingEway();
+  const receivables = useReceivables(role !== "counter");
   const t = today.data;
   const tied = useWorkingCapital((t?.as_of ?? "").slice(0, 7), {
     trend: false,
     enabled: role === "owner" && Boolean(t),
   });
 
-  const outOfStock = (stock.data ?? []).filter((s) => Number(s.quantity) <= 0);
+  const stockRows = stock.data ?? [];
+  const outOfStock = stockRows.filter((s) => Number(s.quantity) <= 0);
   const returns = t ? Number(t.returns_today) : 0;
+  const rec = receivables.data;
+  const loading = (ready: boolean) =>
+    !ready && today.isLoading ? <span className={styles.skeleton} aria-label="Loading" /> : "—";
 
-  const kpis: Kpi[] = [
-    {
-      label: "Net sales today",
-      value: t?.net_sales_today ?? null,
-      money: true,
-      tone: "accent",
-      badge: t
-        ? returns > 0
-          ? { text: `Returns ₹${formatMoney(t.returns_today)}`, tone: "warn", icon: RotateCcw }
-          : { text: "No returns", tone: "good", icon: TrendingUp }
-        : null,
-      to: allowed.has("/sales") ? "/sales" : null,
-    },
-    ...(role === "owner"
-      ? [
-          {
-            label: "Profit today",
-            value: t?.profit_today ?? null,
-            money: true,
-            tone: "good" as const,
-            badge: { text: "Owner only", tone: "accent" as const, icon: Lock },
-            to: "/reports/profit",
-          },
-        ]
-      : []),
-    {
-      label: "Customers owe",
-      value: t?.customers_owe ?? null,
-      money: true,
-      tone: "warn",
-      badge: { text: "To collect", tone: "accent", icon: ArrowRight },
-      to: role !== "counter" ? "/reports/dues" : null,
-    },
-    ...(role !== "counter"
-      ? [
-          {
-            label: "We owe suppliers",
-            value: t?.we_owe ?? null,
-            money: true,
-            tone: "accent" as const,
-            badge: { text: "To pay", tone: "accent" as const, icon: ArrowRight },
-            to: "/reports/dues",
-          },
-        ]
-      : []),
-    ...(role === "owner" && tied.data
-      ? [
-          {
-            label: "Cash tied up",
-            value: tied.data.cash_tied_up,
-            money: true,
-            tone: "accent" as const,
-            badge: {
-              text:
-                tied.data.ccc_days == null
-                  ? "Cycle: not enough data yet"
-                  : `Cycle ${tied.data.ccc_days} days`,
-              tone: "accent" as const,
-              icon: ArrowRight,
-            },
-            to: "/reports/working-capital",
-          },
-        ]
-      : []),
-    {
-      label: "Items in stock",
-      value: t ? String(t.items_in_stock) : null,
-      money: false,
-      tone: outOfStock.length ? "critical" : "good",
-      badge: stock.data
-        ? outOfStock.length
-          ? { text: `${outOfStock.length} out of stock`, tone: "critical", icon: AlertTriangle }
-          : { text: "All in stock", tone: "good", icon: CheckCircle2 }
-        : null,
-      to: "/stock",
-    },
+  const cards: ReactNode[] = [
+    <KpiCard
+      key="net"
+      label="Net sales today"
+      value={t ? money(t.net_sales_today) : loading(false)}
+      icon={Receipt}
+      tone="accent"
+      href={allowed.has("/sales") ? "/sales" : undefined}
+      note={
+        t ? (
+          returns > 0 ? (
+            <span className={styles.kpiNote}>
+              <RotateCcw size={14} aria-hidden="true" /> Returns ₹{formatMoney(t.returns_today)}
+            </span>
+          ) : (
+            <span className={styles.kpiNote}>
+              <TrendingUp size={14} aria-hidden="true" /> No returns
+            </span>
+          )
+        ) : undefined
+      }
+    />,
   ];
+  if (role === "owner") {
+    cards.push(
+      <KpiCard
+        key="profit"
+        label="Profit today"
+        value={t ? money(t.profit_today ?? "0.00") : loading(false)}
+        icon={TrendingUp}
+        tone="good"
+        href="/reports/profit"
+        note="Owner only"
+      />,
+    );
+  }
+  if (role === "counter") {
+    cards.push(
+      <KpiCard
+        key="eway"
+        label="Waiting e-way bills"
+        value={eway.data ? String(eway.data.length) : eway.isLoading ? loading(false) : "—"}
+        icon={Truck}
+        tone={eway.data?.length ? "warn" : "good"}
+        href={allowed.has("/sales") ? "/sales" : undefined}
+        note={eway.data ? (eway.data.length ? "Bills to move" : "None waiting") : undefined}
+      />,
+    );
+  } else {
+    const total = rec ? Number(rec.total) : 0;
+    cards.push(
+      <KpiCard
+        key="owe"
+        label="Customers owe"
+        value={t ? money(t.customers_owe) : loading(false)}
+        icon={Wallet}
+        tone="warn"
+        href="/reports/dues"
+        note="To collect"
+        progress={
+          rec && total > 0
+            ? {
+                value: Number(rec.overdue),
+                max: total,
+                label: "Share of what customers owe that is overdue",
+              }
+            : undefined
+        }
+      />,
+    );
+    if (role === "accountant" && rec) {
+      cards.push(
+        <KpiCard
+          key="overdue"
+          label="Overdue"
+          value={money(rec.overdue)}
+          icon={Clock}
+          tone={Number(rec.overdue) > 0 ? "critical" : "good"}
+          href="/reports/receivables"
+          note={Number(rec.overdue) > 0 ? "Past the due date" : "Nothing overdue"}
+        />,
+      );
+    }
+    cards.push(
+      <KpiCard
+        key="weowe"
+        label="We owe suppliers"
+        value={t ? money(t.we_owe ?? "0.00") : loading(false)}
+        icon={HandCoins}
+        tone="accent"
+        href="/reports/dues"
+        note="To pay"
+      />,
+    );
+  }
+  if (role === "owner" && tied.data) {
+    cards.push(
+      <KpiCard
+        key="tied"
+        label="Cash tied up"
+        value={money(tied.data.cash_tied_up)}
+        icon={PiggyBank}
+        tone="accent"
+        href="/reports/working-capital"
+        note={
+          tied.data.ccc_days == null
+            ? "Cycle: not enough data yet"
+            : `Cycle ${tied.data.ccc_days} days`
+        }
+      />,
+    );
+  }
+  cards.push(
+    <KpiCard
+      key="stock"
+      label="Items in stock"
+      value={t ? String(t.items_in_stock) : loading(false)}
+      icon={Boxes}
+      tone={outOfStock.length ? "critical" : "good"}
+      href="/stock"
+      note={
+        stock.data ? (
+          outOfStock.length ? (
+            <span className={styles.kpiNote}>
+              <AlertTriangle size={14} aria-hidden="true" /> {outOfStock.length} out of stock
+            </span>
+          ) : (
+            <span className={styles.kpiNote}>
+              <CheckCircle2 size={14} aria-hidden="true" /> All in stock
+            </span>
+          )
+        ) : undefined
+      }
+      progress={
+        stockRows.length > 0
+          ? {
+              value: outOfStock.length,
+              max: stockRows.length,
+              label: "Share of items that are out of stock",
+            }
+          : undefined
+      }
+    />,
+  );
 
   const date = t
     ? new Date(`${t.as_of}T00:00:00`).toLocaleDateString("en-IN", {
@@ -137,15 +216,16 @@ export function TodayPage() {
         month: "long",
       })
     : null;
+  const shop = user?.locations[0]?.name;
 
   return (
     <section aria-labelledby="today-title" className={styles.page}>
-      <header className={styles.head}>
-        <h1 id="today-title" className={styles.title}>
-          Today
-        </h1>
-        {date ? <p className={styles.date}>{date}</p> : null}
-      </header>
+      <PageHeader
+        eyebrow={shop ?? "All shops"}
+        title="Today"
+        titleId="today-title"
+        subtitle={`${date ? `${date}. ` : ""}Sales, dues and stock at a glance.`}
+      />
 
       {today.isError ? (
         <p role="alert" className={styles.error}>
@@ -153,11 +233,9 @@ export function TodayPage() {
         </p>
       ) : null}
 
-      <dl className={styles.kpis}>
-        {kpis.map((k) => (
-          <KpiCard key={k.label} kpi={k} loading={today.isLoading} />
-        ))}
-      </dl>
+      <div className={styles.kpis}>{cards}</div>
+
+      {role !== "counter" ? <DuesTable /> : null}
 
       <div className={styles.panels}>
         <StockLevels
@@ -169,48 +247,6 @@ export function TodayPage() {
         {role !== "counter" ? <SalesChart /> : null}
       </div>
     </section>
-  );
-}
-
-function KpiCard({ kpi, loading }: { kpi: Kpi; loading: boolean }) {
-  const Badge = kpi.badge?.icon;
-  return (
-    <div className={styles.kpi} data-tone={kpi.tone} data-link={kpi.to ? true : undefined}>
-      <dt className={styles.kpiLabel}>
-        {kpi.to ? (
-          <Link to={kpi.to} className={styles.kpiLink}>
-            {kpi.label}
-          </Link>
-        ) : (
-          kpi.label
-        )}
-      </dt>
-      <dd className={styles.kpiValue}>
-        {kpi.value === null ? (
-          loading ? (
-            <span className={styles.skeleton} aria-label="Loading" />
-          ) : (
-            "—"
-          )
-        ) : (
-          <>
-            {kpi.money ? <span className={styles.rupee}>₹</span> : null}
-            <span className="num">{kpi.money ? formatMoney(kpi.value) : kpi.value}</span>
-          </>
-        )}
-      </dd>
-      {kpi.badge && Badge ? (
-        <dd className={styles.badge} data-tone={kpi.badge.tone}>
-          <Badge size={13} strokeWidth={2.4} aria-hidden="true" />
-          {kpi.badge.text}
-        </dd>
-      ) : null}
-      {kpi.to ? (
-        <dd className={styles.kpiArrow} aria-hidden="true">
-          <ArrowRight size={16} />
-        </dd>
-      ) : null}
-    </div>
   );
 }
 
@@ -407,7 +443,7 @@ function SalesChart() {
                       </span>
                     ) : null}
                   </button>
-                  <span className={styles.month} aria-hidden="true">
+                  <span className={styles.month} data-now={isNow || undefined} aria-hidden="true">
                     {m.label}
                   </span>
                 </li>

@@ -34,7 +34,7 @@ docs/                  SPEC, ROADMAP, GAP_ANALYSIS, ARCHITECTURE, API, DESIGN, a
   clock there (pass `today` in).
 - Every table has `tenant_id` and every query filters on `current_tenant_id(db)` from
   `app/core/tenancy.py` (ADR 0011). A new table's migration must also enable and force row-level
-  security and add the `tenant_isolation` policy (copy migration 0023). Scripts call
+  security and add the `tenant_isolation` policy (copy migration 0024). Scripts call
   `services.tenants.use_slug(db, slug)` before any query. Tests run as role `erp_app`.
 - The Duolink admin (`api/v1/admin/`, `services/platform/`, `src/admin/`) answers counts and
   statuses only, never amounts, costs or document contents (ADR 0012). Only

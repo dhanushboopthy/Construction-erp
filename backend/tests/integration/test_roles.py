@@ -61,6 +61,14 @@ def test_signed_in_routes_open_to_every_role(client, who, method, path):
     assert client.request(method, path).status_code == 401
 
 
+def test_tenant_is_open_to_everyone_without_signing_in(client):
+    """The sign-in page shows the business name before anyone has signed in."""
+    for headers in ({}, login(client, *COUNTER)):
+        response = client.get("/api/v1/tenant", headers=headers)
+        assert response.status_code == 200
+        assert set(response.json()) == {"slug", "status", "name", "tagline", "logo_url"}
+
+
 def test_bad_token_is_rejected(client):
     response = client.get("/api/v1/auth/me", headers={"Authorization": "Bearer not-a-token"})
     assert response.status_code == 401

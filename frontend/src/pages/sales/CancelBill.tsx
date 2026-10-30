@@ -38,7 +38,7 @@ export function CancelBill({
   if (!open) {
     return (
       <div className={styles.actions}>
-        <Button variant="quiet" onClick={() => setOpen(true)}>
+        <Button variant="ghost" onClick={() => setOpen(true)}>
           Cancel bill
         </Button>
       </div>

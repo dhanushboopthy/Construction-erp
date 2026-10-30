@@ -27,7 +27,7 @@ def set_tenant(db: Session, tenant_id: int) -> None:
 
 def set_platform(db: Session) -> None:
     """A Duolink admin's session (ADR 0012): the database shows rows of every company
-    (policy `platform_admin`, migration 0024). Only `api/deps.get_platform_admin` calls this."""
+    (policy `platform_admin`, migration 0025). Only `api/deps.get_platform_admin` calls this."""
     db.info[PLATFORM_KEY] = True
     if db.in_transaction():
         db.execute(select(func.set_config("app.platform", "on", True)))

@@ -13,36 +13,50 @@
   height: 100vh;
   padding: var(--space-5) var(--space-4) var(--space-4);
   background: var(--color-sidebar);
-  box-shadow: 1px 0 0 var(--color-separator);
+  color: var(--color-on-sidebar);
+  /* The focus ring must show on navy: the bright orange is 6:1 there. */
+  --color-focus: var(--color-accent-bright);
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-1) var(--space-2) var(--space-6);
+  padding: var(--space-1) var(--space-2) var(--space-5);
 }
 
 .appIcon {
   display: grid;
   place-items: center;
   flex: none;
-  width: 48px;
-  height: 48px;
-  border-radius: 15px;
-  background: var(--gradient-brand);
-  color: var(--color-on-accent);
-  box-shadow: var(--shadow-glow);
+  width: var(--avatar-md);
+  height: var(--avatar-md);
+  border-radius: var(--radius-sm);
+  background: var(--color-accent-bright);
+  color: var(--color-on-accent-bright);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  overflow: hidden;
+}
+
+.brandText {
+  display: grid;
+  min-width: 0;
 }
 
 .brandName {
-  font-size: 1.1875rem;
+  overflow: hidden;
+  font-size: var(--text-md);
   font-weight: 800;
   letter-spacing: var(--tracking-tight);
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.brandAccent {
-  color: var(--color-accent);
+.brandSub {
+  color: var(--color-on-sidebar-muted);
+  font-size: var(--text-xs);
 }
 
 .navArea {
@@ -64,39 +78,41 @@
 }
 
 .navFooter {
-  margin-top: var(--space-4);
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--color-separator);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-sidebar-line);
 }
 
-.nav a {
+.nav a,
+.navButton {
   position: relative;
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  padding: 12px var(--space-4);
-  border-radius: 14px;
-  color: var(--color-secondary);
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--color-on-sidebar-muted);
+  text-align: left;
   text-decoration: none;
-  font-size: 0.9375rem;
+  font-size: var(--text-sm);
   font-weight: 600;
+  cursor: pointer;
   transition:
     background-color var(--duration-fast) var(--ease),
     color var(--duration-fast) var(--ease);
 }
 
-.nav a:hover {
+.nav a:hover,
+.navButton:hover {
   background: var(--color-sidebar-hover);
-  color: var(--color-label);
+  color: var(--color-on-sidebar);
 }
 
 .icon {
   flex: none;
-  transition: transform var(--duration-fast) var(--ease);
-}
-
-.nav a:hover .icon {
-  transform: scale(1.08);
 }
 
 .label {
@@ -105,27 +121,27 @@
 }
 
 .nav a.active {
-  background: var(--gradient-nav-active);
-  color: var(--color-accent);
+  background: var(--color-sidebar-active);
+  color: var(--color-on-sidebar);
 }
 
-/* The marker hugging the sidebar's inner edge, as in the reference. */
-.nav a.active::after {
+/* The orange marker on the sidebar's left edge. */
+.nav a.active::before {
   content: "";
   position: absolute;
-  top: 6px;
-  right: calc(-1 * var(--space-4) + 4px);
-  bottom: 6px;
+  top: var(--space-2);
+  bottom: var(--space-2);
+  left: calc(-1 * var(--space-4));
   width: 3px;
-  border-radius: 3px;
-  background: var(--gradient-action);
+  border-radius: 0 3px 3px 0;
+  background: var(--color-accent-bright);
 }
 
 .kbd {
   font: inherit;
   font-size: var(--text-2xs);
   font-weight: 600;
-  color: var(--color-secondary);
+  color: var(--color-on-sidebar-muted);
   white-space: nowrap;
   opacity: 0;
   transition: opacity var(--duration-fast) var(--ease);
@@ -133,75 +149,38 @@
 
 .nav a:hover .kbd,
 .nav a:focus-visible .kbd {
-  opacity: 0.8;
+  opacity: 0.85;
 }
 
-/* ------------------------------------------------------------ user card */
-.userCard {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  margin-top: var(--space-4);
-  padding: var(--space-4);
-  border-radius: 20px;
-  background: var(--gradient-action);
-  color: var(--color-on-accent);
-  box-shadow: var(--shadow-glow);
-}
-
-.avatar {
+/* The count of things needing attention; hidden at zero. Navy text on orange: 6:1. */
+.badge {
   display: grid;
   place-items: center;
-  flex: none;
-  width: 44px;
-  height: 44px;
-  border: 3px solid rgb(255 255 255 / 35%);
-  border-radius: 50%;
-  background: var(--color-on-accent);
-  background-clip: padding-box;
-  color: var(--color-accent-strong);
-  font-size: var(--text-sm);
+  min-width: var(--space-5);
+  height: var(--space-5);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-bright);
+  color: var(--color-on-accent-bright);
+  font-size: var(--text-xs);
   font-weight: 800;
 }
 
-.userText {
-  display: grid;
-  flex: 1;
-  min-width: 0;
-}
-
-.userName {
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
   overflow: hidden;
-  font-weight: 700;
-  text-overflow: ellipsis;
+  clip-path: inset(50%);
   white-space: nowrap;
 }
 
-.userRole {
-  color: var(--color-on-accent-muted);
-  font-size: var(--text-2xs);
-  font-weight: 700;
-  letter-spacing: var(--tracking-caps);
-  text-transform: uppercase;
-}
-
-.signOut {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  border: 0;
-  border-radius: 12px;
-  background: rgb(255 255 255 / 16%);
-  color: var(--color-on-accent);
-  cursor: pointer;
-  transition: background-color var(--duration-fast) var(--ease);
-}
-
-.signOut:hover {
-  background: rgb(255 255 255 / 28%);
+.tagline {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-3) var(--space-2) 0;
+  border-top: 1px solid var(--color-sidebar-line);
+  color: var(--color-on-sidebar-muted);
+  font-size: var(--text-xs);
 }
 
 /* ------------------------------------------------------------ main */
@@ -215,23 +194,83 @@
   padding: var(--space-3) var(--space-6) var(--space-7);
 }
 
+/* Short screens (a 768 px laptop): tighter rows so Settings is not pushed below the fold. */
+@media (max-height: 820px) {
+  .nav a,
+  .navButton {
+    padding-block: var(--space-2);
+  }
+  .brand {
+    padding-bottom: var(--space-3);
+  }
+}
+
+/* Narrow desktop and tablet: icons only; the label is the tooltip (and stays for screen readers). */
+@media (max-width: 1199px) {
+  .shell {
+    --sidebar-width: 72px;
+  }
+  .sidebar {
+    align-items: center;
+    padding-inline: var(--space-2);
+  }
+  .brand {
+    padding-inline: 0;
+  }
+  .brandText,
+  .kbd,
+  .tagline {
+    display: none;
+  }
+  .navArea {
+    margin-inline: 0;
+    padding-inline: 0;
+  }
+  .nav a,
+  .navButton {
+    justify-content: center;
+    padding-inline: 0;
+  }
+  .label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .nav a.active::before {
+    left: 0;
+  }
+  .badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    min-width: var(--space-4);
+    height: var(--space-4);
+    padding: 0 var(--space-1);
+    font-size: var(--text-2xs);
+  }
+}
+
 /* Phone and small tablets: the sidebar becomes a scrolling strip of pills at the top. */
 @media (max-width: 900px) {
   .shell {
+    --sidebar-width: auto;
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr;
   }
   .sidebar {
     z-index: 35;
     flex-direction: row;
+    align-items: stretch;
     height: auto;
     padding: var(--space-2) var(--space-3);
     overflow-x: auto;
-    box-shadow: 0 1px 0 var(--color-separator);
   }
   .brand,
   .kbd,
-  .userCard {
+  .tagline {
     display: none;
   }
   .navArea {
@@ -248,19 +287,34 @@
     padding: 0;
     border: 0;
   }
-  .nav a {
+  .nav a,
+  .navButton {
+    width: auto;
     gap: var(--space-2);
-    padding: 8px 14px;
+    padding: var(--space-2) var(--space-4);
     border-radius: var(--radius-pill);
     white-space: nowrap;
-    font-size: var(--text-sm);
+  }
+  .label {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
   }
   .nav a.active {
-    background: var(--gradient-action);
-    color: var(--color-on-accent);
+    background: var(--color-accent-bright);
+    color: var(--color-on-accent-bright);
   }
-  .nav a.active::after {
+  .nav a.active::before {
     display: none;
+  }
+  .badge {
+    position: static;
+    min-width: var(--space-5);
+    height: var(--space-5);
+    padding: 0 var(--space-2);
+    font-size: var(--text-xs);
   }
   .content {
     padding: var(--space-2) var(--space-4) var(--space-6);

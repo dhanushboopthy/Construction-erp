@@ -10,6 +10,11 @@ import { useAuth } from "@/auth/AuthContext";
 import { Button } from "@/components/Button";
 import { SelectField, TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
+import { PageHeader } from "@/components/PageHeader";
+import { StatusPill } from "@/components/StatusPill";
+import { TableToolbar } from "@/components/TableToolbar";
+import { useTableFilters } from "@/hooks/useTableFilters";
+import { includesText } from "@/lib/filters";
 import { formatMoney, trimDecimal } from "@/lib/format";
 import { unitNames } from "@/pages/items/itemLabels";
 
@@ -250,23 +255,35 @@ export function OrdersPage() {
   const canReceive = owner || user?.role === "counter";
   const [openOnly, setOpenOnly] = useState(true);
   const orders = useOrders(openOnly);
+  const filters = useTableFilters();
+  const shownOrders = (orders.data ?? []).filter(
+    (o) =>
+      includesText(filters.q, o.number, o.supplier_name) &&
+      (!filters.status || o.status === filters.status),
+  );
   const [openId, setOpenId] = useState<number | null>(null);
   const [note, setNote] = useState<string | null>(null);
 
   return (
     <section aria-labelledby="orders-title" className={styles.page}>
-      <div className={styles.toolbar}>
-        <h1 id="orders-title" className={styles.title}>
-          Purchase orders
-        </h1>
-        <Link to="/purchases">Back to purchases</Link>
-      </div>
+      <PageHeader
+        eyebrow="Purchases"
+        title="Purchase orders"
+        titleId="orders-title"
+        subtitle="Placed at an agreed rate; goods received are recorded here."
+        actions={<Link to="/purchases">Back to purchases</Link>}
+      />
       {note ? (
         <p role="status" className={styles.saved}>
           {note}
         </p>
       ) : null}
       {owner ? <NewOrder onDone={setNote} /> : null}
+      <TableToolbar
+        filters={filters}
+        searchPlaceholder="Order number or supplier"
+        statusOptions={Object.entries(STATUS).map(([value, label]) => ({ value, label }))}
+      />
       <label className={styles.choice}>
         <input type="checkbox" checked={openOnly} onChange={(e) => setOpenOnly(e.target.checked)} />
         Show only orders not fully billed
@@ -288,7 +305,7 @@ export function OrdersPage() {
             </tr>
           </thead>
           <tbody>
-            {(orders.data ?? []).map((o) => (
+            {shownOrders.map((o) => (
               <Fragment key={o.id}>
                 <tr className={openId === o.id ? styles.selected : ""}>
                   <td>
@@ -304,7 +321,14 @@ export function OrdersPage() {
                   <td>{o.order_date}</td>
                   <td>{o.supplier_name}</td>
                   <td>{o.location_code}</td>
-                  <td>{STATUS[o.status] ?? o.status}</td>
+                  <td>
+                    <StatusPill
+                      tone={
+                        o.status === "billed" ? "good" : o.status === "received" ? "accent" : "warn"
+                      }
+                      label={STATUS[o.status] ?? o.status}
+                    />
+                  </td>
                   {owner ? (
                     <td className="num">{"value" in o ? formatMoney(o.value) : ""}</td>
                   ) : null}

@@ -173,6 +173,14 @@ lists); `DataTable` is for read-and-open lists and is adopted screen by screen i
 
 ## Patterns
 
+- **Lists.** Every list screen is a `PageHeader`, a `TableToolbar` and a `DataTable`. Search is
+  always there; a status filter is there where the rows have a status (Sales bills: e-way bill
+  pending or posted; Stock: in or out of stock; Payments: received or paid out; Trips: paid or
+  unpaid; Purchases: stock or customer's site; Items: category; Parties: customers or
+  suppliers). The filters live in the URL (`?q=&status=`, and `place` on Stock), so Back, reload
+  and a pasted link keep them, and opening a bill or a row keeps them too. `/` jumps to the
+  search box. Not lists, so not converted: the cash book and the daily rate board (entry grids for
+  one day) and the stock counts picker.
 - **List + editor.** Setup lists (users, locations, later items and parties) are a ledger table
   with an editor panel beside it (stacked below 1100 px). The row being edited carries the
   accent tint and marker bar. Alt+N opens a new record, Up/Down move between rows, Enter opens, Esc

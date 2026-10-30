@@ -5,13 +5,17 @@ import { usePendingEway } from "@/api/compliance";
 import { toFormError } from "@/api/errors";
 import { openFile } from "@/api/client";
 import { useInvoice, useInvoices, type InvoiceFull } from "@/api/sales";
-import type { InvoiceOwner } from "@/api/types";
+import type { InvoiceOwner, InvoiceSummary } from "@/api/types";
 import { useAuth } from "@/auth/AuthContext";
 import { Attachments } from "@/components/Attachments";
 import { Button } from "@/components/Button";
-import { TextField } from "@/components/Field";
+import { DataTable, type Column } from "@/components/DataTable";
+import { PageHeader } from "@/components/PageHeader";
+import { StatusPill } from "@/components/StatusPill";
+import { TableToolbar } from "@/components/TableToolbar";
 import styles from "@/components/Ledger.module.css";
 import { useAltKey } from "@/hooks/useKeys";
+import { useTableFilters } from "@/hooks/useTableFilters";
 import { formatMoney, plural, trimDecimal } from "@/lib/format";
 
 import { DirectLink } from "./DirectLink";
@@ -25,14 +29,45 @@ export function SalesPage() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const openId = params.get("open") ? Number(params.get("open")) : null;
-  const [q, setQ] = useState("");
+  const filters = useTableFilters();
+  const q = filters.q;
   const list = useInvoices(q);
   const detail = useInvoice(openId);
   const pending = usePendingEway();
   const [pdfError, setPdfError] = useState<string | null>(null);
   const canBill = user?.role === "owner" || user?.role === "counter";
   useAltKey("n", () => canBill && void navigate("/sales/new"));
-  const rows = list.data?.items ?? [];
+  // Opening a bill keeps the search and the status filter in the URL.
+  const setOpen = (id: number | null) =>
+    setParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (id === null) next.delete("open");
+      else next.set("open", String(id));
+      return next;
+    });
+  const waiting = new Set((pending.data ?? []).map((p) => p.invoice_id));
+  const columns: Column<InvoiceSummary>[] = [
+    { id: "number", header: "Number", cell: (r) => r.number },
+    { id: "date", header: "Date", cell: (r) => r.invoice_date },
+    { id: "customer", header: "Customer", cell: (r) => r.party_name },
+    { id: "type", header: "Type", cell: (r) => r.supply_type },
+    { id: "total", header: "Total (₹)", numeric: true, cell: (r) => formatMoney(r.grand_total) },
+    {
+      id: "status",
+      header: "Status",
+      cell: (r) =>
+        waiting.has(r.id) ? (
+          <StatusPill tone="warn" label="E-way bill pending" />
+        ) : (
+          <StatusPill tone="good" label="Posted" />
+        ),
+    },
+  ];
+  const rows = (list.data?.items ?? []).filter(
+    (r) =>
+      !filters.status ||
+      (filters.status === "eway_pending" ? waiting.has(r.id) : !waiting.has(r.id)),
+  );
 
   async function print(id: number, copy: string) {
     setPdfError(null);
@@ -46,21 +81,23 @@ export function SalesPage() {
   const inv = detail.data;
   return (
     <section aria-labelledby="sales-title" className={styles.page}>
-      <div className={styles.toolbar}>
-        <h1 id="sales-title" className={styles.title}>
-          Sales bills
-        </h1>
-        {canBill ? (
-          <Button
-            variant="primary"
-            onClick={() => void navigate("/sales/new")}
-            aria-keyshortcuts="Alt+N"
-          >
-            New bill
-          </Button>
-        ) : null}
-        <p className={styles.keys}>Alt+N new bill</p>
-      </div>
+      <PageHeader
+        eyebrow="Sales"
+        title="Sales bills"
+        titleId="sales-title"
+        subtitle="GST invoices, newest first. Alt+N new bill"
+        actions={
+          canBill ? (
+            <Button
+              variant="primary"
+              onClick={() => void navigate("/sales/new")}
+              aria-keyshortcuts="Alt+N"
+            >
+              New bill
+            </Button>
+          ) : null
+        }
+      />
       {canBill && pending.data && pending.data.length > 0 ? (
         <p role="status" className={styles.callout}>
           {plural(pending.data.length, "delivered bill")} still without an e-way bill:{" "}
@@ -70,7 +107,7 @@ export function SalesPage() {
               <button
                 type="button"
                 className={styles.rowButton}
-                onClick={() => setParams({ open: String(p.invoice_id) })}
+                onClick={() => setOpen(p.invoice_id)}
               >
                 {p.number}
               </button>
@@ -79,81 +116,43 @@ export function SalesPage() {
           {pending.data.length > 5 ? " and more" : ""}
         </p>
       ) : null}
-      <div className={styles.filters}>
-        <div className={styles.search}>
-          <TextField
-            label="Search"
-            type="search"
-            placeholder="Bill number or customer"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
-        </div>
-      </div>
+      <TableToolbar
+        filters={filters}
+        searchPlaceholder="Bill number or customer"
+        statusOptions={[
+          { value: "eway_pending", label: "E-way bill pending" },
+          { value: "posted", label: "Posted" },
+        ]}
+      />
       <div className={styles.split}>
-        <div className={styles.tableWrap}>
-          {list.isPending ? (
-            <p role="status" className={styles.empty}>
-              Loading bills…
-            </p>
-          ) : null}
-          {list.isSuccess && rows.length === 0 ? (
-            <p className={styles.empty}>
-              {q
-                ? "No bills match."
-                : canBill
-                  ? "No bills yet. Press Alt+N to make the first one."
-                  : "No bills yet."}
-            </p>
-          ) : null}
-          {rows.length > 0 ? (
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th scope="col">Number</th>
-                  <th scope="col">Date</th>
-                  <th scope="col">Customer</th>
-                  <th scope="col">Type</th>
-                  <th scope="col" className="num">
-                    Total (₹)
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr key={r.id} className={openId === r.id ? styles.selected : ""}>
-                    <td>
-                      <button
-                        type="button"
-                        className={styles.rowButton}
-                        aria-current={openId === r.id ? "true" : undefined}
-                        onClick={() => setParams({ open: String(r.id) })}
-                      >
-                        {r.number}
-                      </button>
-                    </td>
-                    <td>{r.invoice_date}</td>
-                    <td>{r.party_name}</td>
-                    <td>{r.supply_type}</td>
-                    <td className="num">{formatMoney(r.grand_total)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : null}
-          {list.isSuccess ? (
-            <p className={styles.results}>{plural(list.data.total, "bill")}</p>
-          ) : null}
-        </div>
+        <DataTable
+          caption="Sales bills"
+          columns={columns}
+          rows={rows}
+          rowKey={(r) => r.id}
+          selectedKey={openId}
+          onOpen={(r) => setOpen(r.id)}
+          loading={list.isPending}
+          error={list.isError ? "Bills could not be loaded." : null}
+          onRetry={() => void list.refetch()}
+          empty={
+            q || filters.status
+              ? "No bills match."
+              : canBill
+                ? "No bills yet. Press Alt+N to make the first one."
+                : "No bills yet."
+          }
+          footer={list.isSuccess ? plural(list.data.total, "bill") : undefined}
+        />
         {inv ? (
           <aside
             className={styles.panel}
             aria-labelledby="inv-title"
-            onKeyDown={(e) => e.key === "Escape" && setParams({})}
+            onKeyDown={(e) => e.key === "Escape" && setOpen(null)}
           >
             <div className={styles.panelHead}>
               <h2 id="inv-title">{inv.number}</h2>
-              <Button variant="ghost" onClick={() => setParams({})}>
+              <Button variant="ghost" onClick={() => setOpen(null)}>
                 Close
               </Button>
             </div>

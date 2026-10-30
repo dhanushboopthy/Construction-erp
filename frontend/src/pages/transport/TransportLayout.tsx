@@ -1,6 +1,8 @@
 import { NavLink, Outlet } from "react-router";
 
 import styles from "@/components/Ledger.module.css";
+import { PageHeader } from "@/components/PageHeader";
+import { purposeOf } from "@/modules";
 
 const TABS = [
   { to: "/transport", label: "Trips", end: true },
@@ -11,9 +13,7 @@ const TABS = [
 export function TransportLayout() {
   return (
     <section aria-labelledby="transport-title" className={styles.page}>
-      <h1 id="transport-title" className={styles.title}>
-        Transport
-      </h1>
+      <PageHeader title="Transport" titleId="transport-title" subtitle={purposeOf("/transport")} />
       <nav aria-label="Transport sections">
         <ul className={styles.tabs}>
           {TABS.map((t) => (

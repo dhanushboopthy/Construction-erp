@@ -45,7 +45,8 @@
 
 .active {
   background: var(--color-accent-soft);
-  color: var(--color-accent);
+  /* The strong accent: the plain one is 4.3:1 on this tint over the page background. */
+  color: var(--color-accent-strong);
   font-weight: 700;
 }
 

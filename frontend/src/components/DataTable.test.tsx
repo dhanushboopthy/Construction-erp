@@ -119,4 +119,16 @@ describe("DataTable", () => {
     render(<DataTable {...base} footer="3 customers" />);
     expect(screen.getByText("3 customers")).toBeVisible();
   });
+
+  it("lets the keyboard scroll a table that has no openable rows, and leaves the others alone", async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<DataTable {...base} />);
+    const region = screen.getByRole("region", { name: "Customer dues" });
+    await user.tab();
+    expect(region).toHaveFocus();
+    unmount();
+
+    render(<DataTable {...base} onOpen={() => undefined} />);
+    expect(screen.queryByRole("region")).toBeNull();
+  });
 });

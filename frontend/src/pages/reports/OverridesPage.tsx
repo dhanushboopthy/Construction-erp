@@ -9,6 +9,7 @@ import { useShops } from "@/hooks/useShops";
 import { formatMoney, trimDecimal } from "@/lib/format";
 
 import tiles from "./PnlPage.module.css";
+import { scrollRegion } from "@/components/scrollRegion";
 
 function rupees(value: string | null | undefined) {
   if (value == null) return "—";
@@ -90,7 +91,7 @@ export function OverridesPage() {
           ) : null}
 
           <h2 style={{ margin: 0 }}>By person</h2>
-          <div className={styles.tableWrap}>
+          <div className={styles.tableWrap} {...scrollRegion("Price overrides by person")}>
             <table className={styles.table} aria-label="Price overrides by person">
               <thead>
                 <tr>
@@ -129,7 +130,7 @@ export function OverridesPage() {
           {r.rows.length > 0 ? (
             <>
               <h2 style={{ margin: 0 }}>Every hand-priced line</h2>
-              <div className={styles.tableWrap}>
+              <div className={styles.tableWrap} {...scrollRegion("Hand-priced lines")}>
                 <table className={styles.table} aria-label="Hand-priced lines">
                   <thead>
                     <tr>

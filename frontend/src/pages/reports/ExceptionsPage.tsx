@@ -10,6 +10,7 @@ import { addDays } from "@/lib/dates";
 import { formatMoney } from "@/lib/format";
 
 import tiles from "./PnlPage.module.css";
+import { scrollRegion } from "@/components/scrollRegion";
 
 /** Entries that look like the usual ways money or stock goes missing (FM7, owner only). A flag
  * is a reason to ask someone, not a finding. */
@@ -57,7 +58,7 @@ export function ExceptionsPage() {
                 </li>
               ))}
           </ul>
-          <div className={styles.tableWrap}>
+          <div className={styles.tableWrap} {...scrollRegion("Flagged entries")}>
             <table className={styles.table} aria-label="Flagged entries">
               <thead>
                 <tr>

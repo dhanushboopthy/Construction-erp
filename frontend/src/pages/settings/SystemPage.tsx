@@ -3,6 +3,7 @@ import { useSystemStatus, useVerify } from "@/api/system";
 import type { SystemCheck } from "@/api/types";
 import { Button } from "@/components/Button";
 import styles from "@/components/Ledger.module.css";
+import { scrollRegion } from "@/components/scrollRegion";
 
 const WORD = { ok: "Good", warn: "Look at this", fail: "Needs action" } as const;
 const COLOUR = {
@@ -48,7 +49,7 @@ export function SystemPage() {
               Yesterday&apos;s day is not closed at {s.unclosed.join(", ")}. Close it under Reports.
             </p>
           ) : null}
-          <div className={styles.tableWrap}>
+          <div className={styles.tableWrap} {...scrollRegion("System status")}>
             <table className={styles.table} aria-label="System status">
               <tbody>
                 <Row check={s.migrations} />
@@ -80,7 +81,7 @@ export function SystemPage() {
               ? "Everything adds up."
               : "Something does not add up. Do not close the month; call support with this list."}
           </p>
-          <div className={styles.tableWrap}>
+          <div className={styles.tableWrap} {...scrollRegion("Book checks")}>
             <table className={styles.table} aria-label="Book checks">
               <tbody>
                 {v.checks.map((c) => (

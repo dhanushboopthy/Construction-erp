@@ -6,6 +6,7 @@ import styles from "@/components/Ledger.module.css";
 
 import chart from "./SegmentsPage.module.css";
 import { formatMoney } from "@/lib/format";
+import { scrollRegion } from "@/components/scrollRegion";
 
 /** Each series has its own fill pattern as well as its own colour, so the chart reads in grey. */
 const SERIES = [
@@ -127,7 +128,7 @@ export function SegmentsPage() {
               </li>
             ))}
           </ul>
-          <div className={styles.tableWrap}>
+          <div className={styles.tableWrap} {...scrollRegion("Sales by segment, month by month")}>
             <table className={styles.table} aria-label="Sales by segment, month by month">
               <thead>
                 <tr>

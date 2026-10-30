@@ -9,6 +9,7 @@ import { moveRowFocus, useAltKey } from "@/hooks/useKeys";
 import { GST_STATES, stateName } from "@/lib/gstStates";
 
 import styles from "@/components/Ledger.module.css";
+import { scrollRegion } from "@/components/scrollRegion";
 
 const KIND_LABEL: Record<LocationKind, string> = { shop: "Shop", godown: "Godown" };
 
@@ -72,7 +73,7 @@ export function LocationsPage() {
         </p>
       ) : null}
       <div className={styles.split}>
-        <div className={styles.tableWrap}>
+        <div className={styles.tableWrap} {...scrollRegion("Locations")}>
           {locations.data.length === 0 ? (
             <p className={styles.empty}>{T.empty}</p>
           ) : (

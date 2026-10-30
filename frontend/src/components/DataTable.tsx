@@ -6,6 +6,7 @@ import { moveRowFocus } from "@/hooks/useKeys";
 import { Avatar } from "./Avatar";
 import { Button } from "./Button";
 import styles from "./DataTable.module.css";
+import { scrollRegion } from "./scrollRegion";
 
 export interface Column<T> {
   id: string;
@@ -96,7 +97,9 @@ export function DataTable<T>({
     );
   }
   return (
-    <div className={styles.wrap}>
+    // With openable rows the row buttons already give the keyboard a way in; a table with none
+    // needs the scroll box itself to be focusable.
+    <div className={styles.wrap} {...(onOpen ? {} : scrollRegion(caption))}>
       <table className={styles.table} aria-label={caption}>
         <thead>
           <tr>

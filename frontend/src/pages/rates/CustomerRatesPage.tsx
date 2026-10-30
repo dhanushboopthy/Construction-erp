@@ -8,6 +8,7 @@ import { SelectField, TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
 import { trimDecimal } from "@/lib/format";
 import { unitNames } from "@/pages/items/itemLabels";
+import { scrollRegion } from "@/components/scrollRegion";
 
 function todayISO(): string {
   const d = new Date();
@@ -135,7 +136,7 @@ export function CustomerRatesPage() {
           {error.message}
         </p>
       ) : null}
-      <div className={styles.tableWrap}>
+      <div className={styles.tableWrap} {...scrollRegion("Customer rates")}>
         {list.data && list.data.length === 0 ? (
           <p className={styles.empty}>No customer rates yet. Everyone pays the daily rate.</p>
         ) : null}

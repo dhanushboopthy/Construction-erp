@@ -8,6 +8,7 @@ import { Metric } from "@/components/Metric";
 import { formatMoney } from "@/lib/format";
 
 import tiles from "./PnlPage.module.css";
+import { scrollRegion } from "@/components/scrollRegion";
 
 const rupees = (value: string) => `₹${formatMoney(value)}`;
 
@@ -23,7 +24,7 @@ function RiskTable({
   return (
     <>
       <h2 style={{ margin: 0 }}>{title}</h2>
-      <div className={styles.tableWrap}>
+      <div className={styles.tableWrap} {...scrollRegion(title)}>
         <table className={styles.table} aria-label={title}>
           <thead>
             <tr>

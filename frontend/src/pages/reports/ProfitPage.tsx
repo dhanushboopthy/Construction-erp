@@ -5,6 +5,7 @@ import type { ProfitGroup } from "@/api/types";
 import { SelectField, TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
 import { formatMoney } from "@/lib/format";
+import { scrollRegion } from "@/components/scrollRegion";
 
 function iso(offsetDays: number): string {
   const d = new Date(Date.now() - offsetDays * 86_400_000);
@@ -53,7 +54,7 @@ export function ProfitPage() {
       ) : null}
       {r && r.rows.length === 0 ? <p className={styles.empty}>No sales in these dates.</p> : null}
       {r && r.rows.length > 0 ? (
-        <div className={styles.tableWrap}>
+        <div className={styles.tableWrap} {...scrollRegion("Profit")}>
           <table className={styles.table}>
             <thead>
               <tr>

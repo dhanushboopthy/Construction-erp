@@ -9,6 +9,7 @@ import { useShops } from "@/hooks/useShops";
 import { formatMoney } from "@/lib/format";
 
 import pnl from "./PnlPage.module.css";
+import { scrollRegion } from "@/components/scrollRegion";
 
 function rupees(value: string | null | undefined) {
   if (value == null) return "—";
@@ -88,7 +89,7 @@ export function PnlPage() {
             />
           </dl>
 
-          <div className={styles.tableWrap}>
+          <div className={styles.tableWrap} {...scrollRegion("Profit and loss")}>
             <table className={styles.table} aria-label="Profit and loss">
               <tbody>
                 <tr>

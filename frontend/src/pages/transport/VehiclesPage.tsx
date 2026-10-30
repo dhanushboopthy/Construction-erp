@@ -6,6 +6,7 @@ import { useAuth } from "@/auth/AuthContext";
 import { Button } from "@/components/Button";
 import { TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
+import { scrollRegion } from "@/components/scrollRegion";
 
 /** Hired vehicles. Each one gets a supplier account, so freight is paid like any supplier bill. */
 export function VehiclesPage() {
@@ -75,7 +76,7 @@ export function VehiclesPage() {
         <p className={styles.empty}>No vehicles yet. Add the first hired vehicle above.</p>
       ) : null}
       {rows.length > 0 ? (
-        <div className={styles.tableWrap}>
+        <div className={styles.tableWrap} {...scrollRegion("Vehicles")}>
           <table className={styles.table}>
             <thead>
               <tr>

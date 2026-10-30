@@ -9,6 +9,7 @@ import { useShops } from "@/hooks/useShops";
 import { formatMoney, trimDecimal } from "@/lib/format";
 
 import tiles from "./PnlPage.module.css";
+import { scrollRegion } from "@/components/scrollRegion";
 
 const CUTS: { value: Cut; label: string }[] = [
   { value: "brand", label: "Brand" },
@@ -82,7 +83,7 @@ export function ProfitCutsPage() {
               value={maybe(r.contribution_per_ton)}
             />
           </dl>
-          <div className={styles.tableWrap}>
+          <div className={styles.tableWrap} {...scrollRegion("Profit by cut")}>
             <table className={styles.table} aria-label="Profit by cut">
               <thead>
                 <tr>

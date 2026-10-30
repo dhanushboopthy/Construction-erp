@@ -12,6 +12,7 @@ import { useShops } from "@/hooks/useShops";
 import { formatMoney, isAmount } from "@/lib/format";
 
 import tiles from "./PnlPage.module.css";
+import { scrollRegion } from "@/components/scrollRegion";
 
 const rupees = (value: string) => `₹${formatMoney(value)}`;
 
@@ -90,7 +91,7 @@ export function ReceivablesPage() {
             ) : null}
           </dl>
 
-          <div className={styles.tableWrap}>
+          <div className={styles.tableWrap} {...scrollRegion("Overdue by due date")}>
             <table className={styles.table} aria-label="Overdue by due date">
               <thead>
                 <tr>
@@ -117,7 +118,7 @@ export function ReceivablesPage() {
             </table>
           </div>
 
-          <div className={styles.tableWrap}>
+          <div className={styles.tableWrap} {...scrollRegion("Customers and what they owe")}>
             <table className={styles.table} aria-label="Customers and what they owe">
               <thead>
                 <tr>
@@ -220,7 +221,7 @@ export function ReceivablesPage() {
       ) : null}
 
       {written.data && written.data.length > 0 ? (
-        <div className={styles.tableWrap}>
+        <div className={styles.tableWrap} {...scrollRegion("Bad debts written off")}>
           <table className={styles.table} aria-label="Bad debts written off">
             <thead>
               <tr>

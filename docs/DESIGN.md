@@ -125,7 +125,8 @@ use tabular figures (`.num`).
 **Shape:** radius 8 (controls), 12 (cards, menus, dialogs), 999 (pills). `--radius-lg` equals
 `--radius-md` for now so existing rules keep working. Spacing on a 4-px scale. Icons are Lucide
 (`lucide-react`), 18–20 px, stroke ~1.9. Motion 150–250 ms, ease-out; the only entrance animation
-is the chart bars and stock bars growing in; reduced motion turns it off.
+is the chart bars and stock bars growing in; reduced motion turns every animation and transition
+off (`animation: none`, not a zero-length one, so a delayed bar is never held hidden).
 
 **Colour outside `tokens.css`.** Components use tokens only. The three places a CSS variable cannot
 reach hold a colour by hand: `index.html` (`theme-color`, the browser bar), `public/favicon.svg`
@@ -229,7 +230,24 @@ and accountant seed users and saves a PNG of every routed screen in light and da
 and 390 px, plus the sign-in page, to `frontend/screenshots/baseline/<role>/<theme>-<width>/`
 (git-ignored). Options: `--out <folder>`, `--roles owner,counter`, `--only sales,reports`. It
 writes `manifest.json` and exits non-zero if a screen redirects. The screen list is in
-`frontend/scripts/screenshots.ts`; it checks itself against `src/modules.ts`, so a new module
+`frontend/scripts/shared.ts`; it checks itself against `src/modules.ts`, so a new module
 fails the run until it is added. Take a set before a UI change and another after, and compare.
 Use development seed data only, never production. The UI refresh in
 [UI_REFACTOR_PLAN](UI_REFACTOR_PLAN.md) uses this as its baseline.
+
+`npm run qa` (same setup) is the browser check behind the accessibility floor. `axe` runs axe-core
+on every screen as every role that may open it, in both themes at 1440 and 390 px, and fails on
+any serious or critical violation (colour contrast included). `motion` loads Today, Sales and
+Items with reduced motion on and fails if anything still animates. `keys` tabs through Today,
+bill entry, purchase entry and Items, and fails on a tab stop without a visible focus ring; it
+also checks Alt+1–4 and opening and closing the Items editor from the keyboard. Choose with
+`--only axe,motion,keys` and `--roles owner`.
+
+**Scrolling tables.** A table that scrolls sideways on a phone sits in a box that is a labelled
+region and a tab stop (`scrollRegion(label)` in `components/scrollRegion.ts`), so a keyboard user
+can reach the hidden columns. `DataTable` adds it only when rows are not openable, because the
+row buttons already give the keyboard a way in and the first Tab must land on the first row.
+
+**Tinted nav items** (the current Settings section) use `--color-accent-strong` for text: the
+plain accent is 4.3:1 on its own tint over the page background. `tokens.test.ts` checks pairs
+over the page background as well as over a card.

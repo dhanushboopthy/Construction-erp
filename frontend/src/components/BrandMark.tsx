@@ -17,7 +17,7 @@ export function BrandMark({
   /** Undefined while the name is still loading: the tile is then empty. */
   name: string | undefined;
   logoUrl?: string | null;
-  className: string;
+  className?: string | undefined;
 }) {
   const [failed, setFailed] = useState<string | null>(null);
   const showLogo = logoUrl && failed !== logoUrl;

@@ -29,14 +29,11 @@
 
 .primary {
   background: var(--color-accent);
-  background-image: var(--gradient-action);
   color: var(--color-on-accent);
-  box-shadow: var(--shadow-glow);
 }
 
 .primary:hover:not(:disabled) {
-  filter: brightness(1.08);
-  transform: translateY(-1px);
+  background: var(--color-accent-strong);
 }
 
 .secondary {

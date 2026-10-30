@@ -71,9 +71,8 @@
 }
 
 .iconButton[aria-expanded="true"] {
-  background: var(--gradient-action);
+  background: var(--color-accent);
   color: var(--color-on-accent);
-  box-shadow: var(--shadow-glow);
 }
 
 .dot {
@@ -162,7 +161,7 @@
 }
 
 .alert:hover {
-  background: var(--color-sidebar-hover);
+  background: var(--color-hover);
 }
 
 .alert strong {
@@ -224,7 +223,7 @@
 }
 
 .action:hover {
-  background: var(--color-sidebar-hover);
+  background: var(--color-hover);
 }
 
 .actionIcon {
@@ -241,7 +240,7 @@
 }
 
 .action:hover .actionIcon {
-  background: var(--gradient-action);
+  background: var(--color-accent);
   color: var(--color-on-accent);
 }
 

@@ -42,7 +42,7 @@
   border-color: var(--color-accent);
   box-shadow:
     var(--shadow-card),
-    0 0 0 4px var(--color-focus);
+    0 0 0 3px var(--color-focus);
 }
 
 .hint {
@@ -114,7 +114,7 @@
 }
 
 .option[aria-selected="true"] {
-  background: var(--gradient-nav-active);
+  background: var(--color-accent-soft);
 }
 
 .optionIcon {
@@ -129,9 +129,8 @@
 }
 
 .option[aria-selected="true"] .optionIcon {
-  background: var(--gradient-action);
+  background: var(--color-accent);
   color: var(--color-on-accent);
-  box-shadow: var(--shadow-glow);
 }
 
 .optionText {

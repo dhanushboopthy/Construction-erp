@@ -13,7 +13,9 @@
   height: 100vh;
   padding: var(--space-5) var(--space-4) var(--space-4);
   background: var(--color-sidebar);
-  box-shadow: 1px 0 0 var(--color-separator);
+  color: var(--color-on-sidebar);
+  /* The focus ring must show on navy: the bright orange is 6:1 there. */
+  --color-focus: var(--color-accent-bright);
 }
 
 .brand {
@@ -29,10 +31,9 @@
   flex: none;
   width: 48px;
   height: 48px;
-  border-radius: 15px;
-  background: var(--gradient-brand);
-  color: var(--color-on-accent);
-  box-shadow: var(--shadow-glow);
+  border-radius: var(--radius-md);
+  background: var(--color-accent-bright);
+  color: var(--color-on-accent-bright);
 }
 
 .brandName {
@@ -42,7 +43,7 @@
 }
 
 .brandAccent {
-  color: var(--color-accent);
+  color: var(--color-accent-bright);
 }
 
 .navArea {
@@ -66,7 +67,7 @@
 .navFooter {
   margin-top: var(--space-4);
   padding-top: var(--space-4);
-  border-top: 1px solid var(--color-separator);
+  border-top: 1px solid var(--color-sidebar-line);
 }
 
 .nav a {
@@ -75,8 +76,8 @@
   align-items: center;
   gap: var(--space-4);
   padding: 12px var(--space-4);
-  border-radius: 14px;
-  color: var(--color-secondary);
+  border-radius: var(--radius-sm);
+  color: var(--color-on-sidebar-muted);
   text-decoration: none;
   font-size: 0.9375rem;
   font-weight: 600;
@@ -87,7 +88,7 @@
 
 .nav a:hover {
   background: var(--color-sidebar-hover);
-  color: var(--color-label);
+  color: var(--color-on-sidebar);
 }
 
 .icon {
@@ -105,8 +106,8 @@
 }
 
 .nav a.active {
-  background: var(--gradient-nav-active);
-  color: var(--color-accent);
+  background: var(--color-sidebar-active);
+  color: var(--color-on-sidebar);
 }
 
 /* The marker hugging the sidebar's inner edge, as in the reference. */
@@ -118,14 +119,14 @@
   bottom: 6px;
   width: 3px;
   border-radius: 3px;
-  background: var(--gradient-action);
+  background: var(--color-accent-bright);
 }
 
 .kbd {
   font: inherit;
   font-size: var(--text-2xs);
   font-weight: 600;
-  color: var(--color-secondary);
+  color: var(--color-on-sidebar-muted);
   white-space: nowrap;
   opacity: 0;
   transition: opacity var(--duration-fast) var(--ease);
@@ -143,10 +144,9 @@
   gap: var(--space-3);
   margin-top: var(--space-4);
   padding: var(--space-4);
-  border-radius: 20px;
-  background: var(--gradient-action);
-  color: var(--color-on-accent);
-  box-shadow: var(--shadow-glow);
+  border-radius: var(--radius-md);
+  background: var(--color-sidebar-active);
+  color: var(--color-on-sidebar);
 }
 
 .avatar {
@@ -155,11 +155,9 @@
   flex: none;
   width: 44px;
   height: 44px;
-  border: 3px solid rgb(255 255 255 / 35%);
   border-radius: 50%;
-  background: var(--color-on-accent);
-  background-clip: padding-box;
-  color: var(--color-accent-strong);
+  background: var(--color-accent-bright);
+  color: var(--color-on-accent-bright);
   font-size: var(--text-sm);
   font-weight: 800;
 }
@@ -178,7 +176,7 @@
 }
 
 .userRole {
-  color: var(--color-on-accent-muted);
+  color: var(--color-on-sidebar-muted);
   font-size: var(--text-2xs);
   font-weight: 700;
   letter-spacing: var(--tracking-caps);
@@ -193,15 +191,15 @@
   height: 36px;
   padding: 0;
   border: 0;
-  border-radius: 12px;
-  background: rgb(255 255 255 / 16%);
-  color: var(--color-on-accent);
+  border-radius: var(--radius-sm);
+  background: var(--color-sidebar-hover);
+  color: var(--color-on-sidebar);
   cursor: pointer;
   transition: background-color var(--duration-fast) var(--ease);
 }
 
 .signOut:hover {
-  background: rgb(255 255 255 / 28%);
+  background: var(--color-sidebar-line);
 }
 
 /* ------------------------------------------------------------ main */
@@ -227,7 +225,6 @@
     height: auto;
     padding: var(--space-2) var(--space-3);
     overflow-x: auto;
-    box-shadow: 0 1px 0 var(--color-separator);
   }
   .brand,
   .kbd,
@@ -256,8 +253,8 @@
     font-size: var(--text-sm);
   }
   .nav a.active {
-    background: var(--gradient-action);
-    color: var(--color-on-accent);
+    background: var(--color-accent-bright);
+    color: var(--color-on-accent-bright);
   }
   .nav a.active::after {
     display: none;

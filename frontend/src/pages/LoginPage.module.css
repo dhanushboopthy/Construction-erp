@@ -4,8 +4,7 @@
   display: grid;
   place-items: center;
   padding: var(--space-4);
-  background:
-    radial-gradient(80% 60% at 50% 0%, var(--color-accent-soft), transparent 70%), var(--color-bg);
+  background: var(--color-bg);
 }
 
 .card {
@@ -27,9 +26,8 @@
   height: 64px;
   border-radius: 15px;
   border-radius: 20px;
-  background: var(--gradient-brand);
-  color: var(--color-on-accent);
-  box-shadow: var(--shadow-glow);
+  background: var(--color-accent-bright);
+  color: var(--color-on-accent-bright);
 }
 
 .title {
@@ -71,7 +69,7 @@
 .field input:focus {
   outline: none;
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 4px var(--color-focus);
+  box-shadow: 0 0 0 3px var(--color-focus);
 }
 
 .error {
@@ -86,9 +84,8 @@
   padding: 0 var(--space-4);
   border: 0;
   border-radius: var(--radius-pill);
-  background: var(--gradient-action);
+  background: var(--color-accent);
   color: var(--color-on-accent);
-  box-shadow: var(--shadow-glow);
   font-size: var(--text-md);
   font-weight: 700;
   cursor: pointer;

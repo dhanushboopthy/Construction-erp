@@ -117,3 +117,7 @@ export const MODULES: ModuleLink[] = [
 
 export const modulesFor = (role: Role): ModuleLink[] =>
   MODULES.filter((m) => m.roles.includes(role));
+
+/** What a module is for, as written in the list above: the subtitle under a screen's title. */
+export const purposeOf = (path: string): string =>
+  MODULES.find((m) => m.path === path)?.purpose ?? "";

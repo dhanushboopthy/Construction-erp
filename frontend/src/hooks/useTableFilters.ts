@@ -7,7 +7,9 @@ export interface TableFilters {
   from: string;
   to: string;
   /** Sets one filter; an empty value removes it from the URL. */
-  set: (key: "q" | "status" | "from" | "to", value: string) => void;
+  set: (key: string, value: string) => void;
+  /** Any other filter kept in the URL, e.g. `get("place")`. */
+  get: (key: string) => string;
 }
 
 /**
@@ -37,5 +39,6 @@ export function useTableFilters(): TableFilters {
     from: params.get("from") ?? "",
     to: params.get("to") ?? "",
     set,
+    get: (key) => params.get(key) ?? "",
   };
 }

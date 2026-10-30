@@ -1,8 +1,9 @@
 import { Search } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import type { TableFilters } from "@/hooks/useTableFilters";
 
+import { SelectField, TextField } from "./Field";
 import styles from "./TableToolbar.module.css";
 
 export interface StatusOption {
@@ -22,6 +23,7 @@ export function TableToolbar({
   allStatusesLabel = "All statuses",
   statusOptions,
   dateRange = false,
+  extra,
   debounceMs = 300,
 }: {
   filters: TableFilters;
@@ -31,6 +33,8 @@ export function TableToolbar({
   allStatusesLabel?: string;
   statusOptions?: StatusOption[];
   dateRange?: boolean;
+  /** More filters of the screen, e.g. a place select; keep their value in the URL too. */
+  extra?: ReactNode;
   debounceMs?: number;
 }) {
   const { q, set } = filters;
@@ -82,28 +86,34 @@ export function TableToolbar({
         </span>
       </label>
       {statusOptions ? (
-        <label className={styles.field}>
-          <span className={styles.label}>{statusLabel}</span>
-          <select value={filters.status} onChange={(e) => set("status", e.target.value)}>
-            <option value="">{allStatusesLabel}</option>
-            {statusOptions.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <SelectField
+          label={statusLabel}
+          value={filters.status}
+          onChange={(e) => set("status", e.target.value)}
+        >
+          <option value="">{allStatusesLabel}</option>
+          {statusOptions.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </SelectField>
       ) : null}
+      {extra}
       {dateRange ? (
         <>
-          <label className={styles.field}>
-            <span className={styles.label}>From</span>
-            <input type="date" value={filters.from} onChange={(e) => set("from", e.target.value)} />
-          </label>
-          <label className={styles.field}>
-            <span className={styles.label}>To</span>
-            <input type="date" value={filters.to} onChange={(e) => set("to", e.target.value)} />
-          </label>
+          <TextField
+            label="From"
+            type="date"
+            value={filters.from}
+            onChange={(e) => set("from", e.target.value)}
+          />
+          <TextField
+            label="To"
+            type="date"
+            value={filters.to}
+            onChange={(e) => set("to", e.target.value)}
+          />
         </>
       ) : null}
     </div>

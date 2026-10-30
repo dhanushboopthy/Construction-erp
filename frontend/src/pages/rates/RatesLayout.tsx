@@ -1,6 +1,8 @@
 import { NavLink, Outlet } from "react-router";
 
 import styles from "@/components/Ledger.module.css";
+import { PageHeader } from "@/components/PageHeader";
+import { purposeOf } from "@/modules";
 
 const TABS = [
   { to: "/rates", label: "Today's rates", end: true },
@@ -10,9 +12,7 @@ const TABS = [
 export function RatesLayout() {
   return (
     <section aria-labelledby="rates-title" className={styles.page}>
-      <h1 id="rates-title" className={styles.title}>
-        Daily rates
-      </h1>
+      <PageHeader title="Daily rates" titleId="rates-title" subtitle={purposeOf("/rates")} />
       <nav aria-label="Rate sections">
         <ul className={styles.tabs}>
           {TABS.map((t) => (

@@ -1,12 +1,17 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 
 import { useParties } from "@/api/masters";
+import type { Party } from "@/api/types";
 import { useAuth } from "@/auth/AuthContext";
 import { Button } from "@/components/Button";
-import { SelectField, TextField } from "@/components/Field";
+import { DataTable, type Column } from "@/components/DataTable";
+import { PageHeader } from "@/components/PageHeader";
+import { StatusPill } from "@/components/StatusPill";
+import { TableToolbar } from "@/components/TableToolbar";
 import styles from "@/components/Ledger.module.css";
-import { moveRowFocus, useAltKey } from "@/hooks/useKeys";
+import { useAltKey } from "@/hooks/useKeys";
+import { useTableFilters } from "@/hooks/useTableFilters";
 import { formatMoney, plural } from "@/lib/format";
 
 import { PartyEditor } from "./PartyEditor";
@@ -14,11 +19,37 @@ import { TYPE_LABEL } from "./partyLabels";
 
 type Mode = { kind: "closed" } | { kind: "new" } | { kind: "edit"; id: number };
 
+const COLUMNS: Column<Party>[] = [
+  { id: "name", header: "Name", cell: (p) => p.name },
+  { id: "type", header: "Type", cell: (p) => TYPE_LABEL[p.type] },
+  { id: "gstin", header: "GSTIN", cell: (p) => p.gstin ?? "—" },
+  { id: "phone", header: "Phone", cell: (p) => p.phone ?? "—" },
+  {
+    id: "credit",
+    header: "Credit limit",
+    numeric: true,
+    cell: (p) =>
+      p.credit_allowed ? (p.credit_limit ? formatMoney(p.credit_limit) : "Default") : "No credit",
+  },
+  { id: "sites", header: "Sites", numeric: true, cell: (p) => p.sites.length },
+  {
+    id: "status",
+    header: "Status",
+    cell: (p) => (
+      <StatusPill
+        tone={p.is_active ? "good" : "neutral"}
+        label={p.is_active ? "Active" : "Inactive"}
+      />
+    ),
+  },
+];
+
 export function PartiesPage() {
   const { user } = useAuth();
   const canWrite = user?.role === "owner" || user?.role === "counter";
-  const [q, setQ] = useState("");
-  const [kind, setKind] = useState("");
+  const filters = useTableFilters();
+  const q = filters.q;
+  const kind = filters.status;
   // A link such as /parties?party=12 (the dues table on Today) opens that customer's editor.
   const [params] = useSearchParams();
   const linked = Number(params.get("party"));
@@ -28,7 +59,6 @@ export function PartiesPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const query = useParties(q, kind);
   const listRef = useRef<HTMLTableSectionElement>(null);
-  const search = useRef<HTMLInputElement>(null);
 
   const openNew = useCallback(() => {
     if (canWrite) {
@@ -38,24 +68,12 @@ export function PartiesPage() {
   }, [canWrite]);
   useAltKey("n", openNew);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement).tagName;
-      if (e.key === "/" && tag !== "INPUT" && tag !== "TEXTAREA" && tag !== "SELECT") {
-        e.preventDefault();
-        search.current?.focus();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
-
   const close = useCallback(() => {
     const id = mode.kind === "edit" ? mode.id : null;
     setMode({ kind: "closed" });
     requestAnimationFrame(() => {
       const row = id ? listRef.current?.querySelector<HTMLElement>(`[data-row="${id}"]`) : null;
-      (row ?? search.current)?.focus();
+      (row ?? document.querySelector<HTMLElement>("[role=search] input"))?.focus();
     });
   }, [mode]);
 
@@ -64,118 +82,56 @@ export function PartiesPage() {
 
   return (
     <section aria-labelledby="parties-title" className={styles.page}>
-      <div className={styles.toolbar}>
-        <h1 id="parties-title" className={styles.title}>
-          Customers and suppliers
-        </h1>
-        {canWrite ? (
-          <Button variant="primary" onClick={openNew} aria-keyshortcuts="Alt+N">
-            Add party
-          </Button>
-        ) : null}
-        <p className={styles.keys}>/ search · Alt+N new · ↑↓ move · Enter open · Esc close</p>
-      </div>
-      <div className={styles.filters}>
-        <div className={styles.search}>
-          <TextField
-            ref={search}
-            label="Search"
-            type="search"
-            placeholder="Name, phone or GSTIN"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
-        </div>
-        <SelectField label="Show" value={kind} onChange={(e) => setKind(e.target.value)}>
-          <option value="">Everyone</option>
-          <option value="customer">Customers</option>
-          <option value="supplier">Suppliers</option>
-        </SelectField>
-      </div>
+      <PageHeader
+        eyebrow="Accounts"
+        title="Customers and suppliers"
+        titleId="parties-title"
+        subtitle="Their sites, credit limits and dues. / search · Alt+N new · ↑↓ move · Enter open · Esc close"
+        actions={
+          canWrite ? (
+            <Button variant="primary" onClick={openNew} aria-keyshortcuts="Alt+N">
+              Add party
+            </Button>
+          ) : null
+        }
+      />
+      <TableToolbar
+        filters={filters}
+        searchPlaceholder="Name, phone or GSTIN"
+        statusLabel="Show"
+        allStatusesLabel="Everyone"
+        statusOptions={[
+          { value: "customer", label: "Customers" },
+          { value: "supplier", label: "Suppliers" },
+        ]}
+      />
       {notice ? (
         <p role="status" className={styles.saved}>
           {notice}
         </p>
       ) : null}
       <div className={styles.split}>
-        <div className={styles.tableWrap}>
-          {query.isPending ? (
-            <p role="status" className={styles.empty}>
-              Loading…
-            </p>
-          ) : null}
-          {query.isError ? <p className={styles.formError}>Parties could not be loaded.</p> : null}
-          {query.isSuccess && rows.length === 0 ? (
-            <p className={styles.empty}>
-              {q || kind
+        <div ref={listRef}>
+          <DataTable
+            caption="Customers and suppliers"
+            columns={COLUMNS}
+            rows={rows}
+            rowKey={(r) => r.id}
+            selectedKey={selected?.id ?? null}
+            onOpen={(p) => {
+              setNotice(null);
+              setMode({ kind: "edit", id: p.id });
+            }}
+            loading={query.isPending}
+            error={query.isError ? "Parties could not be loaded." : null}
+            onRetry={() => void query.refetch()}
+            empty={
+              q || kind
                 ? "Nobody matches. Clear the search to see all."
-                : "No customers or suppliers yet. Add the first with Alt+N."}
-            </p>
-          ) : null}
-          {rows.length > 0 ? (
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th scope="col">Name</th>
-                  <th scope="col">Type</th>
-                  <th scope="col">GSTIN</th>
-                  <th scope="col">Phone</th>
-                  <th scope="col" className="num">
-                    Credit limit
-                  </th>
-                  <th scope="col" className="num">
-                    Sites
-                  </th>
-                  <th scope="col">Status</th>
-                </tr>
-              </thead>
-              <tbody ref={listRef} onKeyDown={moveRowFocus}>
-                {rows.map((p) => (
-                  <tr
-                    key={p.id}
-                    className={[
-                      selected?.id === p.id ? styles.selected : "",
-                      p.is_active ? "" : styles.inactive,
-                    ].join(" ")}
-                  >
-                    <td>
-                      <button
-                        type="button"
-                        className={styles.rowButton}
-                        data-row={p.id}
-                        aria-current={selected?.id === p.id ? "true" : undefined}
-                        onClick={() => {
-                          setNotice(null);
-                          setMode({ kind: "edit", id: p.id });
-                        }}
-                      >
-                        {p.name}
-                      </button>
-                    </td>
-                    <td>{TYPE_LABEL[p.type]}</td>
-                    <td>{p.gstin ?? "—"}</td>
-                    <td>{p.phone ?? "—"}</td>
-                    <td className="num">
-                      {p.credit_allowed
-                        ? p.credit_limit
-                          ? formatMoney(p.credit_limit)
-                          : "Default"
-                        : "No credit"}
-                    </td>
-                    <td className="num">{p.sites.length}</td>
-                    <td className={styles.status}>
-                      <span className={p.is_active ? styles.statusActive : styles.statusInactive}>
-                        {p.is_active ? "Active" : "Inactive"}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : null}
-          {query.isSuccess ? (
-            <p className={styles.results}>{plural(query.data.total, "party", "parties")}</p>
-          ) : null}
+                : "No customers or suppliers yet. Add the first with Alt+N."
+            }
+            footer={query.isSuccess ? plural(query.data.total, "party", "parties") : undefined}
+          />
         </div>
         {mode.kind === "new" ? (
           <PartyEditor

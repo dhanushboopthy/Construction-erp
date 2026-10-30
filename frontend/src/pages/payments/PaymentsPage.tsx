@@ -9,6 +9,13 @@ import { useAuth } from "@/auth/AuthContext";
 import { Button } from "@/components/Button";
 import { SelectField, TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
+import { DataTable, type Column } from "@/components/DataTable";
+import { PageHeader } from "@/components/PageHeader";
+import { StatusPill } from "@/components/StatusPill";
+import { TableToolbar } from "@/components/TableToolbar";
+import { useTableFilters } from "@/hooks/useTableFilters";
+import { includesText } from "@/lib/filters";
+import { purposeOf } from "@/modules";
 import { formatMoney, plural } from "@/lib/format";
 
 function todayISO(): string {
@@ -88,12 +95,38 @@ export function PaymentsPage() {
     }
   }
 
-  const rows = list.data ?? [];
+  const filters = useTableFilters();
+  const all = list.data ?? [];
+  const rows = all.filter(
+    (p) =>
+      includesText(filters.q, p.number, p.party_name) &&
+      (!filters.status || p.direction === filters.status),
+  );
+  const columns: Column<(typeof all)[number]>[] = [
+    { id: "number", header: "Receipt", cell: (p) => p.number },
+    { id: "date", header: "Date", cell: (p) => p.payment_date },
+    { id: "party", header: "Party", cell: (p) => p.party_name },
+    {
+      id: "direction",
+      header: "Direction",
+      cell: (p) =>
+        p.direction === "received" ? (
+          <StatusPill tone="good" label="Received" />
+        ) : (
+          <StatusPill tone="neutral" label="Paid out" />
+        ),
+    },
+    { id: "mode", header: "Paid by", cell: (p) => MODE[p.mode] },
+    { id: "amount", header: "Amount (₹)", numeric: true, cell: (p) => formatMoney(p.amount) },
+  ];
   return (
     <section aria-labelledby="payments-title" className={styles.page}>
-      <h1 id="payments-title" className={styles.title}>
-        Payments
-      </h1>
+      <PageHeader
+        eyebrow="Accounts"
+        title="Payments"
+        titleId="payments-title"
+        subtitle={purposeOf("/payments")}
+      />
       {canRecord ? (
         <form
           className={styles.stack}
@@ -253,45 +286,27 @@ export function PaymentsPage() {
           </div>
         </form>
       ) : null}
-      <div className={styles.tableWrap}>
-        {list.isPending ? (
-          <p role="status" className={styles.empty}>
-            Loading receipts…
-          </p>
-        ) : null}
-        {list.isSuccess && rows.length === 0 ? (
-          <p className={styles.empty}>No receipts yet.</p>
-        ) : null}
-        {rows.length > 0 ? (
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th scope="col">Receipt</th>
-                <th scope="col">Date</th>
-                <th scope="col">Party</th>
-                <th scope="col">Direction</th>
-                <th scope="col">Paid by</th>
-                <th scope="col" className="num">
-                  Amount (₹)
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((p) => (
-                <tr key={p.id}>
-                  <td>{p.number}</td>
-                  <td>{p.payment_date}</td>
-                  <td>{p.party_name}</td>
-                  <td>{p.direction === "received" ? "Received" : "Paid out"}</td>
-                  <td>{MODE[p.mode]}</td>
-                  <td className="num">{formatMoney(p.amount)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : null}
-        {list.isSuccess ? <p className={styles.results}>{plural(rows.length, "receipt")}</p> : null}
-      </div>
+      <TableToolbar
+        filters={filters}
+        searchPlaceholder="Receipt number or party"
+        statusLabel="Direction"
+        allStatusesLabel="Received and paid out"
+        statusOptions={[
+          { value: "received", label: "Received" },
+          { value: "paid", label: "Paid out" },
+        ]}
+      />
+      <DataTable
+        caption="Receipts and payments"
+        columns={columns}
+        rows={rows}
+        rowKey={(p) => p.id}
+        loading={list.isPending}
+        error={list.isError ? "Receipts could not be loaded." : null}
+        onRetry={() => void list.refetch()}
+        empty={filters.q || filters.status ? "No receipts match." : "No receipts yet."}
+        footer={list.isSuccess ? plural(rows.length, "receipt") : undefined}
+      />
     </section>
   );
 }

@@ -8,6 +8,11 @@ import { useAuth } from "@/auth/AuthContext";
 import { Button } from "@/components/Button";
 import { SelectField, TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
+import { DataTable, type Column } from "@/components/DataTable";
+import { StatusPill } from "@/components/StatusPill";
+import { TableToolbar } from "@/components/TableToolbar";
+import { useTableFilters } from "@/hooks/useTableFilters";
+import { includesText } from "@/lib/filters";
 import { formatMoney, plural } from "@/lib/format";
 
 /** One run of one vehicle. Freight becomes payable to the vehicle's owner (pay it under
@@ -29,7 +34,48 @@ export function TripsPage() {
   const [done, setDone] = useState<string | null>(null);
 
   const places = (locations.data ?? []).filter((l) => l.is_active);
-  const rows = trips.data?.items ?? [];
+  const filters = useTableFilters();
+  const all = trips.data?.items ?? [];
+  const rows = all.filter(
+    (t) =>
+      includesText(
+        filters.q,
+        t.vehicle_number,
+        t.owner_name,
+        t.from_place,
+        t.to_place,
+        t.invoice_number,
+        t.purchase_number,
+      ) &&
+      (!filters.status ||
+        (filters.status === "paid"
+          ? Number(t.paid_amount) >= Number(t.freight_amount)
+          : Number(t.paid_amount) < Number(t.freight_amount))),
+  );
+  const columns: Column<(typeof all)[number]>[] = [
+    { id: "date", header: "Date", cell: (t) => t.trip_date },
+    { id: "vehicle", header: "Vehicle", cell: (t) => `${t.vehicle_number} · ${t.owner_name}` },
+    { id: "route", header: "Route", cell: (t) => `${t.from_place} to ${t.to_place}` },
+    { id: "bill", header: "Bill", cell: (t) => t.invoice_number ?? t.purchase_number ?? "—" },
+    {
+      id: "freight",
+      header: "Freight (₹)",
+      numeric: true,
+      cell: (t) => formatMoney(t.freight_amount),
+    },
+    { id: "paid", header: "Paid (₹)", numeric: true, cell: (t) => formatMoney(t.paid_amount) },
+    {
+      id: "status",
+      header: "Status",
+      cell: (t) =>
+        Number(t.paid_amount) >= Number(t.freight_amount) ? (
+          <StatusPill tone="good" label="Paid" />
+        ) : (
+          <StatusPill tone="warn" label="Unpaid" />
+        ),
+    },
+    { id: "ref", header: "Pay as", cell: (t) => t.pay_ref ?? "—" },
+  ];
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -116,48 +162,25 @@ export function TripsPage() {
           ) : null}
         </form>
       ) : null}
-      {trips.isSuccess && rows.length === 0 ? <p className={styles.empty}>No trips yet.</p> : null}
-      {rows.length > 0 ? (
-        <div className={styles.tableWrap}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th scope="col">Date</th>
-                <th scope="col">Vehicle</th>
-                <th scope="col">Route</th>
-                <th scope="col">Bill</th>
-                <th scope="col" className="num">
-                  Freight (₹)
-                </th>
-                <th scope="col" className="num">
-                  Paid (₹)
-                </th>
-                <th scope="col">Pay as</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((t) => (
-                <tr key={t.id}>
-                  <td>{t.trip_date}</td>
-                  <td>
-                    {t.vehicle_number} · {t.owner_name}
-                  </td>
-                  <td>
-                    {t.from_place} to {t.to_place}
-                  </td>
-                  <td>{t.invoice_number ?? t.purchase_number ?? "—"}</td>
-                  <td className="num">{formatMoney(t.freight_amount)}</td>
-                  <td className="num">{formatMoney(t.paid_amount)}</td>
-                  <td>{t.pay_ref ?? "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : null}
-      {trips.isSuccess ? (
-        <p className={styles.results}>{plural(trips.data.total, "trip")}</p>
-      ) : null}
+      <TableToolbar
+        filters={filters}
+        searchPlaceholder="Vehicle, route or bill"
+        statusOptions={[
+          { value: "paid", label: "Paid" },
+          { value: "unpaid", label: "Unpaid" },
+        ]}
+      />
+      <DataTable
+        caption="Trips"
+        columns={columns}
+        rows={rows}
+        rowKey={(t) => t.id}
+        loading={trips.isPending}
+        error={trips.isError ? "Trips could not be loaded." : null}
+        onRetry={() => void trips.refetch()}
+        empty={filters.q || filters.status ? "No trips match." : "No trips yet."}
+        footer={trips.isSuccess ? plural(rows.length, "trip") : undefined}
+      />
     </div>
   );
 }

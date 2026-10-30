@@ -2,6 +2,8 @@ import { NavLink, Outlet } from "react-router";
 
 import { useAuth } from "@/auth/AuthContext";
 import styles from "@/components/Ledger.module.css";
+import { PageHeader } from "@/components/PageHeader";
+import { purposeOf } from "@/modules";
 
 const TABS = [
   { to: "/stock", label: "Stock levels", end: true, roles: ["owner", "counter", "accountant"] },
@@ -28,9 +30,7 @@ export function StockLayout() {
   const { user } = useAuth();
   return (
     <section aria-labelledby="stock-title" className={styles.page}>
-      <h1 id="stock-title" className={styles.title}>
-        Stock
-      </h1>
+      <PageHeader title="Stock" titleId="stock-title" subtitle={purposeOf("/stock")} />
       <nav aria-label="Stock sections">
         <ul className={styles.tabs}>
           {TABS.filter((t) => user && t.roles.includes(user.role)).map((t) => (

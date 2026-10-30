@@ -5,6 +5,7 @@ import type { LedgerAccount } from "@/api/types";
 import { SelectField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
 import { formatMoney, plural } from "@/lib/format";
+import { scrollRegion } from "@/components/scrollRegion";
 
 /** Who owes us, or whom we owe, with how old the money is (the weekly dues list). */
 export function DuesPage() {
@@ -25,7 +26,7 @@ export function DuesPage() {
       </div>
       {d && d.rows.length === 0 ? <p className={styles.empty}>Nothing is outstanding.</p> : null}
       {d && d.rows.length > 0 ? (
-        <div className={styles.tableWrap}>
+        <div className={styles.tableWrap} {...scrollRegion("Dues")}>
           <table className={styles.table}>
             <thead>
               <tr>

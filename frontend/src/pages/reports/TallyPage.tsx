@@ -8,6 +8,7 @@ import { Button } from "@/components/Button";
 import { TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
 import { formatMoney } from "@/lib/format";
+import { scrollRegion } from "@/components/scrollRegion";
 
 function monthBounds(asOf: string): { from: string; to: string } {
   const [y, m] = asOf.split("-").map(Number);
@@ -112,7 +113,7 @@ export function TallyPage() {
           </p>
           {p.note ? <p className={styles.note}>{p.note}</p> : null}
 
-          <div className={styles.tableWrap}>
+          <div className={styles.tableWrap} {...scrollRegion("Vouchers in the file")}>
             <table className={styles.table} aria-label="Vouchers in the file">
               <thead>
                 <tr>
@@ -137,7 +138,7 @@ export function TallyPage() {
             </table>
           </div>
 
-          <div className={styles.tableWrap}>
+          <div className={styles.tableWrap} {...scrollRegion("Checks against the books")}>
             <table className={styles.table} aria-label="Checks against the books">
               <thead>
                 <tr>

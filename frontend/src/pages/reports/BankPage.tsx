@@ -18,6 +18,7 @@ import { addDays } from "@/lib/dates";
 import { formatMoney } from "@/lib/format";
 
 import tiles from "./PnlPage.module.css";
+import { scrollRegion } from "@/components/scrollRegion";
 
 const rupees = (value: string) => `₹${formatMoney(value)}`;
 
@@ -155,7 +156,7 @@ export function BankPage() {
             days; a matching UPI or bank reference wins. Matching is worked out each time you open
             this page.
           </p>
-          <div className={styles.tableWrap}>
+          <div className={styles.tableWrap} {...scrollRegion("Bank lines")}>
             <table className={styles.table} aria-label="Bank lines">
               <thead>
                 <tr>
@@ -199,7 +200,7 @@ export function BankPage() {
           </div>
 
           <h2 style={{ margin: 0 }}>In our books, not on the statement</h2>
-          <div className={styles.tableWrap}>
+          <div className={styles.tableWrap} {...scrollRegion("Recorded but not in the bank")}>
             <table className={styles.table} aria-label="Recorded but not in the bank">
               <thead>
                 <tr>
@@ -237,7 +238,7 @@ export function BankPage() {
       {statements.data && statements.data.length > 0 ? (
         <>
           <h2 style={{ margin: 0 }}>Statements uploaded</h2>
-          <div className={styles.tableWrap}>
+          <div className={styles.tableWrap} {...scrollRegion("Statements uploaded")}>
             <table className={styles.table} aria-label="Statements uploaded">
               <thead>
                 <tr>

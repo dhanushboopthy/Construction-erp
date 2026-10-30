@@ -6,6 +6,7 @@ import { TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
 import { Metric } from "@/components/Metric";
 import { formatMoney, trimDecimal } from "@/lib/format";
+import { scrollRegion } from "@/components/scrollRegion";
 
 /** Input tax to take back in GSTR-3B for goods lost in the month (FM2, owner and accountant). */
 export function ItcReversalPage() {
@@ -42,7 +43,7 @@ export function ItcReversalPage() {
             />
           </dl>
           <p className={styles.note}>{r.note}</p>
-          <div className={styles.tableWrap}>
+          <div className={styles.tableWrap} {...scrollRegion("ITC to reverse")}>
             <table className={styles.table} aria-label="ITC to reverse">
               <thead>
                 <tr>

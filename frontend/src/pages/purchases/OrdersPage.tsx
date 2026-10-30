@@ -17,6 +17,7 @@ import { useTableFilters } from "@/hooks/useTableFilters";
 import { includesText } from "@/lib/filters";
 import { formatMoney, trimDecimal } from "@/lib/format";
 import { unitNames } from "@/pages/items/itemLabels";
+import { scrollRegion } from "@/components/scrollRegion";
 
 const DECIMAL = /^\d+(\.\d+)?$/;
 const STATUS: Record<string, string> = {
@@ -288,7 +289,7 @@ export function OrdersPage() {
         <input type="checkbox" checked={openOnly} onChange={(e) => setOpenOnly(e.target.checked)} />
         Show only orders not fully billed
       </label>
-      <div className={styles.tableWrap}>
+      <div className={styles.tableWrap} {...scrollRegion("Purchase orders")}>
         <table className={styles.table} aria-label="Purchase orders">
           <thead>
             <tr>

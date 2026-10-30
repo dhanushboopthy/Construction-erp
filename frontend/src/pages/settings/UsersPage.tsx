@@ -16,6 +16,7 @@ import { moveRowFocus, useAltKey } from "@/hooks/useKeys";
 import { formatDateTime } from "@/lib/format";
 
 import styles from "@/components/Ledger.module.css";
+import { scrollRegion } from "@/components/scrollRegion";
 
 const MIN_PASSWORD = 8; // backend app/core/security.py MIN_PASSWORD_LENGTH
 
@@ -97,7 +98,7 @@ export function UsersPage() {
         </p>
       ) : null}
       <div className={styles.split}>
-        <div className={styles.tableWrap}>
+        <div className={styles.tableWrap} {...scrollRegion("Users")}>
           <table className={styles.table}>
             <thead>
               <tr>

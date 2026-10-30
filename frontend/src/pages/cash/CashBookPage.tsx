@@ -17,6 +17,7 @@ import { SelectField, TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
 import { useShops } from "@/hooks/useShops";
 import { formatMoney } from "@/lib/format";
+import { scrollRegion } from "@/components/scrollRegion";
 
 const KIND: Record<CashEntryKind, string> = {
   expense: "Expense",
@@ -252,7 +253,7 @@ export function CashBookPage() {
         </div>
       ) : null}
 
-      <div className={styles.tableWrap}>
+      <div className={styles.tableWrap} {...scrollRegion("Vouchers")}>
         <table className={styles.table} aria-label="Vouchers">
           <thead>
             <tr>

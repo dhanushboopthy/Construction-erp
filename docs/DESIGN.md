@@ -125,7 +125,8 @@ use tabular figures (`.num`).
 **Shape:** radius 8 (controls), 12 (cards, menus, dialogs), 999 (pills). `--radius-lg` equals
 `--radius-md` for now so existing rules keep working. Spacing on a 4-px scale. Icons are Lucide
 (`lucide-react`), 18–20 px, stroke ~1.9. Motion 150–250 ms, ease-out; the only entrance animation
-is the chart bars and stock bars growing in; reduced motion turns it off.
+is the chart bars and stock bars growing in; reduced motion turns every animation and transition
+off (`animation: none`, not a zero-length one, so a delayed bar is never held hidden).
 
 **Colour outside `tokens.css`.** Components use tokens only. The three places a CSS variable cannot
 reach hold a colour by hand: `index.html` (`theme-color`, the browser bar), `public/favicon.svg`
@@ -181,6 +182,34 @@ lists); `DataTable` is for read-and-open lists and is adopted screen by screen i
   and a pasted link keep them, and opening a bill or a row keeps them too. `/` jumps to the
   search box. Not lists, so not converted: the cash book and the daily rate board (entry grids for
   one day) and the stock counts picker.
+- **Sign-in.** From 900 px a split page: a navy panel on the left with the business's initials,
+  its name and tagline (from `GET /tenant`, which is open to signed-out visitors and returns
+  nothing but those two things), and the white form card on the right. Below 900 px the panel is a
+  slim navy banner above the form. If the name cannot be read the page still works and says
+  "Construction ERP". The form works with the keyboard alone (username has focus on arrival, Tab,
+  password, Enter) and errors appear under it.
+- **Reports and settings.** Both start with a `PageHeader` (the module's purpose as subtitle).
+  Reports keep the tab strip of sections the role may open (owner-only reports are not in the
+  strip for counter staff, and their routes are guarded as before). Settings put the sections in a
+  column on the left from 1100 px (the current one on an accent tint with an orange marker) and
+  in a scrolling strip above that. Headline numbers on report screens are `Metric`s: the same card
+  look as `KpiCard` (radius 12, small caps label, large tabular value) plus the KPI-catalogue
+  formula tooltip, which is why `Metric` was restyled rather than replaced. The "Rule B8" tag on a
+  setting is a neutral pill.
+- **Charts.** Series are told apart by pattern as well as colour: the sales-by-segment chart uses
+  solid, solid, hatched and dotted fills, the legend repeats the pattern, and the same numbers are
+  in a table under it. On Today the current month is orange and also bold and underlined in its
+  label, with the value on hover or focus.
+- **Entry screens (bill, purchase).** A white header card (customer, delivery, shop, date), one
+  white card per line with the Field style (label above, error under the field), and the totals on
+  the right in a navy card: line figures in white, the grand total large and white (`--color-on-hero`
+  on `--color-hero`, 12.7:1 or better), problems in `--color-on-hero-critical`. Below 1100 px the
+  totals card moves under the lines. The order of the fields is part of the design: from a line's
+  item, two Tabs reach Quantity and Enter adds the next line; `BillKeys.test.tsx` fails if a
+  5-line bill ever needs more keys than the 26 it takes today.
+- **Forms.** Settings and other full-page forms are sections (heading and purpose on the left),
+  two columns of fields from 1100 px and one below, with a sticky save bar. Editors beside a list
+  (item, customer) stay one column in their side panel. Errors sit under their field.
 - **List + editor.** Setup lists (users, locations, later items and parties) are a ledger table
   with an editor panel beside it (stacked below 1100 px). The row being edited carries the
   accent tint and marker bar. Alt+N opens a new record, Up/Down move between rows, Enter opens, Esc
@@ -201,7 +230,24 @@ and accountant seed users and saves a PNG of every routed screen in light and da
 and 390 px, plus the sign-in page, to `frontend/screenshots/baseline/<role>/<theme>-<width>/`
 (git-ignored). Options: `--out <folder>`, `--roles owner,counter`, `--only sales,reports`. It
 writes `manifest.json` and exits non-zero if a screen redirects. The screen list is in
-`frontend/scripts/screenshots.ts`; it checks itself against `src/modules.ts`, so a new module
+`frontend/scripts/shared.ts`; it checks itself against `src/modules.ts`, so a new module
 fails the run until it is added. Take a set before a UI change and another after, and compare.
 Use development seed data only, never production. The UI refresh in
 [UI_REFACTOR_PLAN](UI_REFACTOR_PLAN.md) uses this as its baseline.
+
+`npm run qa` (same setup) is the browser check behind the accessibility floor. `axe` runs axe-core
+on every screen as every role that may open it, in both themes at 1440 and 390 px, and fails on
+any serious or critical violation (colour contrast included). `motion` loads Today, Sales and
+Items with reduced motion on and fails if anything still animates. `keys` tabs through Today,
+bill entry, purchase entry and Items, and fails on a tab stop without a visible focus ring; it
+also checks Alt+1–4 and opening and closing the Items editor from the keyboard. Choose with
+`--only axe,motion,keys` and `--roles owner`.
+
+**Scrolling tables.** A table that scrolls sideways on a phone sits in a box that is a labelled
+region and a tab stop (`scrollRegion(label)` in `components/scrollRegion.ts`), so a keyboard user
+can reach the hidden columns. `DataTable` adds it only when rows are not openable, because the
+row buttons already give the keyboard a way in and the first Tab must land on the first row.
+
+**Tinted nav items** (the current Settings section) use `--color-accent-strong` for text: the
+plain accent is 4.3:1 on its own tint over the page background. `tokens.test.ts` checks pairs
+over the page background as well as over a card.

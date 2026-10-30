@@ -2,6 +2,7 @@ import { useDropShipReport } from "@/api/transport";
 import { useAuth } from "@/auth/AuthContext";
 import styles from "@/components/Ledger.module.css";
 import { formatMoney, plural, trimDecimal } from "@/lib/format";
+import { scrollRegion } from "@/components/scrollRegion";
 
 /** Sales delivered straight from the supplier: what they earned after the purchase and freight. */
 export function DirectSalesPage() {
@@ -24,7 +25,7 @@ export function DirectSalesPage() {
         </p>
       ) : null}
       {rows.length > 0 ? (
-        <div className={styles.tableWrap}>
+        <div className={styles.tableWrap} {...scrollRegion("Direct sales")}>
           <table className={styles.table}>
             <thead>
               <tr>

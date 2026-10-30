@@ -56,8 +56,11 @@ function ratio(a: Rgb, b: Rgb): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-/** [foreground, background, minimum ratio]. translucent backgrounds are laid over the surface. */
-const PAIRS: [string, string, number][] = [
+/**
+ * [foreground, background, minimum ratio, what a translucent background is laid over]. The last
+ * is the surface unless named: a tinted nav item on the page background is darker than on a card.
+ */
+const PAIRS: [string, string, number, string?][] = [
   ["--color-label", "--color-bg", 4.5],
   ["--color-label", "--color-surface", 4.5],
   ["--color-label", "--color-fill", 4.5],
@@ -68,6 +71,7 @@ const PAIRS: [string, string, number][] = [
   ["--color-accent", "--color-surface", 4.5],
   ["--color-accent", "--color-fill", 4.5],
   ["--color-accent", "--color-accent-soft", 4.5],
+  ["--color-accent-strong", "--color-accent-soft", 4.5, "--color-bg"],
   ["--color-on-accent", "--color-accent", 4.5],
   ["--color-on-accent", "--color-accent-strong", 4.5],
   ["--color-on-accent-bright", "--color-accent-bright", 4.5],
@@ -91,6 +95,8 @@ const PAIRS: [string, string, number][] = [
   ["--color-on-sidebar-muted", "--color-sidebar", 4.5],
   ["--color-on-sidebar-muted", "--color-sidebar-active", 4.5],
   ["--color-on-hero", "--color-hero", 4.5],
+  ["--color-on-hero-muted", "--color-hero", 4.5],
+  ["--color-on-hero-critical", "--color-hero", 4.5],
   // Non-text: control borders, focus ring, status colours as graphics, the sidebar marker.
   ["--color-control-border", "--color-surface", 3],
   ["--color-control-border", "--color-bg", 3],
@@ -113,8 +119,9 @@ describe.each([
   ["dark", DARK],
 ])("tokens.css contrast, %s theme", (_theme, tokens) => {
   const surface = resolve(tokens, tokens["--color-surface"] ?? "", [255, 255, 255]);
-  it.each(PAIRS)("%s on %s is at least %s:1", (fg, bg, min) => {
-    const back = resolve(tokens, tokens[bg] ?? "", surface);
+  const page = resolve(tokens, tokens["--color-bg"] ?? "", surface);
+  it.each(PAIRS)("%s on %s is at least %s:1", (fg, bg, min, over) => {
+    const back = resolve(tokens, tokens[bg] ?? "", over === "--color-bg" ? page : surface);
     const front = resolve(tokens, tokens[fg] ?? "", back);
     expect(ratio(front, back)).toBeGreaterThanOrEqual(min);
   });

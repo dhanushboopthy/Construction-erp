@@ -7,6 +7,7 @@ import { Button } from "@/components/Button";
 import { TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
 import { formatMoney, trimDecimal } from "@/lib/format";
+import { scrollRegion } from "@/components/scrollRegion";
 
 const isOwnerRow = (r: BoardRow): r is RateRowOwner => "avg_cost" in r;
 
@@ -133,7 +134,7 @@ export function RateBoardPage() {
           </ul>
         </div>
       ) : null}
-      <div className={styles.tableWrap}>
+      <div className={styles.tableWrap} {...scrollRegion("Daily rates")}>
         {board.isPending ? (
           <p role="status" className={styles.empty}>
             Loading rates…

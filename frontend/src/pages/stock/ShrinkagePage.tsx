@@ -6,6 +6,7 @@ import styles from "@/components/Ledger.module.css";
 import { Metric } from "@/components/Metric";
 import { formatMoney, trimDecimal } from "@/lib/format";
 import tiles from "@/pages/reports/PnlPage.module.css";
+import { scrollRegion } from "@/components/scrollRegion";
 
 const rupees = (value: string) => `₹${formatMoney(value)}`;
 
@@ -43,7 +44,7 @@ export function ShrinkagePage() {
               note={`From ${s.date_from} to ${s.date_to}.`}
             />
           </dl>
-          <div className={styles.tableWrap}>
+          <div className={styles.tableWrap} {...scrollRegion("Shortages by supplier")}>
             <table className={styles.table} aria-label="Shortages by supplier">
               <thead>
                 <tr>
@@ -89,7 +90,7 @@ export function ShrinkagePage() {
           {s.claims.length > 0 ? (
             <>
               <h2 style={{ margin: 0 }}>Lines to claim</h2>
-              <div className={styles.tableWrap}>
+              <div className={styles.tableWrap} {...scrollRegion("Shortage claims")}>
                 <table className={styles.table} aria-label="Shortage claims">
                   <thead>
                     <tr>

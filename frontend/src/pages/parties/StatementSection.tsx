@@ -5,6 +5,7 @@ import type { AccountView, Party } from "@/api/types";
 import styles from "@/components/Ledger.module.css";
 import { SelectField } from "@/components/Field";
 import { formatMoney } from "@/lib/format";
+import { scrollRegion } from "@/components/scrollRegion";
 
 function AccountBlock({ view, title }: { view: AccountView; title: string }) {
   const owed = Number(view.balance);
@@ -26,7 +27,7 @@ function AccountBlock({ view, title }: { view: AccountView; title: string }) {
         ) : null}
       </p>
       {view.entries.length > 0 ? (
-        <div className={styles.tableWrap}>
+        <div className={styles.tableWrap} {...scrollRegion("Statement")}>
           <table className={styles.table}>
             <thead>
               <tr>

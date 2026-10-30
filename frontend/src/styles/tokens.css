@@ -44,6 +44,9 @@
   /* The bill total card. */
   --color-hero: #0f1e33;
   --color-on-hero: #ffffff;
+  --color-on-hero-muted: #a9b4c6;
+  /* An error line on the navy totals card. */
+  --color-on-hero-critical: #fca5a5;
 
   --color-good: #15803d;
   --color-good-soft: rgb(21 128 61 / 8%);
@@ -142,6 +145,7 @@
   --color-on-accent-muted: rgb(11 18 32 / 72%);
   --color-accent-bright: #fb923c;
   --color-hero: #1e3354;
+  --color-on-hero-muted: #b4c0d3;
   --color-good: #4ade80;
   --color-good-soft: rgb(74 222 128 / 14%);
   --color-warn: #fbbf24;

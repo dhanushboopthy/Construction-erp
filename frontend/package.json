@@ -17,6 +17,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "shots": "node scripts/screenshots.ts",
+    "qa": "node scripts/qa.ts",
     "gen:api": "openapi-typescript http://localhost:8000/api/openapi.json -o src/api/schema.d.ts"
   },
   "dependencies": {
@@ -36,6 +37,7 @@
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "@vitejs/plugin-react": "^5.0.0",
+    "axe-core": "^4.10.2",
     "eslint": "^9.28.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",

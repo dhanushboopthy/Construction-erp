@@ -10,6 +10,7 @@ import { Metric } from "@/components/Metric";
 import { useShops } from "@/hooks/useShops";
 import { formatMoney, trimDecimal } from "@/lib/format";
 import tiles from "@/pages/reports/PnlPage.module.css";
+import { scrollRegion } from "@/components/scrollRegion";
 
 const rupees = (value: string | null | undefined) =>
   value == null
@@ -83,7 +84,7 @@ export function StockValuePage() {
               Writing stock down is switched off in Settings. The loss is shown here only.
             </p>
           ) : null}
-          <div className={styles.tableWrap}>
+          <div className={styles.tableWrap} {...scrollRegion("Stock against the market")}>
             <table className={styles.table} aria-label="Stock against the market">
               <thead>
                 <tr>
@@ -188,7 +189,7 @@ export function StockValuePage() {
       ) : null}
 
       {written.data && written.data.length > 0 ? (
-        <div className={styles.tableWrap}>
+        <div className={styles.tableWrap} {...scrollRegion("Write-downs")}>
           <table className={styles.table} aria-label="Write-downs">
             <thead>
               <tr>

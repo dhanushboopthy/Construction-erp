@@ -13,14 +13,14 @@
   font-weight: 600;
 }
 
-/* The spec rule a setting controls, e.g. "Rule B8": quiet, but there when the owner asks why. */
+/* The spec rule a setting controls, e.g. "Rule B8": a neutral pill, quiet but there when the owner asks why. */
 .rule {
   padding: 0 var(--space-2);
   border-radius: var(--radius-pill);
-  background: var(--color-fill);
+  background: var(--color-neutral-soft);
   color: var(--color-secondary);
   font-size: var(--text-xs);
-  font-weight: 500;
+  font-weight: 700;
   white-space: nowrap;
 }
 

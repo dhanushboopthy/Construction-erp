@@ -356,10 +356,17 @@ fieldset.choices legend {
   color: var(--color-secondary);
 }
 
+/* Two columns from 1100 px, one below. */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
+}
+
+@media (min-width: 1100px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .wide {
@@ -603,9 +610,40 @@ fieldset.choices legend {
   box-shadow: var(--shadow-raised);
 }
 
+/* The totals card on the entry screens: navy, with the grand total large and white. */
+.preview {
+  background: var(--color-hero);
+  color: var(--color-on-hero);
+}
+
 .preview h3 {
   margin: 0;
   font-size: var(--text-md);
+}
+
+.preview .sub {
+  color: var(--color-on-hero-muted);
+}
+
+.preview .kvStrong {
+  border-top-color: var(--color-sidebar-line);
+}
+
+.preview .billTotal {
+  padding: var(--space-3) 0 var(--space-2);
+  border-top: 1px solid var(--color-sidebar-line);
+  border-radius: 0;
+  background: none;
+}
+
+.preview .formError,
+.preview .problem {
+  background: var(--color-sidebar-hover);
+  color: var(--color-on-hero-critical);
+}
+
+.preview .negative {
+  color: var(--color-on-hero-critical);
 }
 
 .kv {

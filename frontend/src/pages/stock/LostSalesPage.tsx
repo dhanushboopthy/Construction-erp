@@ -14,6 +14,7 @@ import { formatMoney, trimDecimal } from "@/lib/format";
 import { unitNames } from "@/pages/items/itemLabels";
 
 import tiles from "@/pages/reports/PnlPage.module.css";
+import { scrollRegion } from "@/components/scrollRegion";
 
 /** "Asked for, out of stock" (FM10): one entry each time a customer asks for something the shop
  * cannot supply. Staff see quantities; the owner also sees what the lost sales were worth. */
@@ -150,7 +151,7 @@ export function LostSalesPage() {
               />
             ) : null}
           </dl>
-          <div className={styles.tableWrap}>
+          <div className={styles.tableWrap} {...scrollRegion("Fill rate by item")}>
             <table className={styles.table} aria-label="Fill rate by item">
               <thead>
                 <tr>
@@ -199,7 +200,7 @@ export function LostSalesPage() {
       ) : null}
 
       <h2 style={{ margin: 0 }}>Last 7 days</h2>
-      <div className={styles.tableWrap}>
+      <div className={styles.tableWrap} {...scrollRegion("Lost sales log")}>
         <table className={styles.table} aria-label="Lost sales log">
           <thead>
             <tr>

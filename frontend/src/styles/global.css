@@ -85,8 +85,11 @@ textarea {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * {
-    transition-duration: 0ms !important;
-    animation-duration: 0ms !important;
+  /* Off, not just instant: a zero-length animation with a delay would still hold bars hidden. */
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
   }
 }

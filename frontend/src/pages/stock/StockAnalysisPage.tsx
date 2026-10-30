@@ -3,6 +3,7 @@ import styles from "@/components/Ledger.module.css";
 import { Metric } from "@/components/Metric";
 import { formatMoney, trimDecimal } from "@/lib/format";
 import tiles from "@/pages/reports/PnlPage.module.css";
+import { scrollRegion } from "@/components/scrollRegion";
 
 const rupees = (value: string) => `₹${formatMoney(value)}`;
 const BUCKET_LABEL: Record<string, string> = {
@@ -50,7 +51,7 @@ export function StockAnalysisPage() {
           </dl>
 
           <h2 style={{ margin: 0 }}>Reorder now</h2>
-          <div className={styles.tableWrap}>
+          <div className={styles.tableWrap} {...scrollRegion("Items to reorder")}>
             <table className={styles.table} aria-label="Items to reorder">
               <thead>
                 <tr>
@@ -99,7 +100,7 @@ export function StockAnalysisPage() {
           </div>
 
           <h2 style={{ margin: 0 }}>How old the stock is</h2>
-          <div className={styles.tableWrap}>
+          <div className={styles.tableWrap} {...scrollRegion("Stock by age")}>
             <table className={styles.table} aria-label="Stock by age">
               <thead>
                 <tr>
@@ -125,7 +126,7 @@ export function StockAnalysisPage() {
           </div>
 
           <h2 style={{ margin: 0 }}>Every item</h2>
-          <div className={styles.tableWrap}>
+          <div className={styles.tableWrap} {...scrollRegion("Stock analysis")}>
             <table className={styles.table} aria-label="Stock analysis">
               <thead>
                 <tr>
@@ -184,7 +185,7 @@ export function StockAnalysisPage() {
         <>
           <h2 style={{ margin: 0 }}>Cement by age (an estimate)</h2>
           <p className={styles.note}>{cement.data.note}</p>
-          <div className={styles.tableWrap}>
+          <div className={styles.tableWrap} {...scrollRegion("Cement by age")}>
             <table className={styles.table} aria-label="Cement by age">
               <thead>
                 <tr>

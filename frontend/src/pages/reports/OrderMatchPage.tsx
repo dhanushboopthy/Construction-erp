@@ -9,6 +9,7 @@ import { addDays } from "@/lib/dates";
 import { formatMoney, trimDecimal } from "@/lib/format";
 
 import tiles from "./PnlPage.module.css";
+import { scrollRegion } from "@/components/scrollRegion";
 
 /** Supplier bills that differ from their purchase order beyond the tolerances, and the purchase
  * price variance on every bill that has an order (FM10, owner only). */
@@ -54,7 +55,7 @@ export function OrderMatchPage() {
               note={`${r.bills_checked} bills against an order, ${r.exceptions} out of tolerance. A plus figure is money paid above the order rate.`}
             />
           </dl>
-          <div className={styles.tableWrap}>
+          <div className={styles.tableWrap} {...scrollRegion("Order match exceptions")}>
             <table className={styles.table} aria-label="Order match exceptions">
               <thead>
                 <tr>

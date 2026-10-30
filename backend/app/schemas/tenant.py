@@ -6,3 +6,5 @@ class TenantOut(BaseModel):
 
     name: str
     tagline: str
+    # Where to load the logo from, or none: the app then draws the initials tile.
+    logo_url: str | None = None

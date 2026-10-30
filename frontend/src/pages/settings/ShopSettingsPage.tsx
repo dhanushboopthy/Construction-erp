@@ -9,6 +9,7 @@ import { isAmount } from "@/lib/format";
 import { GST_STATES } from "@/lib/gstStates";
 
 import styles from "@/components/Ledger.module.css";
+import { LogoSection } from "./LogoSection";
 
 const MONTHS = [
   "January",
@@ -195,7 +196,12 @@ export function ShopSettingsPage() {
   const query = useShopSettings();
   if (query.isPending) return <p role="status">{T.loading}</p>;
   if (query.isError) return <p className={styles.formError}>{T.loadFailed}</p>;
-  return <ShopSettingsForm settings={query.data} />;
+  return (
+    <div className={styles.sheet}>
+      <LogoSection />
+      <ShopSettingsForm settings={query.data} />
+    </div>
+  );
 }
 
 function ShopSettingsForm({ settings }: { settings: ShopSettings }) {

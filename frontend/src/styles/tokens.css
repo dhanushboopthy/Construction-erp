@@ -39,6 +39,8 @@
   --color-on-accent-muted: rgb(255 255 255 / 80%);
   /* Decorative orange (brand tile, alert dot, count badge); text on it is navy. */
   --color-accent-bright: #f97316;
+  /* The plate a shop's logo sits on in the sidebar and sign-in: white, so any logo reads in both themes. */
+  --color-logo-plate: #ffffff;
   --color-on-accent-bright: #0f1e33;
 
   /* The bill total card. */

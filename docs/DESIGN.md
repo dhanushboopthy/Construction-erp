@@ -15,8 +15,8 @@ soft shadow, a navy sidebar in both themes, and a single orange accent for actio
 active marker. Status uses green, amber and red, always with a word. There are no gradients and no
 coloured glow. Small labels are uppercase with wide tracking; figures are large and extra-bold.
 
-**Frame.** Navy sidebar, 240 px wide. Brand block: an orange tile with the business's initials, the
-business name from `GET /tenant` (the product name "Construction ERP" stands in until it arrives)
+**Frame.** Navy sidebar, 240 px wide. Brand block: the shop's logo on a white plate, or, without one, an orange tile with its initials
+(`BrandMark`), the business name from `GET /tenant` (the product name "Construction ERP" stands in until it arrives)
 and "Construction ERP" under it. Nav: a Lucide icon and label per module the role may open (the
 list comes from `modulesFor(role)`, nothing else), the shortcut (`Alt 2`) shown on hover and
 focus and in the tooltip; the current screen sits on a lighter navy block with an orange marker on
@@ -159,6 +159,7 @@ Build screens from these; each has tests for its states, keyboard use and access
 | `PageHeader` | Eyebrow (shop or section), title (`<h1>`), subtitle, actions slot on the right | One per screen. The title is the only `<h1>` |
 | `KpiCard` | Label, big tabular value, icon tile coloured by tone, optional note, optional progress bar, optional link | With `href` the whole card is one link. The bar is `role="progressbar"` with `aria-valuenow/min/max` and the percentage written beside it. The value shrinks with the card so a long amount fits |
 | `StatusPill` | Icon and word on a tone: good, warn, critical, neutral, accent | `label` is required (a pill without text does not type-check). Solid in light, tinted in dark |
+| `BrandMark` | The shop's logo, or its initials on a tile; the page supplies the tile (size, shape) | Decorative (`aria-hidden`, the name is beside it). The logo sits on `--color-logo-plate` (white) so any logo reads in both themes. If the image fails to load, the initials stand in |
 | `Avatar` | Initials in a circle, navy or orange picked from the name, 32 or 40 px | Decorative next to a name; give `label` when it stands alone |
 | `ProgressBar` | A bar with its percentage beside it, `role="progressbar"` | Used by `KpiCard` and the credit-used column |
 | `DataTable` | The list pattern: 64 px rows, two-line first cell (`PrimaryCell`), right-aligned tabular figures, status column, chevron, sticky header | With `onOpen`: Up/Down between rows, Enter opens, click opens, the selected row has the accent marker. Draws loading, error (with retry) and empty states |
@@ -182,9 +183,9 @@ lists); `DataTable` is for read-and-open lists and is adopted screen by screen i
   and a pasted link keep them, and opening a bill or a row keeps them too. `/` jumps to the
   search box. Not lists, so not converted: the cash book and the daily rate board (entry grids for
   one day) and the stock counts picker.
-- **Sign-in.** From 900 px a split page: a navy panel on the left with the business's initials,
-  its name and tagline (from `GET /tenant`, which is open to signed-out visitors and returns
-  nothing but those two things), and the white form card on the right. Below 900 px the panel is a
+- **Sign-in.** From 900 px a split page: a navy panel on the left with the business's logo or
+  initials, its name and tagline (from `GET /tenant`, which is open to signed-out visitors and
+  returns nothing but those two things and the logo's address), and the white form card on the right. Below 900 px the panel is a
   slim navy banner above the form. If the name cannot be read the page still works and says
   "Construction ERP". The form works with the keyboard alone (username has focus on arrival, Tab,
   password, Enter) and errors appear under it.
@@ -251,3 +252,10 @@ row buttons already give the keyboard a way in and the first Tab must land on th
 **Tinted nav items** (the current Settings section) use `--color-accent-strong` for text: the
 plain accent is 4.3:1 on its own tint over the page background. `tokens.test.ts` checks pairs
 over the page background as well as over a card.
+
+
+**Shop logo.** The owner uploads it in Settings › Shop details (`LogoSection`): a square PNG
+(32 to 2048 px) or a plain SVG, up to 200 KB, replaced or removed at once, not part of "Save shop
+details". The API checks the type from the bytes, rejects an SVG with anything beyond drawing
+shapes (no script, style sheet, image, foreignObject or outside link), and serves it with
+`nosniff` and a policy that forbids scripts and sub-resources. It is shown only through `<img>`.

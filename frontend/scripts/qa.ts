@@ -28,10 +28,12 @@ const { values: args } = parseArgs({
     base: { type: "string", default: process.env.SHOTS_BASE_URL ?? "http://localhost:5173" },
     roles: { type: "string", default: ALL.join(",") },
     only: { type: "string", default: "axe,motion,keys" },
+    paths: { type: "string" }, // axe only: comma-separated substrings of the screen path
   },
 });
 const base = (args.base ?? "").replace(/\/$/, "");
 const roles = (args.roles ?? "").split(",").map((r) => r.trim()) as Role[];
+const pathFilter = args.paths?.split(",").map((s) => s.trim());
 const checks = (args.only ?? "").split(",").map((s) => s.trim());
 
 const problems: string[] = [];
@@ -90,7 +92,11 @@ async function runAxe(browser: Browser) {
         const paths =
           role === "anonymous"
             ? ["/login"]
-            : SCREENS.filter((s) => s.roles.includes(role)).map((s) => s.path);
+            : SCREENS.filter(
+                (s) =>
+                  s.roles.includes(role) &&
+                  (!pathFilter || pathFilter.some((f) => s.path.includes(f))),
+              ).map((s) => s.path);
         for (const p of paths) {
           await page.goto(`${base}${p}`);
           await settle(page, role === "anonymous");

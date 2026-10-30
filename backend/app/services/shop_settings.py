@@ -25,7 +25,11 @@ def get_settings_row(db: Session) -> ShopSettings:
 def get_tenant(db: Session) -> TenantOut:
     """The business name for the sidebar: the trade name if there is one, else the legal name."""
     row = get_settings_row(db)
-    return TenantOut(name=row.trade_name or row.legal_name, tagline=DEFAULT_TAGLINE)
+    return TenantOut(
+        name=row.trade_name or row.legal_name,
+        tagline=DEFAULT_TAGLINE,
+        logo_url=f"/api/v1/tenant/logo?v={row.logo_sha256[:12]}" if row.logo_sha256 else None,
+    )
 
 
 def update_settings(db: Session, data: ShopSettingsUpdate) -> ShopSettings:

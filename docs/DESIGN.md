@@ -94,9 +94,13 @@ use tabular figures (`.num`).
 (`lucide-react`), 18–20 px, stroke ~1.9. Motion 150–250 ms, ease-out; the only entrance animation
 is the chart bars and stock bars growing in; reduced motion turns it off.
 
-**Colour outside `tokens.css`.** Components use tokens only. The two places a CSS variable cannot
-reach hold the same navy and orange by hand: `index.html` (`theme-color`, the browser bar) and
-`public/favicon.svg`. Change them together with the tokens.
+**Colour outside `tokens.css`.** Components use tokens only. The three places a CSS variable cannot
+reach hold a colour by hand: `index.html` (`theme-color`, the browser bar), `public/favicon.svg`
+(navy and orange), and the select chevron in `Field.module.css` (a data URI, slate `#76839A`, the
+control-border grey). Change them together with the tokens.
+
+**Sizes.** `--row-height` (64 px table rows), `--icon-tile` (40 px KPI icon tile), `--avatar-sm` and
+`--avatar-md` (32 and 40 px), `--bar-height` (8 px progress bars).
 
 ## Principles
 
@@ -111,6 +115,27 @@ reach hold the same navy and orange by hand: `index.html` (`theme-color`, the br
 6. **Accessibility floor:** contrast 4.5:1, labels on every input, status not by colour alone,
    reduced motion respected, works at 1024 px and on a phone for the owner.
 7. **Tamil labels later:** keep strings in one place per screen so translation can be added.
+
+## Components (`frontend/src/components/`)
+
+Build screens from these; each has tests for its states, keyboard use and accessible names.
+
+| Component | What it is | Rules |
+| --- | --- | --- |
+| `PageHeader` | Eyebrow (shop or section), title (`<h1>`), subtitle, actions slot on the right | One per screen. The title is the only `<h1>` |
+| `KpiCard` | Label, big tabular value, icon tile coloured by tone, optional note, optional progress bar, optional link | With `href` the whole card is one link. The bar is `role="progressbar"` with `aria-valuenow/min/max` and the percentage written beside it. The value shrinks with the card so a long amount fits |
+| `StatusPill` | Icon and word on a tone: good, warn, critical, neutral, accent | `label` is required (a pill without text does not type-check). Solid in light, tinted in dark |
+| `Avatar` | Initials in a circle, navy or orange picked from the name, 32 or 40 px | Decorative next to a name; give `label` when it stands alone |
+| `DataTable` | The list pattern: 64 px rows, two-line first cell (`PrimaryCell`), right-aligned tabular figures, status column, chevron, sticky header | With `onOpen`: Up/Down between rows, Enter opens, click opens, the selected row has the accent marker. Draws loading, error (with retry) and empty states |
+| `TableToolbar` + `useTableFilters` | Search (waits for a pause in typing; `/` focuses it), status `<select>`, optional date range | Filters live in the URL (`?q=&status=&from=&to=`), so Back, reload and a pasted link keep them |
+| `Button` | `primary` (orange, one per screen), `secondary` (outlined), `ghost` (text only) | Radius 8; always `type="button"` unless it submits |
+| `Field` family | Label above, hint and error under, 8 px radius, 3 px focus ring | Error and hint are linked with `aria-describedby`; a field error turns the border red |
+| `Segmented` | One choice out of a few, always visible | A radio group: one tab stop, arrows, Home and End |
+| Tabs (`styles.tabs` in `Ledger.module.css`) | Route tabs as a segmented strip | Used by the Reports, Stock, Rates, Transport and Settings layouts |
+
+`Metric` (the KPI-catalogue figure with a formula tooltip) stays on the report screens until T7
+moves them to `KpiCard`. `Ledger.module.css` keeps the dense editable tables (bill lines, setup
+lists); `DataTable` is for read-and-open lists and is adopted screen by screen in T4 and T5.
 
 ## Patterns
 

@@ -153,7 +153,7 @@ export function SalesPage() {
           >
             <div className={styles.panelHead}>
               <h2 id="inv-title">{inv.number}</h2>
-              <Button variant="quiet" onClick={() => setParams({})}>
+              <Button variant="ghost" onClick={() => setParams({})}>
                 Close
               </Button>
             </div>

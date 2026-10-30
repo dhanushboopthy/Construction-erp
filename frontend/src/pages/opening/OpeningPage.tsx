@@ -167,7 +167,7 @@ export function OpeningPage() {
                   <td>
                     {r.status === "draft" ? (
                       <Button
-                        variant="quiet"
+                        variant="ghost"
                         aria-label={`Remove ${r.item_name ?? r.party_name ?? "entry"}`}
                         onClick={() => void remove.mutateAsync(r.id)}
                       >

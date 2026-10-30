@@ -10,7 +10,7 @@
   align-items: baseline;
   gap: var(--space-1) var(--space-2);
   font-size: var(--text-sm);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* The spec rule a setting controls, e.g. "Rule B8": quiet, but there when the owner asks why. */
@@ -55,14 +55,14 @@
 }
 
 .control[aria-invalid="true"]:focus {
-  box-shadow: 0 0 0 4px var(--color-critical-soft);
+  box-shadow: 0 0 0 3px var(--color-critical);
 }
 
-/* Native selects look dated on Windows: draw an Apple-style chevron (mid grey works in both themes). */
+/* Native selects look dated on Windows: draw a chevron (the control-border grey works in both themes; a data URI cannot use a token). */
 select.control {
   appearance: none;
   padding-right: var(--space-6);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none' stroke='%238c91b5' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 4.5 6 1.75 9 4.5M3 7.5 6 10.25 9 7.5'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none' stroke='%2376839a' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 4.5 6 1.75 9 4.5M3 7.5 6 10.25 9 7.5'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right var(--space-3) center;
 }

@@ -1,0 +1,136 @@
+.card {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-5);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  color: inherit;
+  text-decoration: none;
+  container-type: inline-size;
+}
+
+.link {
+  transition: box-shadow var(--duration-fast) var(--ease);
+}
+
+.link:hover {
+  box-shadow: var(--shadow-raised);
+}
+
+.link:focus-visible {
+  box-shadow:
+    var(--shadow-card),
+    0 0 0 3px var(--color-focus);
+}
+
+.top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.label {
+  color: var(--color-secondary);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--icon-tile);
+  height: var(--icon-tile);
+  border-radius: var(--radius-sm);
+}
+
+.icon[data-tone="good"] {
+  background: var(--color-good-soft);
+  color: var(--color-good);
+}
+
+.icon[data-tone="warn"] {
+  background: var(--color-warn-soft);
+  color: var(--color-warn);
+}
+
+.icon[data-tone="critical"] {
+  background: var(--color-critical-soft);
+  color: var(--color-critical);
+}
+
+.icon[data-tone="neutral"] {
+  background: var(--color-neutral-soft);
+  color: var(--color-secondary);
+}
+
+.icon[data-tone="accent"] {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.value {
+  font-family: var(--font-display);
+  /* Shrinks with the card so a lakh-crore figure never spills out. */
+  font-size: clamp(var(--text-lg), 14cqi, var(--text-figure));
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  letter-spacing: var(--tracking-tight);
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.note {
+  color: var(--color-secondary);
+  font-size: var(--text-sm);
+}
+
+.progressRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.track {
+  flex: 1;
+  height: var(--bar-height);
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--color-fill);
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-accent);
+}
+
+.fill[data-tone="good"] {
+  background: var(--color-good);
+}
+
+.fill[data-tone="warn"] {
+  background: var(--color-warn);
+}
+
+.fill[data-tone="critical"] {
+  background: var(--color-critical);
+}
+
+.fill[data-tone="neutral"] {
+  background: var(--color-neutral-pill);
+}
+
+.percent {
+  color: var(--color-secondary);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}

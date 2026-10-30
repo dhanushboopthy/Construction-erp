@@ -72,7 +72,7 @@ export function InvoiceReturn({ inv }: { inv: SalesInvoiceFull }) {
           </span>
           <span>
             ₹{formatMoney(n.grand_total)}{" "}
-            <Button variant="quiet" onClick={() => void openFile(`/credit-notes/${n.id}/pdf`)}>
+            <Button variant="ghost" onClick={() => void openFile(`/credit-notes/${n.id}/pdf`)}>
               Print {n.number}
             </Button>
           </span>

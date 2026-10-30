@@ -2,7 +2,8 @@ import type { ButtonHTMLAttributes } from "react";
 
 import styles from "./Button.module.css";
 
-type Variant = "primary" | "secondary" | "quiet";
+/** Primary: orange, one per screen. Secondary: outlined. Ghost: text only, for the quiet third action. */
+type Variant = "primary" | "secondary" | "ghost";
 
 export function Button({
   variant = "secondary",

@@ -123,7 +123,7 @@ export function ChargeTypesPage() {
                   </td>
                   <td>
                     <Button
-                      variant="quiet"
+                      variant="ghost"
                       aria-label={`${c.is_active ? "Hide" : "Show"} ${c.name}`}
                       onClick={() =>
                         void update.mutateAsync({ id: c.id, body: { is_active: !c.is_active } })

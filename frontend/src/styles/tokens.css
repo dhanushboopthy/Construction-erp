@@ -107,6 +107,11 @@
   --radius-lg: 12px;
   --radius-pill: 999px;
   --control-height: 42px;
+  --row-height: 64px;
+  --icon-tile: 40px;
+  --avatar-sm: 32px;
+  --avatar-md: 40px;
+  --bar-height: 8px;
   --sidebar-width: 272px;
   --topbar-height: 76px;
   --panel-width: 400px;

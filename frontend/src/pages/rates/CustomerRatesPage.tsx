@@ -174,7 +174,7 @@ export function CustomerRatesPage() {
                   <td>
                     {r.is_active ? (
                       <Button
-                        variant="quiet"
+                        variant="ghost"
                         aria-label={`Stop rate for ${r.party_name}, ${r.item_name}`}
                         onClick={() =>
                           void end.mutateAsync({ id: r.id, body: { is_active: false } })

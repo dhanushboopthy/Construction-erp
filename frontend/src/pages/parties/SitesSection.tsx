@@ -71,11 +71,11 @@ export function SitesSection({ party }: { party: Party }) {
                 {stateName(s.state_code)} · {s.gstin ?? "URP (no GSTIN)"}
               </span>
               <div className={styles.actions}>
-                <Button variant="quiet" onClick={() => begin(s)}>
+                <Button variant="ghost" onClick={() => begin(s)}>
                   Edit {s.name}
                 </Button>
                 <Button
-                  variant="quiet"
+                  variant="ghost"
                   onClick={() =>
                     void update.mutateAsync({ id: s.id, body: { is_active: !s.is_active } })
                   }

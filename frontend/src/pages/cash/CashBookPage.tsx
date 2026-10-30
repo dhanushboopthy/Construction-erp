@@ -294,7 +294,7 @@ export function CashBookPage() {
                 {owner ? (
                   <td>
                     {!e.reverses_id && !e.reversed_by_number ? (
-                      <Button variant="quiet" onClick={() => void onReverse(e)}>
+                      <Button variant="ghost" onClick={() => void onReverse(e)}>
                         Reverse
                       </Button>
                     ) : null}

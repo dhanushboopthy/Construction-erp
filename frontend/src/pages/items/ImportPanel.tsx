@@ -36,7 +36,7 @@ export function ImportPanel({ onClose }: { onClose: () => void }) {
     >
       <div className={styles.panelHead}>
         <h2 id="import-title">Import items from Excel</h2>
-        <Button variant="quiet" onClick={onClose}>
+        <Button variant="ghost" onClick={onClose}>
           Close
         </Button>
       </div>

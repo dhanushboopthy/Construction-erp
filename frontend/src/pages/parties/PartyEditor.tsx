@@ -123,7 +123,7 @@ export function PartyEditor({
     >
       <div className={styles.panelHead}>
         <h2 id={titleId}>{party ? party.name : "New party"}</h2>
-        <Button variant="quiet" onClick={onClose}>
+        <Button variant="ghost" onClick={onClose}>
           Close
         </Button>
       </div>

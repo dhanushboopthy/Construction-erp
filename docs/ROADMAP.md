@@ -50,7 +50,7 @@ T5–T9 in any order.
 | --- | --- | --- | --- |
 | T0 | Baseline screenshots | `npm run shots` covers every module route for owner, counter and accountant, light and dark, at 1440, 1024 and 390 px | **Done** (`style/ui-baseline`) |
 | T1 | Tokens and design doc | No raw hex outside `tokens.css`; every text pair ≥ 4.5:1 | **Done** (`style/ui-tokens`; contrast checked by `tokens.test.ts`) |
-| T2 | Shared components | `PageHeader`, `KpiCard`, `StatusPill`, `Avatar`, `DataTable`, `TableToolbar`, buttons and fields tested | Planned |
+| T2 | Shared components | `PageHeader`, `KpiCard`, `StatusPill`, `Avatar`, `DataTable`, `TableToolbar`, buttons and fields tested | **Done** (`style/ui-components`) |
 | T3 | App shell: sidebar and top bar | Every module per role, shortcuts kept, tenant name from the API | Planned |
 | T4 | Today dashboard | KPI row and customer dues table; counter never requests receivables or profit | Planned |
 | T5 | List screens | Search, status filter and URL-kept filters on every list | Planned |

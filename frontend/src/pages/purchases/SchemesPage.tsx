@@ -246,7 +246,7 @@ export function SchemesPage() {
                       <>
                         ₹{formatMoney(s.projected_rebate)} earned{" "}
                         {owner ? (
-                          <Button variant="quiet" onClick={() => void bookRebate(s.id)}>
+                          <Button variant="ghost" onClick={() => void bookRebate(s.id)}>
                             Book rebate for {s.name}
                           </Button>
                         ) : null}

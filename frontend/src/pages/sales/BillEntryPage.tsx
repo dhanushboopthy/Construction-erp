@@ -408,7 +408,7 @@ export function BillEntryPage() {
                     <span />
                   )}
                   <Button
-                    variant="quiet"
+                    variant="ghost"
                     aria-label={`Remove line ${i + 1}`}
                     disabled={lines.length === 1}
                     onClick={() => setLines((rows) => rows.filter((_, j) => j !== i))}
@@ -520,7 +520,7 @@ export function BillEntryPage() {
                   }
                 />
                 <Button
-                  variant="quiet"
+                  variant="ghost"
                   aria-label={`Remove payment ${i + 1}`}
                   onClick={() => setPays((r) => r.filter((_, j) => j !== i))}
                 >

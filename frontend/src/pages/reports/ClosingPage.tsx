@@ -291,14 +291,14 @@ export function ClosingPage() {
                   <td>
                     {c.has_pdf ? (
                       <Button
-                        variant="quiet"
+                        variant="ghost"
                         onClick={() => void openFile(`/closings/${c.id}/pdf`)}
                       >
                         Print {c.closing_date}
                       </Button>
                     ) : null}
                     {owner && c.status === "closed" ? (
-                      <Button variant="quiet" onClick={() => void onReopen(c.id)}>
+                      <Button variant="ghost" onClick={() => void onReopen(c.id)}>
                         Reopen {c.closing_date}
                       </Button>
                     ) : null}

@@ -130,7 +130,7 @@ export function PurchasesPage() {
           >
             <div className={styles.panelHead}>
               <h2 id="purchase-detail">{selected.number}</h2>
-              <Button variant="quiet" onClick={() => setOpenId(null)}>
+              <Button variant="ghost" onClick={() => setOpenId(null)}>
                 Close
               </Button>
             </div>

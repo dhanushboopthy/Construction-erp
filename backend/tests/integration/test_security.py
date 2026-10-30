@@ -15,6 +15,8 @@ PUBLIC = {
     ("POST", "/api/v1/auth/login"),
     ("POST", "/api/v1/auth/refresh"),
     ("POST", "/api/v1/auth/logout"),
+    # The business name and tagline only, for the sign-in page (docs/UI_REFACTOR_PLAN.md, T8).
+    ("GET", "/api/v1/tenant"),
 }
 
 

@@ -13,9 +13,9 @@ COUNTER = ("counter1", "counter-pass-123")
 OWNER = ("owner", "owner-pass-123")
 
 
-def test_every_role_gets_only_the_name_and_the_tagline(client):
-    for who in (OWNER, COUNTER):
-        body = client.get("/api/v1/tenant", headers=login(client, *who)).json()
+def test_everyone_gets_only_the_name_and_the_tagline(client):
+    for headers in ({}, login(client, *OWNER), login(client, *COUNTER)):
+        body = client.get("/api/v1/tenant", headers=headers).json()
         assert set(body) == {"name", "tagline"}
         assert body["tagline"] == DEFAULT_TAGLINE
 

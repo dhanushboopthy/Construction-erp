@@ -33,7 +33,6 @@ SIGNED_IN = [
     ("GET", "/api/v1/auth/me"),
     ("GET", "/api/v1/locations"),
     ("GET", "/api/v1/settings"),
-    ("GET", "/api/v1/tenant"),
 ]
 
 
@@ -60,6 +59,14 @@ def test_signed_in_routes_open_to_every_role(client, who, method, path):
     headers = login(client, *who)
     assert client.request(method, path, headers=headers).status_code == 200
     assert client.request(method, path).status_code == 401
+
+
+def test_tenant_is_open_to_everyone_without_signing_in(client):
+    """The sign-in page shows the business name before anyone has signed in."""
+    for headers in ({}, login(client, *COUNTER)):
+        response = client.get("/api/v1/tenant", headers=headers)
+        assert response.status_code == 200
+        assert set(response.json()) == {"name", "tagline"}
 
 
 def test_bad_token_is_rejected(client):

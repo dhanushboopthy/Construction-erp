@@ -1,10 +1,11 @@
-import { Factory } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router";
 
 import { ApiError } from "@/api/client";
+import { useTenant } from "@/api/tenant";
 import { useAuth } from "@/auth/AuthContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { initials } from "@/lib/avatar";
 
 import styles from "./LoginPage.module.css";
 
@@ -16,6 +17,7 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const tenant = useTenant();
 
   const from = (location.state as { from?: string } | null)?.from ?? "/";
   if (user) return <Navigate to={from} replace />;
@@ -36,46 +38,57 @@ export function LoginPage() {
     }
   }
 
+  // Whose shop this is comes from the API, before anyone has signed in. If it cannot be read the
+  // page still works and says only the product name.
+  const name = tenant.data?.name;
+
   return (
     <main className={styles.page}>
       <ThemeToggle className={styles.themeCorner} />
-      <form
-        className={styles.card}
-        onSubmit={(e) => void onSubmit(e)}
-        aria-describedby="login-error"
-      >
+      <aside className={styles.brand} aria-label="About this shop">
         <span className={styles.appIcon} aria-hidden="true">
-          <Factory size={30} strokeWidth={2} />
+          {name ? initials(name) : ""}
         </span>
-        <h1 className={styles.title}>Sign in to the shop</h1>
-        <p className={styles.subtitle}>Construction ERP</p>
-        <label className={styles.field}>
-          Username
-          <input
-            autoFocus
-            autoComplete="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
-        </label>
-        <label className={styles.field}>
-          Password
-          <input
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </label>
-        <p id="login-error" role="alert" className={styles.error}>
-          {error}
-        </p>
-        <button type="submit" className={styles.submit} disabled={busy}>
-          {busy ? "Signing in…" : "Sign in"}
-        </button>
-      </form>
+        <p className={styles.brandName}>{name ?? "Construction ERP"}</p>
+        {tenant.data ? <p className={styles.tagline}>{tenant.data.tagline}</p> : null}
+        <p className={styles.product}>Construction ERP</p>
+      </aside>
+      <div className={styles.formSide}>
+        <form
+          className={styles.card}
+          onSubmit={(e) => void onSubmit(e)}
+          aria-describedby="login-error"
+        >
+          <h1 className={styles.title}>Sign in to the shop</h1>
+          <p className={styles.subtitle}>{name ?? "Construction ERP"}</p>
+          <label className={styles.field}>
+            Username
+            <input
+              autoFocus
+              autoComplete="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+          </label>
+          <label className={styles.field}>
+            Password
+            <input
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </label>
+          <p id="login-error" role="alert" className={styles.error}>
+            {error}
+          </p>
+          <button type="submit" className={styles.submit} disabled={busy}>
+            {busy ? "Signing in…" : "Sign in"}
+          </button>
+        </form>
+      </div>
     </main>
   );
 }

@@ -181,6 +181,12 @@ lists); `DataTable` is for read-and-open lists and is adopted screen by screen i
   and a pasted link keep them, and opening a bill or a row keeps them too. `/` jumps to the
   search box. Not lists, so not converted: the cash book and the daily rate board (entry grids for
   one day) and the stock counts picker.
+- **Sign-in.** From 900 px a split page: a navy panel on the left with the business's initials,
+  its name and tagline (from `GET /tenant`, which is open to signed-out visitors and returns
+  nothing but those two things), and the white form card on the right. Below 900 px the panel is a
+  slim navy banner above the form. If the name cannot be read the page still works and says
+  "Construction ERP". The form works with the keyboard alone (username has focus on arrival, Tab,
+  password, Enter) and errors appear under it.
 - **Reports and settings.** Both start with a `PageHeader` (the module's purpose as subtitle).
   Reports keep the tab strip of sections the role may open (owner-only reports are not in the
   strip for counter staff, and their routes are guarded as before). Settings put the sections in a

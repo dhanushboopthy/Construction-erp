@@ -54,7 +54,7 @@ T5–T9 in any order.
 | T3 | App shell: sidebar and top bar | Every module per role, shortcuts kept, tenant name from the API | **Done** (`style/ui-shell`; adds `GET /tenant`) |
 | T4 | Today dashboard | KPI row and customer dues table; counter never requests receivables or profit | **Done** (`style/ui-today`) |
 | T5 | List screens | Search, status filter and URL-kept filters on every list | **Done** (`style/ui-lists`; cash book, rate board and counts picker are entry grids, left as they were) |
-| T6 | Entry forms | Bill entry takes no more keystrokes than today | Planned |
+| T6 | Entry forms | Bill entry takes no more keystrokes than today | **Done** (`style/ui-forms`; keystrokes checked by `BillKeys.test.tsx`) |
 | T7 | Reports and settings | Owner-only reports stay hidden from counter users | Planned |
 | T8 | Sign-in page | Tenant name shown before sign-in | Planned |
 | T9 | Polish and QA | No serious axe violations; printed bill unchanged | Planned |

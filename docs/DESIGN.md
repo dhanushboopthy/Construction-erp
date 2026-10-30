@@ -181,6 +181,16 @@ lists); `DataTable` is for read-and-open lists and is adopted screen by screen i
   and a pasted link keep them, and opening a bill or a row keeps them too. `/` jumps to the
   search box. Not lists, so not converted: the cash book and the daily rate board (entry grids for
   one day) and the stock counts picker.
+- **Entry screens (bill, purchase).** A white header card (customer, delivery, shop, date), one
+  white card per line with the Field style (label above, error under the field), and the totals on
+  the right in a navy card: line figures in white, the grand total large and white (`--color-on-hero`
+  on `--color-hero`, 12.7:1 or better), problems in `--color-on-hero-critical`. Below 1100 px the
+  totals card moves under the lines. The order of the fields is part of the design: from a line's
+  item, two Tabs reach Quantity and Enter adds the next line; `BillKeys.test.tsx` fails if a
+  5-line bill ever needs more keys than the 26 it takes today.
+- **Forms.** Settings and other full-page forms are sections (heading and purpose on the left),
+  two columns of fields from 1100 px and one below, with a sticky save bar. Editors beside a list
+  (item, customer) stay one column in their side panel. Errors sit under their field.
 - **List + editor.** Setup lists (users, locations, later items and parties) are a ledger table
   with an editor panel beside it (stacked below 1100 px). The row being edited carries the
   accent tint and marker bar. Alt+N opens a new record, Up/Down move between rows, Enter opens, Esc

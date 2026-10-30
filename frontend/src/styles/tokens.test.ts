@@ -91,6 +91,8 @@ const PAIRS: [string, string, number][] = [
   ["--color-on-sidebar-muted", "--color-sidebar", 4.5],
   ["--color-on-sidebar-muted", "--color-sidebar-active", 4.5],
   ["--color-on-hero", "--color-hero", 4.5],
+  ["--color-on-hero-muted", "--color-hero", 4.5],
+  ["--color-on-hero-critical", "--color-hero", 4.5],
   // Non-text: control borders, focus ring, status colours as graphics, the sidebar marker.
   ["--color-control-border", "--color-surface", 3],
   ["--color-control-border", "--color-bg", 3],

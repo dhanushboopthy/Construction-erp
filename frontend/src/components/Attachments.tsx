@@ -55,7 +55,7 @@ export function Attachments({
           <span>
             {KIND_LABEL[a.kind]} · {a.file_name}
           </span>
-          <Button variant="quiet" onClick={() => void openFile(`/attachments/${a.id}/file`)}>
+          <Button variant="ghost" onClick={() => void openFile(`/attachments/${a.id}/file`)}>
             Open {a.file_name}
           </Button>
         </span>

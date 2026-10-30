@@ -28,6 +28,17 @@ export function formatDateTime(iso: string | null | undefined): string {
   }).format(new Date(iso));
 }
 
+/** A date in shop time, e.g. "9 Oct 2026". Dates ("2026-10-09") are not shifted by the time zone. */
+export function formatDay(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  return new Intl.DateTimeFormat("en-IN", {
+    timeZone: "UTC",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(`${iso.slice(0, 10)}T00:00:00Z`));
+}
+
 const DECIMAL = /^\d+(\.\d{1,2})?$/;
 
 /** True when `value` is a non-negative amount with at most two decimals. */

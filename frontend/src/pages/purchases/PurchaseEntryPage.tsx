@@ -411,7 +411,7 @@ export function PurchaseEntryPage() {
                     error={errors[`${i}.rate`]}
                   />
                   <Button
-                    variant="quiet"
+                    variant="ghost"
                     aria-label={`Remove line ${i + 1}`}
                     disabled={lines.length === 1}
                     onClick={() => setLines((rows) => rows.filter((_, j) => j !== i))}
@@ -500,7 +500,7 @@ export function PurchaseEntryPage() {
                       }
                     />
                     <Button
-                      variant="quiet"
+                      variant="ghost"
                       aria-label={`Remove charge ${j + 1} of line ${i + 1}`}
                       onClick={() =>
                         setLine(i, { charges: line.charges.filter((_, k) => k !== j) })

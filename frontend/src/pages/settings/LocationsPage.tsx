@@ -216,7 +216,7 @@ function LocationEditor({
     >
       <div className={styles.panelHead}>
         <h2 id={titleId}>{location ? `${location.code} ${location.name}` : T.newTitle}</h2>
-        <Button variant="quiet" onClick={onClose} aria-keyshortcuts="Escape">
+        <Button variant="ghost" onClick={onClose} aria-keyshortcuts="Escape">
           {T.close}
         </Button>
       </div>

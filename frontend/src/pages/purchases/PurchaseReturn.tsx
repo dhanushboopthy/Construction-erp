@@ -50,7 +50,7 @@ export function PurchaseReturn({ purchase }: { purchase: PurchaseRow }) {
           </span>
           <span>
             ₹{formatMoney(n.grand_total)}{" "}
-            <Button variant="quiet" onClick={() => void openFile(`/debit-notes/${n.id}/pdf`)}>
+            <Button variant="ghost" onClick={() => void openFile(`/debit-notes/${n.id}/pdf`)}>
               Print {n.number}
             </Button>
           </span>

@@ -23,7 +23,7 @@
   margin: 0;
   padding: 2px;
   list-style: none;
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
   background: var(--color-fill);
   overflow-x: auto;
 }
@@ -32,7 +32,7 @@
 .tabActive {
   display: block;
   padding: 8px var(--space-4);
-  border-radius: 11px;
+  border-radius: calc(var(--radius-sm) - 2px);
   color: var(--color-label);
   text-decoration: none;
   font-size: var(--text-sm);
@@ -42,7 +42,7 @@
 }
 
 .tab:hover {
-  background: var(--color-sidebar-hover);
+  background: var(--color-hover);
 }
 
 .tabActive {
@@ -134,7 +134,7 @@
 }
 
 .table tbody tr:hover {
-  background: var(--color-sidebar-hover);
+  background: var(--color-hover);
 }
 
 .table tbody tr:last-child td,
@@ -149,7 +149,7 @@
 
 /* The row being edited: accent tint and a marker bar. */
 .table tr.selected td:first-child {
-  box-shadow: inset 3px 0 0 var(--color-violet);
+  box-shadow: inset 3px 0 0 var(--color-accent);
 }
 
 .table tr.selected,
@@ -487,7 +487,7 @@ fieldset.choices legend {
 }
 
 .step:hover {
-  background: var(--color-sidebar-hover);
+  background: var(--color-hover);
 }
 
 .stepActive {
@@ -620,7 +620,7 @@ fieldset.choices legend {
   border-top: 1px solid var(--color-separator);
 }
 
-/* The bill total: the brand gradient with a large white figure. */
+/* The bill total: a navy card with a large white figure. */
 .billTotal {
   display: flex;
   justify-content: space-between;
@@ -628,10 +628,8 @@ fieldset.choices legend {
   gap: var(--space-3);
   padding: var(--space-5);
   background: var(--color-hero);
-  background-image: var(--gradient-action);
   color: var(--color-on-hero);
-  border-radius: 20px;
-  box-shadow: var(--shadow-glow);
+  border-radius: var(--radius-md);
   font-weight: 600;
 }
 

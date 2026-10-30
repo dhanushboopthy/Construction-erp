@@ -6,10 +6,10 @@ import styles from "@/components/Ledger.module.css";
 import { formatMoney } from "@/lib/format";
 
 const SERIES = [
-  { key: "retail", label: "Retail", color: "var(--color-chart-1)" },
-  { key: "contractor", label: "Contractor", color: "var(--color-chart-2)" },
-  { key: "bulk", label: "Bulk", color: "var(--color-chart-3)" },
-  { key: "unassigned", label: "No segment", color: "var(--color-chart-4)" },
+  { key: "retail", label: "Retail", color: "var(--color-series-1)" },
+  { key: "contractor", label: "Contractor", color: "var(--color-series-2)" },
+  { key: "bulk", label: "Bulk", color: "var(--color-series-3)" },
+  { key: "unassigned", label: "No segment", color: "var(--color-series-4)" },
 ] as const;
 
 const MONTH = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];

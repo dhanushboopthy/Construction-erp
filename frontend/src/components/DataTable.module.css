@@ -1,0 +1,134 @@
+.wrap {
+  max-height: var(--table-max-height, 70vh);
+  overflow: auto;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.table {
+  width: 100%;
+  /* On a phone the card scrolls sideways instead of squeezing names to one letter. */
+  min-width: 640px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--text-sm);
+}
+
+.table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  border-bottom: 1px solid var(--color-separator);
+  background: var(--color-surface);
+  color: var(--color-secondary);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-caps);
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.table td {
+  height: var(--row-height);
+  padding: 0 var(--space-4);
+  border-bottom: 1px solid var(--color-separator);
+  vertical-align: middle;
+}
+
+.table .numeric {
+  text-align: right;
+}
+
+.row:last-child td {
+  border-bottom: 0;
+}
+
+.row.open {
+  cursor: pointer;
+}
+
+.row.open:hover {
+  background: var(--color-hover);
+}
+
+.row.selected,
+.row.selected:hover {
+  background: var(--color-accent-soft);
+}
+
+.row.selected td:first-child {
+  box-shadow: inset 3px 0 0 var(--color-accent);
+}
+
+.rowButton {
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.primary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.primaryText {
+  display: grid;
+  min-width: 0;
+}
+
+.name {
+  overflow: hidden;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sub {
+  overflow: hidden;
+  color: var(--color-secondary);
+  font-size: var(--text-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevronHead,
+.chevron {
+  width: var(--space-6);
+  padding-left: 0;
+  color: var(--color-secondary);
+}
+
+.message {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-6) var(--space-4);
+  color: var(--color-secondary);
+  text-align: center;
+}
+
+.message p {
+  margin: 0;
+}
+
+.error {
+  color: var(--color-critical);
+}
+
+.footer {
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--color-separator);
+  color: var(--color-secondary);
+  font-size: var(--text-xs);
+}

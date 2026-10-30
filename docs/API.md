@@ -379,4 +379,5 @@ in the unit of the bill line. New error codes: `RETURN_WINDOW_CLOSED`, `RETURN_T
 | POST/PATCH | `/locations`, `/locations/{id}` | owner |
 | GET | `/settings` | signed in |
 | PUT | `/settings` | owner |
+| GET | `/tenant` | signed in; the business name (trade name, else legal name) and tagline for the app shell, nothing else from the settings |
 | GET | `/audit-log` | owner |

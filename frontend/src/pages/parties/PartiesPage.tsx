@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router";
 
 import { useParties } from "@/api/masters";
 import { useAuth } from "@/auth/AuthContext";
@@ -18,7 +19,12 @@ export function PartiesPage() {
   const canWrite = user?.role === "owner" || user?.role === "counter";
   const [q, setQ] = useState("");
   const [kind, setKind] = useState("");
-  const [mode, setMode] = useState<Mode>({ kind: "closed" });
+  // A link such as /parties?party=12 (the dues table on Today) opens that customer's editor.
+  const [params] = useSearchParams();
+  const linked = Number(params.get("party"));
+  const [mode, setMode] = useState<Mode>(
+    Number.isInteger(linked) && linked > 0 ? { kind: "edit", id: linked } : { kind: "closed" },
+  );
   const [notice, setNotice] = useState<string | null>(null);
   const query = useParties(q, kind);
   const listRef = useRef<HTMLTableSectionElement>(null);

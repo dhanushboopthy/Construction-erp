@@ -5,16 +5,15 @@
   gap: var(--space-2);
   min-height: 40px;
   padding: 0 var(--space-5);
-  border: 0;
-  border-radius: 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
   font-size: var(--text-sm);
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
   transition:
     background-color var(--duration-fast) var(--ease),
-    box-shadow var(--duration-fast) var(--ease),
-    filter var(--duration-fast) var(--ease),
+    border-color var(--duration-fast) var(--ease),
     transform var(--duration-fast) var(--ease);
 }
 
@@ -29,31 +28,29 @@
 
 .primary {
   background: var(--color-accent);
-  background-image: var(--gradient-action);
   color: var(--color-on-accent);
-  box-shadow: var(--shadow-glow);
 }
 
 .primary:hover:not(:disabled) {
-  filter: brightness(1.08);
-  transform: translateY(-1px);
+  background: var(--color-accent-strong);
 }
 
 .secondary {
-  background: var(--color-fill);
+  border-color: var(--color-control-border);
+  background: var(--color-surface);
   color: var(--color-label);
 }
 
 .secondary:hover:not(:disabled) {
-  background: var(--color-fill-hover);
+  background: var(--color-fill);
 }
 
-.quiet {
+.ghost {
   background: none;
   color: var(--color-accent);
   padding-inline: var(--space-2);
 }
 
-.quiet:hover:not(:disabled) {
+.ghost:hover:not(:disabled) {
   background: var(--color-accent-soft);
 }

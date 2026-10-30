@@ -33,6 +33,7 @@ SIGNED_IN = [
     ("GET", "/api/v1/auth/me"),
     ("GET", "/api/v1/locations"),
     ("GET", "/api/v1/settings"),
+    ("GET", "/api/v1/tenant"),
 ]
 
 

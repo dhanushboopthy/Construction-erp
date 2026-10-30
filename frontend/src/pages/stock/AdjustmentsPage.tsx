@@ -209,7 +209,7 @@ export function AdjustmentsPage() {
                   )}
                 </SelectField>
                 <Button
-                  variant="quiet"
+                  variant="ghost"
                   aria-label={`Remove line ${i + 1}`}
                   disabled={rows.length === 1}
                   onClick={() => setRows((rs) => rs.filter((_, j) => j !== i))}

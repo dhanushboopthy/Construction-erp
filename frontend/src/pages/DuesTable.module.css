@@ -1,0 +1,49 @@
+.section {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.head h2 {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 800;
+}
+
+.sub {
+  margin: var(--space-1) 0 0;
+  color: var(--color-secondary);
+  font-size: var(--text-sm);
+}
+
+.viewAll {
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.overdue {
+  display: inline-grid;
+  justify-items: end;
+  color: var(--color-critical);
+  font-weight: 700;
+}
+
+.late {
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.credit {
+  min-width: 120px;
+}
+
+.muted {
+  color: var(--color-secondary);
+}

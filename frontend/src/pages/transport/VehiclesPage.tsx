@@ -96,7 +96,7 @@ export function VehiclesPage() {
                   {owner ? (
                     <td>
                       <Button
-                        variant="quiet"
+                        variant="ghost"
                         onClick={() => toggle.mutate({ id: v.id, is_active: !v.is_active })}
                       >
                         {v.is_active ? `Switch off ${v.number}` : `Switch on ${v.number}`}

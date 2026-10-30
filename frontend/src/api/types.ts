@@ -16,6 +16,7 @@ export type UserCreate = Schemas["UserCreate"];
 export type UserUpdate = Schemas["UserUpdate"];
 export type PasswordReset = Schemas["PasswordReset"];
 export type ShopSettings = Schemas["ShopSettingsOut"];
+export type Tenant = Schemas["TenantOut"];
 export type ShopSettingsUpdate = Schemas["ShopSettingsUpdate"];
 export type TokenResponse = Schemas["TokenResponse"];
 export type Item = Schemas["ItemOut"];

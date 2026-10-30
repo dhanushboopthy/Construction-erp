@@ -1,22 +1,18 @@
-import { Factory, LogOut } from "lucide-react";
+import { Bell } from "lucide-react";
+import { useRef } from "react";
 import { NavLink, Outlet } from "react-router";
 
+import { useTenant } from "@/api/tenant";
 import { useAuth } from "@/auth/AuthContext";
+import { useAlerts } from "@/hooks/useAlerts";
 import { useModuleShortcuts } from "@/hooks/useModuleShortcuts";
+import { initials } from "@/lib/avatar";
 import { modulesFor, type ModuleLink } from "@/modules";
 
 import styles from "./AppShell.module.css";
 import { iconFor } from "./moduleIcons";
 import { TopBar } from "./TopBar";
-
-const ROLE_LABEL = { owner: "Owner", counter: "Counter", accountant: "Accountant" } as const;
-
-function initials(name: string) {
-  const parts = name.trim().split(/\s+/);
-  return (
-    (parts[0]?.[0] ?? "") + (parts.length > 1 ? (parts.at(-1)?.[0] ?? "") : "")
-  ).toUpperCase();
-}
+import { usePopover } from "./usePopover";
 
 function NavItem({ module: m }: { module: ModuleLink }) {
   const Icon = iconFor(m.path);
@@ -25,6 +21,7 @@ function NavItem({ module: m }: { module: ModuleLink }) {
       <NavLink
         to={m.path}
         end={m.path === "/"}
+        title={`${m.label} (Alt ${m.shortcut.toUpperCase()})`}
         className={({ isActive }) => (isActive ? styles.active : undefined)}
       >
         <Icon className={styles.icon} size={20} strokeWidth={1.9} aria-hidden="true" />
@@ -41,28 +38,59 @@ export function AppShell() {
   const { user, signOut } = useAuth();
   const modules = user ? modulesFor(user.role) : [];
   useModuleShortcuts(modules);
+  const tenant = useTenant();
+  const alertsNav = useRef<HTMLButtonElement>(null);
+  const alertsMenu = usePopover([alertsNav]);
+  const alerts = useAlerts(alertsMenu.open);
   if (!user) return null;
 
   const where = user.locations.map((l) => `${l.code} · ${l.name}`).join(", ") || "All locations";
   const main = modules.filter((m) => m.path !== "/settings");
   const settings = modules.find((m) => m.path === "/settings");
+  // The name comes from the API. Until it arrives (or if it fails) the product name stands in.
+  const name = tenant.data?.name ?? "Construction ERP";
 
   return (
     <div className={styles.shell}>
       <aside className={styles.sidebar} aria-label="Modules">
         <div className={styles.brand}>
           <span className={styles.appIcon} aria-hidden="true">
-            <Factory size={22} strokeWidth={2} />
+            {tenant.data ? initials(name) : ""}
           </span>
-          <span className={styles.brandName}>
-            Construction<span className={styles.brandAccent}>ERP</span>
+          <span className={styles.brandText}>
+            <span className={styles.brandName}>{name}</span>
+            <span className={styles.brandSub}>Construction ERP</span>
           </span>
         </div>
-        <nav className={styles.navArea}>
+        <nav className={styles.navArea} aria-label="Modules">
           <ul className={styles.nav}>
             {main.map((m) => (
               <NavItem key={m.path} module={m} />
             ))}
+            <li>
+              <button
+                ref={alertsNav}
+                type="button"
+                className={styles.navButton}
+                title="Alerts"
+                aria-haspopup="dialog"
+                aria-expanded={alertsMenu.open}
+                onClick={alertsMenu.toggle}
+              >
+                <Bell className={styles.icon} size={20} strokeWidth={1.9} aria-hidden="true" />
+                <span className={styles.label}>Alerts</span>
+                {alerts.count > 0 ? (
+                  <>
+                    <span className={styles.badge} aria-hidden="true">
+                      {alerts.count}
+                    </span>
+                    <span className={styles.srOnly}>
+                      {alerts.count === 1 ? "1 alert" : `${alerts.count} alerts`}
+                    </span>
+                  </>
+                ) : null}
+              </button>
+            </li>
           </ul>
           {settings ? (
             <ul className={`${styles.nav} ${styles.navFooter}`}>
@@ -70,27 +98,16 @@ export function AppShell() {
             </ul>
           ) : null}
         </nav>
-        <div className={styles.userCard}>
-          <span className={styles.avatar} aria-hidden="true">
-            {initials(user.full_name)}
-          </span>
-          <span className={styles.userText}>
-            <span className={styles.userName}>{user.full_name}</span>
-            <span className={styles.userRole}>{ROLE_LABEL[user.role]}</span>
-          </span>
-          <button
-            type="button"
-            className={styles.signOut}
-            onClick={() => void signOut()}
-            aria-label="Sign out"
-            title="Sign out"
-          >
-            <LogOut size={18} strokeWidth={2} aria-hidden="true" />
-          </button>
-        </div>
+        <p className={styles.tagline}>{tenant.data?.tagline}</p>
       </aside>
       <div className={styles.main}>
-        <TopBar role={user.role} where={where} onSignOut={() => void signOut()} />
+        <TopBar
+          user={user}
+          where={where}
+          onSignOut={() => void signOut()}
+          alerts={alerts}
+          alertsMenu={alertsMenu}
+        />
         <main className={styles.content}>
           <Outlet />
         </main>

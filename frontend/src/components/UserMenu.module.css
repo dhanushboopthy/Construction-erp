@@ -1,0 +1,101 @@
+.root {
+  position: relative;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--control-height);
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-1);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: none;
+  color: var(--color-label);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease);
+}
+
+.trigger:hover,
+.trigger[aria-expanded="true"] {
+  background: var(--color-hover);
+}
+
+.text {
+  display: grid;
+  min-width: 0;
+  text-align: left;
+}
+
+.name {
+  overflow: hidden;
+  max-width: 160px;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.role {
+  color: var(--color-secondary);
+  font-size: var(--text-xs);
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: 40;
+  display: grid;
+  gap: var(--space-1);
+  width: 240px;
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-raised);
+}
+
+.who {
+  display: grid;
+  margin: 0;
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  border-bottom: 1px solid var(--color-separator);
+  font-size: var(--text-sm);
+}
+
+.who span {
+  color: var(--color-secondary);
+  font-size: var(--text-xs);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--color-label);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.item:hover {
+  background: var(--color-hover);
+}
+
+@media (max-width: 900px) {
+  .text {
+    display: none;
+  }
+  /* Anchor the menu to the top bar, not the small avatar button, so it stays on the screen. */
+  .root {
+    position: static;
+  }
+  .menu {
+    right: var(--space-4);
+  }
+}

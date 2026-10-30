@@ -15,12 +15,28 @@ soft shadow, a navy sidebar in both themes, and a single orange accent for actio
 active marker. Status uses green, amber and red, always with a word. There are no gradients and no
 coloured glow. Small labels are uppercase with wide tracking; figures are large and extra-bold.
 
-**Frame.** Navy sidebar: brand tile (bright orange, navy icon), nav with icons (the active item sits
-on a lighter navy block with an orange marker on the sidebar's inner edge), Settings set apart below
-a divider, and the signed-in user on a lighter navy card with Sign out. Top bar: a search box that
-is also the command palette (Ctrl+K or `/`; arrows and Enter), the location pill with a live dot,
-the alerts bell (out-of-stock items and waiting e-way bills, loaded when opened), quick actions,
-and the light/dark toggle. The sidebar and top bar are rebuilt in task T3 of the plan.
+**Frame.** Navy sidebar, 240 px wide. Brand block: an orange tile with the business's initials, the
+business name from `GET /tenant` (the product name "Construction ERP" stands in until it arrives)
+and "Construction ERP" under it. Nav: a Lucide icon and label per module the role may open (the
+list comes from `modulesFor(role)`, nothing else), the shortcut (`Alt 2`) shown on hover and
+focus and in the tooltip; the current screen sits on a lighter navy block with an orange marker on
+the sidebar's left edge. After the modules comes **Alerts**, a button (not a screen) with an orange
+count badge of out-of-stock items plus e-way bills still to be made; the badge is hidden at zero
+and read out as "3 alerts". Settings sits below a divider (owner only), and the tagline closes
+the sidebar ("Bill fast. Close on time." until shops can set their own).
+
+Top bar: the search box that is also the command palette (Ctrl+K or `/`; arrows and Enter) on the
+left; on the right the location pill with a live dot, the alerts bell with an orange dot when
+there is something to look at, quick actions, a divider, and the signed-in user (avatar, name,
+role) whose chevron menu holds the light/dark switch and Sign out. The bell and the sidebar's
+Alerts item open the same panel; the count loads with the screen and is fetched again each time
+the panel opens.
+
+**Narrow screens.** Below 1200 px the sidebar shrinks to 72 px of icons: the label becomes the
+tooltip (and stays for screen readers) and the badge moves onto the icon. Below 900 px it becomes
+a scrolling strip of pills at the top, the current one in bright orange; the top bar keeps the
+avatar and chevron (name and role are hidden). On screens shorter than 820 px the nav rows are
+tighter so Settings stays in view.
 
 **Today.** KPI cards (each opens its detail screen) with a tinted corner disc and a status badge;
 the stock-levels card with orange bars and a reorder tip; the monthly sales chart (owner and
@@ -61,6 +77,7 @@ so it shows on navy.
 | `--color-neutral-pill` | `#64748B` / `#94A3B8` | "Cash customer", "Draft", "No data" |
 | `--pill-{good,warn,critical,neutral,accent}-bg` / `-fg` | solid + white / tint + status colour | Status pills (component in T2): solid in light, tinted in dark |
 | `--color-series-1..4` | orange, navy, slate, light slate / orange, steel blue, slate, dark slate | Chart series (sales by segment); replaces the old `--color-chart-*` |
+| `--sidebar-width` | 240 px; 72 px below 1200 px | Sidebar column |
 | `--shadow-card`, `--shadow-raised` | soft navy shadow / ring + black | Cards; menus and dialogs. No glow |
 
 **Contrast (light / dark).** Measured from the token values (WCAG 2.x); the test
@@ -147,8 +164,8 @@ lists); `DataTable` is for read-and-open lists and is adopted screen by screen i
   small "Rule B8" tag next to its label, so the owner can find it in docs/SPEC.md.
 - **Errors sit under the field** they belong to (`aria-describedby`); server errors with a
   `field` are shown there too, others above the save button.
-- **Phone:** below 900 px the sidebar becomes a scrolling strip of pills at the top and Sign
-  out moves to the top bar.
+- **Phone:** below 900 px the sidebar becomes a scrolling strip of pills at the top; Sign out is
+  in the user menu at the right of the top bar.
 - **Command palette.** Every screen and common action is reachable from the search box; new
   actions go in `frontend/src/actions.ts` with the module they belong to (roles follow it).
 

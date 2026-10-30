@@ -32,6 +32,7 @@ from app.api.v1 import (
     stock_ops,
     system,
     tally,
+    tenant,
     transport,
     users,
 )
@@ -42,6 +43,7 @@ api_router.include_router(auth.router)
 api_router.include_router(users.router)
 api_router.include_router(locations.router)
 api_router.include_router(settings.router)
+api_router.include_router(tenant.router)
 api_router.include_router(audit.router)
 api_router.include_router(items.router)
 api_router.include_router(parties.router)

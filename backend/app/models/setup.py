@@ -34,7 +34,14 @@ class ShopSettings(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
     not in code (see docs/SPEC.md, Business rules)."""
 
     __tablename__ = "shop_settings"
-    __table_args__ = (UniqueConstraint("tenant_id"),)
+    __table_args__ = (
+        UniqueConstraint("tenant_id"),
+        CheckConstraint(
+            "(logo_key IS NULL AND logo_type IS NULL AND logo_sha256 IS NULL) "
+            "OR (logo_key IS NOT NULL AND logo_type IS NOT NULL AND logo_sha256 IS NOT NULL)",
+            name="logo_all_or_none",
+        ),
+    )
 
     id: Mapped[IntPK]
     legal_name: Mapped[str] = mapped_column(String(200))
@@ -48,6 +55,11 @@ class ShopSettings(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
     bank_account_no: Mapped[str | None] = mapped_column(String(30))
     bank_ifsc: Mapped[str | None] = mapped_column(String(11))
     invoice_terms: Mapped[str | None] = mapped_column(Text)
+    # The shop's logo (UI refresh T10): where the file is stored, its type and its SHA-256, which
+    # also busts caches when the owner replaces it. All three are set together or not at all.
+    logo_key: Mapped[str | None] = mapped_column(String(200))
+    logo_type: Mapped[str | None] = mapped_column(String(20))
+    logo_sha256: Mapped[str | None] = mapped_column(String(64))
 
     financial_year_start_month: Mapped[int] = mapped_column(Integer, default=4)
     return_window_days: Mapped[int] = mapped_column(Integer, default=2)

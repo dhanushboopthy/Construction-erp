@@ -244,13 +244,43 @@ export interface paths {
         };
         /**
          * Get Tenant
-         * @description Name and tagline only, so the shell can brand itself without reading the shop settings
-         *     (bank details, thresholds) that counter staff have no use for.
+         * @description Name, tagline and logo address only, so the sign-in page and the app shell can show whose
+         *     shop this is. Open to anyone: it is the name printed on every bill, and nothing else from the
+         *     settings (bank details, thresholds) is ever added here.
          */
         get: operations["get_tenant_api_v1_tenant_get"];
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenant/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Logo
+         * @description The logo image. Open for the same reason as the name: the sign-in page shows it. Served so
+         *     a browser can only draw it: no sniffing, and a policy that forbids scripts and sub-resources.
+         */
+        get: operations["get_logo_api_v1_tenant_logo_get"];
+        /**
+         * Put Logo
+         * @description Replace the logo (owner only): a square PNG or plain SVG, up to 200 KB.
+         */
+        put: operations["put_logo_api_v1_tenant_logo_put"];
+        post?: never;
+        /**
+         * Delete Logo
+         * @description Go back to the initials tile (owner only).
+         */
+        delete: operations["delete_logo_api_v1_tenant_logo_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2952,6 +2982,11 @@ export interface components {
         Body_import_statement_api_v1_bank_statements_post: {
             /** Bank Account Id */
             bank_account_id: number;
+            /** File */
+            file: string;
+        };
+        /** Body_put_logo_api_v1_tenant_logo_put */
+        Body_put_logo_api_v1_tenant_logo_put: {
             /** File */
             file: string;
         };
@@ -7999,6 +8034,8 @@ export interface components {
             name: string;
             /** Tagline */
             tagline: string;
+            /** Logo Url */
+            logo_url?: string | null;
         };
         /** TodayOut */
         TodayOut: {
@@ -9696,6 +9733,212 @@ export interface operations {
         };
     };
     get_tenant_api_v1_tenant_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_logo_api_v1_tenant_logo_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    put_logo_api_v1_tenant_logo_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_put_logo_api_v1_tenant_logo_put"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_logo_api_v1_tenant_logo_delete: {
         parameters: {
             query?: never;
             header?: never;

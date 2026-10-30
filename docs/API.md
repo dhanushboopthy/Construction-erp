@@ -379,5 +379,8 @@ in the unit of the bill line. New error codes: `RETURN_WINDOW_CLOSED`, `RETURN_T
 | POST/PATCH | `/locations`, `/locations/{id}` | owner |
 | GET | `/settings` | signed in |
 | PUT | `/settings` | owner |
-| GET | `/tenant` | open, no sign-in: the business name (trade name, else legal name) and tagline, for the sign-in page and the app shell; nothing else from the settings is ever added |
+| GET | `/tenant` | open, no sign-in: the business name (trade name, else legal name), tagline and `logo_url` (null without a logo), for the sign-in page and the app shell; nothing else from the settings is ever added |
+| GET | `/tenant/logo` | open, no sign-in: the logo image; 404 without one. Served `nosniff` with `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; sandbox` |
+| PUT | `/tenant/logo` | owner: multipart `file`, a square PNG (32–2048 px) or plain SVG, up to 200 KB (413 over; 400 for another type or an unsafe SVG; 409 for a file that is empty, not square or the wrong size). Returns the tenant |
+| DELETE | `/tenant/logo` | owner: back to the initials tile. Returns the tenant |
 | GET | `/audit-log` | owner |

@@ -58,7 +58,7 @@ T5–T9 in any order.
 | T7 | Reports and settings | Owner-only reports stay hidden from counter users | **Done** (`style/ui-reports`) |
 | T8 | Sign-in page | Tenant name shown before sign-in | **Done** (`style/ui-signin`; `GET /tenant` is now open; no suspended-tenant message, there is no such state yet) |
 | T9 | Polish and QA | No serious axe violations; printed bill unchanged | **Done** (`style/ui-polish`; `npm run qa` for axe, motion and keys; bill PDFs match `main`; there is no quotation to compare) |
-| T10 | Tenant logo (optional) | Owner-only upload; needs a migration | Planned |
+| T10 | Tenant logo (optional) | Owner-only upload; needs a migration | **Done** (`style/ui-logo`; migration 0023; `GET /tenant/logo` is open; there is no Duolink admin here, so nothing to limit there) |
 
 ## Already in place (Milestones 0–1)
 

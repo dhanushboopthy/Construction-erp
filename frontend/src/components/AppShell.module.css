@@ -36,6 +36,7 @@
   color: var(--color-on-accent-bright);
   font-size: var(--text-sm);
   font-weight: 800;
+  overflow: hidden;
 }
 
 .brandText {

@@ -4,8 +4,8 @@ import { Navigate, useLocation, useNavigate } from "react-router";
 import { ApiError } from "@/api/client";
 import { useTenant } from "@/api/tenant";
 import { useAuth } from "@/auth/AuthContext";
+import { BrandMark } from "@/components/BrandMark";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { initials } from "@/lib/avatar";
 
 import styles from "./LoginPage.module.css";
 
@@ -46,9 +46,7 @@ export function LoginPage() {
     <main className={styles.page}>
       <ThemeToggle className={styles.themeCorner} />
       <aside className={styles.brand} aria-label="About this shop">
-        <span className={styles.appIcon} aria-hidden="true">
-          {name ? initials(name) : ""}
-        </span>
+        <BrandMark name={name} logoUrl={tenant.data?.logo_url} className={styles.appIcon} />
         <p className={styles.brandName}>{name ?? "Construction ERP"}</p>
         {tenant.data ? <p className={styles.tagline}>{tenant.data.tagline}</p> : null}
         <p className={styles.product}>Construction ERP</p>

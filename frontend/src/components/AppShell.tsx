@@ -6,10 +6,10 @@ import { useTenant } from "@/api/tenant";
 import { useAuth } from "@/auth/AuthContext";
 import { useAlerts } from "@/hooks/useAlerts";
 import { useModuleShortcuts } from "@/hooks/useModuleShortcuts";
-import { initials } from "@/lib/avatar";
 import { modulesFor, type ModuleLink } from "@/modules";
 
 import styles from "./AppShell.module.css";
+import { BrandMark } from "./BrandMark";
 import { iconFor } from "./moduleIcons";
 import { TopBar } from "./TopBar";
 import { usePopover } from "./usePopover";
@@ -54,9 +54,11 @@ export function AppShell() {
     <div className={styles.shell}>
       <aside className={styles.sidebar} aria-label="Modules">
         <div className={styles.brand}>
-          <span className={styles.appIcon} aria-hidden="true">
-            {tenant.data ? initials(name) : ""}
-          </span>
+          <BrandMark
+            name={tenant.data ? name : undefined}
+            logoUrl={tenant.data?.logo_url}
+            className={styles.appIcon}
+          />
           <span className={styles.brandText}>
             <span className={styles.brandName}>{name}</span>
             <span className={styles.brandSub}>Construction ERP</span>

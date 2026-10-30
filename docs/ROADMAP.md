@@ -55,7 +55,7 @@ T5–T9 in any order.
 | T4 | Today dashboard | KPI row and customer dues table; counter never requests receivables or profit | **Done** (`style/ui-today`) |
 | T5 | List screens | Search, status filter and URL-kept filters on every list | **Done** (`style/ui-lists`; cash book, rate board and counts picker are entry grids, left as they were) |
 | T6 | Entry forms | Bill entry takes no more keystrokes than today | **Done** (`style/ui-forms`; keystrokes checked by `BillKeys.test.tsx`) |
-| T7 | Reports and settings | Owner-only reports stay hidden from counter users | Planned |
+| T7 | Reports and settings | Owner-only reports stay hidden from counter users | **Done** (`style/ui-reports`) |
 | T8 | Sign-in page | Tenant name shown before sign-in | Planned |
 | T9 | Polish and QA | No serious axe violations; printed bill unchanged | Planned |
 | T10 | Tenant logo (optional) | Owner-only upload; needs a migration | Planned |

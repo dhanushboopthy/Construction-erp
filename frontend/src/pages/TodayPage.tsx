@@ -443,7 +443,7 @@ function SalesChart() {
                       </span>
                     ) : null}
                   </button>
-                  <span className={styles.month} aria-hidden="true">
+                  <span className={styles.month} data-now={isNow || undefined} aria-hidden="true">
                     {m.label}
                   </span>
                 </li>

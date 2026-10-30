@@ -181,6 +181,18 @@ lists); `DataTable` is for read-and-open lists and is adopted screen by screen i
   and a pasted link keep them, and opening a bill or a row keeps them too. `/` jumps to the
   search box. Not lists, so not converted: the cash book and the daily rate board (entry grids for
   one day) and the stock counts picker.
+- **Reports and settings.** Both start with a `PageHeader` (the module's purpose as subtitle).
+  Reports keep the tab strip of sections the role may open (owner-only reports are not in the
+  strip for counter staff, and their routes are guarded as before). Settings put the sections in a
+  column on the left from 1100 px (the current one on an accent tint with an orange marker) and
+  in a scrolling strip above that. Headline numbers on report screens are `Metric`s: the same card
+  look as `KpiCard` (radius 12, small caps label, large tabular value) plus the KPI-catalogue
+  formula tooltip, which is why `Metric` was restyled rather than replaced. The "Rule B8" tag on a
+  setting is a neutral pill.
+- **Charts.** Series are told apart by pattern as well as colour: the sales-by-segment chart uses
+  solid, solid, hatched and dotted fills, the legend repeats the pattern, and the same numbers are
+  in a table under it. On Today the current month is orange and also bold and underlined in its
+  label, with the value on hover or focus.
 - **Entry screens (bill, purchase).** A white header card (customer, delivery, shop, date), one
   white card per line with the Field style (label above, error under the field), and the totals on
   the right in a navy card: line figures in white, the grand total large and white (`--color-on-hero`

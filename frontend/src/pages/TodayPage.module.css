@@ -348,6 +348,16 @@
   text-transform: uppercase;
 }
 
+/* The current month is also marked in the label (bold, underlined), not by colour alone. */
+.month[data-now] {
+  color: var(--color-label);
+  font-weight: 800;
+  text-decoration: underline;
+  text-decoration-color: var(--color-accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
 .chartSkeleton {
   height: 280px;
   border-radius: var(--radius-md);

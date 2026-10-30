@@ -1,6 +1,9 @@
 import { NavLink, Outlet } from "react-router";
 
-import styles from "@/components/Ledger.module.css";
+import { PageHeader } from "@/components/PageHeader";
+import { purposeOf } from "@/modules";
+
+import styles from "./SettingsLayout.module.css";
 
 const TABS = [
   { to: "/settings", label: "Shop details", end: true },
@@ -14,28 +17,31 @@ const TABS = [
   { to: "/settings/system", label: "System", end: false },
 ];
 
+/** Settings: the sections in a column on the left from 1100 px, a scrolling strip above that. */
 export function SettingsLayout() {
   return (
     <section aria-labelledby="settings-title" className={styles.page}>
-      <h1 id="settings-title" className={styles.title}>
-        Settings
-      </h1>
-      <nav aria-label="Settings sections">
-        <ul className={styles.tabs}>
-          {TABS.map((tab) => (
-            <li key={tab.to}>
-              <NavLink
-                to={tab.to}
-                end={tab.end}
-                className={({ isActive }) => (isActive ? styles.tabActive : styles.tab)}
-              >
-                {tab.label}
-              </NavLink>
-            </li>
-          ))}
-        </ul>
-      </nav>
-      <Outlet />
+      <PageHeader title="Settings" titleId="settings-title" subtitle={purposeOf("/settings")} />
+      <div className={styles.layout}>
+        <nav aria-label="Settings sections" className={styles.nav}>
+          <ul className={styles.list}>
+            {TABS.map((tab) => (
+              <li key={tab.to}>
+                <NavLink
+                  to={tab.to}
+                  end={tab.end}
+                  className={({ isActive }) => (isActive ? styles.active : styles.link)}
+                >
+                  {tab.label}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <div className={styles.content}>
+          <Outlet />
+        </div>
+      </div>
     </section>
   );
 }

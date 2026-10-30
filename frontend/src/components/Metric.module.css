@@ -1,10 +1,10 @@
 .metric {
   display: grid;
   align-content: start;
-  gap: 6px;
+  gap: var(--space-2);
   min-width: 0;
   padding: var(--space-5);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   background: var(--color-surface);
   box-shadow: var(--shadow-card);
   container-type: inline-size;
@@ -13,9 +13,9 @@
 .label {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
   color: var(--color-secondary);
-  font-size: var(--text-xs);
+  font-size: var(--text-2xs);
   font-weight: 700;
   letter-spacing: var(--tracking-caps);
   text-transform: uppercase;
@@ -23,7 +23,8 @@
 
 .value {
   margin: 0;
-  font-size: clamp(1.25rem, 12cqi, 1.875rem);
+  font-family: var(--font-display);
+  font-size: clamp(var(--text-lg), 14cqi, var(--text-figure));
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   letter-spacing: var(--tracking-tight);

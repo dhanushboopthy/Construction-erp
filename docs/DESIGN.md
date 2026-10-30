@@ -83,3 +83,15 @@ entrance animation is the chart bars and stock bars growing in; reduced motion t
   out moves to the top bar.
 - **Command palette.** Every screen and common action is reachable from the search box; new
   actions go in `frontend/src/actions.ts` with the module they belong to (roles follow it).
+
+## Checking the look
+
+`npm run shots` (in `frontend/`, with the dev stack up and seeded) signs in as the owner, counter
+and accountant seed users and saves a PNG of every routed screen in light and dark at 1440, 1024
+and 390 px, plus the sign-in page, to `frontend/screenshots/baseline/<role>/<theme>-<width>/`
+(git-ignored). Options: `--out <folder>`, `--roles owner,counter`, `--only sales,reports`. It
+writes `manifest.json` and exits non-zero if a screen redirects. The screen list is in
+`frontend/scripts/screenshots.ts`; it checks itself against `src/modules.ts`, so a new module
+fails the run until it is added. Take a set before a UI change and another after, and compare.
+Use development seed data only, never production. The UI refresh in
+[UI_REFACTOR_PLAN](UI_REFACTOR_PLAN.md) uses this as its baseline.

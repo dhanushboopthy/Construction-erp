@@ -16,6 +16,7 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "shots": "node scripts/screenshots.ts",
     "gen:api": "openapi-typescript http://localhost:8000/api/openapi.json -o src/api/schema.d.ts"
   },
   "dependencies": {
@@ -41,6 +42,7 @@
     "globals": "^16.2.0",
     "jsdom": "^26.1.0",
     "openapi-typescript": "^7.8.0",
+    "playwright": "^1.63.0",
     "prettier": "^3.5.0",
     "typescript": "~5.9.0",
     "typescript-eslint": "^8.33.0",

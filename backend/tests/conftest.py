@@ -9,6 +9,7 @@ inside a transaction that is rolled back, even when the code under test commits.
 import os
 import tempfile
 from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
@@ -16,6 +17,7 @@ import pytest
 TEST_DATABASE_URL = os.environ.get(
     "TEST_DATABASE_URL", "postgresql+psycopg://erp:erp@localhost:5432/erp_test"
 )
+APP_ROLE = "erp_app"  # created by migration 0024
 os.environ["DATABASE_URL"] = TEST_DATABASE_URL
 os.environ.setdefault("APP_ENV", "test")
 os.environ.setdefault("STORAGE_DIR", tempfile.mkdtemp(prefix="erp-files-"))
@@ -39,12 +41,15 @@ def engine():
 
 @pytest.fixture
 def db(engine) -> Iterator:
+    from sqlalchemy import text
     from sqlalchemy.orm import Session
 
-    from app import services as _services  # noqa: F401 - audit listeners
+    from app import services as _services  # noqa: F401 - audit and tenancy listeners
 
     connection = engine.connect()
     outer = connection.begin()
+    # Act as the app does in production: as the role row-level security applies to (ADR 0011).
+    connection.execute(text(f"SET ROLE {APP_ROLE}"))
     session = Session(bind=connection, join_transaction_mode="create_savepoint")
     try:
         yield session
@@ -75,7 +80,25 @@ def client(seeded) -> Iterator:
     app.dependency_overrides.clear()
 
 
-def login(client, username: str, password: str) -> dict[str, str]:
-    response = client.post("/api/v1/auth/login", json={"username": username, "password": password})
+def login(client, username: str, password: str, host: str | None = None) -> dict[str, str]:
+    """Sign in and return the headers for later calls. `host` picks the company by subdomain
+    (e.g. "beta.localhost"); without it the default company answers."""
+    extra = {"host": host} if host else {}
+    response = client.post(
+        "/api/v1/auth/login", json={"username": username, "password": password}, headers=extra
+    )
     assert response.status_code == 200, response.text
-    return {"Authorization": f"Bearer {response.json()['access_token']}"}
+    return {"Authorization": f"Bearer {response.json()['access_token']}", **extra}
+
+
+@contextmanager
+def as_db_owner(db) -> Iterator[None]:
+    """For the few tests that switch database triggers off: those need the table owner, not the
+    app role. Row-level security does not apply inside."""
+    from sqlalchemy import text
+
+    db.execute(text("RESET ROLE"))
+    try:
+        yield
+    finally:
+        db.execute(text(f"SET ROLE {APP_ROLE}"))

@@ -4,7 +4,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.errors import BusinessRuleError, ConflictError, NotFoundError, PermissionDeniedError
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.models.enums import PartyType
 from app.models.masters import Party, Site
 from app.schemas.parties import PartyCreate, PartyUpdate, SiteCreate, SiteUpdate
@@ -21,7 +21,7 @@ def list_parties(
     limit: int = 50,
     offset: int = 0,
 ) -> tuple[list[Party], int]:
-    filters = [Party.tenant_id == TENANT_ID]
+    filters = [Party.tenant_id == current_tenant_id(db)]
     if not include_inactive:
         filters.append(Party.is_active.is_(True))
     if kind == "customer":
@@ -42,14 +42,14 @@ def list_parties(
 
 def get_party(db: Session, party_id: int) -> Party:
     party = db.get(Party, party_id)
-    if party is None or party.tenant_id != TENANT_ID:
+    if party is None or party.tenant_id != current_tenant_id(db):
         raise NotFoundError("Party not found")
     return party
 
 
 def _name_taken(db: Session, name: str, except_id: int | None = None) -> bool:
     stmt = select(Party.id).where(
-        Party.tenant_id == TENANT_ID, func.lower(Party.name) == name.lower()
+        Party.tenant_id == current_tenant_id(db), func.lower(Party.name) == name.lower()
     )
     if except_id is not None:
         stmt = stmt.where(Party.id != except_id)
@@ -78,9 +78,9 @@ def create_party(db: Session, data: PartyCreate, *, is_owner: bool) -> Party:
     if _name_taken(db, data.name):
         raise ConflictError("A party with this name exists", code="PARTY_NAME_TAKEN", field="name")
     party = Party(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         **data.model_dump(exclude={"sites"}),
-        sites=[Site(tenant_id=TENANT_ID, **s.model_dump()) for s in data.sites],
+        sites=[Site(tenant_id=current_tenant_id(db), **s.model_dump()) for s in data.sites],
     )
     db.add(party)
     db.commit()
@@ -107,7 +107,7 @@ def update_party(db: Session, party_id: int, data: PartyUpdate, *, is_owner: boo
 
 def get_site(db: Session, site_id: int) -> Site:
     site = db.get(Site, site_id)
-    if site is None or site.tenant_id != TENANT_ID:
+    if site is None or site.tenant_id != current_tenant_id(db):
         raise NotFoundError("Site not found")
     return site
 
@@ -122,7 +122,7 @@ def add_site(db: Session, party_id: int, data: SiteCreate) -> Site:
         raise ConflictError(
             "This customer already has a site with this name", code="SITE_NAME_TAKEN", field="name"
         )
-    site = Site(tenant_id=TENANT_ID, party_id=party.id, **data.model_dump())
+    site = Site(tenant_id=current_tenant_id(db), party_id=party.id, **data.model_dump())
     db.add(site)
     db.commit()
     return site

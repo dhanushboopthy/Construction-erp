@@ -11,7 +11,7 @@ from sqlalchemy import ColumnElement, Date, cast, func, select
 from sqlalchemy.orm import InstrumentedAttribute, Session
 
 from app.core.errors import BusinessRuleError
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import controls as rules
 from app.domain.money import ZERO, money
 from app.models.cashbook import CashEntry
@@ -45,8 +45,15 @@ def _ist_date(column: InstrumentedAttribute[datetime]) -> ColumnElement[date]:
 class _Ctx:
     def __init__(self, db: Session) -> None:
         self.db = db
-        self.users = {u.id: u.full_name for u in db.scalars(select(AppUser))}
-        self.places = {p.id: p.code for p in db.scalars(select(Location))}
+        self.tenant_id = current_tenant_id(db)
+        self.users = {
+            u.id: u.full_name
+            for u in db.scalars(select(AppUser).where(AppUser.tenant_id == self.tenant_id))
+        }
+        self.places = {
+            p.id: p.code
+            for p in db.scalars(select(Location).where(Location.tenant_id == self.tenant_id))
+        }
 
     def who(self, user_id: int | None) -> str | None:
         return self.users.get(user_id) if user_id is not None else None
@@ -64,7 +71,7 @@ def _round_and_before_count(
 ) -> Iterable[ExceptionRow]:
     adjustments = ctx.db.scalars(
         select(StockAdjustment).where(
-            StockAdjustment.tenant_id == TENANT_ID,
+            StockAdjustment.tenant_id == ctx.tenant_id,
             StockAdjustment.adjustment_date >= date_from,
             StockAdjustment.adjustment_date <= date_to,
         )
@@ -73,7 +80,7 @@ def _round_and_before_count(
     if s.exception_count_days > 0 and adjustments:
         for loc, on in ctx.db.execute(
             select(StockCount.location_id, StockCount.count_date).where(
-                StockCount.tenant_id == TENANT_ID,
+                StockCount.tenant_id == ctx.tenant_id,
                 StockCount.count_date >= date_from,
                 StockCount.count_date <= date_to + timedelta(days=s.exception_count_days),
             )
@@ -123,7 +130,7 @@ def _repeat_returns(
     rows = ctx.db.execute(
         select(CreditNote.party_id, CreditNote.note_date, CreditNote.created_by)
         .where(
-            CreditNote.tenant_id == TENANT_ID,
+            CreditNote.tenant_id == ctx.tenant_id,
             CreditNote.note_date >= since,
             CreditNote.note_date <= date_to,
         )
@@ -181,7 +188,7 @@ def _back_dated(
         keyed = _ist_date(model.created_at)
         found = ctx.db.execute(
             select(date_col, keyed, number_col, model.location_id, model.created_by).where(
-                model.tenant_id == TENANT_ID,
+                model.tenant_id == ctx.tenant_id,
                 date_col >= date_from,
                 date_col <= date_to,
                 keyed - date_col >= BACKDATE_MIN_DAYS,
@@ -218,7 +225,7 @@ def _cash_near_limit(
             func.max(Payment.created_by),
         )
         .where(
-            Payment.tenant_id == TENANT_ID,
+            Payment.tenant_id == ctx.tenant_id,
             Payment.direction == PaymentDirection.RECEIVED,
             Payment.mode == PaymentMode.CASH,
             Payment.payment_date >= date_from,
@@ -226,7 +233,9 @@ def _cash_near_limit(
         )
         .group_by(Payment.party_id, Payment.payment_date)
     ).all()
-    names = {p.id: p.name for p in ctx.db.scalars(select(Party))}
+    names = {
+        p.id: p.name for p in ctx.db.scalars(select(Party).where(Party.tenant_id == ctx.tenant_id))
+    }
     for party_id, on, total, location_id, user in rows:
         if rules.near_limit(total, s.cash_receipt_limit, s.exception_cash_near_pct):
             yield _row(
@@ -255,14 +264,16 @@ def _repeat_shortages(
         select(Purchase.supplier_id, func.count(), func.max(Purchase.bill_date))
         .join(PurchaseLine, PurchaseLine.purchase_id == Purchase.id)
         .where(
-            Purchase.tenant_id == TENANT_ID,
+            Purchase.tenant_id == ctx.tenant_id,
             Purchase.bill_date >= since,
             Purchase.bill_date <= date_to,
             PurchaseLine.received_qty < PurchaseLine.billed_qty,
         )
         .group_by(Purchase.supplier_id)
     ).all()
-    names = {p.id: p.name for p in ctx.db.scalars(select(Party))}
+    names = {
+        p.id: p.name for p in ctx.db.scalars(select(Party).where(Party.tenant_id == ctx.tenant_id))
+    }
     for supplier_id, n, last in rows:
         if n >= s.exception_shortage_count and last >= date_from:
             yield _row(

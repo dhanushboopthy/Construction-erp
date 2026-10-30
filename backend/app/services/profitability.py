@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 from app.core.clock import today_ist
 from app.core.errors import BusinessRuleError
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import finance
 from app.domain.money import ZERO, money
 from app.models.setup import AppUser, Location
@@ -61,9 +61,13 @@ def profitability(
     scope = frozenset({location_id}) if location_id is not None else None
     lines = reports._lines(db, date_from, date_to, scope)
     share = reports.freight_shares(db, lines)
-    places = {p.id: f"{p.code} {p.name}" for p in db.scalars(select(Location))}
+    places = {
+        p.id: f"{p.code} {p.name}"
+        for p in db.scalars(select(Location).where(Location.tenant_id == current_tenant_id(db)))
+    }
     people = {
-        u.id: u.full_name for u in db.scalars(select(AppUser).where(AppUser.tenant_id == TENANT_ID))
+        u.id: u.full_name
+        for u in db.scalars(select(AppUser).where(AppUser.tenant_id == current_tenant_id(db)))
     }
 
     buckets: dict[str, _Bucket] = defaultdict(_Bucket)

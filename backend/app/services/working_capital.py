@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.core.clock import today_ist
 from app.core.errors import BusinessRuleError
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import finance
 from app.domain import stock_valuation as stock_rules
 from app.domain.money import ZERO, money
@@ -36,7 +36,7 @@ def stock_values(db: Session, dates: list[date]) -> dict[date, Decimal]:
     by_item: dict[int, list[StockLedger]] = defaultdict(list)
     rows = db.execute(
         select(StockLedger)
-        .where(StockLedger.tenant_id == TENANT_ID)
+        .where(StockLedger.tenant_id == current_tenant_id(db))
         .order_by(StockLedger.entry_date, StockLedger.id)
     ).scalars()
     for row in rows:
@@ -62,7 +62,9 @@ def party_balances(db: Session, dates: list[date]) -> dict[date, dict[str, Decim
     """For each date: customers' dues, customer advances, supplier dues and supplier advances,
     each summed over parties (a party in credit counts as an advance, not as a negative due)."""
     per_party: dict[tuple[LedgerAccount, int], list[tuple[date, Decimal]]] = defaultdict(list)
-    for r in db.execute(select(PartyLedger).where(PartyLedger.tenant_id == TENANT_ID)).scalars():
+    for r in db.execute(
+        select(PartyLedger).where(PartyLedger.tenant_id == current_tenant_id(db))
+    ).scalars():
         net = r.debit - r.credit if r.account is LedgerAccount.RECEIVABLE else r.credit - r.debit
         per_party[(r.account, r.party_id)].append((r.entry_date, net))
     out: dict[date, dict[str, Decimal]] = {}
@@ -86,35 +88,35 @@ def _flows(db: Session, date_from: date, date_to: date) -> dict[str, Decimal]:
         select(
             func.coalesce(func.sum(SalesInvoice.grand_total - SalesInvoice.paid_at_billing), 0)
         ).where(
-            SalesInvoice.tenant_id == TENANT_ID,
+            SalesInvoice.tenant_id == current_tenant_id(db),
             SalesInvoice.invoice_date >= date_from,
             SalesInvoice.invoice_date <= date_to,
         )
     ).scalar_one()
     bought = db.execute(
         select(func.coalesce(func.sum(Purchase.supplier_payable), 0)).where(
-            Purchase.tenant_id == TENANT_ID,
+            Purchase.tenant_id == current_tenant_id(db),
             Purchase.bill_date >= date_from,
             Purchase.bill_date <= date_to,
         )
     ).scalar_one()
     returned = db.execute(
         select(func.coalesce(func.sum(DebitNote.grand_total), 0)).where(
-            DebitNote.tenant_id == TENANT_ID,
+            DebitNote.tenant_id == current_tenant_id(db),
             DebitNote.note_date >= date_from,
             DebitNote.note_date <= date_to,
         )
     ).scalar_one()
     taken_with_bills = db.execute(
         select(func.coalesce(func.sum(SalesInvoice.paid_at_billing), 0)).where(
-            SalesInvoice.tenant_id == TENANT_ID,
+            SalesInvoice.tenant_id == current_tenant_id(db),
             SalesInvoice.invoice_date >= date_from,
             SalesInvoice.invoice_date <= date_to,
         )
     ).scalar_one()
     collected = db.execute(
         select(func.coalesce(func.sum(PartyLedger.credit), 0)).where(
-            PartyLedger.tenant_id == TENANT_ID,
+            PartyLedger.tenant_id == current_tenant_id(db),
             PartyLedger.account == LedgerAccount.RECEIVABLE,
             PartyLedger.ref_type == PartyRef.PAYMENT,
             PartyLedger.entry_date >= date_from,

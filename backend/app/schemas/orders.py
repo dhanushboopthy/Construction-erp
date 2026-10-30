@@ -151,6 +151,7 @@ class LotOut(Schema):
     label: str
     mfg_week: int | None
     mfg_year: int | None
+    batch_no: str | None = None
     quantity: Decimal  # base units
 
 

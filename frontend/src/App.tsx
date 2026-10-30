@@ -18,6 +18,7 @@ import { CustomerRatesPage } from "@/pages/rates/CustomerRatesPage";
 import { RateBoardPage } from "@/pages/rates/RateBoardPage";
 import { RatesLayout } from "@/pages/rates/RatesLayout";
 import { BillEntryPage } from "@/pages/sales/BillEntryPage";
+import { QuotesPage } from "@/pages/sales/QuotesPage";
 import { SalesPage } from "@/pages/sales/SalesPage";
 import { PaymentsPage } from "@/pages/payments/PaymentsPage";
 import { AuditLogPage } from "@/pages/settings/AuditLogPage";
@@ -33,6 +34,7 @@ import { UsersPage } from "@/pages/settings/UsersPage";
 import { LostSalesPage } from "@/pages/stock/LostSalesPage";
 import { ShrinkagePage } from "@/pages/stock/ShrinkagePage";
 import { StockAnalysisPage } from "@/pages/stock/StockAnalysisPage";
+import { StockDashboardPage } from "@/pages/stock/StockDashboardPage";
 import { StockValuePage } from "@/pages/stock/StockValuePage";
 import { AdjustmentsPage } from "@/pages/stock/AdjustmentsPage";
 import { CountsPage } from "@/pages/stock/CountsPage";
@@ -138,6 +140,14 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
                 }
               />
               <Route
+                path="/sales/quotes"
+                element={
+                  <RequireRole roles={["owner", "counter", "accountant"]}>
+                    <QuotesPage />
+                  </RequireRole>
+                }
+              />
+              <Route
                 path="/sales/new"
                 element={
                   <RequireRole roles={["owner", "counter"]}>
@@ -213,6 +223,7 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
                 }
               >
                 <Route index element={<StockPage />} />
+                <Route path="dashboard" element={<StockDashboardPage />} />
                 <Route path="transfers" element={<TransfersPage />} />
                 <Route path="counts" element={<CountsPage />} />
                 <Route path="adjustments" element={<AdjustmentsPage />} />

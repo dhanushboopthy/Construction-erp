@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.core.clock import today_ist
 from app.core.errors import BusinessRuleError
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import controls as rules
 from app.models.audit import AuditLog
 from app.models.documents import DailyClosing, Gstr2bImport
@@ -28,7 +28,7 @@ def get_lock(db: Session) -> PeriodLockOut:
     locked = get_settings_row(db).locked_through
     last = db.scalars(
         select(AuditLog)
-        .where(AuditLog.tenant_id == TENANT_ID, AuditLog.entity == ENTITY)
+        .where(AuditLog.tenant_id == current_tenant_id(db), AuditLog.entity == ENTITY)
         .order_by(AuditLog.id.desc())
         .limit(1)
     ).first()
@@ -83,7 +83,7 @@ def checklist(db: Session, period: str) -> PeriodChecklist:
         (loc, on)
         for loc, on in db.execute(
             select(SalesInvoice.location_id, SalesInvoice.invoice_date).where(
-                SalesInvoice.tenant_id == TENANT_ID,
+                SalesInvoice.tenant_id == current_tenant_id(db),
                 SalesInvoice.invoice_date >= start,
                 SalesInvoice.invoice_date <= end,
             )
@@ -93,7 +93,7 @@ def checklist(db: Session, period: str) -> PeriodChecklist:
         (loc, on)
         for loc, on in db.execute(
             select(DailyClosing.location_id, DailyClosing.closing_date).where(
-                DailyClosing.tenant_id == TENANT_ID,
+                DailyClosing.tenant_id == current_tenant_id(db),
                 DailyClosing.status == ClosingStatus.CLOSED,
                 DailyClosing.closing_date >= start,
                 DailyClosing.closing_date <= end,
@@ -101,7 +101,10 @@ def checklist(db: Session, period: str) -> PeriodChecklist:
         )
     }
     open_days = sorted(billed - closed, key=lambda x: (x[1], x[0]))
-    codes = {x.id: x.code for x in db.scalars(select(Location))}
+    codes = {
+        x.id: x.code
+        for x in db.scalars(select(Location).where(Location.tenant_id == current_tenant_id(db)))
+    }
     items.append(
         ChecklistItem(
             code="days_closed",
@@ -116,7 +119,7 @@ def checklist(db: Session, period: str) -> PeriodChecklist:
 
     has_2b = db.execute(
         select(Gstr2bImport.id).where(
-            Gstr2bImport.tenant_id == TENANT_ID, Gstr2bImport.period == period
+            Gstr2bImport.tenant_id == current_tenant_id(db), Gstr2bImport.period == period
         )
     ).first()
     items.append(

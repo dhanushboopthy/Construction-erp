@@ -11,7 +11,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.errors import NotFoundError
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import ledger as ledger_rules
 from app.domain import stock_valuation
 from app.domain.inventory_analytics import AdjustmentReason
@@ -50,7 +50,7 @@ def add_stock_move(
     actor_id: int | None = None,
 ) -> StockLedger:
     row = StockLedger(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         item_id=item_id,
         location_id=location_id,
         entry_date=entry_date,
@@ -84,7 +84,7 @@ def add_party_entry(
     actor_id: int | None = None,
 ) -> PartyLedger:
     row = PartyLedger(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         party_id=party_id,
         site_id=site_id,
         account=account,
@@ -125,7 +125,7 @@ def stock_position(
     """(company-wide position, quantity at `location_id`) rebuilt from the ledger."""
     rows = db.execute(
         select(StockLedger)
-        .where(StockLedger.tenant_id == TENANT_ID, StockLedger.item_id == item_id)
+        .where(StockLedger.tenant_id == current_tenant_id(db), StockLedger.item_id == item_id)
         .order_by(StockLedger.entry_date, StockLedger.id)
     ).scalars()
     moves = [
@@ -149,16 +149,18 @@ def stock_summary(
 ) -> list[StockItemOut | StockItemOwnerOut]:
     items = {
         i.id: i
-        for i in db.execute(select(Item).where(Item.tenant_id == TENANT_ID)).scalars()
+        for i in db.execute(select(Item).where(Item.tenant_id == current_tenant_id(db))).scalars()
         if not q or q.lower() in f"{i.name} {i.brand or ''} {i.size or ''}".lower()
     }
     locations = {
         loc.id: loc
-        for loc in db.execute(select(Location).where(Location.tenant_id == TENANT_ID)).scalars()
+        for loc in db.execute(
+            select(Location).where(Location.tenant_id == current_tenant_id(db))
+        ).scalars()
     }
     rows = db.execute(
         select(StockLedger)
-        .where(StockLedger.tenant_id == TENANT_ID)
+        .where(StockLedger.tenant_id == current_tenant_id(db))
         .order_by(StockLedger.entry_date, StockLedger.id)
     ).scalars()
     moves: dict[int, list[stock_valuation.StockMove]] = {}
@@ -257,11 +259,11 @@ def party_statement(
     see_payable: bool,
 ) -> StatementOut:
     party = db.get(Party, party_id)
-    if party is None or party.tenant_id != TENANT_ID:
+    if party is None or party.tenant_id != current_tenant_id(db):
         raise NotFoundError("Party not found")
     stmt = (
         select(PartyLedger)
-        .where(PartyLedger.tenant_id == TENANT_ID, PartyLedger.party_id == party_id)
+        .where(PartyLedger.tenant_id == current_tenant_id(db), PartyLedger.party_id == party_id)
         .order_by(PartyLedger.entry_date, PartyLedger.id)
     )
     if site_id is not None:
@@ -289,11 +291,12 @@ def party_statement(
 
 def dues_report(db: Session, account: LedgerAccount, today: date) -> DuesOut:
     parties = {
-        p.id: p for p in db.execute(select(Party).where(Party.tenant_id == TENANT_ID)).scalars()
+        p.id: p
+        for p in db.execute(select(Party).where(Party.tenant_id == current_tenant_id(db))).scalars()
     }
     rows = db.execute(
         select(PartyLedger)
-        .where(PartyLedger.tenant_id == TENANT_ID, PartyLedger.account == account)
+        .where(PartyLedger.tenant_id == current_tenant_id(db), PartyLedger.account == account)
         .order_by(PartyLedger.entry_date, PartyLedger.id)
     ).scalars()
     grouped: dict[int, list[PartyLedger]] = {}

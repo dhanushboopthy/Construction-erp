@@ -4,7 +4,7 @@ A modular monolith: one FastAPI backend and one PostgreSQL database behind nginx
 React + TypeScript single-page app. Runs on one machine with Docker Compose (ADR 0001).
 
 ```text
- Browsers (owner, counter staff, accountant)
+ Browsers (owner, counter staff, accountant) at <company>.duolink.app
         │ HTTPS
         ▼
  ┌───────────────────── one machine, Docker Compose ─────────────────────┐
@@ -41,7 +41,8 @@ clock (pass `today` in). Anything that touches money is in `domain/` and unit-te
 | Money | `Decimal` end to end; floats rejected; `NUMERIC` columns; sent as strings in JSON | `domain/money.py` |
 | Errors | One JSON shape `{code, message, field, request_id}`; business blocks are 409 | `core/errors.py` |
 | Observability | Request id per request (header `X-Request-ID`), access log with user and duration, JSON logs in production, `/api/v1/health` and `/health/ready` | `core/middleware.py`, `core/logging.py` |
-| Tenancy | `tenant_id` on every table, `TENANT_ID = 1` constant for now | `core/tenancy.py`, ADR 0004 |
+| Duolink admin | Separate `platform_admin` accounts and `platform` tokens, only at `admin.<domain>`; platform mode reads every company through policy `platform_admin`; counts and statuses only; append-only `platform_audit_log`; plan limits in `domain/plans.py` | `api/v1/admin/`, `services/platform/`, `src/admin/`, migration 0025, ADR 0012 |
+| Tenancy | Subdomain names the company; `get_tenant` sets it on the session; services filter on `current_tenant_id(db)`; a flush listener stamps and guards `tenant_id`; PostgreSQL row-level security (FORCE) on every table, app connections act as role `erp_app` | `api/deps.py`, `core/tenancy.py`, `services/tenancy.py`, migration 0024, ADR 0011 |
 
 ## Frontend
 

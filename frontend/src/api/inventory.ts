@@ -6,11 +6,21 @@ import type {
   InventoryAnalytics,
   NrvReport,
   Shrinkage,
+  StockDashboard,
+  StockDashboardOwner,
   Writedown,
   WritedownCreate,
 } from "./types";
 
 /** FM6: stock analysis, stock value against the market, cement age and weight shortages. */
+
+/** Stock on one screen (R5). The owner's answer also carries values at cost. */
+export function useStockDashboard() {
+  return useQuery({
+    queryKey: ["stock", "dashboard"],
+    queryFn: () => api<StockDashboard | StockDashboardOwner>("/stock/dashboard"),
+  });
+}
 
 export function useInventoryAnalytics() {
   return useQuery({

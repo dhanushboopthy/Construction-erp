@@ -9,12 +9,12 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, aliased
 
 from app.core.clock import today_ist
 from app.core.errors import BusinessRuleError, ConflictError, NotFoundError, PermissionDeniedError
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import finance
 from app.domain.finance import CashEntryKind
 from app.domain.money import ZERO, money
@@ -26,6 +26,7 @@ from app.schemas.finance import (
     CashBookOut,
     CashEntryCreate,
     CashEntryOut,
+    CashMonthOut,
     ExpenseCategoryIn,
     ExpenseCategoryOut,
     ExpenseCategoryUpdate,
@@ -59,12 +60,12 @@ def ensure_default_categories(db: Session) -> None:
     have = set(db.execute(select(ExpenseCategory.name)).scalars())
     for name, nature in DEFAULT_CATEGORIES:
         if name not in have:
-            db.add(ExpenseCategory(tenant_id=TENANT_ID, name=name, nature=nature))
+            db.add(ExpenseCategory(tenant_id=current_tenant_id(db), name=name, nature=nature))
     db.flush()
 
 
 def list_categories(db: Session, include_inactive: bool = False) -> list[ExpenseCategoryOut]:
-    stmt = select(ExpenseCategory).where(ExpenseCategory.tenant_id == TENANT_ID)
+    stmt = select(ExpenseCategory).where(ExpenseCategory.tenant_id == current_tenant_id(db))
     if not include_inactive:
         stmt = stmt.where(ExpenseCategory.is_active.is_(True))
     rows = db.execute(stmt.order_by(ExpenseCategory.name)).scalars()
@@ -73,14 +74,14 @@ def list_categories(db: Session, include_inactive: bool = False) -> list[Expense
 
 def _category(db: Session, category_id: int) -> ExpenseCategory:
     row = db.get(ExpenseCategory, category_id)
-    if row is None or row.tenant_id != TENANT_ID:
+    if row is None or row.tenant_id != current_tenant_id(db):
         raise NotFoundError("Expense head not found", field="category_id")
     return row
 
 
 def _name_taken(db: Session, name: str, except_id: int | None = None) -> bool:
     stmt = select(ExpenseCategory.id).where(
-        ExpenseCategory.tenant_id == TENANT_ID, ExpenseCategory.name == name
+        ExpenseCategory.tenant_id == current_tenant_id(db), ExpenseCategory.name == name
     )
     found = db.execute(stmt).scalar_one_or_none()
     return found is not None and found != except_id
@@ -90,7 +91,7 @@ def create_category(db: Session, data: ExpenseCategoryIn) -> ExpenseCategoryOut:
     name = data.name.strip()
     if _name_taken(db, name):
         raise ConflictError("An expense head with this name exists", code="DUPLICATE", field="name")
-    row = ExpenseCategory(tenant_id=TENANT_ID, name=name, nature=data.nature)
+    row = ExpenseCategory(tenant_id=current_tenant_id(db), name=name, nature=data.nature)
     db.add(row)
     db.commit()
     return ExpenseCategoryOut.model_validate(row)
@@ -199,7 +200,7 @@ def create_entry(db: Session, data: CashEntryCreate, actor: Actor) -> CashEntryO
     if not owner and data.kind not in COUNTER_KINDS:
         raise PermissionDeniedError("Only the owner records bank withdrawals, drawings or capital")
     place = db.get(Location, data.location_id)
-    if place is None or place.tenant_id != TENANT_ID or not place.is_active:
+    if place is None or place.tenant_id != current_tenant_id(db) or not place.is_active:
         raise NotFoundError("Shop not found or inactive", field="location_id")
 
     today = today_ist()
@@ -262,7 +263,7 @@ def create_entry(db: Session, data: CashEntryCreate, actor: Actor) -> CashEntryO
         fy_start_month=settings.financial_year_start_month,
     )
     row = CashEntry(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         number=number,
         location_id=place.id,
         entry_date=on,
@@ -287,7 +288,7 @@ def create_entry(db: Session, data: CashEntryCreate, actor: Actor) -> CashEntryO
 def reverse_entry(db: Session, entry_id: int, reason: str, *, actor_id: int) -> CashEntryOut:
     """Owner only: a new voucher, dated today, that cancels the original exactly."""
     original = db.get(CashEntry, entry_id)
-    if original is None or original.tenant_id != TENANT_ID:
+    if original is None or original.tenant_id != current_tenant_id(db):
         raise NotFoundError("Voucher not found")
     if original.reverses_id is not None:
         raise BusinessRuleError("A reversal cannot itself be reversed", code="IS_REVERSAL")
@@ -307,7 +308,7 @@ def reverse_entry(db: Session, entry_id: int, reason: str, *, actor_id: int) -> 
         fy_start_month=settings.financial_year_start_month,
     )
     row = CashEntry(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         number=number,
         location_id=original.location_id,
         entry_date=on,
@@ -330,20 +331,21 @@ def cash_book(
     *,
     location_ids: frozenset[int] | None,
     location_id: int | None,
-    date_from: date,
+    date_from: date | None,
     date_to: date,
 ) -> CashBookOut:
+    """Vouchers from `date_from` to `date_to`. No `date_from` means from the first voucher."""
+    where = [CashEntry.tenant_id == current_tenant_id(db), CashEntry.entry_date <= date_to]
+    if location_id is not None:
+        where.append(CashEntry.location_id == location_id)
+    if location_ids is not None:
+        where.append(CashEntry.location_id.in_(location_ids))
+    if date_from is None:
+        first = db.execute(select(func.min(CashEntry.entry_date)).where(*where)).scalar_one()
+        date_from = min(first or date_to, date_to)
     if date_to < date_from:
         raise BusinessRuleError("The end date is before the start date", code="BAD_RANGE")
-    stmt = select(CashEntry).where(
-        CashEntry.tenant_id == TENANT_ID,
-        CashEntry.entry_date >= date_from,
-        CashEntry.entry_date <= date_to,
-    )
-    if location_id is not None:
-        stmt = stmt.where(CashEntry.location_id == location_id)
-    if location_ids is not None:
-        stmt = stmt.where(CashEntry.location_id.in_(location_ids))
+    stmt = select(CashEntry).where(*where, CashEntry.entry_date >= date_from)
     rows = list(db.execute(stmt.order_by(CashEntry.entry_date, CashEntry.id)).scalars())
     views = _views(db, rows)
     drawer_in = sum((v.drawer_effect for v in views if v.drawer_effect > ZERO), ZERO)
@@ -364,6 +366,19 @@ def cash_book(
         drawer_in=money(drawer_in),
         drawer_out=money(drawer_out),
         expenses=money(expenses),
+        months=[
+            CashMonthOut(
+                month=m.month, drawer_in=m.drawer_in, drawer_out=m.drawer_out, expenses=m.expenses
+            )
+            for m in finance.monthly_cash(
+                [
+                    finance.CashMove(
+                        v.entry_date, v.kind, v.amount, v.drawer_effect, v.reverses_id is not None
+                    )
+                    for v in views
+                ]
+            )
+        ],
     )
 
 
@@ -389,7 +404,7 @@ class DrawerMoves:
 def drawer_moves(db: Session, location_id: int, on: date) -> DrawerMoves:
     rows = db.execute(
         select(CashEntry).where(
-            CashEntry.tenant_id == TENANT_ID,
+            CashEntry.tenant_id == current_tenant_id(db),
             CashEntry.location_id == location_id,
             CashEntry.entry_date == on,
             CashEntry.mode == PaymentMode.CASH,

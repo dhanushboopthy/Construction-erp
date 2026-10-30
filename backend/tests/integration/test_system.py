@@ -9,7 +9,7 @@ from sqlalchemy.exc import DBAPIError
 
 from app.core.clock import today_ist
 from app.services import verify
-from tests.conftest import login
+from tests.conftest import as_db_owner, login
 from tests.integration.test_sales import (  # noqa: F401 - the world fixture is shared
     ACCOUNTANT,
     COUNTER,
@@ -94,12 +94,15 @@ def test_the_checks_catch_a_gap_a_wrong_total_and_a_stray_ledger_row(seeded, bus
     def failed(name):
         return next(c for c in verify.run_checks(seeded).checks if c.name == name).state == "fail"
 
-    seeded.execute(text("ALTER TABLE sales_invoice DISABLE TRIGGER sales_invoice_no_edit"))
-    seeded.execute(text("UPDATE sales_invoice SET grand_total = grand_total + 5"))
+    with as_db_owner(seeded):
+        seeded.execute(text("ALTER TABLE sales_invoice DISABLE TRIGGER sales_invoice_no_edit"))
+        seeded.execute(text("UPDATE sales_invoice SET grand_total = grand_total + 5"))
     assert failed("Document totals")
-    seeded.execute(text("UPDATE sales_invoice SET number = 'S1/26-27/00009'"))
+    with as_db_owner(seeded):
+        seeded.execute(text("UPDATE sales_invoice SET number = 'S1/26-27/00009'"))
     assert failed("Document numbers") is False  # a single number has no gap, only its neighbours do
-    seeded.execute(text("ALTER TABLE sales_invoice ENABLE TRIGGER sales_invoice_no_edit"))
+    with as_db_owner(seeded):
+        seeded.execute(text("ALTER TABLE sales_invoice ENABLE TRIGGER sales_invoice_no_edit"))
 
     seeded.execute(
         text(
@@ -109,14 +112,17 @@ def test_the_checks_catch_a_gap_a_wrong_total_and_a_stray_ledger_row(seeded, bus
         )
     )
     assert failed("Accounts agree with documents")
-    seeded.execute(text("ALTER TABLE stock_ledger DISABLE TRIGGER stock_ledger_append_only"))
-    seeded.execute(text("UPDATE stock_ledger SET qty_out = qty_out + 100000 WHERE qty_out > 0"))
+    with as_db_owner(seeded):
+        seeded.execute(text("ALTER TABLE stock_ledger DISABLE TRIGGER stock_ledger_append_only"))
+        seeded.execute(text("UPDATE stock_ledger SET qty_out = qty_out + 100000 WHERE qty_out > 0"))
     assert failed("Stock")
-    seeded.execute(text("ALTER TABLE stock_ledger ENABLE TRIGGER stock_ledger_append_only"))
+    with as_db_owner(seeded):
+        seeded.execute(text("ALTER TABLE stock_ledger ENABLE TRIGGER stock_ledger_append_only"))
 
 
 def test_missing_guards_and_a_missing_file_are_reported(seeded, busy, client, world):
-    seeded.execute(text("DROP TRIGGER sales_invoice_no_delete ON sales_invoice"))
+    with as_db_owner(seeded):
+        seeded.execute(text("DROP TRIGGER sales_invoice_no_delete ON sales_invoice"))
     check = verify.triggers_check(seeded)
     assert check.state == "fail" and "sales_invoice_no_delete" in check.detail
 
@@ -229,7 +235,8 @@ def test_the_command_line_check_exits_with_the_result(seeded, busy, monkeypatch,
     monkeypatch.setattr(cli, "SessionLocal", lambda: Same())
     assert cli.main([]) == 0
     assert "OK" in capsys.readouterr().out
-    seeded.execute(text("DROP TRIGGER sales_invoice_no_delete ON sales_invoice"))
+    with as_db_owner(seeded):
+        seeded.execute(text("DROP TRIGGER sales_invoice_no_delete ON sales_invoice"))
     assert cli.main(["--full"]) == 1
     assert "FAILED" in capsys.readouterr().out
 

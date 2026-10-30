@@ -13,8 +13,9 @@ Related: [ROADMAP.md](ROADMAP.md) (milestones and status) · [ARCHITECTURE.md](A
 ## 1. Overview
 
 A web ERP for a new construction-materials business that bills on paper today: **two shops and
-one godown**. Version 1 serves this single client and must go live fast. Multi-tenant SaaS
-comes later, so every table already carries `tenant_id` (ADR 0004).
+one godown**. Version 1 serves this single client and must go live fast. Since Milestone 15 the
+same server can host many companies (Duolink SaaS): each company has its own subdomain, and its
+rows are kept apart by `tenant_id` and PostgreSQL row-level security (ADR 0011).
 
 **Products:** TMT bars, MS square pipe, round pipe, cement, binding wire, angles and channels.
 
@@ -87,8 +88,20 @@ G17 day lock · G18 owner approvals · G19 idempotency.
 
 ## 4. Data model
 
-Every table: `id`, `tenant_id` (default 1), `created_at`, `updated_at`, `created_by`,
-`updated_by` (where it is a business record). Money `NUMERIC(14,2)`, quantity `NUMERIC(14,3)`,
+Every table: `id`, `tenant_id` (a foreign key to `tenant`, no default: set from the session),
+`created_at`, `updated_at`, `created_by`, `updated_by` (where it is a business record).
+
+**Built (Milestone 15):** `tenant` (slug = subdomain, name, status trial / active / suspended /
+cancelled, plan trial / basic / pro, trial end, user and location limits, suspension reason).
+Every table with `tenant_id` has row-level security, policy `tenant_isolation`. `user_location`
+takes its user's company in a trigger. Public `GET /api/v1/tenant` returns the company of the
+address for the sign-in page.
+
+**Built (Milestone 16, ADR 0012):** `platform_admin`, `platform_session` and `platform_audit_log`
+(append-only) for Duolink's own staff. Plans limit active users and active shops and godowns
+(trial 5 / 2 for 14 days, basic 10 / 3, pro 50 / 10; a company may have its own limit). Beyond a
+limit the API answers 409 `PLAN_USER_LIMIT` / `PLAN_LOCATION_LIMIT`. An ended trial never locks a
+company out. A suspended company cannot sign in, and its sessions end. Money `NUMERIC(14,2)`, quantity `NUMERIC(14,3)`,
 unit cost `NUMERIC(14,4)`. Stock, balances and average cost are **derived from ledgers**, never
 stored as editable numbers. Enums are `VARCHAR` + `CHECK`.
 
@@ -178,7 +191,35 @@ stock ledger moved here from Milestone 4 because opening stock is its first writ
   or shop is a conflict (G19).
 - A4 PDF: `GET /invoices/{id}/pdf?copy=` via WeasyPrint, template `app/templates/invoice_a4.html`
   behind the `InvoiceRenderer` interface (a thermal layout can be added). Outside production the PDF
-  carries a TEST watermark (ADR 0005).
+  carries a TEST watermark (ADR 0005). Layout is the owner's Tally-style template (October 2026):
+  title and copy label; e-invoice IRN, acknowledgement and QR when there is one; seller (with
+  GSTIN and state), consignee (ship to, or the buyer when collected) and buyer (bill to) with
+  GSTIN and state; the details grid (number, e-way bill no., date, mode/terms of payment, the
+  quotation it was made from, place of supply, destination, vehicle, terms of delivery; delivery
+  note, buyer's order, dispatch and LR boxes print empty for writing in); goods with HSN,
+  quantity, rate, per, discount (only when a line has one) and amount; OUTPUT CGST/SGST/IGST and
+  rounded off under the goods; Total pinned to the foot of the goods box; amount in words and the
+  customer's previous balance; HSN summary per HSN and rate (CGST + SGST or IGST); tax in words;
+  company PAN (characters 3-12 of the GSTIN), declaration, terms, bank (name, account, branch and
+  IFSC), signatory; "Subject to <jurisdiction> jurisdiction" from shop settings. A long bill runs
+  onto a second page with the column heads repeated.
+- New-bill screen: a user with one shop is not asked which shop (the page says "Billing from …");
+  the vehicle number is asked only when the bill is delivered to a site (it can also be added on
+  the e-way bill). A missing customer is added from the bill (owner and counter); a missing item
+  is added from the bill by the owner only (item master stays owner-only) and lands on the first
+  empty line.
+- Quotations and proforma invoices (`sales_quote`, `sales_quote_line`): made on the same screen
+  ("Document"), by owner or counter. Priced by the same rules as a bill (rates, owner-only
+  discount and price, below-cost needs the owner, GST by place of supply) but with no day lock,
+  stock or credit check, because they move no stock and put nothing on the customer's account.
+  Own number series per shop and year: `S1Q/26-27/00001` (quotation), `S1PI/26-27/00001`
+  (proforma). Optional valid-until date (not in the past). The A4 print uses the bill layout
+  titled Estimate/Quotation or Proforma Invoice, with "Valid Until" in place of the terms of
+  delivery, and its declaration says it is not a tax invoice (ADR 0005). "Make the
+  bill" opens a new bill with its customer, shop and lines; the bill is priced again at that
+  day's rates and saves `quote_id`, which links it (`invoice_id` on the quote). A quote is billed
+  once (409 `QUOTE_ALREADY_BILLED`) and only for its own customer (`QUOTE_OTHER_CUSTOMER`).
+  Not built: editing or withdrawing a quote (make a new one), holding the quoted price on the bill.
 
 **Built (Milestone 7):** `approval`; `app_user.pin_hash`; `party_ledger.applies_to`;
 `sales_invoice.paid_at_billing`. The planned `payment_allocation` table is not needed: a payment's
@@ -210,6 +251,13 @@ line is the sum of its note lines.
   exactly); GST is worked out again per line with the invoice's supply kind; round-off per note.
   Stock goes back to the location it left at the cost it left at; lines delivered direct from a
   supplier restock nothing. The customer's receivable is credited against that invoice number.
+- Cancel a bill (owner only, `POST /invoices/{id}/cancel {reason}`): the bill is never deleted or
+  changed (B16). A credit note for every line, marked `cancels_invoice`, reverses all of it (stock
+  back, receivable credited, GST reversed in GSTR-1 as a credit note); the bill then reads
+  "Cancelled" with that note's number (`cancelled_by`). Refused when part was already returned
+  (409 `BILL_HAS_RETURNS`), when already cancelled (`ALREADY_CANCELLED`), or while a live e-way
+  bill or IRN is on it (`CANCEL_EWAY_FIRST`, `CANCEL_IRN_FIRST`). Money taken with the bill stays
+  on the customer's account as credit.
 - Debit note: owner only. Taxable value is pro rata to the billed quantity on the supplier line,
   GST by supplier state against shop state. Stock leaves at the line's landed cost and cannot
   exceed what is held (B13, 409 `INSUFFICIENT_STOCK`; direct purchases touch no stock). The
@@ -334,6 +382,11 @@ on issued documents (ADR 0010).
 - Counter staff record expenses and bank deposits at their own shop, dated today; an expense
   above the limit needs the owner's PIN (`expense` approval). The owner records everything and
   may back-date; closed shop-days refuse vouchers (G17). The accountant reads.
+- Reading the cash book: one day, a calendar month, a financial year (April–March), any from–to
+  range, or everything (`all_time`, from the first voucher to today). Totals for the period plus
+  the same totals per calendar month (`months`, `domain/finance.monthly_cash`), so the months
+  add up to the period. Looking at one day files a new voucher on that day; longer views file it
+  today.
 - Daily closing: cash in = cash receipts + cash from the bank + owner's capital; cash out = cash
   paid to parties + cash expenses + deposits + drawings. A normal day closes with no difference.
 - Expense heads have a nature: fixed, variable or interest (defaults seeded, owner edits).
@@ -454,6 +507,13 @@ number series `W`; `shop_settings.provision_pct_*` (not yet due 0, 1-15 days 1, 
 - Metrics explained (owner): `/metrics`, built from `GET /kpis/definitions`.
 - Deferred: bank and cash balances in working capital (FM7); booking the provision; reversing a
   write-off (a later payment covers it).
+
+**Built (owner request R5):** stock dashboard, `GET /stock/dashboard` and the Stock → Dashboard
+tab. Active items in stock, by place and by category; active items with no stock; items at or
+below their reorder point (FM6 analytics, once there is enough sales history). The owner also
+sees the stock value, the dead stock (no movement for 180 days) and the value per place and
+category, at the weighted-average cost (`domain/stock_dashboard.py`). Everyone else sees counts
+and quantities only (B4).
 
 **Built (FM6, finance review F10 to F14):** `stock_writedown`, `stock_writedown_line`; stock ledger
 ref `stock_writedown`; number series `N`; `item.lead_time_days`, `item.safety_days`,
@@ -597,6 +657,12 @@ confirm AS 2).
   than the lots hold, the missing quantity comes off the oldest lots. Costing is unchanged (one
   weighted-average cost); the bill PDF is unchanged; the lots show on the invoice screen.
   Transfers carry no lot, and a lot is kept per shop of the purchase.
+- Batch numbers (owner request R6): any purchase line may carry the supplier's batch, lot or heat
+  number (`purchase_line.batch_no`, optional, up to 40 characters). Lots now apply to every item,
+  not only cement: every sale takes the oldest lot first and records it in `sales_line_lot`. A
+  lot reads "Batch H-2231" (with the week for cement when both are given), else the week, else
+  the receipt date. The batch numbers a bill line took print under its description on the A4
+  bill. Costing is still the one weighted-average cost.
 - Lost-sales log (`services/lost_sales.py`), also the smallest version, built without the owner's
   answer on whether counter staff will log (question 7): item, quantity (any unit of the item),
   optional note, shop and user; counter staff log for their own shop, dated today; the owner may

@@ -93,8 +93,13 @@ def lot_date(year: int, week: int) -> date:
         raise ValueError(f"{year} has no week {week}") from exc
 
 
-def lot_label(week: int | None, year: int | None, received_on: date) -> str:
-    """How a lot reads on screen: the printed week, or the day it came in when none was marked."""
+def lot_label(
+    week: int | None, year: int | None, received_on: date, batch: str | None = None
+) -> str:
+    """How a lot reads on screen: the supplier's batch number, the printed week, or the day it
+    came in when neither was marked."""
+    if batch:
+        return f"Batch {batch}" + (f", week {week}, {year}" if week and year else "")
     if week is not None and year is not None:
         return f"Week {week}, {year}"
     return f"Received {received_on:%d-%m-%Y}"

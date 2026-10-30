@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.core.clock import today_ist
 from app.core.errors import BusinessRuleError, NotFoundError
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import gst
 from app.domain import returns as return_rules
 from app.domain.compliance import return_window_open
@@ -43,6 +43,7 @@ from app.schemas.returns import (
 )
 from app.services import approvals as approval_service
 from app.services import closing as closing_service
+from app.services import compliance as compliance_service
 from app.services import ledgers
 from app.services.numbering import allocate_number
 from app.services.shop_settings import get_settings_row
@@ -94,9 +95,14 @@ def create_credit_note(
     actor_id: int,
     is_owner: bool,
     can_access: Callable[[int], bool],
+    cancels_invoice: bool = False,
 ) -> CreditNote:
     invoice = db.get(SalesInvoice, data.invoice_id)
-    if invoice is None or invoice.tenant_id != TENANT_ID or not can_access(invoice.location_id):
+    if (
+        invoice is None
+        or invoice.tenant_id != current_tenant_id(db)
+        or not can_access(invoice.location_id)
+    ):
         raise NotFoundError("Invoice not found", field="invoice_id")
     _no_repeats(data.lines)
     today = today_ist()
@@ -143,7 +149,7 @@ def create_credit_note(
         (a.approved_by for a in approvals if a.action is ApprovalAction.LATE_RETURN), None
     )
     note = CreditNote(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         number=number,
         financial_year=fy_label(today, settings.financial_year_start_month),
         location_id=invoice.location_id,
@@ -165,9 +171,10 @@ def create_credit_note(
         round_off=totals.round_off,
         grand_total=totals.grand_total,
         approved_by=approver if approver is not None else (actor_id if is_owner else None),
+        cancels_invoice=cancels_invoice,
         lines=[
             CreditNoteLine(
-                tenant_id=TENANT_ID,
+                tenant_id=current_tenant_id(db),
                 line_no=n,
                 sales_line_id=line.id,
                 item_id=line.item_id,
@@ -224,9 +231,61 @@ def create_credit_note(
     return note
 
 
+def cancelling_note(db: Session, invoice_id: int) -> CreditNote | None:
+    """The credit note that cancelled this bill, if the owner cancelled it."""
+    return db.execute(
+        select(CreditNote).where(
+            CreditNote.tenant_id == current_tenant_id(db),
+            CreditNote.invoice_id == invoice_id,
+            CreditNote.cancels_invoice.is_(True),
+        )
+    ).scalar_one_or_none()
+
+
+def cancel_invoice(
+    db: Session,
+    invoice_id: int,
+    reason: str,
+    *,
+    actor_id: int,
+    can_access: Callable[[int], bool],
+) -> CreditNote:
+    """Cancel a whole bill (owner only). The bill stays on record, as B16 requires; a credit note
+    for every line puts the stock back and takes the amount off the customer's account. Money
+    taken with the bill stays on the customer's account as credit."""
+    invoice = db.get(SalesInvoice, invoice_id)
+    if (
+        invoice is None
+        or invoice.tenant_id != current_tenant_id(db)
+        or not can_access(invoice.location_id)
+    ):
+        raise NotFoundError("Invoice not found")
+    if cancelling_note(db, invoice.id) is not None:
+        raise BusinessRuleError("This bill is already cancelled.", code="ALREADY_CANCELLED")
+    if returned_on_invoice(db, invoice.id):
+        raise BusinessRuleError(
+            "Part of this bill was already returned. Return the rest with a credit note instead.",
+            code="BILL_HAS_RETURNS",
+        )
+    if compliance_service.live_eway(db, invoice.id) is not None:
+        raise BusinessRuleError(
+            "Cancel the e-way bill on this bill first.", code="CANCEL_EWAY_FIRST"
+        )
+    if compliance_service.live_einvoice(db, invoice.id) is not None:
+        raise BusinessRuleError("Cancel the IRN on this bill first.", code="CANCEL_IRN_FIRST")
+    data = CreditNoteCreate(
+        invoice_id=invoice.id,
+        reason=f"Bill cancelled: {reason}"[:300],
+        lines=[ReturnLineIn(line_id=x.id, quantity=x.quantity) for x in invoice.lines],
+    )
+    return create_credit_note(
+        db, data, actor_id=actor_id, is_owner=True, can_access=can_access, cancels_invoice=True
+    )
+
+
 def get_credit_note(db: Session, note_id: int) -> CreditNote:
     row = db.get(CreditNote, note_id)
-    if row is None or row.tenant_id != TENANT_ID:
+    if row is None or row.tenant_id != current_tenant_id(db):
         raise NotFoundError("Credit note not found")
     return row
 
@@ -240,7 +299,7 @@ def list_credit_notes(
     limit: int,
     offset: int,
 ) -> tuple[list[CreditNote], int]:
-    filters = [CreditNote.tenant_id == TENANT_ID]
+    filters = [CreditNote.tenant_id == current_tenant_id(db)]
     if location_ids is not None:
         filters.append(CreditNote.location_id.in_(location_ids))
     if invoice_id is not None:
@@ -273,6 +332,7 @@ def credit_summary(db: Session, note: CreditNote) -> CreditNoteSummary:
         grand_total=note.grand_total,
         invoice_id=note.invoice_id,
         invoice_number=invoice.number if invoice else "",
+        cancels_invoice=note.cancels_invoice,
     )
 
 
@@ -310,7 +370,7 @@ def returned_on_purchase(db: Session, purchase_id: int) -> dict[int, Decimal]:
 
 def create_debit_note(db: Session, data: DebitNoteCreate, *, actor_id: int) -> DebitNote:
     purchase = db.get(Purchase, data.purchase_id)
-    if purchase is None or purchase.tenant_id != TENANT_ID:
+    if purchase is None or purchase.tenant_id != current_tenant_id(db):
         raise NotFoundError("Purchase not found", field="purchase_id")
     supplier = db.get(Party, purchase.supplier_id)
     if supplier is None:
@@ -359,7 +419,7 @@ def create_debit_note(db: Session, data: DebitNoteCreate, *, actor_id: int) -> D
         fy_start_month=settings.financial_year_start_month,
     )
     note = DebitNote(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         number=number,
         financial_year=fy_label(today, settings.financial_year_start_month),
         location_id=purchase.location_id,
@@ -376,7 +436,7 @@ def create_debit_note(db: Session, data: DebitNoteCreate, *, actor_id: int) -> D
         grand_total=totals.grand_total,
         lines=[
             DebitNoteLine(
-                tenant_id=TENANT_ID,
+                tenant_id=current_tenant_id(db),
                 line_no=n,
                 purchase_line_id=line.id,
                 item_id=line.item_id,
@@ -430,7 +490,7 @@ def create_debit_note(db: Session, data: DebitNoteCreate, *, actor_id: int) -> D
 
 def get_debit_note(db: Session, note_id: int) -> DebitNote:
     row = db.get(DebitNote, note_id)
-    if row is None or row.tenant_id != TENANT_ID:
+    if row is None or row.tenant_id != current_tenant_id(db):
         raise NotFoundError("Debit note not found")
     return row
 
@@ -438,7 +498,7 @@ def get_debit_note(db: Session, note_id: int) -> DebitNote:
 def list_debit_notes(
     db: Session, *, purchase_id: int | None, party_id: int | None, limit: int, offset: int
 ) -> tuple[list[DebitNote], int]:
-    filters = [DebitNote.tenant_id == TENANT_ID]
+    filters = [DebitNote.tenant_id == current_tenant_id(db)]
     if purchase_id is not None:
         filters.append(DebitNote.purchase_id == purchase_id)
     if party_id is not None:

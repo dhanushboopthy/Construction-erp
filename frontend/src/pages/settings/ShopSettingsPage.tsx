@@ -52,7 +52,9 @@ const TEXT_KEYS = [
   "bank_name",
   "bank_account_no",
   "bank_ifsc",
+  "bank_branch",
   "invoice_terms",
+  "jurisdiction",
   "timezone",
 ] as const;
 const INT_KEYS = [
@@ -110,7 +112,9 @@ const OPTIONAL = new Set([
   "bank_name",
   "bank_account_no",
   "bank_ifsc",
+  "bank_branch",
   "invoice_terms",
+  "jurisdiction",
 ]);
 
 function toForm(s: ShopSettings): Form {
@@ -300,6 +304,13 @@ function ShopSettingsForm({ settings }: { settings: ShopSettings }) {
           {...text("bank_account_no")}
         />
         <TextField label="IFSC" maxLength={11} className={styles.code} {...text("bank_ifsc")} />
+        <TextField label="Branch" maxLength={100} {...text("bank_branch")} />
+        <TextField
+          label="Jurisdiction city"
+          maxLength={60}
+          hint='Prints as "Subject to … jurisdiction".'
+          {...text("jurisdiction")}
+        />
         <div className={styles.wide}>
           <TextAreaField label="Terms on the bill" {...text("invoice_terms")} />
         </div>

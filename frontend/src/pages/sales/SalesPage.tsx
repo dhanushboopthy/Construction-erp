@@ -18,6 +18,7 @@ import { useAltKey } from "@/hooks/useKeys";
 import { useTableFilters } from "@/hooks/useTableFilters";
 import { formatMoney, plural, trimDecimal } from "@/lib/format";
 
+import { CancelBill } from "./CancelBill";
 import { DirectLink } from "./DirectLink";
 import { EwayPanel } from "./EwayPanel";
 import { InvoiceReturn } from "./InvoiceReturn";
@@ -50,23 +51,29 @@ export function SalesPage() {
     { id: "number", header: "Number", cell: (r) => r.number },
     { id: "date", header: "Date", cell: (r) => r.invoice_date },
     { id: "customer", header: "Customer", cell: (r) => r.party_name },
-    { id: "type", header: "Type", cell: (r) => r.supply_type },
+    {
+      id: "type",
+      header: "Type",
+      cell: (r) => `${r.supply_type}${r.cancelled_by ? " · Cancelled" : ""}`,
+    },
     { id: "total", header: "Total (₹)", numeric: true, cell: (r) => formatMoney(r.grand_total) },
     {
       id: "status",
       header: "Status",
       cell: (r) =>
-        waiting.has(r.id) ? (
+        r.cancelled_by ? (
+          <StatusPill tone="neutral" label="Cancelled" />
+        ) : waiting.has(r.id) ? (
           <StatusPill tone="warn" label="E-way bill pending" />
         ) : (
           <StatusPill tone="good" label="Posted" />
         ),
     },
   ];
+  const statusOf = (r: InvoiceSummary) =>
+    r.cancelled_by ? "cancelled" : waiting.has(r.id) ? "eway_pending" : "posted";
   const rows = (list.data?.items ?? []).filter(
-    (r) =>
-      !filters.status ||
-      (filters.status === "eway_pending" ? waiting.has(r.id) : !waiting.has(r.id)),
+    (r) => !filters.status || statusOf(r) === filters.status,
   );
 
   async function print(id: number, copy: string) {
@@ -87,15 +94,20 @@ export function SalesPage() {
         titleId="sales-title"
         subtitle="GST invoices, newest first. Alt+N new bill"
         actions={
-          canBill ? (
-            <Button
-              variant="primary"
-              onClick={() => void navigate("/sales/new")}
-              aria-keyshortcuts="Alt+N"
-            >
-              New bill
+          <>
+            <Button variant="secondary" onClick={() => void navigate("/sales/quotes")}>
+              Quotations and proforma
             </Button>
-          ) : null
+            {canBill ? (
+              <Button
+                variant="primary"
+                onClick={() => void navigate("/sales/new")}
+                aria-keyshortcuts="Alt+N"
+              >
+                New bill
+              </Button>
+            ) : null}
+          </>
         }
       />
       {canBill && pending.data && pending.data.length > 0 ? (
@@ -122,6 +134,7 @@ export function SalesPage() {
         statusOptions={[
           { value: "eway_pending", label: "E-way bill pending" },
           { value: "posted", label: "Posted" },
+          { value: "cancelled", label: "Cancelled" },
         ]}
       />
       <div className={styles.split}>
@@ -162,6 +175,11 @@ export function SalesPage() {
                 ? ` · deliver to ${inv.ship_to_name}`
                 : " · collected from the shop"}
             </p>
+            {inv.cancelled_by ? (
+              <p role="status" className={styles.callout}>
+                Cancelled by credit note {inv.cancelled_by}. The bill stays on record.
+              </p>
+            ) : null}
             <div className={styles.actions}>
               <Button variant="primary" onClick={() => void print(inv.id, "original")}>
                 Print A4 bill
@@ -190,7 +208,7 @@ export function SalesPage() {
                 </span>
                 {(l.lots ?? []).length > 0 ? (
                   <span className={styles.sub}>
-                    Cement from:{" "}
+                    From stock:{" "}
                     {(l.lots ?? [])
                       .map((x) => `${x.label} (${trimDecimal(x.quantity)})`)
                       .join(", ")}
@@ -241,7 +259,14 @@ export function SalesPage() {
             {canBill && inv.ship_to_name ? (
               <EwayPanel key={`e${inv.id}`} invoiceId={inv.id} owner={user?.role === "owner"} />
             ) : null}
-            {canBill ? <InvoiceReturn key={inv.id} inv={inv} /> : null}
+            {canBill && !inv.cancelled_by ? <InvoiceReturn key={inv.id} inv={inv} /> : null}
+            {user?.role === "owner" && !inv.cancelled_by ? (
+              <CancelBill
+                key={`c${inv.id}`}
+                invoiceId={inv.id}
+                paidAtBilling={inv.paid_at_billing}
+              />
+            ) : null}
           </aside>
         ) : null}
       </div>

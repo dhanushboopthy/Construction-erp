@@ -7,6 +7,7 @@ from datetime import date
 from decimal import Decimal
 
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     Date,
     ForeignKey,
@@ -63,6 +64,9 @@ class CreditNote(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
     round_off: Mapped[Money] = mapped_column()
     grand_total: Mapped[Money] = mapped_column()
     approved_by: Mapped[int | None] = mapped_column(Integer)  # owner who approved a late return
+    # True when the owner cancelled the whole bill: the bill then shows as cancelled. The bill
+    # itself is never changed or deleted (B16); this note reverses all of it.
+    cancels_invoice: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
 
     lines: Mapped[list["CreditNoteLine"]] = relationship(
         lazy="selectin", cascade="all, delete-orphan", order_by="CreditNoteLine.line_no"

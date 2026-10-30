@@ -175,6 +175,15 @@ def test_cancel_within_24_hours_then_make_a_new_one(client, world, shop, seeded)
     assert nothing.status_code == 404
 
 
+def test_a_bill_with_a_live_eway_bill_cannot_be_cancelled(client, world, shop):
+    inv = sale(client, world)
+    assert eway(client, world["owner"], inv).status_code == 201
+    refused = client.post(
+        f"/api/v1/invoices/{inv['id']}/cancel", headers=world["owner"], json={"reason": "wrong"}
+    )
+    assert refused.status_code == 409 and refused.json()["code"] == "CANCEL_EWAY_FIRST"
+
+
 def test_manual_fallback_records_a_portal_number(client, world, shop):
     inv = sale(client, world)
     bad = client.post(

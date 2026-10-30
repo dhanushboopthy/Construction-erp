@@ -5,11 +5,16 @@ import type { Tenant } from "./types";
 
 const KEY = ["tenant"];
 
-/** The business name, tagline and logo address. Open to anyone, so the sign-in page can use it. */
+/**
+ * The company this address (subdomain) belongs to, with its business name, tagline and logo
+ * address. Open to anyone, so the sign-in page can use it. No retry: an unknown or closed company
+ * answers 404 or 403 at once (ADR 0011).
+ */
 export function useTenant() {
   return useQuery({
     queryKey: KEY,
     queryFn: () => api<Tenant>("/tenant"),
+    retry: false,
     staleTime: 5 * 60_000,
   });
 }

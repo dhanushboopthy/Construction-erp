@@ -194,6 +194,30 @@ def test_abc_fsn_cover_reorder_and_age_match_the_hand_worked_shop(client, shop):
     assert [a["bucket"] for a in r["aging"]] == ["0-30", "31-90", "91-180", "180+"]
 
 
+def test_stock_dashboard_counts_values_and_hides_cost_from_staff(client, shop):
+    owner = shop["owner"]
+    make_item(client, shop, "Binding wire 18 g", "wire", "kg", "72171010")  # never bought
+    r = analytics(client, owner)
+    dash = client.get("/api/v1/stock/dashboard", headers=owner).json()
+    # The same value as the analysis screen, and the old pipe is the dead stock.
+    assert dash["stock_value"] == r["stock_value"] and dash["dead_stock_value"] == "14000.00"
+    held = [x for x in r["rows"] if Decimal(x["on_hand"]) > 0]
+    assert dash["items_in_stock"] == len(held) >= 3  # TMT, cement, the old pipe, ...
+    assert [x["name"] for x in dash["out_of_stock"]] == ["Binding wire 18 g"]
+    assert sum(Decimal(p["value"]) for p in dash["places"]) == Decimal(dash["stock_value"])
+    tmt = next(c for c in dash["categories"] if c["category"] == "tmt")
+    assert (tmt["items"], tmt["value"]) == (1, "1265000.00")
+    for row in dash["reorder"]:
+        assert Decimal(row["on_hand"]) <= Decimal(row["reorder_point"])
+
+    staff = client.get("/api/v1/stock/dashboard", headers=login(client, *COUNTER))
+    assert staff.status_code == 200
+    seen = staff.json()
+    assert seen["items_in_stock"] == len(held) and "stock_value" not in seen
+    assert "value" not in str(seen) and "cost" not in str(seen)
+    assert client.get("/api/v1/stock/dashboard").status_code == 401
+
+
 def test_lead_time_and_safety_days_come_from_the_item_then_the_supplier_then_the_shop(client, shop):
     owner = shop["owner"]
     # Cement's own days: 200 days' lead, 5 days' safety -> 1 x 200 + 1 x 5 = 205 bags; 160 on

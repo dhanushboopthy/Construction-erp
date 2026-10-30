@@ -3,11 +3,13 @@ from typing import Annotated
 
 from fastapi import APIRouter, Header, Query, Response, status
 
-from app.api.deps import CurrentPrincipal, DbSession, OwnerOrCounter
+from app.api.deps import CurrentPrincipal, DbSession, OwnerOnly, OwnerOrCounter
 from app.core.errors import NotFoundError
 from app.models.enums import Role
 from app.schemas.common import Page
+from app.schemas.returns import CreditNoteOut
 from app.schemas.sales import (
+    InvoiceCancel,
     InvoiceCreate,
     InvoiceOut,
     InvoiceOwnerOut,
@@ -16,6 +18,7 @@ from app.schemas.sales import (
 )
 from app.services import compliance as compliance_service
 from app.services import invoice_pdf
+from app.services import returns as return_service
 from app.services import sales as sales_service
 
 router = APIRouter(prefix="/invoices", tags=["invoices"])
@@ -92,6 +95,23 @@ def get_invoice(
     if not principal.can_access_location(invoice.location_id):
         raise NotFoundError("Invoice not found")
     return sales_service.invoice_view(db, invoice, principal.sees_cost)
+
+
+@router.post(
+    "/{invoice_id}/cancel", response_model=CreditNoteOut, status_code=status.HTTP_201_CREATED
+)
+def cancel_invoice(
+    invoice_id: int, body: InvoiceCancel, principal: OwnerOnly, db: DbSession
+) -> CreditNoteOut:
+    """Cancel the whole bill. Nothing is deleted (B16): a credit note for every line reverses it."""
+    note = return_service.cancel_invoice(
+        db,
+        invoice_id,
+        body.reason,
+        actor_id=principal.user_id,
+        can_access=principal.can_access_location,
+    )
+    return return_service.credit_view(db, note)
 
 
 @router.get("/{invoice_id}/pdf", response_class=Response)

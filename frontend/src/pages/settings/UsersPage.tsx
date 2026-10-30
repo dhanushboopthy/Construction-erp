@@ -4,6 +4,7 @@ import { toFormError, type FormError } from "@/api/errors";
 import {
   useCreateUser,
   useLocations,
+  usePlanUsage,
   useResetPassword,
   useUpdateUser,
   useUsers,
@@ -58,6 +59,7 @@ type Mode = { kind: "closed" } | { kind: "new" } | { kind: "edit"; id: number };
 export function UsersPage() {
   const users = useUsers();
   const locations = useLocations();
+  const plan = usePlanUsage();
   const [mode, setMode] = useState<Mode>({ kind: "closed" });
   const [notice, setNotice] = useState<string | null>(null);
   const listRef = useRef<HTMLTableSectionElement>(null);
@@ -90,6 +92,11 @@ export function UsersPage() {
         <Button variant="primary" onClick={openNew} aria-keyshortcuts="Alt+N">
           {T.add}
         </Button>
+        {plan.data ? (
+          <p className={styles.note}>
+            {plan.data.users} of {plan.data.max_users} active users on your plan
+          </p>
+        ) : null}
         <p className={styles.keys}>{T.keys}</p>
       </div>
       {notice ? (

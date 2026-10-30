@@ -37,6 +37,17 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://erp:erp@localhost:5432/erp"
     db_pool_size: int = 5
     db_max_overflow: int = 5
+    # The app's connections switch to this role, which has no superuser rights, so PostgreSQL
+    # row-level security applies to them (migration 0024 creates it). Migrations keep running
+    # as the owner. Blank turns the switch off (not for production).
+    db_app_role: str = "erp_app"
+
+    # Companies by subdomain (ADR 0011): acme.<BASE_DOMAIN> is the company "acme". Any other
+    # host (the bare domain, an IP address on a shop LAN) uses DEFAULT_TENANT_SLUG; leave that
+    # blank on a SaaS server so only real subdomains reach a company.
+    base_domain: str = "localhost"
+    default_tenant_slug: str = "main"
+    admin_subdomain: str = "admin"
 
     jwt_secret: str = _DEV_SECRET
     jwt_algorithm: str = "HS256"
@@ -95,6 +106,8 @@ class Settings(BaseSettings):
                     "COOKIE_SECURE must be true in production (serve over HTTPS), "
                     "or set ALLOW_INSECURE_COOKIES=true for a plain-HTTP shop LAN"
                 )
+            if not self.db_app_role:
+                raise ValueError("DB_APP_ROLE must be set in production (row-level security)")
         return self
 
 

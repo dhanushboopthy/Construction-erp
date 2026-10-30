@@ -29,6 +29,35 @@ whoever looks after the server. Commands run in the project folder on the server
    issued* shows no missing numbers.
 4. Confirm the **off-site copy** is current: `BACKUP_REMOTE=... ./scripts/offsite-sync.sh`.
 
+## Duolink admin (admin.duolink.app/admin)
+
+- **First admin:** on the server, `docker compose -f docker-compose.prod.yml exec -e
+  PLATFORM_ADMIN_PASSWORD=... backend python -m app.scripts.create_platform_admin
+  you@duolink.app "Your Name"`. Without the variable, a password is printed once.
+- **A new company:** Companies, Add company. Give the legal name, the company code (its address),
+  the GST state, the plan and the first owner. Hand the owner their address and password in person.
+- **A user is locked out or forgot their password:** Users, find them, then use Unlock or Reset
+  password. A reset shows a temporary password once. Read it out to them; they change it after
+  signing in.
+- **A company does not pay:** open the company, write the reason, then Suspend company and
+  confirm. Everyone there is signed out. Reactivate company undoes it. Nothing is deleted.
+- **Trials:** the overview lists trials ending this week. Change the plan, or move the trial end, on
+  the company's page.
+- **Who did what:** Activity shows sign-ins at every company, and every admin action is listed
+  under "What Duolink admins did".
+
+## Several companies on one server
+
+The scripts work for one company at a time. Without `--tenant` they use the default company:
+
+- `python -m app.scripts.seed --tenant acme` sets up a new company (or completes one).
+- `python -m app.scripts.verify --tenant acme [--full]` checks one company's books.
+- `python -m app.scripts.reset_password owner --tenant acme` resets a password.
+
+Backups and restores cover **every company at once**. Restoring a backup puts every company back
+to that night. A per-company export and restore is not built yet, so think before restoring a
+shared server for one company's mistake.
+
 ## Something went wrong
 
 ### The backup row says "Needs action"

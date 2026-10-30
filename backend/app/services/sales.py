@@ -19,7 +19,7 @@ from app.core.errors import (
     NotFoundError,
     PermissionDeniedError,
 )
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import credit as credit_rules
 from app.domain import dropship, gst, pricing
 from app.domain import ledger as ledger_rules
@@ -45,7 +45,7 @@ from app.models.enums import (
 from app.models.ledgers import PartyLedger
 from app.models.masters import Item, Party, Site
 from app.models.purchasing import Purchase, PurchaseLine
-from app.models.sales import SalesInvoice, SalesLine
+from app.models.sales import SalesInvoice, SalesLine, SalesQuote
 from app.models.setup import Location, ShopSettings
 from app.schemas.sales import (
     InvoiceCreate,
@@ -133,7 +133,7 @@ def _balance(db: Session, party_id: int) -> Decimal:
     rows = db.execute(
         select(PartyLedger)
         .where(
-            PartyLedger.tenant_id == TENANT_ID,
+            PartyLedger.tenant_id == current_tenant_id(db),
             PartyLedger.party_id == party_id,
             PartyLedger.account == LedgerAccount.RECEIVABLE,
         )
@@ -152,17 +152,21 @@ def price_invoice(
     is_owner: bool,
     can_access: bool,
     approved: frozenset[ApprovalAction] = frozenset(),
+    quote: bool = False,
 ) -> PricedInvoice:
     """Work out every figure on the bill. Hard errors raise; fixable ones are collected in
-    `problems` so the screen can show them while the bill is being keyed."""
+    `problems` so the screen can show them while the bill is being keyed.
+
+    `quote` prices a quotation or proforma invoice: the same rates, discounts and GST, but it
+    moves no stock and owes nothing, so the day lock, stock and credit checks do not apply."""
     if not can_access:
         raise PermissionDeniedError("You can only bill from your own shop")
     settings = get_settings_row(db)
     location = db.get(Location, data.location_id)
-    if location is None or location.tenant_id != TENANT_ID or not location.is_active:
+    if location is None or location.tenant_id != current_tenant_id(db) or not location.is_active:
         raise NotFoundError("Location not found or inactive", field="location_id")
     party = db.get(Party, data.party_id)
-    if party is None or party.tenant_id != TENANT_ID or not party.is_active:
+    if party is None or party.tenant_id != current_tenant_id(db) or not party.is_active:
         raise NotFoundError("Customer not found or inactive", field="party_id")
     if party.type is PartyType.SUPPLIER:
         raise BusinessRuleError(
@@ -182,7 +186,8 @@ def price_invoice(
         raise BusinessRuleError(
             "A bill cannot be dated in the future", code="FUTURE_DATE", field="invoice_date"
         )
-    closing_service.ensure_day_open(db, location.id, on)  # G17: a closed shop-day takes no bills
+    if not quote:
+        closing_service.ensure_day_open(db, location.id, on)  # G17: a closed day takes no bills
     # What the owner's PIN can clear: the same rights the owner has, for this one bill (G18).
     may_discount = is_owner or ApprovalAction.DISCOUNT in approved
     may_sell_below_cost = is_owner or ApprovalAction.BELOW_COST in approved
@@ -207,7 +212,7 @@ def price_invoice(
     priced: list[PricedLine] = []
     for index, line in enumerate(data.lines):
         item = db.get(Item, line.item_id)
-        if item is None or item.tenant_id != TENANT_ID or not item.is_active:
+        if item is None or item.tenant_id != current_tenant_id(db) or not item.is_active:
             raise NotFoundError("Item not found or inactive", field="item_id")
         unit = (line.unit or item.base_unit).lower()
         conversion = item_service.conversions(item).get(unit)
@@ -328,14 +333,19 @@ def price_invoice(
                     )
                 )
             place_row = db.get(Location, where)
-            if place_row is None or place_row.tenant_id != TENANT_ID or not place_row.is_active:
+            if (
+                place_row is None
+                or place_row.tenant_id != current_tenant_id(db)
+                or not place_row.is_active
+            ):
                 raise NotFoundError("Stock location not found", field="source_location_id")
             row.source_location_id = where
             _, here = ledgers.stock_position(db, item.id, where)
             already = used.get((item.id, where), ZERO)
             row.available = here - already
             try:
-                ensure_available(row.available, base_qty)
+                if not quote:
+                    ensure_available(row.available, base_qty)
             except NegativeStockError:
                 row.problems.append(
                     Problem(
@@ -393,7 +403,7 @@ def price_invoice(
         if message:
             problems.append(Problem(None, "CASH_LIMIT_REACHED", message, False, "payments"))
     unpaid = totals.grand_total - paid
-    if unpaid > ZERO and totals.grand_total > ZERO:
+    if unpaid > ZERO and totals.grand_total > ZERO and not quote:
         decision = credit_service.decide(db, party, settings, unpaid, on)
         messages = {
             credit_rules.CreditViolation.CREDIT_NOT_ALLOWED: (
@@ -435,7 +445,13 @@ def price_invoice(
 
 
 def preview(
-    db: Session, data: InvoiceCreate, *, is_owner: bool, can_access: bool, actor_id: int
+    db: Session,
+    data: InvoiceCreate,
+    *,
+    is_owner: bool,
+    can_access: bool,
+    actor_id: int,
+    quote: bool = False,
 ) -> InvoicePreview:
     approvals = approval_service.load_valid(db, data.approval_ids, actor_id, data.party_id)
     p = price_invoice(
@@ -444,6 +460,7 @@ def preview(
         is_owner=is_owner,
         can_access=can_access,
         approved=frozenset(a.action for a in approvals),
+        quote=quote,
     )
     lines = [
         PreviewLineOut(
@@ -494,9 +511,30 @@ def preview(
 def _existing(db: Session, key: str) -> SalesInvoice | None:
     return db.execute(
         select(SalesInvoice).where(
-            SalesInvoice.tenant_id == TENANT_ID, SalesInvoice.idempotency_key == key
+            SalesInvoice.tenant_id == current_tenant_id(db), SalesInvoice.idempotency_key == key
         )
     ).scalar_one_or_none()
+
+
+def _quote_to_bill(db: Session, quote_id: int, party_id: int) -> SalesQuote:
+    """A quotation or proforma becomes one bill, for the same customer. Locked so two counters
+    cannot both bill it; checked before anything of the bill is written."""
+    quote = db.execute(
+        select(SalesQuote)
+        .where(SalesQuote.id == quote_id, SalesQuote.tenant_id == current_tenant_id(db))
+        .with_for_update()
+    ).scalar_one_or_none()
+    if quote is None:
+        raise NotFoundError("Quotation not found", field="quote_id")
+    if quote.party_id != party_id:
+        raise BusinessRuleError(
+            "This quotation is for another customer.", code="QUOTE_OTHER_CUSTOMER", field="quote_id"
+        )
+    if quote.invoice_id is not None:
+        raise BusinessRuleError(
+            "This quotation has already been billed.", code="QUOTE_ALREADY_BILLED", field="quote_id"
+        )
+    return quote
 
 
 def create(
@@ -539,6 +577,7 @@ def create(
             requires_owner_approval=first.approval,
             field=first.field,
         )
+    quote = _quote_to_bill(db, data.quote_id, data.party_id) if data.quote_id else None
 
     number = allocate_number(
         db,
@@ -553,7 +592,7 @@ def create(
     due = p.invoice_date + timedelta(days=credit_days) if p.party.credit_allowed else p.invoice_date
     t = p.totals
     invoice = SalesInvoice(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         number=number,
         financial_year=fy_label(p.invoice_date, p.settings.financial_year_start_month),
         location_id=p.location.id,
@@ -584,7 +623,7 @@ def create(
         status=InvoiceStatus.POSTED,
         lines=[
             SalesLine(
-                tenant_id=TENANT_ID,
+                tenant_id=current_tenant_id(db),
                 line_no=i,
                 item_id=r.item.id,
                 description=r.item.name,
@@ -667,6 +706,8 @@ def create(
             actor_id=actor_id,
         )
     approval_service.mark_used(approvals, number)
+    if quote is not None:
+        quote.invoice_id = invoice.id
     if p.overrides:
         # The owner waived a credit rule: leave a trail of who, which rule and for which bill.
         record_event(
@@ -686,7 +727,7 @@ def create(
 
 def get_invoice(db: Session, invoice_id: int) -> SalesInvoice:
     row = db.get(SalesInvoice, invoice_id)
-    if row is None or row.tenant_id != TENANT_ID:
+    if row is None or row.tenant_id != current_tenant_id(db):
         raise NotFoundError("Invoice not found")
     return row
 
@@ -702,7 +743,7 @@ def list_invoices(
     limit: int,
     offset: int,
 ) -> tuple[list[SalesInvoice], int]:
-    filters = [SalesInvoice.tenant_id == TENANT_ID]
+    filters = [SalesInvoice.tenant_id == current_tenant_id(db)]
     if location_ids is not None:
         filters.append(SalesInvoice.location_id.in_(location_ids))
     if party_id is not None:
@@ -729,6 +770,7 @@ def list_invoices(
 
 def summary(db: Session, inv: SalesInvoice) -> InvoiceSummary:
     loc = db.get(Location, inv.location_id)
+    cancelled = returns_service.cancelling_note(db, inv.id)
     return InvoiceSummary(
         id=inv.id,
         number=inv.number,
@@ -740,6 +782,7 @@ def summary(db: Session, inv: SalesInvoice) -> InvoiceSummary:
         supply_type=inv.supply_type,
         grand_total=inv.grand_total,
         status=inv.status,
+        cancelled_by=cancelled.number if cancelled else None,
     )
 
 

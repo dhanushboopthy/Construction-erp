@@ -16,6 +16,7 @@ import { Button } from "@/components/Button";
 import { SelectField, TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
 import { useShops } from "@/hooks/useShops";
+import { fyBounds, fyLabel, fyStartYear, monthBounds } from "@/lib/dates";
 import { formatMoney } from "@/lib/format";
 import { scrollRegion } from "@/components/scrollRegion";
 
@@ -35,6 +36,14 @@ const OWNER_KINDS: CashEntryKind[] = [
   "owner_capital",
 ];
 const MODE: Record<PaymentMode, string> = { cash: "Cash", upi: "UPI", bank: "Bank transfer" };
+type Period = "day" | "month" | "year" | "range" | "all";
+const PERIOD: Record<Period, string> = {
+  day: "One day",
+  month: "A month",
+  year: "Financial year",
+  range: "From – to",
+  all: "Everything",
+};
 const CASH_ONLY: CashEntryKind[] = ["bank_deposit", "bank_withdrawal"];
 
 function signed(value: string) {
@@ -52,10 +61,32 @@ export function CashBookPage() {
   const { shops, single } = useShops();
   const serverToday = useToday().data?.as_of ?? "";
   const [shopId, setShopId] = useState("");
+  const [period, setPeriod] = useState<Period>("day");
   const [day, setDay] = useState<string | null>(null);
+  const [month, setMonth] = useState<string | null>(null);
+  const [fy, setFy] = useState<number | null>(null);
+  const [rangeFrom, setRangeFrom] = useState("");
+  const [rangeTo, setRangeTo] = useState("");
   const on = day ?? serverToday;
+  const thisFy = serverToday ? fyStartYear(serverToday) : null;
+  const pickedMonth = month ?? serverToday.slice(0, 7);
+  const pickedFy = fy ?? thisFy;
+  const [from, to] =
+    period === "day"
+      ? [on, on]
+      : period === "month"
+        ? pickedMonth
+          ? monthBounds(pickedMonth)
+          : ["", ""]
+        : period === "year"
+          ? pickedFy !== null
+            ? fyBounds(pickedFy)
+            : ["", ""]
+          : period === "range"
+            ? [rangeFrom, rangeTo]
+            : ["", ""];
   const place = shopId || (shops[0] ? String(shops[0].id) : "");
-  const book = useCashBook(place, on, on);
+  const book = useCashBook(place, from, to, period === "all");
   const heads = useExpenseCategories();
   const create = useCreateCashEntry();
   const reverse = useReverseCashEntry();
@@ -83,7 +114,8 @@ export function CashBookPage() {
     try {
       const made = await create.mutateAsync({
         location_id: Number(place),
-        entry_date: on || null,
+        // Looking at one day files the voucher on that day; any longer view files it today.
+        entry_date: period === "day" ? on || null : null,
         kind,
         mode: cashOnly ? "cash" : mode,
         amount,
@@ -134,14 +166,73 @@ export function CashBookPage() {
             ))}
           </SelectField>
         )}
-        <TextField
-          label="Day"
-          type="date"
-          value={on}
-          max={serverToday || undefined}
-          onChange={(e) => setDay(e.target.value)}
-        />
+        <SelectField
+          label="Period"
+          value={period}
+          onChange={(e) => setPeriod(e.target.value as Period)}
+        >
+          {(Object.keys(PERIOD) as Period[]).map((p) => (
+            <option key={p} value={p}>
+              {PERIOD[p]}
+            </option>
+          ))}
+        </SelectField>
+        {period === "day" ? (
+          <TextField
+            label="Day"
+            type="date"
+            value={on}
+            max={serverToday || undefined}
+            onChange={(e) => setDay(e.target.value)}
+          />
+        ) : null}
+        {period === "month" ? (
+          <TextField
+            label="Month"
+            type="month"
+            value={pickedMonth}
+            max={serverToday.slice(0, 7) || undefined}
+            onChange={(e) => setMonth(e.target.value)}
+          />
+        ) : null}
+        {period === "year" && thisFy !== null ? (
+          <SelectField
+            label="Financial year"
+            value={String(pickedFy)}
+            onChange={(e) => setFy(Number(e.target.value))}
+          >
+            {Array.from({ length: 6 }, (_, i) => thisFy - i).map((y) => (
+              <option key={y} value={y}>
+                {fyLabel(y)}
+              </option>
+            ))}
+          </SelectField>
+        ) : null}
+        {period === "range" ? (
+          <>
+            <TextField
+              label="From"
+              type="date"
+              value={rangeFrom}
+              max={serverToday || undefined}
+              onChange={(e) => setRangeFrom(e.target.value)}
+            />
+            <TextField
+              label="To"
+              type="date"
+              value={rangeTo}
+              max={serverToday || undefined}
+              error={rangeFrom && rangeTo && rangeTo < rangeFrom ? "Before the start." : undefined}
+              onChange={(e) => setRangeTo(e.target.value)}
+            />
+          </>
+        ) : null}
       </div>
+      {b && period !== "day" ? (
+        <p className={styles.sub}>
+          {b.date_from} to {b.date_to} · {b.entries.length} vouchers
+        </p>
+      ) : null}
 
       {canWrite ? (
         <form
@@ -253,10 +344,42 @@ export function CashBookPage() {
         </div>
       ) : null}
 
+      {b && b.months.length > 1 ? (
+        <div className={styles.tableWrap} {...scrollRegion("Month by month")}>
+          <table className={styles.table} aria-label="Month by month">
+            <thead>
+              <tr>
+                <th scope="col">Month</th>
+                <th scope="col" className="num">
+                  Into the drawer
+                </th>
+                <th scope="col" className="num">
+                  Out of the drawer
+                </th>
+                <th scope="col" className="num">
+                  Expenses
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {b.months.map((m) => (
+                <tr key={m.month}>
+                  <td>{m.month}</td>
+                  <td className="num">₹{formatMoney(m.drawer_in)}</td>
+                  <td className="num">₹{formatMoney(m.drawer_out)}</td>
+                  <td className="num">₹{formatMoney(m.expenses)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
+
       <div className={styles.tableWrap} {...scrollRegion("Vouchers")}>
         <table className={styles.table} aria-label="Vouchers">
           <thead>
             <tr>
+              {period === "day" ? null : <th scope="col">Date</th>}
               <th scope="col">Voucher</th>
               <th scope="col">What</th>
               <th scope="col">Paid to / by</th>
@@ -273,6 +396,7 @@ export function CashBookPage() {
           <tbody>
             {(b?.entries ?? []).map((e) => (
               <tr key={e.id} className={e.reversed_by_number ? styles.inactive : undefined}>
+                {period === "day" ? null : <td>{e.entry_date}</td>}
                 <td className={styles.code}>{e.number}</td>
                 <td>
                   {e.category_name ?? KIND[e.kind]}
@@ -307,8 +431,9 @@ export function CashBookPage() {
         </table>
         {b && b.entries.length === 0 ? (
           <p className={styles.empty}>
-            No vouchers on this day. Record loading labour, tea, power bills or the cash you take to
-            the bank, so the daily closing balances.
+            {period === "day"
+              ? "No vouchers on this day. Record loading labour, tea, power bills or the cash you take to the bank, so the daily closing balances."
+              : "No vouchers in this period."}
           </p>
         ) : null}
       </div>

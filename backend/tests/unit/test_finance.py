@@ -381,3 +381,33 @@ def test_the_working_capital_kpis_are_in_the_catalogue() -> None:
     for code in ("dio_days", "dpo_days", "advance_days", "ccc_days", "cash_tied_up", "bad_debts"):
         assert code not in staff  # supplier terms, stock value and write-offs: owner only
     assert {"dso_days", "overdue_receivables", "credit_utilisation_pct"} <= staff
+
+
+def test_cash_book_month_by_month() -> None:
+    """October: ₹2,000 labour in cash, ₹1,50,000 deposited, ₹10,000 withdrawn. November: ₹5,000
+    rent by bank transfer (no drawer effect) and a ₹2,000 reversal of October's labour.
+    October in 10,000, out 1,52,000, expenses 2,000; November in 2,000, out 0, expenses
+    5,000 - 2,000 = 3,000. Months come back in date order, empty months left out."""
+    rows = [
+        f.CashMove(date(2026, 11, 3), K.EXPENSE, D("5000"), D("0.00"), reversal=False),
+        f.CashMove(date(2026, 10, 5), K.EXPENSE, D("2000"), D("-2000.00"), reversal=False),
+        f.CashMove(date(2026, 10, 9), K.BANK_DEPOSIT, D("150000"), D("-150000.00"), reversal=False),
+        f.CashMove(
+            date(2026, 10, 20), K.BANK_WITHDRAWAL, D("10000"), D("10000.00"), reversal=False
+        ),
+        f.CashMove(date(2026, 11, 4), K.EXPENSE, D("2000"), D("2000.00"), reversal=True),
+    ]
+    months = f.monthly_cash(rows)
+    assert [m.month for m in months] == ["2026-10", "2026-11"]
+    october, november = months
+    assert (october.drawer_in, october.drawer_out, october.expenses) == (
+        D("10000.00"),
+        D("152000.00"),
+        D("2000.00"),
+    )
+    assert (november.drawer_in, november.drawer_out, november.expenses) == (
+        D("2000.00"),
+        D("0.00"),
+        D("3000.00"),
+    )
+    assert f.monthly_cash([]) == []

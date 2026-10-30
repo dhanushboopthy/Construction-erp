@@ -20,11 +20,12 @@ from app.models.orders import (
     PurchaseOrderLine,
     SalesLineLot,
 )
+from app.models.platform import PlatformAdmin, PlatformAuditLog, PlatformSession
 from app.models.purchasing import CostComponent, Payment, Purchase, PurchaseCost, PurchaseLine
 from app.models.rates import CustomerRate, ItemMargin, MarketRate
 from app.models.receivables import BadDebtWriteoff
 from app.models.returns import CreditNote, CreditNoteLine, DebitNote, DebitNoteLine
-from app.models.sales import SalesInvoice, SalesLine
+from app.models.sales import SalesInvoice, SalesLine, SalesQuote, SalesQuoteLine
 from app.models.schemes import SupplierScheme
 from app.models.setup import AppUser, Location, ShopSettings, UserLocation
 from app.models.stock_ops import (
@@ -38,6 +39,7 @@ from app.models.stock_ops import (
     StockWritedownLine,
 )
 from app.models.tally import TallyLedger
+from app.models.tenancy import Tenant
 from app.models.transport import DropShipLink, Trip, Vehicle
 
 __all__ = [
@@ -77,6 +79,9 @@ __all__ = [
     "Party",
     "PartyLedger",
     "Payment",
+    "PlatformAdmin",
+    "PlatformAuditLog",
+    "PlatformSession",
     "Purchase",
     "PurchaseCost",
     "PurchaseLine",
@@ -85,6 +90,8 @@ __all__ = [
     "SalesInvoice",
     "SalesLine",
     "SalesLineLot",
+    "SalesQuote",
+    "SalesQuoteLine",
     "ShopSettings",
     "Site",
     "StockAdjustment",
@@ -98,6 +105,7 @@ __all__ = [
     "StockWritedownLine",
     "SupplierScheme",
     "TallyLedger",
+    "Tenant",
     "Trip",
     "UserLocation",
     "Vehicle",

@@ -57,6 +57,43 @@ def cash_effect(
     return money(value * sign)
 
 
+@dataclass(frozen=True)
+class CashMove:
+    """One cash-book voucher, as the month totals need it."""
+
+    on: date
+    kind: CashEntryKind
+    amount: Decimal
+    drawer_effect: Decimal  # from cash_effect
+    reversal: bool
+
+
+@dataclass(frozen=True)
+class CashMonth:
+    month: str  # "2026-10"
+    drawer_in: Decimal
+    drawer_out: Decimal
+    expenses: Decimal  # every mode, net of reversals
+
+
+def monthly_cash(moves: list[CashMove]) -> list[CashMonth]:
+    """Cash book totals per calendar month, oldest first; months without vouchers are left out.
+    The same sums as the cash book's own totals, so the months add up to the period."""
+    totals: dict[str, list[Decimal]] = {}
+    for m in moves:
+        row = totals.setdefault(f"{m.on.year:04d}-{m.on.month:02d}", [ZERO, ZERO, ZERO])
+        if m.drawer_effect > ZERO:
+            row[0] += m.drawer_effect
+        else:
+            row[1] -= m.drawer_effect
+        if m.kind is CashEntryKind.EXPENSE:
+            row[2] += -m.amount if m.reversal else m.amount
+    return [
+        CashMonth(month, money(t[0]), money(t[1]), money(t[2]))
+        for month, t in sorted(totals.items())
+    ]
+
+
 def needs_approval(amount: Numberish, limit: Numberish | None) -> bool:
     """Above the shop's limit, a counter user needs the owner's PIN."""
     return limit is not None and to_decimal(amount) > to_decimal(limit)

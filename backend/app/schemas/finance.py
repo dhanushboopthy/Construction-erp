@@ -66,6 +66,13 @@ class CashEntryOut(Schema):
     created_by_name: str | None
 
 
+class CashMonthOut(Schema):
+    month: str  # "2026-10"
+    drawer_in: Decimal
+    drawer_out: Decimal
+    expenses: Decimal
+
+
 class CashBookOut(Schema):
     location_id: int | None
     date_from: date
@@ -74,6 +81,7 @@ class CashBookOut(Schema):
     drawer_in: Decimal
     drawer_out: Decimal
     expenses: Decimal  # all modes, net of reversals
+    months: list[CashMonthOut] = []  # the same totals per calendar month, oldest first
 
 
 class PnlExpense(Schema):

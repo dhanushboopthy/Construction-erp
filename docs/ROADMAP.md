@@ -40,6 +40,27 @@ From [FINANCE_REVIEW.md](FINANCE_REVIEW.md); one branch and PR each.
 | FM9 | Forecast and accruals | 13-week cash forecast; rebate accrual | Skipped (owner decision, not needed) |
 | FM10 | Orders, lots and demand | PO → GRN → bill match; cement oldest week first; fill rate | **Done** (`feat/fm10-orders-lots-demand`; smallest versions of lots and the log, see SPEC) |
 
+## SaaS milestones
+
+Duolink hosts the ERP for many companies. One branch and PR each.
+
+| # | Milestone | Acceptance test | Status |
+| --- | --- | --- | --- |
+| 15 | Multi-tenancy foundation: `tenant` table, company by subdomain, tenant on the session, row-level security, `--tenant` on the scripts (ADR 0011) | A second company on `beta.localhost` signs in with the same usernames, sees none of the first company's rows on any screen, and the database refuses a cross-company row | **Done** (`feat/m15-multi-tenancy`) |
+| 16 | Duolink super admin on `admin.<domain>/admin`: companies, users across companies, activity, plans and limits | Create a company and sign in at its subdomain; suspend it and its users are signed out; the plan's user limit is enforced | **Done** (`feat/m16-platform-admin`; ADR 0012) |
+
+## Owner requests (October 2026)
+
+| # | Change | Acceptance test | Status |
+| --- | --- | --- | --- |
+| R1 | New bill: add a customer or (owner) an item without leaving it; no shop picker for a one-shop user; vehicle only on delivery | A counter user at one shop bills without choosing the shop; a new customer is picked on the bill | **Done** (`feat/bill-quick-add`) |
+| R2 | Cancel a bill (owner): a full credit note, never a delete (B16) | The cancelled bill keeps its number, shows "Cancelled", stock and dues are back | **Done** (`feat/bill-cancel`) |
+| R3 | Quotation (estimate) and proforma invoice, each with its own number series, billed once | A quotation moves no stock and owes nothing; its bill is linked and a second bill is refused | **Done** (`feat/quotations`) |
+| R4 | Cash book for a month, a year, any range or everything | The same entries and running balance whichever way the range is picked | **Done** (`feat/cash-book-periods`) |
+| R5 | Stock dashboard | Value by place and category, low stock and slow stock on one screen | **Done** (`feat/stock-dashboard`) |
+| R6 | Batch (lot) on every purchase line | A purchase line keeps its batch; the batch shows on the bill | **Done** (`feat/purchase-batches`; batch-wise stock report not built yet) |
+| R7 | Print the tax invoice, proforma and quotation on the owner's Tally-style template | The PDF has the consignee/buyer blocks, details grid, tax lines, HSN summary, tax in words, PAN, bank branch and jurisdiction; a 35-line bill runs to two pages | **Done** (`feat/bill-print-layout`; no logo or CIN yet) |
+
 ## UI refresh ("Site navy")
 
 Restyle of the whole UI, from [UI_REFACTOR_PLAN](UI_REFACTOR_PLAN.md); one branch and PR per task
@@ -56,9 +77,9 @@ T5–T9 in any order.
 | T5 | List screens | Search, status filter and URL-kept filters on every list | **Done** (`style/ui-lists`; cash book, rate board and counts picker are entry grids, left as they were) |
 | T6 | Entry forms | Bill entry takes no more keystrokes than today | **Done** (`style/ui-forms`; keystrokes checked by `BillKeys.test.tsx`) |
 | T7 | Reports and settings | Owner-only reports stay hidden from counter users | **Done** (`style/ui-reports`) |
-| T8 | Sign-in page | Tenant name shown before sign-in | **Done** (`style/ui-signin`; `GET /tenant` is now open; no suspended-tenant message, there is no such state yet) |
+| T8 | Sign-in page | Tenant name shown before sign-in | **Done** (`style/ui-signin`; `GET /tenant` is now open; since M15 an unknown, suspended or cancelled company disables the form with its message) |
 | T9 | Polish and QA | No serious axe violations; printed bill unchanged | **Done** (`style/ui-polish`; `npm run qa` for axe, motion and keys; bill PDFs match `main`; there is no quotation to compare) |
-| T10 | Tenant logo (optional) | Owner-only upload; needs a migration | **Done** (`style/ui-logo`; migration 0023; `GET /tenant/logo` is open; there is no Duolink admin here, so nothing to limit there) |
+| T10 | Tenant logo (optional) | Owner-only upload; needs a migration | **Done** (`style/ui-logo`; migration 0023; `GET /tenant/logo` is open; stored per company; the Duolink admin never shows it) |
 
 ## Already in place (Milestones 0–1)
 

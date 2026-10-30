@@ -9,7 +9,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Request, Response, status
 
-from app.api.deps import CurrentPrincipal, DbSession
+from app.api.deps import CurrentPrincipal, CurrentTenant, DbSession
 from app.core.config import get_settings
 from app.schemas.auth import ChangePasswordRequest, LoginRequest, TokenResponse
 from app.schemas.user import UserOut
@@ -58,14 +58,17 @@ def _token_response(response: Response, tokens: auth_service.IssuedTokens) -> To
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(body: LoginRequest, request: Request, response: Response, db: DbSession) -> TokenResponse:
+def login(
+    body: LoginRequest, request: Request, response: Response, _: CurrentTenant, db: DbSession
+) -> TokenResponse:
+    """Sign in to the company named by the subdomain."""
     ip, agent = _client(request)
     tokens = auth_service.login(db, body.username, body.password, ip, agent)
     return _token_response(response, tokens)
 
 
 @router.post("/refresh", response_model=TokenResponse)
-def refresh(request: Request, response: Response, db: DbSession) -> TokenResponse:
+def refresh(request: Request, response: Response, _: CurrentTenant, db: DbSession) -> TokenResponse:
     ip, agent = _client(request)
     token = request.cookies.get(get_settings().refresh_cookie_name)
     tokens = auth_service.refresh(db, token, ip, agent)
@@ -73,7 +76,7 @@ def refresh(request: Request, response: Response, db: DbSession) -> TokenRespons
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-def logout(request: Request, response: Response, db: DbSession) -> None:
+def logout(request: Request, response: Response, _: CurrentTenant, db: DbSession) -> None:
     auth_service.logout(db, request.cookies.get(get_settings().refresh_cookie_name))
     _clear_refresh_cookie(response)
 

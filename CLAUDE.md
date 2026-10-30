@@ -2,7 +2,8 @@
 
 ERP for a construction-materials supplier (TMT bars, pipes, cement, binding wire, angles and
 channels; two shops and a godown): purchase with landed cost, stock, GST billing, credit,
-e-way bills, daily closing. Single client now, multi-tenant SaaS later.
+e-way bills, daily closing. Hosted by Duolink for many companies, each on its own subdomain
+(ADR 0011).
 
 **Read before any task:** `docs/SPEC.md` (business rules B1–B18, gap fixes G1–G27, data model),
 `docs/ROADMAP.md` (milestones and status). Open questions: `docs/GAP_ANALYSIS.md`.
@@ -31,7 +32,13 @@ docs/                  SPEC, ROADMAP, GAP_ANALYSIS, ARCHITECTURE, API, DESIGN, a
 - Money and quantities are `Decimal`/`NUMERIC`. Never float, in Python or in stored data.
 - Business maths goes in `backend/app/domain/` with unit tests written first. No DB, HTTP or
   clock there (pass `today` in).
-- Every table has `tenant_id` (use `TENANT_ID` from `app/core/tenancy.py`). No tenant logic yet.
+- Every table has `tenant_id` and every query filters on `current_tenant_id(db)` from
+  `app/core/tenancy.py` (ADR 0011). A new table's migration must also enable and force row-level
+  security and add the `tenant_isolation` policy (copy migration 0024). Scripts call
+  `services.tenants.use_slug(db, slug)` before any query. Tests run as role `erp_app`.
+- The Duolink admin (`api/v1/admin/`, `services/platform/`, `src/admin/`) answers counts and
+  statuses only, never amounts, costs or document contents (ADR 0012). Only
+  `services/platform/` reads across companies.
 - Stock and balances are derived from append-only ledgers. Issued documents are never deleted
   or edited in place; use credit/debit notes. Numbers come from `services/numbering.py` inside
   the saving transaction.
@@ -50,7 +57,8 @@ docs/                  SPEC, ROADMAP, GAP_ANALYSIS, ARCHITECTURE, API, DESIGN, a
 
 ```bash
 make up / make down / make logs        # dev stack: web :5173, API :8000, db :5432
-make seed                              # owner / owner-pass-123 (dev only)
+make seed                              # owner / owner-pass-123 (dev only), at main.localhost:5173
+                                       # another company: python -m app.scripts.seed --tenant acme
 make test                              # backend + frontend tests
 make lint                              # ruff, mypy, alembic check, eslint, tsc, prettier
 make migration m="add item master"     # then review the file, then make migrate

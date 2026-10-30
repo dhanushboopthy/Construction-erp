@@ -1,19 +1,36 @@
 import { useEffect, useMemo, useState, type FormEvent, type KeyboardEvent } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 
 import { toFormError } from "@/api/errors";
 import { useItems, useParties } from "@/api/masters";
+import { previewQuote, QUOTE_LABEL, useCreateQuote, useQuote } from "@/api/quotes";
 import { previewInvoice, useCreateInvoice } from "@/api/sales";
 import { useLocations } from "@/api/setup";
 import { useOpenDirectLines } from "@/api/transport";
-import type { FulfilmentSource, InvoiceCreate, InvoicePreview, PaymentMode } from "@/api/types";
+import type {
+  FulfilmentSource,
+  InvoiceCreate,
+  InvoicePreview,
+  PaymentMode,
+  QuoteCreate,
+  QuoteKind,
+} from "@/api/types";
 import { useAuth } from "@/auth/AuthContext";
 import { ApprovalPrompt } from "@/components/ApprovalPrompt";
 import { Button } from "@/components/Button";
 import { SelectField, TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
 import { formatMoney, trimDecimal } from "@/lib/format";
+import { ItemEditor } from "@/pages/items/ItemEditor";
 import { unitNames } from "@/pages/items/itemLabels";
+import { PartyEditor } from "@/pages/parties/PartyEditor";
+
+/** What the side column shows: the bill's totals, or a quick form to add a missing customer or
+ * item without leaving the bill. */
+type Side = { kind: "totals" } | { kind: "customer" } | { kind: "item" };
+
+/** What is being made: a tax invoice, or a quotation or proforma that is not one (ADR 0005). */
+type Doc = "invoice" | QuoteKind;
 
 interface PayRow {
   mode: PaymentMode;
@@ -90,6 +107,17 @@ export function BillEntryPage() {
   const parties = useParties("", "customer");
   const locations = useLocations();
   const create = useCreateInvoice();
+  const createQuote = useCreateQuote();
+  const [params] = useSearchParams();
+  // A bill made from a saved quotation or proforma (`?quote=`), or a new quotation (`?doc=`).
+  const fromQuoteId = params.get("quote") ? Number(params.get("quote")) : null;
+  const fromQuote = useQuote(fromQuoteId);
+  const [doc, setDoc] = useState<Doc>(() => {
+    const asked = params.get("doc");
+    return asked === "quotation" || asked === "proforma" ? asked : "invoice";
+  });
+  const isQuote = doc !== "invoice";
+  const [validUntil, setValidUntil] = useState("");
 
   const [partyId, setPartyId] = useState("");
   const [siteId, setSiteId] = useState("");
@@ -110,6 +138,7 @@ export function BillEntryPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [focusLine, setFocusLine] = useState<number | null>(null);
   const [key, setKey] = useState(() => crypto.randomUUID());
+  const [side, setSide] = useState<Side>({ kind: "totals" });
 
   const itemList = useMemo(
     () => (items.data?.items ?? []).filter((i) => i.is_active),
@@ -120,22 +149,49 @@ export function BillEntryPage() {
   const party = customers.find((p) => String(p.id) === partyId);
   const sites = (party?.sites ?? []).filter((s) => s.is_active);
   const itemOf = (id: string) => itemList.find((i) => String(i.id) === id);
+  // The shops this user may bill from. With only one there is nothing to choose.
+  const shops = places.filter(
+    (l) => l.kind === "shop" && (owner || user?.locations.some((x) => x.id === l.id)),
+  );
+  const onlyShop = shops.length === 1 ? shops[0] : undefined;
+
+  // Billing a quotation: start from its customer, shop and lines. Prices are worked out again at
+  // today's rates, the same as any bill.
+  const quote = fromQuote.data;
+  useEffect(() => {
+    if (!quote) return;
+    setPartyId(String(quote.party_id));
+    setSiteId(quote.site_id ? String(quote.site_id) : "");
+    setLocationId(String(quote.location_id));
+    setLines(
+      quote.lines.map((x) => ({
+        ...emptyLine(),
+        itemId: String(x.item_id),
+        unit: x.unit,
+        quantity: trimDecimal(x.quantity),
+        discount: Number(x.discount) > 0 ? trimDecimal(x.discount) : "",
+        reason: x.discount_reason ?? "",
+      })),
+    );
+  }, [quote]);
 
   // Default to the walk-in customer once the list is there.
   useEffect(() => {
-    if (!partyId && customers.length > 0) {
+    if (!partyId && !fromQuoteId && customers.length > 0) {
       const walkIn = customers.find((c) => c.name === "Walk-in customer");
       if (walkIn) setPartyId(String(walkIn.id));
     }
-  }, [customers, partyId]);
+  }, [customers, partyId, fromQuoteId]);
 
-  // The owner works at every shop, so start on the first one.
+  // A user with one shop always bills from it; the owner works at every shop, so start on the first.
   useEffect(() => {
-    if (!locationId) {
+    if (onlyShop && locationId !== String(onlyShop.id)) {
+      setLocationId(String(onlyShop.id));
+    } else if (!locationId) {
       const first = places.find((l) => l.kind === "shop");
       if (first) setLocationId(String(first.id));
     }
-  }, [places, locationId]);
+  }, [places, locationId, onlyShop]);
 
   function payload(): InvoiceCreate | null {
     if (!partyId || !locationId) return null;
@@ -168,18 +224,42 @@ export function BillEntryPage() {
       party_id: Number(partyId),
       site_id: siteId ? Number(siteId) : null,
       invoice_date: date === todayISO() ? null : date,
-      vehicle_no: vehicle.trim() || null,
+      // A vehicle is only asked for when we deliver; it can also be added later on the e-way bill.
+      vehicle_no: (siteId && vehicle.trim()) || null,
       remark: remark.trim() || null,
       lines: out,
       payments: pays
         .filter((p) => p.amount)
         .map((p) => ({ mode: p.mode, amount: p.amount, reference: p.reference.trim() || null })),
       approval_ids: approvalIds,
+      quote_id: fromQuoteId,
+    };
+  }
+
+  /** A quotation or proforma carries the same customer and lines, and nothing about payment,
+   * delivery vehicle or where the stock comes from. */
+  function asQuote(bill: InvoiceCreate, kind: QuoteKind): QuoteCreate {
+    return {
+      kind,
+      location_id: bill.location_id,
+      party_id: bill.party_id,
+      site_id: bill.site_id,
+      valid_until: validUntil || null,
+      remark: bill.remark,
+      lines: bill.lines.map((l) => ({
+        ...l,
+        source: "shop",
+        source_location_id: null,
+        purchase_line_id: null,
+        slip_weight: null,
+        weight_note: null,
+      })),
+      approval_ids: bill.approval_ids,
     };
   }
 
   const body = payload();
-  const bodyKey = JSON.stringify(body);
+  const bodyKey = JSON.stringify([doc, body]);
   useEffect(() => {
     if (!body) {
       setPreview(null);
@@ -187,7 +267,7 @@ export function BillEntryPage() {
       return;
     }
     const handle = setTimeout(() => {
-      previewInvoice(body)
+      (doc === "invoice" ? previewInvoice(body) : previewQuote(asQuote(body, doc)))
         .then((p) => {
           setPreview(p);
           setPreviewError(null);
@@ -228,6 +308,11 @@ export function BillEntryPage() {
     setServerError(null);
     if (Object.keys(found).length > 0 || !body) return;
     try {
+      if (doc !== "invoice") {
+        const saved = await createQuote.mutateAsync(asQuote(body, doc));
+        void navigate(`/sales/quotes?open=${saved.id}`);
+        return;
+      }
       const saved = await create.mutateAsync({ body, key });
       setKey(crypto.randomUUID());
       void navigate(`/sales?open=${saved.id}`);
@@ -257,36 +342,68 @@ export function BillEntryPage() {
     <section aria-labelledby="bill-title" className={styles.page}>
       <div className={styles.toolbar}>
         <h1 id="bill-title" className={styles.title}>
-          New bill
+          {doc === "invoice" ? "New bill" : `New ${QUOTE_LABEL[doc].toLowerCase()}`}
         </h1>
         <Link to="/stock/lost-sales">Asked for, out of stock? Log it</Link>
+        {onlyShop ? (
+          <p className={styles.sub}>
+            Billing from {onlyShop.code} {onlyShop.name}
+          </p>
+        ) : null}
         <p className={styles.keys}>Enter in Quantity adds a line · Ctrl+Enter saves · Tab moves</p>
       </div>
-      <form
-        onSubmit={(e) => void onSubmit(e)}
-        onKeyDown={onKeyDown}
-        noValidate
-        className={styles.entryLayout}
-      >
-        <div className={styles.stack}>
+      {quote ? (
+        <p role="status" className={styles.callout}>
+          Billing {QUOTE_LABEL[quote.kind].toLowerCase()} {quote.number}. Prices are worked out at
+          today&apos;s rates.
+        </p>
+      ) : null}
+      {isQuote ? (
+        <p className={styles.sub}>
+          Not a tax invoice: it moves no stock and the customer owes nothing until it is billed.
+        </p>
+      ) : null}
+      <div className={styles.entryLayout}>
+        <form
+          onSubmit={(e) => void onSubmit(e)}
+          onKeyDown={onKeyDown}
+          noValidate
+          className={styles.stack}
+        >
           <div className={styles.headerGrid}>
-            <SelectField
-              label="Customer"
-              value={partyId}
-              error={errors.party}
-              onChange={(e) => {
-                setPartyId(e.target.value);
-                setSiteId("");
-              }}
-              autoFocus
-            >
-              <option value="">Choose a customer</option>
-              {customers.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </SelectField>
+            {fromQuoteId ? null : (
+              <SelectField
+                label="Document"
+                value={doc}
+                onChange={(e) => setDoc(e.target.value as Doc)}
+              >
+                <option value="invoice">Tax invoice</option>
+                <option value="quotation">Quotation (estimate)</option>
+                <option value="proforma">Proforma invoice</option>
+              </SelectField>
+            )}
+            <div className={styles.stack}>
+              <SelectField
+                label="Customer"
+                value={partyId}
+                error={errors.party}
+                onChange={(e) => {
+                  setPartyId(e.target.value);
+                  setSiteId("");
+                }}
+                autoFocus
+              >
+                <option value="">Choose a customer</option>
+                {customers.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </SelectField>
+              <Button variant="ghost" onClick={() => setSide({ kind: "customer" })}>
+                New customer
+              </Button>
+            </div>
             <SelectField
               label="Deliver to"
               value={siteId}
@@ -300,24 +417,31 @@ export function BillEntryPage() {
                 </option>
               ))}
             </SelectField>
-            <SelectField
-              label="Bill from"
-              value={locationId}
-              error={errors.location}
-              onChange={(e) => setLocationId(e.target.value)}
-            >
-              <option value="">Choose a shop</option>
-              {places
-                .filter(
-                  (l) => l.kind === "shop" && (owner || user?.locations.some((x) => x.id === l.id)),
-                )
-                .map((l) => (
+            {onlyShop ? null : (
+              <SelectField
+                label="Bill from"
+                value={locationId}
+                error={errors.location}
+                onChange={(e) => setLocationId(e.target.value)}
+              >
+                <option value="">Choose a shop</option>
+                {shops.map((l) => (
                   <option key={l.id} value={l.id}>
                     {l.code} {l.name}
                   </option>
                 ))}
-            </SelectField>
-            {owner ? (
+              </SelectField>
+            )}
+            {isQuote ? (
+              <TextField
+                label="Valid until (optional)"
+                type="date"
+                value={validUntil}
+                min={todayISO()}
+                onChange={(e) => setValidUntil(e.target.value)}
+              />
+            ) : null}
+            {owner && !isQuote ? (
               <TextField
                 label="Bill date"
                 type="date"
@@ -326,11 +450,13 @@ export function BillEntryPage() {
                 onChange={(e) => setDate(e.target.value)}
               />
             ) : null}
-            <TextField
-              label="Vehicle no."
-              value={vehicle}
-              onChange={(e) => setVehicle(e.target.value.toUpperCase())}
-            />
+            {siteId && !isQuote ? (
+              <TextField
+                label="Vehicle no. (optional)"
+                value={vehicle}
+                onChange={(e) => setVehicle(e.target.value.toUpperCase())}
+              />
+            ) : null}
           </div>
 
           {lines.map((l, i) => {
@@ -374,16 +500,22 @@ export function BillEntryPage() {
                     error={errors[`${i}.qty`]}
                     onChange={(e) => setLine(i, { quantity: e.target.value })}
                   />
-                  <SelectField
-                    label="Taken from"
-                    value={l.source}
-                    onChange={(e) => setLine(i, { source: e.target.value as FulfilmentSource })}
-                  >
-                    <option value="shop">Shop</option>
-                    <option value="godown">Other place</option>
-                    <option value="direct">Supplier direct</option>
-                  </SelectField>
-                  {l.source === "godown" ? (
+                  {isQuote ? (
+                    <span />
+                  ) : (
+                    <SelectField
+                      label="Taken from"
+                      value={l.source}
+                      onChange={(e) => setLine(i, { source: e.target.value as FulfilmentSource })}
+                    >
+                      <option value="shop">Shop</option>
+                      <option value="godown">Other place</option>
+                      <option value="direct">Supplier direct</option>
+                    </SelectField>
+                  )}
+                  {isQuote ? (
+                    <span />
+                  ) : l.source === "godown" ? (
                     <SelectField
                       label="Which place"
                       value={l.sourceLocationId}
@@ -443,14 +575,16 @@ export function BillEntryPage() {
                       onChange={(e) => setLine(i, { priceReason: e.target.value })}
                     />
                   ) : null}
-                  <TextField
-                    label="Slip weight (optional)"
-                    inputMode="decimal"
-                    className={styles.amount}
-                    value={l.slipWeight}
-                    onChange={(e) => setLine(i, { slipWeight: e.target.value })}
-                  />
-                  {row?.weight_flagged ? (
+                  {isQuote ? null : (
+                    <TextField
+                      label="Slip weight (optional)"
+                      inputMode="decimal"
+                      className={styles.amount}
+                      value={l.slipWeight}
+                      onChange={(e) => setLine(i, { slipWeight: e.target.value })}
+                    />
+                  )}
+                  {row?.weight_flagged && !isQuote ? (
                     <TextField
                       label="Why the weight differs"
                       value={l.weightNote}
@@ -478,8 +612,13 @@ export function BillEntryPage() {
           })}
           <div className={styles.actions}>
             <Button onClick={addLine}>Add line</Button>
+            {owner ? (
+              <Button variant="ghost" onClick={() => setSide({ kind: "item" })}>
+                New item
+              </Button>
+            ) : null}
           </div>
-          <fieldset className={styles.lineBlock} style={{ margin: 0 }}>
+          <fieldset className={styles.lineBlock} style={{ margin: 0 }} hidden={isQuote}>
             <legend className="visually-hidden">Money taken now</legend>
             <strong>Money taken now</strong>
             {pays.map((p, i) => (
@@ -570,15 +709,50 @@ export function BillEntryPage() {
             <Button
               type="submit"
               variant="primary"
-              disabled={create.isPending || preview?.can_save === false}
+              disabled={create.isPending || createQuote.isPending || preview?.can_save === false}
             >
-              {create.isPending ? "Saving…" : "Save bill"}
+              {create.isPending || createQuote.isPending
+                ? "Saving…"
+                : doc === "invoice"
+                  ? "Save bill"
+                  : `Save ${QUOTE_LABEL[doc].toLowerCase()}`}
             </Button>
             <Button onClick={() => void navigate("/sales")}>Cancel</Button>
           </div>
-        </div>
+        </form>
 
-        <aside className={styles.preview} aria-labelledby="totals-title" aria-live="polite">
+        {side.kind === "customer" ? (
+          <PartyEditor
+            key="new-customer"
+            onClose={() => setSide({ kind: "totals" })}
+            onDone={(p) => {
+              setPartyId(String(p.id));
+              setSiteId("");
+              setSide({ kind: "totals" });
+            }}
+          />
+        ) : side.kind === "item" ? (
+          <ItemEditor
+            key="new-item"
+            onClose={() => setSide({ kind: "totals" })}
+            onDone={(it) => {
+              const empty = lines.findIndex((l) => !l.itemId);
+              if (empty >= 0) {
+                setLine(empty, { itemId: String(it.id), unit: "" });
+              } else {
+                setLines((rows) => [...rows, { ...emptyLine(), itemId: String(it.id) }]);
+              }
+              setSide({ kind: "totals" });
+            }}
+          />
+        ) : null}
+
+        <aside
+          className={styles.preview}
+          aria-labelledby="totals-title"
+          aria-live="polite"
+          hidden={side.kind !== "totals"}
+        >
           <h3 id="totals-title">Bill</h3>
           {previewError ? <p className={styles.formError}>{previewError}</p> : null}
           {!preview && !previewError ? (
@@ -648,7 +822,7 @@ export function BillEntryPage() {
             </>
           ) : null}
         </aside>
-      </form>
+      </div>
     </section>
   );
 }

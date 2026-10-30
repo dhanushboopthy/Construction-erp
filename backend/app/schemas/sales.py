@@ -11,6 +11,7 @@ from app.models.enums import (
     FulfilmentSource,
     InvoiceStatus,
     PaymentMode,
+    QuoteKind,
     SupplyType,
 )
 from app.schemas.common import Schema
@@ -58,6 +59,78 @@ class InvoiceCreate(Schema):
     payments: list[BillPaymentIn] = Field(default_factory=list)
     # Owner PIN approvals obtained for this bill (POST /approvals, G18).
     approval_ids: list[int] = Field(default_factory=list, max_length=10)
+    # The quotation or proforma this bill was made from; it is marked billed.
+    quote_id: int | None = None
+
+
+# ------------------------------------------------------------------ quotations
+
+
+class QuoteCreate(Schema):
+    """A quotation or proforma invoice: priced like a bill, with no stock or account effect."""
+
+    kind: QuoteKind
+    location_id: int
+    party_id: int
+    site_id: int | None = None
+    valid_until: date | None = None
+    remark: str | None = Field(default=None, max_length=300)
+    lines: list[InvoiceLineIn] = Field(min_length=1, max_length=100)
+    approval_ids: list[int] = Field(default_factory=list, max_length=10)
+
+
+class QuoteLineOut(Schema):
+    id: int
+    line_no: int
+    item_id: int
+    description: str
+    hsn: str
+    unit: str
+    quantity: Decimal
+    base_qty: Decimal
+    base_unit: str
+    rate: Decimal
+    rate_source: RateSource
+    rate_override_reason: str | None
+    discount: Decimal
+    discount_reason: str | None
+    taxable: Decimal
+    gst_rate: Decimal
+    cgst: Decimal
+    sgst: Decimal
+    igst: Decimal
+    line_total: Decimal
+
+
+class QuoteSummary(Schema):
+    id: int
+    kind: QuoteKind
+    number: str
+    quote_date: date
+    valid_until: date | None
+    party_id: int
+    party_name: str
+    location_id: int
+    location_code: str
+    grand_total: Decimal
+    invoice_id: int | None
+    invoice_number: str | None
+
+
+class QuoteOut(QuoteSummary):
+    site_id: int | None
+    bill_to_gstin: str | None
+    ship_to_name: str | None
+    place_of_supply: str
+    supply_kind: SupplyKind
+    supply_type: SupplyType
+    taxable_value: Decimal
+    cgst: Decimal
+    sgst: Decimal
+    igst: Decimal
+    round_off: Decimal
+    remark: str | None
+    lines: list[QuoteLineOut]
 
 
 # ------------------------------------------------------------------ preview
@@ -157,6 +230,11 @@ class InvoiceSummary(Schema):
     supply_type: SupplyType
     grand_total: Decimal
     status: InvoiceStatus
+    cancelled_by: str | None = None  # number of the credit note that cancelled the whole bill
+
+
+class InvoiceCancel(Schema):
+    reason: str = Field(min_length=3, max_length=250)
 
 
 class InvoiceOut(InvoiceSummary):

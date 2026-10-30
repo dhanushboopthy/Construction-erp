@@ -6,7 +6,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.errors import BusinessRuleError, ConflictError, NotFoundError
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain.units import UnitConversion, convert
 from app.models.enums import ItemCategory
 from app.models.masters import Item, ItemUnit
@@ -24,7 +24,7 @@ def list_items(
     limit: int = 50,
     offset: int = 0,
 ) -> tuple[list[Item], int]:
-    filters = [Item.tenant_id == TENANT_ID]
+    filters = [Item.tenant_id == current_tenant_id(db)]
     if not include_inactive:
         filters.append(Item.is_active.is_(True))
     if category:
@@ -41,22 +41,24 @@ def list_items(
 
 def get_item(db: Session, item_id: int) -> Item:
     item = db.get(Item, item_id)
-    if item is None or item.tenant_id != TENANT_ID:
+    if item is None or item.tenant_id != current_tenant_id(db):
         raise NotFoundError("Item not found")
     return item
 
 
 def _name_taken(db: Session, name: str, except_id: int | None = None) -> bool:
-    stmt = select(Item.id).where(Item.tenant_id == TENANT_ID, func.lower(Item.name) == name.lower())
+    stmt = select(Item.id).where(
+        Item.tenant_id == current_tenant_id(db), func.lower(Item.name) == name.lower()
+    )
     if except_id is not None:
         stmt = stmt.where(Item.id != except_id)
     return db.execute(stmt).first() is not None
 
 
 def _units(rows: list[ItemUnitIn]) -> list[ItemUnit]:
+    """tenant_id is filled in from the session when the item is saved (services/tenancy.py)."""
     return [
         ItemUnit(
-            tenant_id=TENANT_ID,
             unit=u.unit,
             factor_to_base=u.factor_to_base,
             whole_only=u.whole_only,
@@ -83,7 +85,7 @@ def apply_create(db: Session, data: ItemCreate) -> Item:
     if _name_taken(db, data.name):
         raise ConflictError("An item with this name exists", code="ITEM_NAME_TAKEN", field="name")
     item = Item(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         **data.model_dump(exclude={"units"}),
         units=_units(data.units),
     )

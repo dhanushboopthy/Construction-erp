@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.core.clock import today_ist
 from app.core.errors import BusinessRuleError, NotFoundError, PermissionDeniedError
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain.inventory_analytics import AdjustmentReason
 from app.domain.money import ZERO, money
 from app.domain.stock_valuation import NegativeStockError, count_variance, ensure_available
@@ -38,7 +38,7 @@ from app.services.shop_settings import get_settings_row
 
 def _location(db: Session, location_id: int, field: str) -> Location:
     row = db.get(Location, location_id)
-    if row is None or row.tenant_id != TENANT_ID or not row.is_active:
+    if row is None or row.tenant_id != current_tenant_id(db) or not row.is_active:
         raise NotFoundError("Location not found or inactive", field=field)
     return row
 
@@ -48,7 +48,7 @@ def base_quantity(
 ) -> tuple[Item, Decimal]:
     """An active item and the quantity in its base unit (a blank unit means the base unit)."""
     item = db.get(Item, item_id)
-    if item is None or item.tenant_id != TENANT_ID or not item.is_active:
+    if item is None or item.tenant_id != current_tenant_id(db) or not item.is_active:
         raise NotFoundError("Item not found or inactive", field="item_id")
     conversion = item_service.conversions(item).get((unit or item.base_unit).lower())
     if conversion is None:
@@ -71,7 +71,9 @@ def _transfer_view(db: Session, t: StockTransfer) -> TransferOut:
             select(Location).where(Location.id.in_([t.from_location_id, t.to_location_id]))
         ).scalars()
     }
-    items = {i.id: i for i in db.execute(select(Item)).scalars()}
+    items = {
+        i.id: i for i in db.scalars(select(Item).where(Item.tenant_id == current_tenant_id(db)))
+    }
     return TransferOut(
         id=t.id,
         number=t.number,
@@ -132,14 +134,15 @@ def create_transfer(
         fy_start_month=settings.financial_year_start_month,
     )
     transfer = StockTransfer(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         number=number,
         from_location_id=origin.id,
         to_location_id=target.id,
         transfer_date=on,
         note=data.note,
         lines=[
-            StockTransferLine(tenant_id=TENANT_ID, item_id=i, quantity=q) for i, q in wanted.items()
+            StockTransferLine(tenant_id=current_tenant_id(db), item_id=i, quantity=q)
+            for i, q in wanted.items()
         ],
     )
     db.add(transfer)
@@ -166,7 +169,7 @@ def create_transfer(
 
 
 def list_transfers(db: Session, location_ids: frozenset[int] | None) -> list[TransferOut]:
-    stmt = select(StockTransfer).where(StockTransfer.tenant_id == TENANT_ID)
+    stmt = select(StockTransfer).where(StockTransfer.tenant_id == current_tenant_id(db))
     if location_ids is not None:
         stmt = stmt.where(
             StockTransfer.from_location_id.in_(location_ids)
@@ -180,7 +183,7 @@ def list_transfers(db: Session, location_ids: frozenset[int] | None) -> list[Tra
 
 def get_transfer(db: Session, transfer_id: int) -> TransferOut:
     row = db.get(StockTransfer, transfer_id)
-    if row is None or row.tenant_id != TENANT_ID:
+    if row is None or row.tenant_id != current_tenant_id(db):
         raise NotFoundError("Transfer not found")
     return _transfer_view(db, row)
 
@@ -190,7 +193,7 @@ def get_transfer(db: Session, transfer_id: int) -> TransferOut:
 
 def _count_row(db: Session, count_id: int) -> StockCount:
     row = db.get(StockCount, count_id)
-    if row is None or row.tenant_id != TENANT_ID:
+    if row is None or row.tenant_id != current_tenant_id(db):
         raise NotFoundError("Count not found")
     return row
 
@@ -200,7 +203,9 @@ def _avg_cost(db: Session, item_id: int) -> Decimal:
 
 
 def count_view(db: Session, row: StockCount, with_cost: bool) -> CountOut | CountOwnerOut:
-    items = {i.id: i for i in db.execute(select(Item)).scalars()}
+    items = {
+        i.id: i for i in db.scalars(select(Item).where(Item.tenant_id == current_tenant_id(db)))
+    }
     location = db.get(Location, row.location_id)
     base = {
         "id": row.id,
@@ -259,7 +264,8 @@ def open_count(db: Session, data: CountCreate, *, actor_id: int, can_access: boo
                 for (r,) in db.execute(
                     select(StockLedger.item_id)
                     .where(
-                        StockLedger.tenant_id == TENANT_ID, StockLedger.location_id == location.id
+                        StockLedger.tenant_id == current_tenant_id(db),
+                        StockLedger.location_id == location.id,
                     )
                     .distinct()
                 )
@@ -270,16 +276,18 @@ def open_count(db: Session, data: CountCreate, *, actor_id: int, can_access: boo
     lines = []
     for item_id in item_ids:
         item = db.get(Item, item_id)
-        if item is None or item.tenant_id != TENANT_ID:
+        if item is None or item.tenant_id != current_tenant_id(db):
             raise NotFoundError("Item not found", field="item_ids")
         _, here = ledgers.stock_position(db, item_id, location.id)
-        lines.append(StockCountLine(tenant_id=TENANT_ID, item_id=item_id, system_qty=here))
+        lines.append(
+            StockCountLine(tenant_id=current_tenant_id(db), item_id=item_id, system_qty=here)
+        )
     if not lines:
         raise BusinessRuleError(
             "Nothing has been stocked here yet. Pick the items to count.", code="NOTHING_TO_COUNT"
         )
     row = StockCount(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         location_id=location.id,
         count_date=data.count_date or today_ist(),
         status=CountStatus.DRAFT,
@@ -296,7 +304,7 @@ def get_count(db: Session, count_id: int) -> StockCount:
 
 
 def list_counts(db: Session, location_ids: frozenset[int] | None) -> list[StockCount]:
-    stmt = select(StockCount).where(StockCount.tenant_id == TENANT_ID)
+    stmt = select(StockCount).where(StockCount.tenant_id == current_tenant_id(db))
     if location_ids is not None:
         stmt = stmt.where(StockCount.location_id.in_(location_ids))
     return list(db.execute(stmt.order_by(StockCount.id.desc()).limit(100)).scalars())

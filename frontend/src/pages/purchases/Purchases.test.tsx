@@ -94,6 +94,7 @@ describe("Purchases", () => {
     expect(screen.getByLabelText("Unit")).toHaveValue("ton");
     await user.type(screen.getByLabelText("Billed qty"), "10");
     await user.type(screen.getByLabelText(/Rate per ton/), "55000");
+    await user.type(screen.getByLabelText("Batch / heat no."), "H-2231");
     await user.click(screen.getByRole("button", { name: "Add charge to line 1" }));
     await user.selectOptions(screen.getByLabelText("Charge 1"), "1");
     expect(screen.getByLabelText("Amount (₹)")).toHaveValue("250");
@@ -111,6 +112,7 @@ describe("Purchases", () => {
       unit: "ton",
       quantity: "10",
       rate: "55000",
+      batch_no: "H-2231",
       charges: [{ component_id: 1, amount: "250", on_supplier_bill: false }],
     });
   });

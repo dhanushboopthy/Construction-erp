@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from app.core.clock import today_ist
 from app.core.errors import BusinessRuleError, NotFoundError
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import orders as rules
 from app.domain.money import ZERO, money, qty
 from app.domain.units import to_base
@@ -38,12 +38,12 @@ def create(
     db: Session, data: LostSaleCreate, *, actor_id: int, is_owner: bool, can_access: bool
 ) -> LostSale:
     place = db.get(Location, data.location_id)
-    if place is None or place.tenant_id != TENANT_ID or not place.is_active:
+    if place is None or place.tenant_id != current_tenant_id(db) or not place.is_active:
         raise NotFoundError("Shop not found", field="location_id")
     if not can_access:
         raise NotFoundError("Shop not found", field="location_id")
     item = db.get(Item, data.item_id)
-    if item is None or item.tenant_id != TENANT_ID or not item.is_active:
+    if item is None or item.tenant_id != current_tenant_id(db) or not item.is_active:
         raise NotFoundError("Item not found or inactive", field="item_id")
     conversion = item_service.conversions(item).get((data.unit or item.base_unit).lower())
     if conversion is None:
@@ -66,7 +66,7 @@ def create(
         )
     board = rates.latest_rates(db, on).get(item.id)
     row = LostSale(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         location_id=place.id,
         item_id=item.id,
         entry_date=on,
@@ -125,7 +125,7 @@ def list_entries(
     only_id: int | None = None,
 ) -> list[LostSaleOut | LostSaleOwnerOut]:
     stmt = select(LostSale).where(
-        LostSale.tenant_id == TENANT_ID,
+        LostSale.tenant_id == current_tenant_id(db),
         LostSale.entry_date >= date_from,
         LostSale.entry_date <= date_to,
     )
@@ -134,7 +134,9 @@ def list_entries(
     if only_id is not None:
         stmt = stmt.where(LostSale.id == only_id)
     rows = db.scalars(stmt.order_by(LostSale.id.desc()).limit(500)).all()
-    items = {i.id: i for i in db.scalars(select(Item).where(Item.tenant_id == TENANT_ID))}
+    items = {
+        i.id: i for i in db.scalars(select(Item).where(Item.tenant_id == current_tenant_id(db)))
+    }
     places = {p.id: p.code for p in db.scalars(select(Location))}
     users = {u.id: u.full_name for u in db.scalars(select(AppUser))}
     return [_view(r, items, places, users, owner) for r in rows]
@@ -150,7 +152,7 @@ def fill_rate(
         select(SalesLine.item_id, func.sum(SalesLine.base_qty), func.count())
         .join(SalesInvoice, SalesInvoice.id == SalesLine.invoice_id)
         .where(
-            SalesInvoice.tenant_id == TENANT_ID,
+            SalesInvoice.tenant_id == current_tenant_id(db),
             SalesInvoice.invoice_date >= date_from,
             SalesInvoice.invoice_date <= date_to,
         )
@@ -159,7 +161,7 @@ def fill_rate(
     lost_stmt = (
         select(LostSale.item_id, func.sum(LostSale.base_qty), func.count())
         .where(
-            LostSale.tenant_id == TENANT_ID,
+            LostSale.tenant_id == current_tenant_id(db),
             LostSale.entry_date >= date_from,
             LostSale.entry_date <= date_to,
         )
@@ -168,7 +170,7 @@ def fill_rate(
     value_stmt = (
         select(LostSale.item_id, func.sum(LostSale.base_qty * LostSale.market_rate))
         .where(
-            LostSale.tenant_id == TENANT_ID,
+            LostSale.tenant_id == current_tenant_id(db),
             LostSale.entry_date >= date_from,
             LostSale.entry_date <= date_to,
             LostSale.market_rate.is_not(None),
@@ -196,7 +198,9 @@ def fill_rate(
     items = {
         i.id: i
         for i in db.scalars(
-            select(Item).where(Item.tenant_id == TENANT_ID, Item.id.in_({*supplied, *lost}))
+            select(Item).where(
+                Item.tenant_id == current_tenant_id(db), Item.id.in_({*supplied, *lost})
+            )
         )
     }
     rows = [

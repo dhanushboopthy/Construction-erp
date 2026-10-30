@@ -11,6 +11,40 @@ class Role(StrEnum):
     ACCOUNTANT = "accountant"
 
 
+class TenantStatus(StrEnum):
+    """A company's account with Duolink (ADR 0011). Suspended and cancelled companies cannot
+    sign in; their books are kept."""
+
+    TRIAL = "trial"
+    ACTIVE = "active"
+    SUSPENDED = "suspended"
+    CANCELLED = "cancelled"
+
+
+class TenantPlan(StrEnum):
+    TRIAL = "trial"
+    BASIC = "basic"
+    PRO = "pro"
+
+
+class PlatformAction(StrEnum):
+    """What a Duolink admin did (platform_audit_log, Milestone 16)."""
+
+    LOGIN = "login"
+    LOGIN_FAILED = "login_failed"
+    LOGOUT = "logout"
+    TOKEN_REUSE = "token_reuse"  # noqa: S105 - an audit action name, not a secret
+    TENANT_CREATE = "tenant_create"
+    TENANT_UPDATE = "tenant_update"
+    TENANT_SUSPEND = "tenant_suspend"
+    TENANT_REACTIVATE = "tenant_reactivate"
+    USER_ACTIVATE = "user_activate"
+    USER_DEACTIVATE = "user_deactivate"
+    USER_UNLOCK = "user_unlock"
+    USER_RESET_PASSWORD = "user_reset_password"  # noqa: S105 - an audit action name
+    USER_SIGN_OUT = "user_sign_out"
+
+
 class LocationKind(StrEnum):
     SHOP = "shop"
     GODOWN = "godown"
@@ -195,6 +229,15 @@ class DocType(StrEnum):
     STOCK_WRITEDOWN = "stock_writedown"  # stock value lowered to NRV (FM6)
     PURCHASE_ORDER = "purchase_order"  # an order to a supplier (FM10)
     GOODS_RECEIPT = "goods_receipt"  # what arrived against an order (FM10)
+    QUOTATION = "quotation"  # an estimate for a customer: no stock, no account entry
+    PROFORMA = "proforma"  # a proforma invoice, asking for payment before the bill
+
+
+class QuoteKind(StrEnum):
+    """A priced offer that is not a tax invoice (ADR 0005 still holds: the bill is separate)."""
+
+    QUOTATION = "quotation"
+    PROFORMA = "proforma"
 
 
 def str_enum(enum_cls: type[StrEnum], name: str) -> sa.Enum:

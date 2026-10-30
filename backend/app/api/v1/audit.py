@@ -5,7 +5,6 @@ from fastapi import APIRouter, Query
 from sqlalchemy import func, select
 
 from app.api.deps import DbSession, OwnerOnly
-from app.core.tenancy import TENANT_ID
 from app.models.audit import AuditLog
 from app.models.enums import AuditAction
 from app.schemas.audit import AuditLogOut
@@ -16,7 +15,7 @@ router = APIRouter(prefix="/audit-log", tags=["audit"])
 
 @router.get("", response_model=Page[AuditLogOut])
 def list_audit_log(
-    _: OwnerOnly,
+    owner: OwnerOnly,
     db: DbSession,
     entity: str | None = None,
     entity_id: str | None = None,
@@ -27,7 +26,7 @@ def list_audit_log(
     limit: Annotated[int, Query(ge=1, le=200)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> Page[AuditLogOut]:
-    filters = [AuditLog.tenant_id == TENANT_ID]
+    filters = [AuditLog.tenant_id == owner.tenant_id]
     if entity:
         filters.append(AuditLog.entity == entity)
     if entity_id:

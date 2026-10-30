@@ -12,13 +12,17 @@ pytestmark = pytest.mark.integration
 PUBLIC = {
     ("GET", "/api/v1/health"),
     ("GET", "/api/v1/health/ready"),
+    # The company, its business name, tagline and logo, for the sign-in page (ADR 0011; T8, T10).
+    ("GET", "/api/v1/tenant"),
+    ("GET", "/api/v1/tenant/logo"),
     ("POST", "/api/v1/auth/login"),
     ("POST", "/api/v1/auth/refresh"),
     ("POST", "/api/v1/auth/logout"),
-    # The business name and tagline only, for the sign-in page (docs/UI_REFACTOR_PLAN.md, T8).
-    ("GET", "/api/v1/tenant"),
-    ("GET", "/api/v1/tenant/logo"),
+    ("POST", "/api/v1/admin/auth/login"),
+    ("POST", "/api/v1/admin/auth/refresh"),
+    ("POST", "/api/v1/admin/auth/logout"),
 }
+ADMIN_HOST = {"host": "admin.localhost"}
 
 
 def routes():
@@ -37,7 +41,8 @@ def test_there_are_many_routes_to_check():
 @pytest.mark.parametrize(("method", "path"), list(routes()))
 def test_every_route_needs_a_sign_in(client, method, path):
     url = re.sub(r"\{[^}]+\}", "1", path)
-    response = client.request(method, url, json={} if method != "GET" else None)
+    headers = ADMIN_HOST if path.startswith("/api/v1/admin/") else None
+    response = client.request(method, url, json={} if method != "GET" else None, headers=headers)
     assert response.status_code == 401, f"{method} {path} answered {response.status_code}"
     assert response.json()["code"] == "NOT_AUTHENTICATED"
 

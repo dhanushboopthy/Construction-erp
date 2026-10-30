@@ -13,7 +13,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.errors import BusinessRuleError
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.models.masters import Item
 from app.schemas.items import ImportResult, ImportRowError, ItemCreate, ItemUnitIn, ItemUpdate
 from app.services import items as item_service
@@ -168,7 +168,9 @@ def import_items(db: Session, content: bytes, *, dry_run: bool) -> ImportResult:
     existing = {
         i.name.lower(): i
         for i in db.execute(
-            select(Item).where(Item.tenant_id == TENANT_ID, func.lower(Item.name).in_(list(seen)))
+            select(Item).where(
+                Item.tenant_id == current_tenant_id(db), func.lower(Item.name).in_(list(seen))
+            )
         ).scalars()
     }
     created = updated = 0

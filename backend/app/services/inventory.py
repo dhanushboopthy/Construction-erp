@@ -15,8 +15,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.errors import BusinessRuleError, NotFoundError
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import inventory_analytics as ia
+from app.domain import stock_dashboard as dashboard_rules
 from app.domain import stock_valuation as stock_rules
 from app.domain.inventory_analytics import Direction
 from app.domain.money import ZERO, money
@@ -28,6 +29,12 @@ from app.models.setup import Location
 from app.models.stock_ops import StockWritedown, StockWritedownLine
 from app.schemas.inventory import (
     AgeBucketOut,
+    DashboardCategoryOut,
+    DashboardCategoryOwnerOut,
+    DashboardItemOut,
+    DashboardPlaceOut,
+    DashboardPlaceOwnerOut,
+    DashboardReorderOut,
     FifoAgeOut,
     FifoItemOut,
     FifoLayerOut,
@@ -37,11 +44,14 @@ from app.schemas.inventory import (
     NrvRowOut,
     ShortageClaimOut,
     ShrinkageOut,
+    StockDashboardOut,
+    StockDashboardOwnerOut,
     SupplierShortageOut,
     WritedownCreate,
     WritedownLineOut,
     WritedownOut,
 )
+from app.schemas.stock import StockItemOwnerOut
 from app.services import closing as closing_service
 from app.services import ledgers, rates
 from app.services.numbering import allocate_number
@@ -66,7 +76,7 @@ def _rows_by_item(db: Session) -> dict[int, list[StockLedger]]:
     out: dict[int, list[StockLedger]] = defaultdict(list)
     rows = db.execute(
         select(StockLedger)
-        .where(StockLedger.tenant_id == TENANT_ID)
+        .where(StockLedger.tenant_id == current_tenant_id(db))
         .order_by(StockLedger.entry_date, StockLedger.id)
     ).scalars()
     for row in rows:
@@ -89,7 +99,7 @@ def _active_items(db: Session) -> list[Item]:
     return list(
         db.execute(
             select(Item)
-            .where(Item.tenant_id == TENANT_ID, Item.is_active.is_(True))
+            .where(Item.tenant_id == current_tenant_id(db), Item.is_active.is_(True))
             .order_by(Item.name)
         ).scalars()
     )
@@ -100,12 +110,13 @@ def _last_suppliers(db: Session) -> dict[int, Party]:
     rows = db.execute(
         select(PurchaseLine.item_id, Purchase.supplier_id)
         .join(Purchase, Purchase.id == PurchaseLine.purchase_id)
-        .where(Purchase.tenant_id == TENANT_ID)
+        .where(Purchase.tenant_id == current_tenant_id(db))
         .order_by(Purchase.bill_date, Purchase.id)
     ).all()
     latest = dict(rows)  # the last purchase of each item wins
     parties = {
-        p.id: p for p in db.execute(select(Party).where(Party.tenant_id == TENANT_ID)).scalars()
+        p.id: p
+        for p in db.execute(select(Party).where(Party.tenant_id == current_tenant_id(db))).scalars()
     }
     return {item_id: parties[sid] for item_id, sid in latest.items() if sid in parties}
 
@@ -248,11 +259,95 @@ def analytics(db: Session, today: date) -> InventoryAnalyticsOut:
 # ------------------------------------------------------------------------------ value (NRV)
 
 
+def stock_dashboard(
+    db: Session, today: date, with_cost: bool
+) -> StockDashboardOut | StockDashboardOwnerOut:
+    """One screen of stock (R5): what is in stock and where, what has run out, what needs
+    ordering. Values at cost only for the owner (B4)."""
+    active = {i.id: i for i in _active_items(db)}
+    held = {
+        r.item_id: r
+        for r in ledgers.stock_summary(db, with_cost=True, include_zero=True)
+        if r.item_id in active
+    }
+    locations = {
+        loc.code: loc
+        for loc in db.execute(
+            select(Location).where(Location.tenant_id == current_tenant_id(db))
+        ).scalars()
+    }
+    stocks: list[dashboard_rules.ItemStock] = []
+    for item in active.values():
+        row = held.get(item.id)
+        stocks.append(
+            dashboard_rules.ItemStock(
+                item.id,
+                item.name,
+                item.category.value,
+                row.avg_cost if isinstance(row, StockItemOwnerOut) else ZERO,
+                {x.code: x.quantity for x in row.locations} if row else {},
+            )
+        )
+    s = dashboard_rules.summarise(stocks)
+    analysed = analytics(db, today)
+    out_of_stock = [
+        DashboardItemOut(item_id=x.item_id, name=x.name, base_unit=active[x.item_id].base_unit)
+        for x in s.out_of_stock
+    ]
+    reorder = [
+        DashboardReorderOut(
+            item_id=r.item_id,
+            name=r.item_name,
+            base_unit=r.base_unit,
+            on_hand=r.on_hand,
+            reorder_point=r.reorder_point,
+            short_by=r.short_by,
+        )
+        for r in analysed.rows
+        if r.reorder_now and r.reorder_point is not None
+    ]
+    common = {
+        "as_of": today,
+        "items_in_stock": s.items_in_stock,
+        "out_of_stock": out_of_stock,
+        "reorder": reorder,
+        "enough_history": analysed.enough_data,
+    }
+    places = [(locations[p.code], p) for p in s.places if p.code in locations]
+    if not with_cost:
+        return StockDashboardOut(
+            **common,
+            places=[
+                DashboardPlaceOut(location_id=loc.id, code=loc.code, name=loc.name, items=p.items)
+                for loc, p in places
+            ],
+            categories=[
+                DashboardCategoryOut(category=ItemCategory(c.code), items=c.items)
+                for c in s.categories
+            ],
+        )
+    return StockDashboardOwnerOut(
+        **common,
+        stock_value=s.stock_value,
+        dead_stock_value=analysed.dead_stock_value,
+        places=[
+            DashboardPlaceOwnerOut(
+                location_id=loc.id, code=loc.code, name=loc.name, items=p.items, value=p.value
+            )
+            for loc, p in places
+        ],
+        categories=[
+            DashboardCategoryOwnerOut(category=ItemCategory(c.code), items=c.items, value=c.value)
+            for c in s.categories
+        ],
+    )
+
+
 def _replacement_costs(db: Session) -> dict[int, Decimal]:
     rows = db.execute(
         select(PurchaseLine.item_id, PurchaseLine.unit_cost)
         .join(Purchase, Purchase.id == PurchaseLine.purchase_id)
-        .where(Purchase.tenant_id == TENANT_ID)
+        .where(Purchase.tenant_id == current_tenant_id(db))
         .order_by(Purchase.bill_date, Purchase.id, PurchaseLine.id)
     ).all()
     return dict(rows)  # the last purchase of each item wins
@@ -306,7 +401,10 @@ def nrv_report(db: Session, today: date) -> NrvReportOut:
 
 
 def _writedown_view(db: Session, doc: StockWritedown) -> WritedownOut:
-    names = {i.id: i for i in db.execute(select(Item).where(Item.tenant_id == TENANT_ID)).scalars()}
+    names = {
+        i.id: i
+        for i in db.execute(select(Item).where(Item.tenant_id == current_tenant_id(db))).scalars()
+    }
     lines = [
         WritedownLineOut(
             item_id=ln.item_id,
@@ -343,7 +441,7 @@ def create_writedown(
             code="WRITEDOWN_DISABLED",
         )
     place = db.get(Location, data.location_id)
-    if place is None or place.tenant_id != TENANT_ID or not place.is_active:
+    if place is None or place.tenant_id != current_tenant_id(db) or not place.is_active:
         raise NotFoundError("Shop not found", field="location_id")
     if len(set(data.item_ids)) != len(data.item_ids):
         raise BusinessRuleError("An item is listed twice", code="DUPLICATE_ITEM", field="item_ids")
@@ -353,13 +451,16 @@ def create_writedown(
     prepared: list[tuple[Item, stock_rules.Replay, Decimal, Decimal]] = []
     for item_id in data.item_ids:
         item = db.get(Item, item_id)
-        if item is None or item.tenant_id != TENANT_ID:
+        if item is None or item.tenant_id != current_tenant_id(db):
             raise NotFoundError("Item not found", field="item_ids")
         pos = _position(
             list(
                 db.execute(
                     select(StockLedger)
-                    .where(StockLedger.tenant_id == TENANT_ID, StockLedger.item_id == item.id)
+                    .where(
+                        StockLedger.tenant_id == current_tenant_id(db),
+                        StockLedger.item_id == item.id,
+                    )
                     .order_by(StockLedger.entry_date, StockLedger.id)
                 ).scalars()
             )
@@ -394,7 +495,7 @@ def create_writedown(
         fy_start_month=settings.financial_year_start_month,
     )
     doc = StockWritedown(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         number=number,
         location_id=place.id,
         writedown_date=today,
@@ -423,7 +524,7 @@ def create_writedown(
             )
         doc.lines.append(
             StockWritedownLine(
-                tenant_id=TENANT_ID,
+                tenant_id=current_tenant_id(db),
                 item_id=item.id,
                 quantity=quantity,
                 old_cost=old,
@@ -439,7 +540,7 @@ def create_writedown(
 def list_writedowns(
     db: Session, date_from: date | None, date_to: date | None
 ) -> list[WritedownOut]:
-    stmt = select(StockWritedown).where(StockWritedown.tenant_id == TENANT_ID)
+    stmt = select(StockWritedown).where(StockWritedown.tenant_id == current_tenant_id(db))
     if date_from is not None:
         stmt = stmt.where(StockWritedown.writedown_date >= date_from)
     if date_to is not None:
@@ -456,7 +557,7 @@ def written_down(db: Session, date_from: date, date_to: date, location_id: int |
         select(StockWritedownLine.value)
         .join(StockWritedown, StockWritedown.id == StockWritedownLine.writedown_id)
         .where(
-            StockWritedown.tenant_id == TENANT_ID,
+            StockWritedown.tenant_id == current_tenant_id(db),
             StockWritedown.writedown_date >= date_from,
             StockWritedown.writedown_date <= date_to,
         )
@@ -535,7 +636,7 @@ def shrinkage(db: Session, date_from: date, date_to: date) -> ShrinkageOut:
         .join(Party, Party.id == Purchase.supplier_id)
         .join(Item, Item.id == PurchaseLine.item_id)
         .where(
-            Purchase.tenant_id == TENANT_ID,
+            Purchase.tenant_id == current_tenant_id(db),
             Purchase.bill_date >= date_from,
             Purchase.bill_date <= date_to,
         )

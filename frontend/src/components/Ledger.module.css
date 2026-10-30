@@ -616,6 +616,13 @@ fieldset.choices legend {
   color: var(--color-on-hero);
 }
 
+/* The bill's totals step aside while a new customer or item is being added; a quotation takes
+   no money, so its payment block is hidden. */
+.preview[hidden],
+.lineBlock[hidden] {
+  display: none;
+}
+
 .preview h3 {
   margin: 0;
   font-size: var(--text-md);

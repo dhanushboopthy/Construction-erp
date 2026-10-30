@@ -30,7 +30,12 @@ Every error has the same body:
 
 ## Auth flow
 
+0. The address picks the company (ADR 0011): `acme.<BASE_DOMAIN>` is the company `acme`.
+   `GET /tenant` → `{slug, name, status}` for the sign-in page. An unknown address answers 404
+   `TENANT_NOT_FOUND`. A suspended or closed company answers 403 `TENANT_SUSPENDED` /
+   `TENANT_CANCELLED` on every route.
 1. `POST /auth/login {username, password}` → `{access_token, expires_in, user}` + refresh cookie.
+   The username is looked up in the address's company only.
 2. Send `Authorization: Bearer <access_token>`.
 3. On 401, `POST /auth/refresh` (cookie only) → new token + new cookie; retry once.
 4. `POST /auth/logout` revokes the session and clears the cookie.
@@ -40,6 +45,29 @@ Every error has the same body:
 Endpoints that return cost, margin or profit use separate response models for owners and
 staff (for example `ItemOwnerOut` and `ItemOut`). Choose the model with `principal.sees_cost`;
 never rely on the UI to hide fields. Test each such endpoint as a counter user.
+
+## Endpoints (Milestone 16: Duolink admin, ADR 0012)
+
+Only at `admin.<BASE_DOMAIN>` (404 elsewhere), under `/admin`, with a Duolink admin's token (type
+`platform`; a company user's token answers 401). Answers carry counts and statuses, never amounts.
+
+| Method | Path | What |
+| --- | --- | --- |
+| POST | `/admin/auth/login {email, password}`, `/admin/auth/refresh`, `/admin/auth/logout` | Admin sign-in; cookie `duolink_admin_refresh` on `/api/v1/admin/auth` |
+| GET | `/admin/auth/me` · POST `/admin/auth/change-password` | The signed-in admin |
+| GET | `/admin/overview` | Companies by status, new this month, active users, open sessions, sign-ins and wrong passwords (24 h, 7 d), trials ending in 7 days |
+| GET | `/admin/tenants?q&status&plan` | Companies with users and shops against their limits, bills in 30 days, last sign-in |
+| POST | `/admin/tenants {name, slug, plan, state_code, owner_username, owner_full_name, owner_password}` | New company with starter data and its first owner. 409 `SLUG_TAKEN` / `SLUG_INVALID` |
+| GET / PATCH | `/admin/tenants/{id}` `{name?, plan?, max_users?, max_locations?, trial_ends_at?}` | Detail; null limits return to the plan's |
+| POST | `/admin/tenants/{id}/suspend {reason}`, `/admin/tenants/{id}/reactivate` | Suspend ends every session and blocks sign-in |
+| GET | `/admin/users?tenant_id&q&role&state=active\|inactive\|locked` | Users of every company |
+| POST | `/admin/users/{id}/deactivate`, `/activate`, `/unlock`, `/sign-out` | Support actions (409 `LAST_OWNER`, `PLAN_USER_LIMIT`) |
+| POST | `/admin/users/{id}/reset-password` | `{temporary_password}`, shown once |
+| GET | `/admin/activity?tenant_id&action` · `/admin/audit?tenant_id&action` | Sign-ins at companies · what admins did |
+
+Company side: `GET /tenant/plan` (owner) → `{plan, status, trial_ends_at, users, max_users,
+locations, max_locations}`. Adding a user or a shop beyond the plan answers 409
+`PLAN_USER_LIMIT` / `PLAN_LOCATION_LIMIT`.
 
 ## Endpoints (FM10: orders, receipts, match report, lost sales)
 
@@ -174,6 +202,7 @@ The saved line returns `rate_source: "override"` and `rate_override_reason`. Err
 
 | Method | Path | Who |
 | --- | --- | --- |
+| GET | `/stock/dashboard`: items in stock by place and category, out of stock, to reorder | all roles; stock value, dead stock and values per place and category only for the owner |
 | GET | `/stock-adjustments?location_id=&date_from=&date_to=` (this month by default) | all roles (counter: own shop); values, totals by reason and ITC only for the owner |
 | GET | `/stock-adjustments/{id}` | as above |
 | POST | `/stock-adjustments` (`reason`, `lines[{item_id, quantity, unit, direction}]`, `approval_ids`) | owner (any place, may back-date); counter: own shop, today; above `adjustment_approval_limit` needs a `stock_adjustment` approval (409 `ADJUSTMENT_NEEDS_OWNER`) |
@@ -192,7 +221,7 @@ Settings gain `adjustment_approval_limit` (₹10,000) and `itc_reverse_shortages
 | --- | --- | --- |
 | GET | `/expense-categories` (`include_inactive` for the owner) | all roles |
 | POST · PATCH | `/expense-categories` · `/expense-categories/{id}` | owner |
-| GET | `/cash-book?location_id=&date_from=&date_to=` (today by default) | owner, accountant; counter: own shop |
+| GET | `/cash-book?location_id=&date_from=&date_to=` (today by default) or `?all_time=true`; returns totals and `months` | owner, accountant; counter: own shop |
 | POST | `/cash-book` | owner; counter: expenses and bank deposits at own shop, today only; expenses above `expense_approval_limit` need an `expense` approval (409 `EXPENSE_NEEDS_OWNER`) |
 | POST | `/cash-book/{id}/reverse` (`reason`) | owner |
 | GET | `/reports/pnl?period=2026-10&location_id=` | owner |
@@ -212,8 +241,10 @@ Errors: `CASH_ONLY` (deposit or withdrawal not in cash), `CATEGORY_REQUIRED`,
 | GET | `/system/status` | owner |
 | POST | `/system/verify?full=true\|false` | owner |
 
-Every other route needs a sign-in; the only open ones are `/health`, `/health/ready`,
-`/auth/login`, `/auth/refresh` and `/auth/logout`. All `/api` answers are `Cache-Control: no-store`.
+Every other route needs a sign-in; the only open ones are `/health`, `/health/ready`, `/tenant`,
+`/auth/login`, `/auth/refresh` and `/auth/logout`, and at the admin address `/admin/auth/login`,
+`/admin/auth/refresh` and `/admin/auth/logout`. All `/api` answers are `Cache-Control: no-store`.
+A token is good only at its own company's address.
 
 ## Endpoints (Milestone 13)
 
@@ -298,6 +329,7 @@ with `warnings` (cash above the daily limit to one person). New codes: `LINK_*`,
 | --- | --- | --- |
 | POST | `/credit-notes` `{invoice_id, reason, lines:[{line_id, quantity}], approval_ids}` | owner, counter (own shop); after the return window: owner or a `late_return` approval |
 | GET | `/credit-notes` (`invoice_id`, `party_id`) · `/credit-notes/{id}` · `/credit-notes/{id}/pdf` | owner, accountant; counter: own shop |
+| POST | `/invoices/{id}/cancel` `{reason}`: a full credit note with `cancels_invoice`; the bill shows `cancelled_by` | owner |
 | POST | `/debit-notes` `{purchase_id, reason, lines:[{line_id, quantity}]}` | owner |
 | GET | `/debit-notes` (`purchase_id`, `party_id`) · `/debit-notes/{id}` · `/debit-notes/{id}/pdf` | owner, accountant |
 
@@ -323,6 +355,9 @@ in the unit of the bill line. New error codes: `RETURN_WINDOW_CLOSED`, `RETURN_T
 | POST | `/invoices/preview` | owner, counter (own shop): prices, tax, stock and problems; nothing saved |
 | POST | `/invoices` (`Idempotency-Key`) | owner, counter (own shop) |
 | GET | `/invoices` (`q`, `party_id`, `date_from`, `date_to`) · `/invoices/{id}` · `/invoices/{id}/pdf` | owner, accountant; counter: own shop. Cost and profit: owner only |
+| POST | `/quotes/preview` · `/quotes` `{kind: quotation\|proforma, location_id, party_id, site_id?, valid_until?, remark?, lines, approval_ids}` | owner, counter (own shop) |
+| GET | `/quotes` (`kind`, `q`) · `/quotes/{id}` · `/quotes/{id}/pdf` | owner, accountant; counter: own shop |
+| POST | `/invoices` with `quote_id` bills that quotation once | owner, counter (own shop) |
 
 ## Endpoints (Milestone 5)
 

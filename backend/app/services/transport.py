@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.core.clock import today_ist
 from app.core.errors import BusinessRuleError, ConflictError, NotFoundError
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import dropship
 from app.domain.compliance import freight_cash_warning
 from app.domain.money import ZERO, money
@@ -54,7 +54,9 @@ def trip_ref(trip_id: int) -> str:
 
 def create_vehicle(db: Session, data: VehicleCreate, *, actor_id: int) -> Vehicle:
     exists = db.execute(
-        select(Vehicle.id).where(Vehicle.tenant_id == TENANT_ID, Vehicle.number == data.number)
+        select(Vehicle.id).where(
+            Vehicle.tenant_id == current_tenant_id(db), Vehicle.number == data.number
+        )
     ).first()
     if exists:
         raise ConflictError("This vehicle number is already listed", code="VEHICLE_EXISTS")
@@ -64,12 +66,12 @@ def create_vehicle(db: Session, data: VehicleCreate, *, actor_id: int) -> Vehicl
         settings = get_settings_row(db)
         name = f"Transport: {data.owner_name} ({data.number})"
         taken = db.execute(
-            select(Party.id).where(Party.tenant_id == TENANT_ID, Party.name == name)
+            select(Party.id).where(Party.tenant_id == current_tenant_id(db), Party.name == name)
         ).first()
         if taken:
             raise ConflictError("A supplier with this name already exists", code="PARTY_EXISTS")
         party = Party(
-            tenant_id=TENANT_ID,
+            tenant_id=current_tenant_id(db),
             name=name,
             type=PartyType.SUPPLIER,
             state_code=settings.state_code,
@@ -81,7 +83,7 @@ def create_vehicle(db: Session, data: VehicleCreate, *, actor_id: int) -> Vehicl
         db.flush()
         party_id = party.id
     vehicle = Vehicle(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         number=data.number,
         owner_name=data.owner_name,
         phone=data.phone,
@@ -96,7 +98,7 @@ def create_vehicle(db: Session, data: VehicleCreate, *, actor_id: int) -> Vehicl
 
 def get_vehicle(db: Session, vehicle_id: int) -> Vehicle:
     row = db.get(Vehicle, vehicle_id)
-    if row is None or row.tenant_id != TENANT_ID:
+    if row is None or row.tenant_id != current_tenant_id(db):
         raise NotFoundError("Vehicle not found")
     return row
 
@@ -112,7 +114,7 @@ def update_vehicle(db: Session, vehicle_id: int, data: VehicleUpdate, *, actor_i
 
 
 def list_vehicles(db: Session, include_inactive: bool) -> list[Vehicle]:
-    stmt = select(Vehicle).where(Vehicle.tenant_id == TENANT_ID)
+    stmt = select(Vehicle).where(Vehicle.tenant_id == current_tenant_id(db))
     if not include_inactive:
         stmt = stmt.where(Vehicle.is_active.is_(True))
     return list(db.execute(stmt.order_by(Vehicle.number)).scalars())
@@ -126,7 +128,7 @@ def _paid(db: Session, vehicle: Vehicle, trip_id: int) -> Decimal:
         return ZERO
     total = db.execute(
         select(func.coalesce(func.sum(PartyLedger.debit), 0)).where(
-            PartyLedger.tenant_id == TENANT_ID,
+            PartyLedger.tenant_id == current_tenant_id(db),
             PartyLedger.party_id == vehicle.party_id,
             PartyLedger.account == LedgerAccount.PAYABLE,
             PartyLedger.applies_to == trip_ref(trip_id),
@@ -165,7 +167,7 @@ def create_trip(db: Session, data: TripCreate, *, actor_id: int) -> Trip:
     if not vehicle.is_active:
         raise BusinessRuleError("This vehicle is switched off", code="VEHICLE_INACTIVE")
     location = db.get(Location, data.location_id)
-    if location is None or location.tenant_id != TENANT_ID or not location.is_active:
+    if location is None or location.tenant_id != current_tenant_id(db) or not location.is_active:
         raise NotFoundError("Location not found or inactive", field="location_id")
     if data.invoice_id is not None and data.purchase_id is not None:
         raise BusinessRuleError(
@@ -173,11 +175,11 @@ def create_trip(db: Session, data: TripCreate, *, actor_id: int) -> Trip:
         )
     if data.invoice_id is not None:
         invoice = db.get(SalesInvoice, data.invoice_id)
-        if invoice is None or invoice.tenant_id != TENANT_ID:
+        if invoice is None or invoice.tenant_id != current_tenant_id(db):
             raise NotFoundError("Invoice not found", field="invoice_id")
     if data.purchase_id is not None:
         purchase = db.get(Purchase, data.purchase_id)
-        if purchase is None or purchase.tenant_id != TENANT_ID:
+        if purchase is None or purchase.tenant_id != current_tenant_id(db):
             raise NotFoundError("Purchase not found", field="purchase_id")
     if vehicle.is_own and data.freight_amount > ZERO:
         raise BusinessRuleError(
@@ -188,7 +190,7 @@ def create_trip(db: Session, data: TripCreate, *, actor_id: int) -> Trip:
     on = data.trip_date or today_ist()
     closing_service.ensure_day_open(db, location.id, on)
     trip = Trip(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         trip_date=on,
         vehicle_id=vehicle.id,
         location_id=location.id,
@@ -224,7 +226,7 @@ def create_trip(db: Session, data: TripCreate, *, actor_id: int) -> Trip:
 def list_trips(
     db: Session, *, invoice_id: int | None, vehicle_id: int | None, limit: int, offset: int
 ) -> tuple[list[Trip], int]:
-    filters = [Trip.tenant_id == TENANT_ID]
+    filters = [Trip.tenant_id == current_tenant_id(db)]
     if invoice_id is not None:
         filters.append(Trip.invoice_id == invoice_id)
     if vehicle_id is not None:
@@ -244,7 +246,7 @@ def freight_cash_note(db: Session, party_id: int, on: date, new_cash: Decimal) -
     """A warning (not a block) when cash paid to one person in a day passes the limit."""
     already = db.execute(
         select(func.coalesce(func.sum(Payment.amount), 0)).where(
-            Payment.tenant_id == TENANT_ID,
+            Payment.tenant_id == current_tenant_id(db),
             Payment.party_id == party_id,
             Payment.direction == PaymentDirection.PAID,
             Payment.mode == PaymentMode.CASH,
@@ -278,7 +280,7 @@ def open_direct_lines(db: Session, item_id: int | None) -> list[OpenDirectLineOu
     stmt = (
         select(PurchaseLine, Purchase)
         .join(Purchase, Purchase.id == PurchaseLine.purchase_id)
-        .where(Purchase.tenant_id == TENANT_ID, Purchase.mode == PurchaseMode.DIRECT)
+        .where(Purchase.tenant_id == current_tenant_id(db), Purchase.mode == PurchaseMode.DIRECT)
         .order_by(Purchase.bill_date.desc(), PurchaseLine.id)
     )
     if item_id is not None:
@@ -317,7 +319,7 @@ def check_linkable(
     """Validate that a direct sale of `item_id` can draw `base_qty` from this purchase line."""
     line = db.get(PurchaseLine, purchase_line_id)
     purchase = db.get(Purchase, line.purchase_id) if line else None
-    if line is None or purchase is None or purchase.tenant_id != TENANT_ID:
+    if line is None or purchase is None or purchase.tenant_id != current_tenant_id(db):
         raise NotFoundError("Purchase line not found", field="purchase_line_id")
     if purchase.mode is not PurchaseMode.DIRECT:
         raise BusinessRuleError(
@@ -348,7 +350,7 @@ def add_link(
     db: Session, sales_line: SalesLine, purchase_line: PurchaseLine, actor_id: int
 ) -> DropShipLink:
     link = DropShipLink(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         sales_line_id=sales_line.id,
         purchase_line_id=purchase_line.id,
         base_qty=sales_line.base_qty,
@@ -362,7 +364,7 @@ def add_link(
 def link_after_billing(db: Session, data: LinkCreate, *, actor_id: int) -> DropShipLink:
     """Owner ties an already-saved direct sale line to the purchase that supplied it."""
     sales_line = db.get(SalesLine, data.sales_line_id)
-    if sales_line is None or sales_line.tenant_id != TENANT_ID:
+    if sales_line is None or sales_line.tenant_id != current_tenant_id(db):
         raise NotFoundError("Sales line not found", field="sales_line_id")
     if sales_line.fulfilment_source is not FulfilmentSource.DIRECT:
         raise BusinessRuleError(
@@ -392,7 +394,7 @@ def link_for(db: Session, sales_line_id: int) -> DropShipLink | None:
 def invoice_freight(db: Session, invoice_id: int) -> Decimal:
     total = db.execute(
         select(func.coalesce(func.sum(Trip.freight_amount), 0)).where(
-            Trip.tenant_id == TENANT_ID, Trip.invoice_id == invoice_id
+            Trip.tenant_id == current_tenant_id(db), Trip.invoice_id == invoice_id
         )
     ).scalar_one()
     return money(total)
@@ -403,7 +405,7 @@ def report(db: Session) -> DropShipReport:
         select(SalesLine, SalesInvoice)
         .join(SalesInvoice, SalesInvoice.id == SalesLine.invoice_id)
         .where(
-            SalesInvoice.tenant_id == TENANT_ID,
+            SalesInvoice.tenant_id == current_tenant_id(db),
             SalesLine.fulfilment_source == FulfilmentSource.DIRECT,
         )
         .order_by(SalesInvoice.invoice_date.desc(), SalesLine.id)

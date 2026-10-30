@@ -19,7 +19,7 @@ from app.core.errors import (
     NotFoundError,
     UpstreamError,
 )
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import eway as eway_rules
 from app.domain.compliance import eway_bill_required
 from app.domain.gst import SupplyKind
@@ -81,7 +81,7 @@ def _call[T](action: Callable[[], T]) -> T:
 
 def _invoice(db: Session, invoice_id: int, can_access: Callable[[int], bool]) -> SalesInvoice:
     inv = db.get(SalesInvoice, invoice_id)
-    if inv is None or inv.tenant_id != TENANT_ID or not can_access(inv.location_id):
+    if inv is None or inv.tenant_id != current_tenant_id(db) or not can_access(inv.location_id):
         raise NotFoundError("Invoice not found", field="invoice_id")
     return inv
 
@@ -134,7 +134,7 @@ def _bills(db: Session, invoice_id: int) -> list[EwayBill]:
     return list(
         db.execute(
             select(EwayBill)
-            .where(EwayBill.tenant_id == TENANT_ID, EwayBill.invoice_id == invoice_id)
+            .where(EwayBill.tenant_id == current_tenant_id(db), EwayBill.invoice_id == invoice_id)
             .order_by(EwayBill.id.desc())
         ).scalars()
     )
@@ -146,7 +146,9 @@ def live_eway(db: Session, invoice_id: int) -> EwayBill | None:
 
 def live_einvoice(db: Session, invoice_id: int) -> EInvoice | None:
     row = db.execute(
-        select(EInvoice).where(EInvoice.tenant_id == TENANT_ID, EInvoice.invoice_id == invoice_id)
+        select(EInvoice).where(
+            EInvoice.tenant_id == current_tenant_id(db), EInvoice.invoice_id == invoice_id
+        )
     ).scalar_one_or_none()
     return row if row and row.status is ComplianceStatus.GENERATED else None
 
@@ -182,7 +184,9 @@ def einvoice_status(
     inv = _invoice(db, invoice_id, can_access)
     settings = get_settings_row(db)
     row = db.execute(
-        select(EInvoice).where(EInvoice.tenant_id == TENANT_ID, EInvoice.invoice_id == inv.id)
+        select(EInvoice).where(
+            EInvoice.tenant_id == current_tenant_id(db), EInvoice.invoice_id == inv.id
+        )
     ).scalar_one_or_none()
     return EInvoiceStatusOut(
         invoice_id=inv.id,
@@ -312,7 +316,7 @@ def generate_eway(
     client = _client()
     result = _call(lambda: client.generate_eway(request))
     row = EwayBill(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         invoice_id=inv.id,
         number=result.number,
         status=ComplianceStatus.GENERATED,
@@ -345,12 +349,14 @@ def record_manual_eway(
     if live_eway(db, inv.id):
         raise ConflictError("This bill already has an e-way bill", code="EWAY_EXISTS")
     taken = db.execute(
-        select(EwayBill.id).where(EwayBill.tenant_id == TENANT_ID, EwayBill.number == data.number)
+        select(EwayBill.id).where(
+            EwayBill.tenant_id == current_tenant_id(db), EwayBill.number == data.number
+        )
     ).first()
     if taken:
         raise ConflictError("This e-way bill number is already recorded", code="EWAY_NUMBER_USED")
     row = EwayBill(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         invoice_id=inv.id,
         number=data.number,
         status=ComplianceStatus.GENERATED,
@@ -426,14 +432,15 @@ def pending_eway(db: Session, location_ids: frozenset[int] | None) -> list[Pendi
     settings = get_settings_row(db)
     since = today_ist() - timedelta(days=PENDING_DAYS)
     stmt = select(SalesInvoice).where(
-        SalesInvoice.tenant_id == TENANT_ID, SalesInvoice.invoice_date >= since
+        SalesInvoice.tenant_id == current_tenant_id(db), SalesInvoice.invoice_date >= since
     )
     if location_ids is not None:
         stmt = stmt.where(SalesInvoice.location_id.in_(location_ids))
     live = set(
         db.execute(
             select(EwayBill.invoice_id).where(
-                EwayBill.tenant_id == TENANT_ID, EwayBill.status == ComplianceStatus.GENERATED
+                EwayBill.tenant_id == current_tenant_id(db),
+                EwayBill.status == ComplianceStatus.GENERATED,
             )
         ).scalars()
     )
@@ -503,7 +510,9 @@ def generate_einvoice(
             code="EINVOICE_NOT_REQUIRED",
         )
     existing = db.execute(
-        select(EInvoice).where(EInvoice.tenant_id == TENANT_ID, EInvoice.invoice_id == inv.id)
+        select(EInvoice).where(
+            EInvoice.tenant_id == current_tenant_id(db), EInvoice.invoice_id == inv.id
+        )
     ).scalar_one_or_none()
     if existing:
         raise ConflictError("This bill already has an IRN", code="EINVOICE_EXISTS")
@@ -519,7 +528,7 @@ def generate_einvoice(
     client = _client()
     result = _call(lambda: client.generate_irn(request))
     row = EInvoice(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         invoice_id=inv.id,
         irn=result.irn,
         ack_no=result.ack_no,

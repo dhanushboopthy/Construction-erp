@@ -16,7 +16,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.errors import BusinessRuleError
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import tally as rules
 from app.domain.money import ZERO, money
 from app.domain.tally import Purpose, VoucherKind
@@ -69,7 +69,9 @@ _ORDER = {kind: i for i, kind in enumerate(VoucherKind)}
 
 
 def _saved(db: Session) -> dict[str, str]:
-    rows = db.execute(select(TallyLedger).where(TallyLedger.tenant_id == TENANT_ID)).scalars()
+    rows = db.execute(
+        select(TallyLedger).where(TallyLedger.tenant_id == current_tenant_id(db))
+    ).scalars()
     return {r.purpose: r.name for r in rows}
 
 
@@ -127,7 +129,9 @@ def save_ledgers(db: Session, data: TallyLedgersPut, *, actor_id: int) -> TallyL
         wanted[COMPANY] = data.company.strip()
     existing = {
         r.purpose: r
-        for r in db.execute(select(TallyLedger).where(TallyLedger.tenant_id == TENANT_ID)).scalars()
+        for r in db.execute(
+            select(TallyLedger).where(TallyLedger.tenant_id == current_tenant_id(db))
+        ).scalars()
     }
     for key, row in existing.items():
         if key not in wanted:
@@ -137,7 +141,11 @@ def save_ledgers(db: Session, data: TallyLedgersPut, *, actor_id: int) -> TallyL
             existing[key].name = name
             existing[key].updated_by = actor_id
         else:
-            db.add(TallyLedger(tenant_id=TENANT_ID, purpose=key, name=name, created_by=actor_id))
+            db.add(
+                TallyLedger(
+                    tenant_id=current_tenant_id(db), purpose=key, name=name, created_by=actor_id
+                )
+            )
     db.commit()
     return read_ledgers(db)
 
@@ -148,7 +156,7 @@ def save_ledgers(db: Session, data: TallyLedgersPut, *, actor_id: int) -> TallyL
 def _party_names(db: Session) -> dict[int, str]:
     return {
         p.id: p.name
-        for p in db.execute(select(Party).where(Party.tenant_id == TENANT_ID)).scalars()
+        for p in db.execute(select(Party).where(Party.tenant_id == current_tenant_id(db))).scalars()
     }
 
 
@@ -159,7 +167,7 @@ def build_vouchers(db: Session, date_from: date, date_to: date) -> list[rules.Vo
 
     for inv in db.execute(
         select(SalesInvoice).where(
-            SalesInvoice.tenant_id == TENANT_ID,
+            SalesInvoice.tenant_id == current_tenant_id(db),
             SalesInvoice.invoice_date >= date_from,
             SalesInvoice.invoice_date <= date_to,
         )
@@ -179,7 +187,7 @@ def build_vouchers(db: Session, date_from: date, date_to: date) -> list[rules.Vo
         )
     for note in db.execute(
         select(CreditNote).where(
-            CreditNote.tenant_id == TENANT_ID,
+            CreditNote.tenant_id == current_tenant_id(db),
             CreditNote.note_date >= date_from,
             CreditNote.note_date <= date_to,
         )
@@ -219,7 +227,7 @@ def build_vouchers(db: Session, date_from: date, date_to: date) -> list[rules.Vo
         )
     for dn in db.execute(
         select(DebitNote).where(
-            DebitNote.tenant_id == TENANT_ID,
+            DebitNote.tenant_id == current_tenant_id(db),
             DebitNote.note_date >= date_from,
             DebitNote.note_date <= date_to,
         )
@@ -239,7 +247,7 @@ def build_vouchers(db: Session, date_from: date, date_to: date) -> list[rules.Vo
         )
     for pay in db.execute(
         select(Payment).where(
-            Payment.tenant_id == TENANT_ID,
+            Payment.tenant_id == current_tenant_id(db),
             Payment.payment_date >= date_from,
             Payment.payment_date <= date_to,
         )
@@ -262,12 +270,12 @@ def build_vouchers(db: Session, date_from: date, date_to: date) -> list[rules.Vo
     heads_by_id = {
         c.id: c.name
         for c in db.execute(
-            select(ExpenseCategory).where(ExpenseCategory.tenant_id == TENANT_ID)
+            select(ExpenseCategory).where(ExpenseCategory.tenant_id == current_tenant_id(db))
         ).scalars()
     }
     for entry in db.execute(
         select(CashEntry).where(
-            CashEntry.tenant_id == TENANT_ID,
+            CashEntry.tenant_id == current_tenant_id(db),
             CashEntry.entry_date >= date_from,
             CashEntry.entry_date <= date_to,
         )
@@ -295,7 +303,7 @@ def build_vouchers(db: Session, date_from: date, date_to: date) -> list[rules.Vo
         )
     for writeoff in db.execute(
         select(BadDebtWriteoff).where(
-            BadDebtWriteoff.tenant_id == TENANT_ID,
+            BadDebtWriteoff.tenant_id == current_tenant_id(db),
             BadDebtWriteoff.writeoff_date >= date_from,
             BadDebtWriteoff.writeoff_date <= date_to,
         )
@@ -354,7 +362,7 @@ def _party_journals(
     """Rebates and freight sit on the party's account with no document of their own."""
     rows = db.execute(
         select(PartyLedger).where(
-            PartyLedger.tenant_id == TENANT_ID,
+            PartyLedger.tenant_id == current_tenant_id(db),
             PartyLedger.ref_type.in_([PartyRef.REBATE, PartyRef.FREIGHT]),
             PartyLedger.entry_date >= date_from,
             PartyLedger.entry_date <= date_to,
@@ -389,7 +397,7 @@ def _movement(db: Session, account: LedgerAccount, date_from: date, date_to: dat
     """How much more is owed on an account in the range, opening balances excluded."""
     rows = db.execute(
         select(PartyLedger).where(
-            PartyLedger.tenant_id == TENANT_ID,
+            PartyLedger.tenant_id == current_tenant_id(db),
             PartyLedger.account == account,
             PartyLedger.ref_type != PartyRef.OPENING,
             PartyLedger.entry_date >= date_from,
@@ -579,7 +587,7 @@ def _heads(db: Session) -> list[str]:
         c.name
         for c in db.execute(
             select(ExpenseCategory)
-            .where(ExpenseCategory.tenant_id == TENANT_ID)
+            .where(ExpenseCategory.tenant_id == current_tenant_id(db))
             .order_by(ExpenseCategory.name)
         ).scalars()
     ]

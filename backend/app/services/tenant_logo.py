@@ -13,7 +13,7 @@ from xml.etree import ElementTree
 from sqlalchemy.orm import Session
 
 from app.core.errors import AppError, BusinessRuleError, NotFoundError, PayloadTooLargeError
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.services import shop_settings
 from app.services.storage import StorageError, get_storage
 
@@ -133,7 +133,7 @@ def check(data: bytes) -> str:
 def save(db: Session, data: bytes) -> None:
     content_type = check(data)
     digest = hashlib.sha256(data).hexdigest()
-    key = f"logo/{TENANT_ID}/{digest[:32]}.{EXTENSION[content_type]}"
+    key = f"logo/{current_tenant_id(db)}/{digest[:32]}.{EXTENSION[content_type]}"
     try:
         get_storage().put(key, data)
     except (StorageError, OSError) as exc:

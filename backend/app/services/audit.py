@@ -14,6 +14,7 @@ from sqlalchemy import event, insert, inspect
 from sqlalchemy.orm import Session, UOWTransaction
 
 from app.core.context import client_ip_var, request_id_var
+from app.core.tenancy import current_tenant_id
 from app.models.audit import AuditLog
 from app.models.base import ActorMixin, Audited
 from app.models.enums import AuditAction
@@ -76,7 +77,7 @@ def _row(
     session: Session, obj: Any, action: AuditAction, changes: dict[str, Any]
 ) -> dict[str, Any]:
     return {
-        "tenant_id": getattr(obj, "tenant_id", None) or 1,
+        "tenant_id": getattr(obj, "tenant_id", None) or current_tenant_id(session),
         "user_id": session.info.get(ACTOR_KEY),
         "action": action,
         "entity": obj.__tablename__,
@@ -126,12 +127,11 @@ def record_event(
     entity_id: str | int | None = None,
     changes: dict[str, Any] | None = None,
     user_id: int | None = None,
-    tenant_id: int = 1,
 ) -> None:
     """Log something that is not a row change: a login, a failed login, an owner override."""
     db.add(
         AuditLog(
-            tenant_id=tenant_id,
+            tenant_id=current_tenant_id(db),
             user_id=user_id if user_id is not None else db.info.get(ACTOR_KEY),
             action=action,
             entity=entity,

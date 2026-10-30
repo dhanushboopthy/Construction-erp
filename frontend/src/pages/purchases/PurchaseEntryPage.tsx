@@ -32,6 +32,7 @@ interface LineRow {
   gst: string;
   mfgWeek: string;
   mfgYear: string;
+  batchNo: string;
   charges: ChargeRow[];
 }
 
@@ -45,6 +46,7 @@ const emptyLine = (): LineRow => ({
   gst: "",
   mfgWeek: "",
   mfgYear: "",
+  batchNo: "",
   charges: [],
 });
 const DECIMAL = /^\d+(\.\d+)?$/;
@@ -121,6 +123,7 @@ export function PurchaseEntryPage() {
         gst_rate: line.gst || null,
         mfg_week: line.mfgWeek ? Number(line.mfgWeek) : null,
         mfg_year: line.mfgYear ? Number(line.mfgYear) : null,
+        batch_no: line.batchNo.trim() || null,
         charges: line.charges.map((c) => ({
           component_id: Number(c.componentId),
           amount: c.amount,
@@ -436,6 +439,17 @@ export function PurchaseEntryPage() {
                       className={styles.amount}
                       value={line.mfgYear}
                       onChange={(e) => setLine(i, { mfgYear: e.target.value })}
+                    />
+                  </div>
+                ) : null}
+                {item ? (
+                  <div className={styles.filters}>
+                    <TextField
+                      label="Batch / heat no."
+                      maxLength={40}
+                      value={line.batchNo}
+                      onChange={(e) => setLine(i, { batchNo: e.target.value })}
+                      hint="Optional. Printed on the bills this stock is sold on."
                     />
                   </div>
                 ) : null}

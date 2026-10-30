@@ -8,6 +8,59 @@ from pydantic import Field
 from app.models.enums import ItemCategory
 from app.schemas.common import Schema
 
+# ------------------------------------------------------------------ stock dashboard (R5)
+
+
+class DashboardPlaceOut(Schema):
+    location_id: int
+    code: str
+    name: str
+    items: int  # items with stock here
+
+
+class DashboardPlaceOwnerOut(DashboardPlaceOut):
+    value: Decimal  # at the weighted-average cost
+
+
+class DashboardCategoryOut(Schema):
+    category: ItemCategory
+    items: int
+
+
+class DashboardCategoryOwnerOut(DashboardCategoryOut):
+    value: Decimal
+
+
+class DashboardItemOut(Schema):
+    item_id: int
+    name: str
+    base_unit: str
+
+
+class DashboardReorderOut(DashboardItemOut):
+    on_hand: Decimal
+    reorder_point: Decimal
+    short_by: Decimal | None
+
+
+class StockDashboardOut(Schema):
+    """Everyone: quantities and counts only, no cost (B4)."""
+
+    as_of: date
+    items_in_stock: int
+    out_of_stock: list[DashboardItemOut]
+    reorder: list[DashboardReorderOut]  # at or below the reorder point
+    enough_history: bool  # reorder points need sales history
+    places: list[DashboardPlaceOut]
+    categories: list[DashboardCategoryOut]
+
+
+class StockDashboardOwnerOut(StockDashboardOut):
+    stock_value: Decimal
+    dead_stock_value: Decimal  # nothing bought or sold for 180 days
+    places: list[DashboardPlaceOwnerOut]  # type: ignore[assignment]
+    categories: list[DashboardCategoryOwnerOut]  # type: ignore[assignment]
+
 
 class InventoryRowOut(Schema):
     item_id: int

@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.errors import BusinessRuleError, ConflictError, NotFoundError
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import pricing
 from app.domain.money import ZERO
 from app.models.enums import PartyType
@@ -36,7 +36,7 @@ QUOTED_PLACES = Decimal("0.0001")
 
 def _item(db: Session, item_id: int, field: str = "item_id") -> Item:
     item = db.get(Item, item_id)
-    if item is None or item.tenant_id != TENANT_ID:
+    if item is None or item.tenant_id != current_tenant_id(db):
         raise NotFoundError("Item not found", field=field)
     return item
 
@@ -68,7 +68,7 @@ def latest_rates(db: Session, on: date) -> dict[int, list[MarketRate]]:
     """Per item: rates on or before `on`, newest first."""
     rows = db.execute(
         select(MarketRate)
-        .where(MarketRate.tenant_id == TENANT_ID, MarketRate.effective_date <= on)
+        .where(MarketRate.tenant_id == current_tenant_id(db), MarketRate.effective_date <= on)
         .order_by(MarketRate.item_id, MarketRate.effective_date.desc())
     ).scalars()
     grouped: dict[int, list[MarketRate]] = {}
@@ -81,14 +81,16 @@ def rate_board(db: Session, on: date, *, owner: bool) -> list[RateRowOut | RateR
     items = list(
         db.execute(
             select(Item)
-            .where(Item.tenant_id == TENANT_ID, Item.is_active.is_(True))
+            .where(Item.tenant_id == current_tenant_id(db), Item.is_active.is_(True))
             .order_by(Item.name)
         ).scalars()
     )
     grouped = latest_rates(db, on)
     margins = {
         m.item_id: m.margin_per_base_unit
-        for m in db.execute(select(ItemMargin).where(ItemMargin.tenant_id == TENANT_ID)).scalars()
+        for m in db.execute(
+            select(ItemMargin).where(ItemMargin.tenant_id == current_tenant_id(db))
+        ).scalars()
     }
     out: list[RateRowOut | RateRowOwnerOut] = []
     for item in items:
@@ -160,7 +162,7 @@ def put_market_rates(db: Session, data: MarketRatesPut) -> MarketRatesResult:
         unit, base_rate = _to_base_rate(item, entry.rate, entry.unit, includes_gst)
         row = db.execute(
             select(MarketRate).where(
-                MarketRate.tenant_id == TENANT_ID,
+                MarketRate.tenant_id == current_tenant_id(db),
                 MarketRate.item_id == item.id,
                 MarketRate.effective_date == data.effective_date,
             )
@@ -168,7 +170,7 @@ def put_market_rates(db: Session, data: MarketRatesPut) -> MarketRatesResult:
         if row is None:
             db.add(
                 MarketRate(
-                    tenant_id=TENANT_ID,
+                    tenant_id=current_tenant_id(db),
                     item_id=item.id,
                     effective_date=data.effective_date,
                     rate=base_rate,
@@ -198,7 +200,7 @@ def rate_history(db: Session, item_id: int, limit: int = 90) -> list[HistoryPoin
     _item(db, item_id)
     rows = db.execute(
         select(MarketRate)
-        .where(MarketRate.tenant_id == TENANT_ID, MarketRate.item_id == item_id)
+        .where(MarketRate.tenant_id == current_tenant_id(db), MarketRate.item_id == item_id)
         .order_by(MarketRate.effective_date.desc())
         .limit(limit)
     ).scalars()
@@ -236,7 +238,7 @@ def _customer_view(db: Session, row: CustomerRate) -> CustomerRateOut:
 
 def create_customer_rate(db: Session, data: CustomerRateCreate) -> CustomerRateOut:
     party = db.get(Party, data.party_id)
-    if party is None or party.tenant_id != TENANT_ID:
+    if party is None or party.tenant_id != current_tenant_id(db):
         raise NotFoundError("Customer not found", field="party_id")
     if party.type is PartyType.SUPPLIER:
         raise BusinessRuleError(
@@ -245,7 +247,7 @@ def create_customer_rate(db: Session, data: CustomerRateCreate) -> CustomerRateO
     item = _item(db, data.item_id)
     overlap = db.execute(
         select(CustomerRate).where(
-            CustomerRate.tenant_id == TENANT_ID,
+            CustomerRate.tenant_id == current_tenant_id(db),
             CustomerRate.party_id == party.id,
             CustomerRate.item_id == item.id,
             CustomerRate.is_active.is_(True),
@@ -266,7 +268,7 @@ def create_customer_rate(db: Session, data: CustomerRateCreate) -> CustomerRateO
         item, data.rate, data.unit, get_settings_row(db).rates_include_gst
     )
     row = CustomerRate(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         party_id=party.id,
         item_id=item.id,
         rate=base_rate,
@@ -282,7 +284,7 @@ def create_customer_rate(db: Session, data: CustomerRateCreate) -> CustomerRateO
 
 def update_customer_rate(db: Session, rate_id: int, data: CustomerRateUpdate) -> CustomerRateOut:
     row = db.get(CustomerRate, rate_id)
-    if row is None or row.tenant_id != TENANT_ID:
+    if row is None or row.tenant_id != current_tenant_id(db):
         raise NotFoundError("Customer rate not found")
     changes = data.model_dump(exclude_unset=True)
     if "valid_to" in changes and changes["valid_to"] and changes["valid_to"] < row.valid_from:
@@ -298,7 +300,7 @@ def update_customer_rate(db: Session, rate_id: int, data: CustomerRateUpdate) ->
 def list_customer_rates(
     db: Session, party_id: int | None, item_id: int | None
 ) -> list[CustomerRateOut]:
-    stmt = select(CustomerRate).where(CustomerRate.tenant_id == TENANT_ID)
+    stmt = select(CustomerRate).where(CustomerRate.tenant_id == current_tenant_id(db))
     if party_id is not None:
         stmt = stmt.where(CustomerRate.party_id == party_id)
     if item_id is not None:
@@ -319,11 +321,15 @@ def put_margins(db: Session, entries: list[MarginPut]) -> list[MarginOut]:
         per_unit = pricing.margin_per_base_unit(entry.margin, factor)
         row = db.execute(
             select(ItemMargin).where(
-                ItemMargin.tenant_id == TENANT_ID, ItemMargin.item_id == item.id
+                ItemMargin.tenant_id == current_tenant_id(db), ItemMargin.item_id == item.id
             )
         ).scalar_one_or_none()
         if row is None:
-            db.add(ItemMargin(tenant_id=TENANT_ID, item_id=item.id, margin_per_base_unit=per_unit))
+            db.add(
+                ItemMargin(
+                    tenant_id=current_tenant_id(db), item_id=item.id, margin_per_base_unit=per_unit
+                )
+            )
         else:
             row.margin_per_base_unit = per_unit
     db.commit()
@@ -333,11 +339,13 @@ def put_margins(db: Session, entries: list[MarginPut]) -> list[MarginOut]:
 def list_margins(db: Session) -> list[MarginOut]:
     margins = {
         m.item_id: m.margin_per_base_unit
-        for m in db.execute(select(ItemMargin).where(ItemMargin.tenant_id == TENANT_ID)).scalars()
+        for m in db.execute(
+            select(ItemMargin).where(ItemMargin.tenant_id == current_tenant_id(db))
+        ).scalars()
     }
     items = db.execute(
         select(Item)
-        .where(Item.tenant_id == TENANT_ID, Item.is_active.is_(True))
+        .where(Item.tenant_id == current_tenant_id(db), Item.is_active.is_(True))
         .order_by(Item.name)
     ).scalars()
     return [
@@ -364,7 +372,7 @@ def resolve(db: Session, item_id: int, party_id: int | None, on: date) -> Resolv
             pricing.CustomerRate(r.rate, r.valid_from, r.valid_to)
             for r in db.execute(
                 select(CustomerRate).where(
-                    CustomerRate.tenant_id == TENANT_ID,
+                    CustomerRate.tenant_id == current_tenant_id(db),
                     CustomerRate.party_id == party_id,
                     CustomerRate.item_id == item_id,
                     CustomerRate.is_active.is_(True),
@@ -375,7 +383,7 @@ def resolve(db: Session, item_id: int, party_id: int | None, on: date) -> Resolv
         pricing.MarketRate(r.rate, r.effective_date)
         for r in db.execute(
             select(MarketRate).where(
-                MarketRate.tenant_id == TENANT_ID,
+                MarketRate.tenant_id == current_tenant_id(db),
                 MarketRate.item_id == item_id,
                 MarketRate.effective_date <= on,
             )

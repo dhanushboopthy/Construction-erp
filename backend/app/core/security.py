@@ -52,6 +52,43 @@ def create_access_token(claims: AccessClaims, now: datetime | None = None) -> tu
     return token, int(ttl.total_seconds())
 
 
+@dataclass(frozen=True)
+class PlatformClaims:
+    admin_id: int
+    session_id: str
+
+
+def create_platform_token(claims: PlatformClaims, now: datetime | None = None) -> tuple[str, int]:
+    """A Duolink admin's access token (ADR 0012). Its type is "platform", so company routes refuse
+    it and admin routes refuse a company user's "access" token."""
+    settings = get_settings()
+    now = now or datetime.now(UTC)
+    ttl = timedelta(minutes=settings.access_token_minutes)
+    payload: dict[str, Any] = {
+        "sub": str(claims.admin_id),
+        "sid": claims.session_id,
+        "typ": "platform",
+        "iat": int(now.timestamp()),
+        "exp": int((now + ttl).timestamp()),
+    }
+    token = jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+    return token, int(ttl.total_seconds())
+
+
+def decode_platform_token(token: str) -> PlatformClaims:
+    """Raise jwt.InvalidTokenError unless this is a valid, unexpired platform token."""
+    settings = get_settings()
+    payload = jwt.decode(
+        token,
+        settings.jwt_secret,
+        algorithms=[settings.jwt_algorithm],
+        options={"require": ["exp", "iat", "sub", "typ"]},
+    )
+    if payload.get("typ") != "platform":
+        raise jwt.InvalidTokenError("not a platform token")
+    return PlatformClaims(admin_id=int(payload["sub"]), session_id=str(payload["sid"]))
+
+
 def decode_access_token(token: str) -> AccessClaims:
     """Raise jwt.InvalidTokenError if the token is invalid, expired or not an access token."""
     settings = get_settings()

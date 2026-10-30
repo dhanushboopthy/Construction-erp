@@ -5,10 +5,11 @@ from sqlalchemy.orm import Session
 
 from app.core.errors import BusinessRuleError, ConflictError, NotFoundError
 from app.core.security import hash_password
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.models.enums import AuditAction, Role
 from app.models.setup import AppUser, Location
 from app.schemas.user import UserCreate, UserUpdate
+from app.services import tenants
 from app.services.audit import record_event
 from app.services.auth import revoke_all
 
@@ -16,14 +17,16 @@ from app.services.auth import revoke_all
 def list_users(db: Session) -> list[AppUser]:
     return list(
         db.execute(
-            select(AppUser).where(AppUser.tenant_id == TENANT_ID).order_by(AppUser.username)
+            select(AppUser)
+            .where(AppUser.tenant_id == current_tenant_id(db))
+            .order_by(AppUser.username)
         ).scalars()
     )
 
 
 def get_user(db: Session, user_id: int) -> AppUser:
     user = db.get(AppUser, user_id)
-    if user is None or user.tenant_id != TENANT_ID:
+    if user is None or user.tenant_id != current_tenant_id(db):
         raise NotFoundError("User not found")
     return user
 
@@ -33,7 +36,9 @@ def _locations(db: Session, ids: list[int]) -> list[Location]:
         return []
     found = list(
         db.execute(
-            select(Location).where(Location.id.in_(ids), Location.tenant_id == TENANT_ID)
+            select(Location).where(
+                Location.id.in_(ids), Location.tenant_id == current_tenant_id(db)
+            )
         ).scalars()
     )
     if len(found) != len(set(ids)):
@@ -52,14 +57,17 @@ def _check_counter_has_shop(role: Role, locations: list[Location]) -> None:
 
 def create_user(db: Session, data: UserCreate) -> AppUser:
     exists = db.execute(
-        select(AppUser.id).where(AppUser.tenant_id == TENANT_ID, AppUser.username == data.username)
+        select(AppUser.id).where(
+            AppUser.tenant_id == current_tenant_id(db), AppUser.username == data.username
+        )
     ).first()
     if exists:
         raise ConflictError("That username is taken", code="USERNAME_TAKEN", field="username")
     locations = _locations(db, data.location_ids)
     _check_counter_has_shop(data.role, locations)
+    tenants.ensure_can_add_user(db)
     user = AppUser(
-        tenant_id=TENANT_ID,
+        tenant_id=current_tenant_id(db),
         username=data.username,
         full_name=data.full_name,
         role=data.role,
@@ -74,7 +82,7 @@ def create_user(db: Session, data: UserCreate) -> AppUser:
 def _active_owner_count(db: Session) -> int:
     return db.execute(
         select(func.count()).where(
-            AppUser.tenant_id == TENANT_ID,
+            AppUser.tenant_id == current_tenant_id(db),
             AppUser.role == Role.OWNER,
             AppUser.is_active.is_(True),
         )
@@ -90,6 +98,8 @@ def update_user(db: Session, user_id: int, data: UserUpdate, acting_user_id: int
         raise BusinessRuleError("There must always be at least one active owner", code="LAST_OWNER")
     if user_id == acting_user_id and data.is_active is False:
         raise BusinessRuleError("You cannot deactivate yourself", code="SELF_DEACTIVATION")
+    if data.is_active is True and not user.is_active:
+        tenants.ensure_can_add_user(db)
 
     if data.full_name is not None:
         user.full_name = data.full_name

@@ -55,8 +55,10 @@ def cash_book(
     location_id: int | None = None,
     date_from: date | None = None,
     date_to: date | None = None,
+    all_time: bool = False,
 ) -> CashBookOut:
-    """Vouchers for a period (today by default). Counter staff see their own shop's."""
+    """Vouchers for a period (today by default), with totals per month. `all_time` starts at
+    the first voucher. Counter staff see their own shop's."""
     if location_id is not None and not principal.can_access_location(location_id):
         raise PermissionDeniedError("You can only see your own shop's cash book")
     today = today_ist()
@@ -64,8 +66,8 @@ def cash_book(
         db,
         location_ids=principal.location_ids if principal.role is Role.COUNTER else None,
         location_id=location_id,
-        date_from=date_from or today,
-        date_to=date_to or date_from or today,
+        date_from=None if all_time else (date_from or today),
+        date_to=date_to or (today if all_time else date_from or today),
     )
 
 

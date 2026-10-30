@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 
 from app.core.clock import today_ist
 from app.core.config import GspProvider, get_settings
-from app.core.tenancy import TENANT_ID
+from app.core.tenancy import current_tenant_id
 from app.domain import gstr
 from app.domain import stock_valuation as stock_rules
 from app.domain.money import ZERO
@@ -232,7 +232,7 @@ def ledger_check(db: Session) -> Check:
 def stock_check(db: Session) -> Check:
     rows = db.execute(
         select(StockLedger)
-        .where(StockLedger.tenant_id == TENANT_ID)
+        .where(StockLedger.tenant_id == current_tenant_id(db))
         .order_by(StockLedger.entry_date, StockLedger.id)
     ).scalars()
     by_item: dict[int, list[stock_rules.StockMove]] = {}
@@ -284,7 +284,7 @@ def cogs_check(db: Session, today: date | None = None) -> Check:
         rows = list(
             db.execute(
                 select(StockLedger).where(
-                    StockLedger.tenant_id == TENANT_ID,
+                    StockLedger.tenant_id == current_tenant_id(db),
                     StockLedger.entry_date >= start,
                     StockLedger.entry_date <= end,
                 )
@@ -303,7 +303,7 @@ def cogs_check(db: Session, today: date | None = None) -> Check:
             select(func.coalesce(func.sum(PurchaseLine.total_cost), 0))
             .join(Purchase, Purchase.id == PurchaseLine.purchase_id)
             .where(
-                Purchase.tenant_id == TENANT_ID,
+                Purchase.tenant_id == current_tenant_id(db),
                 Purchase.mode == PurchaseMode.STOCK,
                 Purchase.bill_date >= start,
                 Purchase.bill_date <= end,
@@ -314,7 +314,7 @@ def cogs_check(db: Session, today: date | None = None) -> Check:
             select(func.coalesce(func.sum(SalesLine.base_qty * SalesLine.cost_per_unit), 0))
             .join(SalesInvoice, SalesInvoice.id == SalesLine.invoice_id)
             .where(
-                SalesInvoice.tenant_id == TENANT_ID,
+                SalesInvoice.tenant_id == current_tenant_id(db),
                 SalesLine.fulfilment_source != FulfilmentSource.DIRECT,
                 SalesInvoice.invoice_date >= start,
                 SalesInvoice.invoice_date <= end,
@@ -451,7 +451,7 @@ def unclosed_yesterday(db: Session) -> list[str]:
     shops = list(
         db.execute(
             select(Location).where(
-                Location.tenant_id == TENANT_ID,
+                Location.tenant_id == current_tenant_id(db),
                 Location.kind == LocationKind.SHOP,
                 Location.is_active.is_(True),
             )

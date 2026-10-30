@@ -54,7 +54,9 @@ class ShopSettings(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
     bank_name: Mapped[str | None] = mapped_column(String(100))
     bank_account_no: Mapped[str | None] = mapped_column(String(30))
     bank_ifsc: Mapped[str | None] = mapped_column(String(11))
+    bank_branch: Mapped[str | None] = mapped_column(String(100))
     invoice_terms: Mapped[str | None] = mapped_column(Text)
+    jurisdiction: Mapped[str | None] = mapped_column(String(60))  # "Subject to X jurisdiction"
     # The shop's logo (UI refresh T10): where the file is stored, its type and its SHA-256, which
     # also busts caches when the owner replaces it. All three are set together or not at all.
     logo_key: Mapped[str | None] = mapped_column(String(200))

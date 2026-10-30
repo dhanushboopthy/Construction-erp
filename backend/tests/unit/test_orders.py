@@ -132,6 +132,9 @@ def test_a_lot_is_the_monday_of_its_week() -> None:
 def test_lot_label() -> None:
     assert o.lot_label(30, 2026, date(2026, 10, 1)) == "Week 30, 2026"
     assert o.lot_label(None, None, date(2026, 10, 1)) == "Received 01-10-2026"
+    # A supplier's batch or heat number names the lot; a printed week is added to it.
+    assert o.lot_label(None, None, date(2026, 10, 1), "H-2231") == "Batch H-2231"
+    assert o.lot_label(30, 2026, date(2026, 10, 1), "B7") == "Batch B7, week 30, 2026"
 
 
 def layers() -> list[o.Layer]:

@@ -81,6 +81,26 @@ def test_fm1_acceptance_a_normal_day_closes_with_no_difference(client, world):
     assert late.status_code == 409 and late.json()["code"] == "DAY_CLOSED"
 
 
+def test_cash_book_for_any_period_with_month_totals(client, world):
+    owner = world["owner"]
+    old = voucher(client, owner, world, amount="700", entry_date=day(40))
+    assert old.status_code == 201, old.text
+    assert voucher(client, owner, world, amount="300").status_code == 201
+    everything = client.get("/api/v1/cash-book?all_time=true", headers=owner).json()
+    assert everything["date_from"] == day(40) and everything["date_to"] == day(0)
+    assert [e["amount"] for e in everything["entries"]] == ["700.00", "300.00"]
+    assert everything["expenses"] == "1000.00"
+    # 40 days apart is always two calendar months; they add up to the period.
+    assert [m["expenses"] for m in everything["months"]] == ["700.00", "300.00"]
+    assert sum(Decimal(m["drawer_out"]) for m in everything["months"]) == Decimal("1000.00")
+    recent = client.get(
+        f"/api/v1/cash-book?date_from={day(10)}&date_to={day(0)}", headers=owner
+    ).json()
+    assert [e["amount"] for e in recent["entries"]] == ["300.00"]
+    backwards = client.get(f"/api/v1/cash-book?date_from={day(0)}&date_to={day(5)}", headers=owner)
+    assert backwards.status_code == 409 and backwards.json()["code"] == "BAD_RANGE"
+
+
 def test_who_may_write_the_cash_book(client, world):
     counter = login(client, *COUNTER)
     counter2 = login(client, *COUNTER2)

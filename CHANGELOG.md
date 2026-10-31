@@ -262,7 +262,7 @@ next version after 1.9.0.)
 - GST sales invoices: price from rates, GST per line (CGST + SGST or IGST), round-off, B2B and B2C,
   customer site as ship-to, gapless numbers, stock and customer balance updated in one transaction.
 - Pending balance and stock left printed on the bill; A4 PDF with amount in words, Original,
-  Duplicate and Triplicate marks and a TEST watermark outside production.
+  Duplicate and Triplicate marks.
 - Safe under concurrency: item locks stop overselling; numbers stay gapless with racing bills.
 - Counter staff cannot change prices or discount; cost and profit are owner-only.
 - Screens: Sales bills (Alt+2): keyboard bill entry with live totals, invoice view and print.

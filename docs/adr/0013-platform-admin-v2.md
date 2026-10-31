@@ -48,8 +48,7 @@ the behaviour reference; its code is not copied (`docs/reference/WA_SUPER_ADMIN.
    and the company restore (M25) set. It runs after a protected backup, behind typed
    confirmations (`DELETE`, and the company's exact name for everything), with a preview and a
    full audit trail. It never creates or hides a bill: it removes records, and the safety backup
-   keeps a copy. Every bill that exists is a real GST tax invoice, and
-   there is no hidden, dummy or unaccounted billing mode.
+   keeps a copy.
 6. **Backups (M25).** Per-company backup and restore run from the admin (a manifest-checked
    archive of that company's rows and files, restored in one transaction). **Restoring the whole
    platform stays a command-line runbook** (`scripts/restore.sh`): replacing the database from a

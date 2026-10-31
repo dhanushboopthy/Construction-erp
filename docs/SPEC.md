@@ -264,8 +264,7 @@ stock ledger moved here from Milestone 4 because opening stock is its first writ
 - `Idempotency-Key` on create: a repeat returns the first bill; the same key for another customer
   or shop is a conflict (G19).
 - A4 PDF: `GET /invoices/{id}/pdf?copy=` via WeasyPrint, template `app/templates/invoice_a4.html`
-  behind the `InvoiceRenderer` interface (a thermal layout can be added). Outside production the PDF
-  carries a TEST watermark. Layout is the owner's Tally-style template (October 2026):
+  behind the `InvoiceRenderer` interface (a thermal layout can be added). Layout is the owner's Tally-style template (October 2026):
   title and copy label; e-invoice IRN, acknowledgement and QR when there is one; seller (with
   GSTIN and state), consignee (ship to, or the buyer when collected) and buyer (bill to) with
   GSTIN and state; the details grid (number, e-way bill no., date, mode/terms of payment, the
@@ -337,7 +336,7 @@ line is the sum of its note lines.
   exceed what is held (B13, 409 `INSUFFICIENT_STOCK`; direct purchases touch no stock). The
   supplier payable is debited against the purchase number. Accountant may read debit notes.
 - Numbers: `<location>C/<fy>/<seq>` for credit notes and `<location>D/<fy>/<seq>` for debit
-  notes. Notes print as A4 PDFs with the TEST watermark outside production.
+  notes. Notes print as A4 PDFs.
 
 **Built (Milestone 9):** `vehicle`, `trip`, `drop_ship_link`.
 

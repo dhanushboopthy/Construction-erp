@@ -54,6 +54,10 @@ export const ACTION: Record<AdminActionKind, string> = {
   staff_unlock: "Unlocked staff member",
   staff_sign_out: "Signed staff member out",
   password_change: "Changed own password",
+  tenant_cancel: "Closed company",
+  tenant_seller_update: "Corrected seller details",
+  tenant_logo_set: "Set company logo",
+  tenant_logo_remove: "Removed company logo",
 };
 
 /** Duolink staff roles: what each may do, in words (ADR 0013). */

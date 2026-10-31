@@ -68,8 +68,9 @@ export function ActivityPage() {
   );
 }
 
-function SignIns({ action }: { action: string }) {
-  const events = useSignIns({ action: action || undefined });
+/** Sign-ins at every company, or at one when `tenantId` is given (the company page's tab). */
+export function SignIns({ action = "", tenantId }: { action?: string; tenantId?: number }) {
+  const events = useSignIns({ action: action || undefined, tenant_id: tenantId });
   if (events.isPending) return <p role="status">Loading sign-ins…</p>;
   if (events.isError) return <p className={styles.formError}>Sign-ins could not be loaded.</p>;
   return (
@@ -125,8 +126,9 @@ function describe(details: Record<string, unknown> | null): string {
     .join("; ");
 }
 
-function AdminActions() {
-  const entries = useAdminActions();
+/** What admins did, everywhere or at one company. */
+export function AdminActions({ tenantId }: { tenantId?: number }) {
+  const entries = useAdminActions({ tenant_id: tenantId });
   if (entries.isPending) return <p role="status">Loading admin actions…</p>;
   if (entries.isError) {
     return <p className={styles.formError}>Admin actions could not be loaded.</p>;

@@ -3,7 +3,8 @@ from decimal import Decimal
 
 from pydantic import Field, ValidationInfo, field_validator
 
-from app.schemas.common import Gstin, Schema, StateCode
+from app.domain.gst import pan_of
+from app.schemas.common import Cin, Gstin, Pan, Schema, StateCode
 
 
 class ShopSettingsBase(Schema):
@@ -11,6 +12,8 @@ class ShopSettingsBase(Schema):
     trade_name: str | None = Field(default=None, max_length=200)
     state_code: StateCode
     gstin: Gstin = None
+    pan: Pan = Field(default=None, description="blank: taken from the GSTIN")
+    cin: Cin = None
     address: str = ""
     phone: str | None = Field(default=None, max_length=20)
     email: str | None = Field(default=None, max_length=200)
@@ -64,6 +67,15 @@ class ShopSettingsBase(Schema):
         state = info.data.get("state_code")
         if value and state and value[:2] != state:
             raise ValueError("The first two digits of the GSTIN must match the state code")
+        return value
+
+    @field_validator("pan")
+    @classmethod
+    def _pan_matches_gstin(cls, value: str | None, info: ValidationInfo) -> str | None:
+        # Characters 3 to 12 of a GSTIN are the holder's PAN, so the two cannot disagree.
+        gstin = info.data.get("gstin")
+        if value and gstin and pan_of(gstin) != value:
+            raise ValueError("The PAN must match characters 3 to 12 of the GSTIN")
         return value
 
 

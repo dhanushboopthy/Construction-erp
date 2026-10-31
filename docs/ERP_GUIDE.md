@@ -607,6 +607,8 @@ Screen: Settings → Shop.
   "trade_name": "Murugan Steels",
   "state_code": "33",
   "gstin": "33ABCDE1234F1Z5",
+  "pan": null,
+  "cin": null,
   "address": "12, Main Road, Chennai 600040",
   "phone": "9840000000",
   "bank_name": "State Bank of India",
@@ -627,7 +629,17 @@ Screen: Settings → Shop.
 ```
 
 The GSTIN is checked for format and check digit, and its first two digits must equal `state_code`.
+`pan` is optional: left blank, the bill prints the PAN inside the GSTIN; if you give one it must
+match characters 3 to 12 of the GSTIN. `cin` (a company's 21-character Corporate Identification
+Number, for example `U45200TN2015PTC098765`) is optional and prints on the bill under the PAN.
+The settings form sends every field, so it keeps these two. If Duolink corrects your GSTIN or
+other bill details for you, the change appears in the audit log as done by "Duolink: <name>".
 All other settings and their defaults are in [section 14](#14-settings-reference).
+
+**A temporary password.** When Duolink onboards a company it can ask the owner to choose their own
+password first. That owner signs in with the password Duolink gave, sees only "Choose a new
+password", and enters it twice. After that they sign in again as normal. Until then no other
+screen opens.
 
 ### 11.2 Location (owner) — `POST /locations`
 

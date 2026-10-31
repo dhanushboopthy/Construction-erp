@@ -389,6 +389,9 @@
         {% if seller.pan %}
         <div class="pan-line"><span class="k">Company&#39;s PAN</span><span class="s">:</span><span class="v">{{ seller.pan }}</span></div>
         {% endif %}
+        {% if seller.cin %}
+        <div class="pan-line"><span class="k">Company&#39;s CIN</span><span class="s">:</span><span class="v">{{ seller.cin }}</span></div>
+        {% endif %}
         <div class="decl">Declaration</div>
         <div class="decl-text">{{ doc.declaration }}</div>
         {% if seller.terms %}

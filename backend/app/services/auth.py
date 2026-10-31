@@ -10,7 +10,7 @@ from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.core.errors import AccountLockedError, AuthenticationError
+from app.core.errors import AccountLockedError, AuthenticationError, BusinessRuleError
 from app.core.security import (
     DUMMY_PASSWORD_HASH,
     AccessClaims,
@@ -159,6 +159,13 @@ def revoke_all(db: Session, user_id: int) -> None:
 def change_password(db: Session, user: AppUser, current: str, new: str) -> None:
     if not verify_password(current, user.password_hash):
         raise AuthenticationError("Current password is wrong", field="current_password")
+    if user.must_change_password and verify_password(new, user.password_hash):
+        raise BusinessRuleError(
+            "Choose a password you have not used just now.",
+            code="PASSWORD_UNCHANGED",
+            field="new_password",
+        )
     user.password_hash = hash_password(new)
+    user.must_change_password = False
     revoke_all(db, user.id)
     db.commit()

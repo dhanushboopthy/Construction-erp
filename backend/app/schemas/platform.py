@@ -7,12 +7,12 @@ Counts, statuses and dates only: nothing here carries an amount, a cost or a doc
 from datetime import datetime
 from typing import Any
 
-from pydantic import Field
+from pydantic import Field, ValidationInfo, field_validator
 
 from app.core.security import MIN_PASSWORD_LENGTH
 from app.domain.plans import TrialState
 from app.models.enums import PlatformAction, PlatformRole, Role, TenantPlan, TenantStatus
-from app.schemas.common import Schema, StateCode
+from app.schemas.common import Cin, Gstin, Pan, Schema, StateCode
 from app.schemas.user import Username
 
 # ------------------------------------------------------------------ sign-in
@@ -48,6 +48,7 @@ class AdminChangePassword(Schema):
 # ------------------------------------------------------------------ Duolink staff (M17)
 
 EmailAddress = Field(min_length=3, max_length=200, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+OptionalEmail = Field(default=None, max_length=200, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 MobileNumber = Field(default=None, max_length=20, pattern=r"^\+?[0-9 ]{7,15}$")
 
 
@@ -94,6 +95,9 @@ class TenantRow(Schema):
     name: str
     status: TenantStatus
     plan: TenantPlan
+    owner_name: str | None
+    city: str | None
+    state_code: str | None
     trial_ends_at: datetime | None
     trial_state: TrialState
     users: int  # active
@@ -102,6 +106,7 @@ class TenantRow(Schema):
     max_locations: int
     bills_30d: int  # sales bills issued in the last 30 days (a count, never an amount)
     last_sign_in_at: datetime | None
+    last_activity_at: datetime | None  # any request at the company, to the minute
     created_at: datetime
 
 
@@ -110,32 +115,116 @@ class TenantDetail(TenantRow):
     own_max_locations: int | None
     suspended_at: datetime | None
     suspended_reason: str | None
+    cancelled_at: datetime | None
+    cancelled_reason: str | None
+    owner_email: str | None
+    owner_mobile: str | None
+    notes: str | None  # internal: Duolink staff only, never shown to the company
     open_sessions: int
 
 
+class TenantCreated(TenantDetail):
+    sign_in_url: str  # where the owner signs in, e.g. https://acme.duolink.app
+
+
 class TenantCreate(Schema):
+    """One form, one transaction: the company, its seller details, its first shop and godown,
+    the plan and the first owner. `registration_no` is the company's GSTIN."""
+
     name: str = Field(min_length=1, max_length=200)
     slug: str = Field(min_length=3, max_length=30, description="the subdomain: acme.duolink.app")
     plan: TenantPlan = TenantPlan.TRIAL
+    trial_days: int | None = Field(default=None, description="trial plan only; 14 if blank")
+    start_active: bool = Field(default=False, description="skip the trial and start active")
     state_code: StateCode
+    city: str | None = Field(default=None, max_length=100)
+    legal_name: str | None = Field(default=None, min_length=1, max_length=200)  # blank: the name
+    registration_no: Gstin = None
+    shop_name: str = Field(default="Shop 1", min_length=1, max_length=100)
+    shop_code: str = Field(default="S1", pattern=r"^[A-Z0-9]{1,2}$")
     owner_username: str = Username
     owner_full_name: str = Field(min_length=1, max_length=100)
+    owner_email: str | None = OptionalEmail
+    owner_mobile: str | None = MobileNumber
     owner_password: str = Field(min_length=MIN_PASSWORD_LENGTH, max_length=128)
+    require_owner_password_change: bool = False
+
+    @field_validator("registration_no")
+    @classmethod
+    def _gstin_matches_state(cls, value: str | None, info: ValidationInfo) -> str | None:
+        state = info.data.get("state_code")
+        if value and state and value[:2] != state:
+            raise ValueError("The first two digits of the GSTIN must match the state code")
+        return value
 
 
 class TenantUpdate(Schema):
     """Send only what changes. `max_users` / `max_locations` sent as null go back to the plan's
-    limit; `trial_ends_at` sent as null ends the trial period."""
+    limit; `trial_ends_at` sent as null ends the trial period; the contact fields sent as null
+    are cleared. The seller's legal details are changed through /seller-details."""
 
     name: str | None = Field(default=None, min_length=1, max_length=200)
     plan: TenantPlan | None = None
     max_users: int | None = Field(default=None, ge=1, le=1000)
     max_locations: int | None = Field(default=None, ge=1, le=100)
     trial_ends_at: datetime | None = None
+    owner_name: str | None = Field(default=None, max_length=100)
+    owner_email: str | None = OptionalEmail
+    owner_mobile: str | None = MobileNumber
+    city: str | None = Field(default=None, max_length=100)
+    state_code: StateCode | None = None
+    notes: str | None = Field(default=None, max_length=2000)
 
 
 class SuspendRequest(Schema):
     reason: str = Field(min_length=3, max_length=500)
+
+
+class CancelRequest(Schema):
+    reason: str = Field(min_length=3, max_length=500)
+
+
+class ReactivateRequest(Schema):
+    """A reason is needed to reopen a cancelled company; a suspended one needs none."""
+
+    reason: str | None = Field(default=None, min_length=3, max_length=500)
+
+
+class SellerDetails(Schema):
+    """What prints on the company's bills. `registration_no` is its GSTIN."""
+
+    legal_name: str
+    registration_no: str | None
+    pan: str | None
+    cin: str | None
+    address: str
+    state_code: str
+
+
+class SellerDetailsUpdate(Schema):
+    """Send only what changes; a blank `registration_no`, `pan` or `cin` clears it. A reason is
+    always needed: these fields are on every bill."""
+
+    legal_name: str | None = Field(default=None, min_length=1, max_length=200)
+    registration_no: Gstin = None
+    pan: Pan = None
+    cin: Cin = None
+    address: str | None = None
+    state_code: StateCode | None = None
+    reason: str = Field(min_length=3, max_length=500)
+
+
+class TenantUsage(Schema):
+    """Counts only (ADR 0012): no amounts."""
+
+    users: int
+    shops: int
+    bills_7d: int
+    bills_30d: int
+    bills_90d: int
+    purchases_30d: int
+    attachments: int
+    attachment_bytes: int
 
 
 # ------------------------------------------------------------------ users across companies

@@ -1,5 +1,32 @@
 # Changelog
 
+## 1.12.0 (M18): company profile, onboarding and the company page
+
+For Duolink staff:
+
+- **Add company is one form.** Besides the company and the first owner it takes the owner's email
+  and mobile, the city, the name and GSTIN printed on bills, the first shop's name and code, the
+  plan, and either a trial length or "Active, no trial". It can ask the owner to choose a new
+  password at first sign-in (off by default). When it is saved you see the owner's sign-in address.
+- **The company page has tabs:** Overview, Users, Subscription, Usage (counts only: users, shops,
+  bills in 7, 30 and 90 days, supplier bills in 30 days, attached files) and Activity.
+- **Contact record:** owner, email, mobile, city, state and internal notes that the company never
+  sees. The company's last activity is shown to the minute.
+- **Correct a company's bill details** (legal name, GSTIN, PAN, CIN, address, state) when it cannot
+  reach its own Settings. It is checked as the company's form is, needs a reason, and shows in the
+  company's own audit log as done by "Duolink: <your name>".
+- **Set or remove a company's logo** from its page.
+- **The company list** searches by name, code, owner, email or GSTIN, filters by status, plan,
+  trial state and "ending within 30 days", sorts, and pages 25 at a time.
+- **Close a company** (cancel) with a reason: everyone is signed out and the data is kept. A Super
+  Admin can reopen it with a reason.
+
+For companies:
+
+- Settings has two new optional fields, **PAN** and **CIN**. The CIN prints on the tax invoice under
+  the PAN; a PAN left blank is still taken from the GSTIN.
+- An owner onboarded with a temporary password sees "Choose a new password" first.
+
 ## 1.11.0 (M17): Duolink staff roles
 
 For Duolink staff (the admin at `admin.<domain>/admin`):

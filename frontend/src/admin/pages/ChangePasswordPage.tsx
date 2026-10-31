@@ -13,7 +13,7 @@ const MIN_PASSWORD = 8; // backend app/core/security.py MIN_PASSWORD_LENGTH
 /** Where an admin with a temporary password lands. Nothing else in the console opens until the
  * password is changed (the server refuses it, 403 PASSWORD_CHANGE_REQUIRED). */
 export function ChangePasswordPage() {
-  const { admin, changePassword } = useAdminAuth();
+  const { admin, ready, changePassword } = useAdminAuth();
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [again, setAgain] = useState("");
@@ -23,6 +23,7 @@ export function ChangePasswordPage() {
 
   // The change signs this browser out; the sign-in page says so.
   if (done) return <Navigate to="/admin/login" replace state={{ changed: true }} />;
+  if (!ready) return <p role="status">Loading…</p>;
   if (!admin) return <Navigate to="/admin/login" replace />;
 
   async function onSubmit(event: FormEvent) {

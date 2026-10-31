@@ -45,6 +45,8 @@ const TEXT_KEYS = [
   "legal_name",
   "trade_name",
   "gstin",
+  "pan",
+  "cin",
   "state_code",
   "address",
   "phone",
@@ -107,6 +109,8 @@ const FLAG_KEYS = [
 const OPTIONAL = new Set([
   "trade_name",
   "gstin",
+  "pan",
+  "cin",
   "phone",
   "email",
   "bank_name",
@@ -135,6 +139,16 @@ function validate(form: Form): Record<string, string> {
     errors.gstin = "A GSTIN has 15 characters, like 33ABCDE1234F1Z5.";
   } else if (gstin && gstin.slice(0, 2) !== text("state_code")) {
     errors.gstin = "The first two digits of the GSTIN must match the state.";
+  }
+  const pan = text("pan").toUpperCase();
+  if (pan && !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan)) {
+    errors.pan = "A PAN has 10 characters, like ABCDE1234F.";
+  } else if (pan && gstin && !errors.gstin && gstin.slice(2, 12) !== pan) {
+    errors.pan = "The PAN must match characters 3 to 12 of the GSTIN.";
+  }
+  const cin = text("cin").toUpperCase();
+  if (cin && !/^[LU][0-9]{5}[A-Z]{2}[0-9]{4}[A-Z]{3}[0-9]{6}$/.test(cin)) {
+    errors.cin = "A CIN has 21 characters, like U45200TN2015PTC098765.";
   }
   const ifsc = text("bank_ifsc").toUpperCase();
   if (ifsc && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc)) {
@@ -174,7 +188,7 @@ function toPayload(form: Form): ShopSettingsUpdate {
   const out = {} as Record<string, string | number | boolean | null>;
   for (const k of TEXT_KEYS) {
     let v = String(form[k]).trim();
-    if (k === "gstin" || k === "bank_ifsc") v = v.toUpperCase();
+    if (k === "gstin" || k === "pan" || k === "cin" || k === "bank_ifsc") v = v.toUpperCase();
     out[k] = v === "" && OPTIONAL.has(k) ? null : v;
   }
   for (const k of INT_KEYS) out[k] = Number(form[k]);
@@ -277,6 +291,20 @@ function ShopSettingsForm({ settings }: { settings: ShopSettings }) {
           maxLength={15}
           className={styles.code}
           {...text("gstin")}
+        />
+        <TextField
+          label="PAN"
+          hint="Leave blank to use the PAN inside the GSTIN."
+          maxLength={10}
+          className={styles.code}
+          {...text("pan")}
+        />
+        <TextField
+          label="CIN"
+          hint="For a company; printed on the bill. Leave blank otherwise."
+          maxLength={21}
+          className={styles.code}
+          {...text("cin")}
         />
         <SelectField label="State" {...text("state_code")}>
           {GST_STATES.map((s) => (

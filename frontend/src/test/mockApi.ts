@@ -56,6 +56,7 @@ export const OWNER: User = {
   full_name: "Shop Owner",
   role: "owner",
   is_active: true,
+  must_change_password: false,
   last_login_at: "2026-10-09T10:00:00Z",
   locations: [],
 };
@@ -65,6 +66,7 @@ export const COUNTER: User = {
   full_name: "Counter, Shop 1",
   role: "counter",
   is_active: true,
+  must_change_password: false,
   last_login_at: null,
   locations: [S1],
 };
@@ -74,6 +76,8 @@ export const SETTINGS: ShopSettings = {
   legal_name: "Demo Construction Materials",
   trade_name: null,
   gstin: null,
+  pan: null,
+  cin: null,
   state_code: "33",
   address: "",
   phone: null,

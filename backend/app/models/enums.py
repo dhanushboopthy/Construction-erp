@@ -56,6 +56,10 @@ class PlatformAction(StrEnum):
     STAFF_UNLOCK = "staff_unlock"
     STAFF_SIGN_OUT = "staff_sign_out"
     PASSWORD_CHANGE = "password_change"  # noqa: S105 - an audit action name
+    TENANT_CANCEL = "tenant_cancel"
+    TENANT_SELLER_UPDATE = "tenant_seller_update"
+    TENANT_LOGO_SET = "tenant_logo_set"
+    TENANT_LOGO_REMOVE = "tenant_logo_remove"
 
 
 class LocationKind(StrEnum):

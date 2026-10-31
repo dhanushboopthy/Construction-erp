@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { createQueryClient } from "@/api/queryClient";
 
 import { AdminApp } from "./AdminApp";
+import { COMPANY_TABS } from "./companyTabs";
 
 const ADMIN = {
   id: 1,
@@ -223,10 +224,10 @@ describe("AdminApp roles (ADR 0013)", () => {
       ],
       SUPPORT,
     );
-    renderAt("/admin/companies/7");
+    renderAt("/admin/companies/7?tab=subscription");
     expect(await screen.findByRole("heading", { name: "Acme Steels" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Save plan" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Suspend company" })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Plan")).not.toBeInTheDocument();
     expect(screen.getByText("Only a Super Admin changes a company.")).toBeInTheDocument();
   });
 
@@ -423,5 +424,388 @@ describe("AdminApp temporary passwords", () => {
     expect(
       await screen.findByText("Choose a password you have not used just now."),
     ).toBeInTheDocument();
+  });
+});
+
+const SELLER = {
+  legal_name: "Acme Steels Private Limited",
+  registration_no: "33AAPFU0939F1ZV",
+  pan: null,
+  cin: null,
+  address: "12 Race Course Road",
+  state_code: "33",
+};
+const USAGE = {
+  users: 3,
+  shops: 2,
+  bills_7d: 4,
+  bills_30d: 12,
+  bills_90d: 40,
+  purchases_30d: 5,
+  attachments: 2,
+  attachment_bytes: 2048,
+};
+const FULL_DETAIL = {
+  ...ACME_DETAIL,
+  owner_name: "Ravi Kumar",
+  owner_email: "ravi@acme.example",
+  owner_mobile: "+91 98765 43210",
+  city: "Coimbatore",
+  state_code: "33",
+  notes: "Pays by cheque.",
+  last_activity_at: "2026-10-31T09:00:00Z",
+  cancelled_at: null,
+  cancelled_reason: null,
+};
+/** The form section under a heading, for fields that repeat a label (Full name, Password). */
+function formSection(heading: string): HTMLElement {
+  const section = screen.getByRole("heading", { name: heading }).closest("fieldset");
+  if (!section) throw new Error(`no form section called ${heading}`);
+  return section;
+}
+
+const COMPANY_ROUTES: [RegExp, Route][] = [
+  [/\/admin\/tenants\/7\/seller-details$/, () => SELLER],
+  [/\/admin\/tenants\/7\/usage$/, () => USAGE],
+  [/\/admin\/tenants\/7$/, () => FULL_DETAIL],
+  [/\/admin\/users\?/, () => page([])],
+  [/\/admin\/activity\?/, () => page([])],
+  [/\/admin\/audit\?/, () => page([])],
+];
+
+describe("AdminApp company page (M18)", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("lists its tabs from one registry, and a tab is kept in the address", async () => {
+    expect(COMPANY_TABS.map((t) => t.key)).toEqual([
+      "overview",
+      "users",
+      "subscription",
+      "usage",
+      "activity",
+    ]);
+    stubApi(COMPANY_ROUTES);
+    const user = userEvent.setup();
+    renderAt("/admin/companies/7");
+    const tabs = await screen.findByRole("navigation", { name: "Company sections" });
+    expect(
+      within(tabs)
+        .getAllByRole("link")
+        .map((l) => l.textContent),
+    ).toEqual(["Overview", "Users", "Subscription", "Usage", "Activity"]);
+    await user.click(within(tabs).getByRole("link", { name: "Usage" }));
+    expect(window.location.search).toBe("?tab=usage");
+    expect(await screen.findByText("Bills, last 90 days")).toBeInTheDocument();
+    expect(screen.getByText("2 (2.0 KB)")).toBeInTheDocument();
+    expect(screen.getByText(/Counts only/)).toBeInTheDocument();
+  });
+
+  it("shows Support every tab with the facts and none of the edit controls", async () => {
+    stubApi(COMPANY_ROUTES, SUPPORT);
+    renderAt("/admin/companies/7");
+    expect(await screen.findByText("Pays by cheque.")).toBeInTheDocument();
+    expect(await screen.findByText("Acme Steels Private Limited")).toBeInTheDocument();
+    expect(screen.getByText("33AAPFU0939F1ZV")).toBeInTheDocument();
+    for (const name of [
+      "Save contact",
+      "Save seller details",
+      "Suspend company",
+      "Close company",
+      "Choose logo",
+      "Remove logo",
+    ]) {
+      expect(screen.queryByRole("button", { name })).not.toBeInTheDocument();
+    }
+    const tabs = screen.getByRole("navigation", { name: "Company sections" });
+    expect(within(tabs).getAllByRole("link")).toHaveLength(5);
+  });
+
+  it("filters the Activity tab to this company", async () => {
+    const calls = stubApi(COMPANY_ROUTES);
+    const user = userEvent.setup();
+    renderAt("/admin/companies/7?tab=activity");
+    await screen.findByText("What Duolink admins did here");
+    expect(calls.some((c) => /\/activity\?.*tenant_id=7/.test(c.url))).toBe(true);
+    expect(calls.some((c) => /\/audit\?.*tenant_id=7/.test(c.url))).toBe(true);
+    await user.click(screen.getByRole("link", { name: "Users" }));
+    expect(window.location.search).toBe("?tab=users");
+  });
+
+  it("corrects the GSTIN with a reason, sending only what changed", async () => {
+    const calls = stubApi([
+      [
+        /\/admin\/tenants\/7\/seller-details$/,
+        (_u, init) =>
+          init?.method === "PATCH" ? { ...SELLER, registration_no: "33ABCDE1234F1Z5" } : SELLER,
+      ],
+      ...COMPANY_ROUTES.slice(2),
+    ]);
+    const user = userEvent.setup();
+    renderAt("/admin/companies/7");
+    const gstin = await screen.findByLabelText("GSTIN");
+    expect(gstin).toHaveValue("33AAPFU0939F1ZV");
+    await user.clear(gstin);
+    await user.type(gstin, "33abcde1234f1z5");
+    await user.click(screen.getByRole("button", { name: "Save seller details" }));
+    expect(await screen.findByText("Write why, in a few words.")).toBeInTheDocument();
+    expect(calls.some((c) => c.method === "PATCH")).toBe(false);
+
+    await user.type(screen.getByLabelText("Reason for the change"), "New certificate");
+    await user.click(screen.getByRole("button", { name: "Save seller details" }));
+    expect(await screen.findByText("Seller details saved.")).toBeInTheDocument();
+    const sent = calls.find((c) => c.method === "PATCH" && c.url.endsWith("/seller-details"));
+    expect(JSON.parse(sent?.body ?? "{}")).toEqual({
+      reason: "New certificate",
+      registration_no: "33ABCDE1234F1Z5",
+    });
+  });
+
+  it("saves the contact record, with blanks sent as null", async () => {
+    const calls = stubApi([
+      [
+        /\/admin\/tenants\/7$/,
+        (_u, init) => (init?.method === "PATCH" ? { ...FULL_DETAIL, city: "Salem" } : FULL_DETAIL),
+      ],
+      ...COMPANY_ROUTES.filter(([re]) => !re.test("/admin/tenants/7")),
+    ]);
+    const user = userEvent.setup();
+    renderAt("/admin/companies/7");
+    const city = await screen.findByLabelText("City");
+    await user.clear(city);
+    await user.type(city, "Salem");
+    await user.clear(screen.getByLabelText("Internal notes"));
+    await user.click(screen.getByRole("button", { name: "Save contact" }));
+    expect(await screen.findByText("Contact saved.")).toBeInTheDocument();
+    const sent = JSON.parse(calls.find((c) => c.method === "PATCH")?.body ?? "{}");
+    expect(sent).toMatchObject({ city: "Salem", notes: null, owner_name: "Ravi Kumar" });
+  });
+
+  it("asks once more before closing a company, saying who is signed out", async () => {
+    const calls = stubApi([
+      [/\/admin\/tenants\/7\/cancel$/, () => ({ ...FULL_DETAIL, status: "cancelled" })],
+      ...COMPANY_ROUTES,
+    ]);
+    const user = userEvent.setup();
+    renderAt("/admin/companies/7");
+    await user.click(await screen.findByRole("button", { name: "Close company" }));
+    expect(
+      await screen.findByText("Write why, in a few words. The company's owner may ask."),
+    ).toBeInTheDocument();
+    await user.type(screen.getByLabelText("Reason"), "Left for another vendor");
+    await user.click(screen.getByRole("button", { name: "Close company" }));
+    expect(screen.getByRole("alertdialog")).toHaveTextContent(
+      "Close Acme Steels? 2 signed-in people are signed out now",
+    );
+    expect(calls.some((c) => c.url.endsWith("/cancel"))).toBe(false);
+    await user.click(screen.getByRole("button", { name: "Close now" }));
+    const sent = calls.find((c) => c.url.endsWith("/cancel"));
+    expect(sent?.method).toBe("POST");
+    expect(JSON.parse(sent?.body ?? "{}")).toEqual({ reason: "Left for another vendor" });
+  });
+
+  it("reopens a closed company only with a reason", async () => {
+    const closed = {
+      ...FULL_DETAIL,
+      status: "cancelled",
+      cancelled_at: "2026-10-30T09:00:00Z",
+      cancelled_reason: "Left for another vendor",
+      open_sessions: 0,
+    };
+    const calls = stubApi([
+      [/\/admin\/tenants\/7\/reactivate$/, () => FULL_DETAIL],
+      [/\/admin\/tenants\/7$/, () => closed],
+      ...COMPANY_ROUTES.slice(0, 2),
+      ...COMPANY_ROUTES.slice(3),
+    ]);
+    const user = userEvent.setup();
+    renderAt("/admin/companies/7");
+    expect(await screen.findByRole("heading", { name: "Closed" })).toBeInTheDocument();
+    expect(screen.getByText("Left for another vendor")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Reopen company" }));
+    expect(await screen.findByText("Say why this company is being reopened.")).toBeInTheDocument();
+    expect(calls.some((c) => c.url.endsWith("/reactivate"))).toBe(false);
+    await user.type(screen.getByLabelText("Reason"), "Paid in full");
+    await user.click(screen.getByRole("button", { name: "Reopen company" }));
+    await vi.waitFor(() => expect(calls.some((c) => c.url.endsWith("/reactivate"))).toBe(true));
+    expect(JSON.parse(calls.find((c) => c.url.endsWith("/reactivate"))?.body ?? "{}")).toEqual({
+      reason: "Paid in full",
+    });
+  });
+
+  it("uploads a logo, refusing a file over 200 KB before it is sent", async () => {
+    const calls = stubApi([[/\/admin\/tenants\/7\/logo$/, () => FULL_DETAIL], ...COMPANY_ROUTES]);
+    const user = userEvent.setup();
+    renderAt("/admin/companies/7");
+    const input = await screen.findByLabelText("Logo file");
+    await user.upload(
+      input,
+      new File([new Uint8Array(300 * 1024)], "big.png", { type: "image/png" }),
+    );
+    expect(
+      await screen.findByText("The logo is larger than 200 KB. Use a smaller file."),
+    ).toBeInTheDocument();
+    expect(calls.some((c) => c.url.endsWith("/logo"))).toBe(false);
+    await user.upload(input, new File([new Uint8Array(1024)], "ok.png", { type: "image/png" }));
+    expect(await screen.findByText("Logo saved.")).toBeInTheDocument();
+    expect(calls.find((c) => c.url.endsWith("/logo"))?.method).toBe("POST");
+  });
+});
+
+describe("AdminApp add company (M18)", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("sends the whole onboarding form and shows the owner's sign-in address", async () => {
+    const calls = stubApi([
+      [/\/admin\/tenants$/, () => ({ ...FULL_DETAIL, sign_in_url: "https://acme.duolink.app" })],
+      ...COMPANY_ROUTES,
+    ]);
+    const user = userEvent.setup();
+    renderAt("/admin/companies/new");
+    await user.type(await screen.findByLabelText("Legal name"), "Acme Steels");
+    await user.type(screen.getByLabelText("City"), "Coimbatore");
+    await user.type(screen.getByLabelText("Name on bills"), "Acme Steels Private Limited");
+    await user.type(screen.getByLabelText("GSTIN"), "33aapfu0939f1zv");
+    await user.clear(screen.getByLabelText("Shop name"));
+    await user.type(screen.getByLabelText("Shop name"), "Acme Main");
+    await user.clear(screen.getByLabelText("Shop code"));
+    await user.type(screen.getByLabelText("Shop code"), "am");
+    await user.clear(screen.getByLabelText("Trial length (days)"));
+    await user.type(screen.getByLabelText("Trial length (days)"), "30");
+    const owner = formSection("First owner");
+    await user.type(within(owner).getByLabelText("Full name"), "Ravi Kumar");
+    await user.type(within(owner).getByLabelText("Email"), "ravi@acme.example");
+    await user.type(within(owner).getByLabelText("Mobile"), "9876543210");
+    await user.type(within(owner).getByLabelText("Password"), "ravi-pass-123");
+    await user.click(
+      within(owner).getByLabelText("Make them choose a new password at first sign-in"),
+    );
+    await user.click(screen.getByRole("button", { name: "Create company" }));
+
+    const sent = JSON.parse(
+      calls.find((c) => c.method === "POST" && c.url.endsWith("/admin/tenants"))?.body ?? "{}",
+    );
+    expect(sent).toEqual({
+      name: "Acme Steels",
+      slug: "acme-steels",
+      plan: "trial",
+      trial_days: 30,
+      start_active: false,
+      state_code: "33",
+      city: "Coimbatore",
+      legal_name: "Acme Steels Private Limited",
+      registration_no: "33AAPFU0939F1ZV",
+      shop_name: "Acme Main",
+      shop_code: "AM",
+      owner_full_name: "Ravi Kumar",
+      owner_username: "owner",
+      owner_email: "ravi@acme.example",
+      owner_mobile: "9876543210",
+      owner_password: "ravi-pass-123",
+      require_owner_password_change: true,
+    });
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "Its owner can sign in at https://acme.duolink.app now.",
+    );
+  });
+
+  it("starts active with no trial length, and a paid plan sends neither", async () => {
+    const calls = stubApi([
+      [/\/admin\/tenants$/, () => ({ ...FULL_DETAIL, sign_in_url: "https://acme.duolink.app" })],
+      ...COMPANY_ROUTES,
+    ]);
+    const user = userEvent.setup();
+    renderAt("/admin/companies/new");
+    await user.type(await screen.findByLabelText("Legal name"), "Beta");
+    await user.selectOptions(screen.getByLabelText("Start"), "active");
+    expect(screen.queryByLabelText("Trial length (days)")).not.toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText("Plan"), "basic");
+    expect(screen.queryByLabelText("Start")).not.toBeInTheDocument();
+    const owner = formSection("First owner");
+    await user.type(within(owner).getByLabelText("Full name"), "Bala");
+    await user.type(within(owner).getByLabelText("Password"), "bala-pass-123");
+    await user.click(screen.getByRole("button", { name: "Create company" }));
+    const sent = JSON.parse(
+      calls.find((c) => c.method === "POST" && c.url.endsWith("/admin/tenants"))?.body ?? "{}",
+    );
+    expect(sent).toMatchObject({ plan: "basic", trial_days: null, start_active: false });
+  });
+});
+
+describe("AdminApp company list (M18)", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("searches, filters, sorts and pages, keeping each in the address", async () => {
+    const many = Array.from({ length: 25 }, (_, i) => ({
+      ...ACME,
+      id: i + 1,
+      slug: `c${i}`,
+      name: `Company ${i}`,
+    }));
+    const calls = stubApi([
+      [
+        /\/admin\/tenants\?/,
+        (url) => ({
+          items: many,
+          total: 40,
+          limit: 25,
+          offset: Number(new URL(url, "http://x").searchParams.get("offset") ?? 0),
+        }),
+      ],
+    ]);
+    const user = userEvent.setup();
+    renderAt("/admin/companies");
+    expect(await screen.findByText("40 companies, showing 1 to 25")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Name, code, owner or GSTIN")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Previous" })).toBeDisabled();
+
+    await user.click(screen.getByRole("button", { name: "Next" }));
+    await vi.waitFor(() => expect(window.location.search).toContain("page=1"));
+    expect(calls.some((c) => /offset=25/.test(c.url))).toBe(true);
+
+    await user.selectOptions(screen.getByLabelText("Trial"), "ended");
+    await vi.waitFor(() => expect(window.location.search).toContain("trial=ended"));
+    expect(window.location.search).not.toContain("page="); // a new filter starts at page one
+    await user.selectOptions(screen.getByLabelText("Sort by"), "users");
+    await user.selectOptions(screen.getByLabelText("Order"), "desc");
+    await user.click(screen.getByLabelText("Ending within 30 days"));
+    await vi.waitFor(() =>
+      expect(
+        calls.some(
+          (c) =>
+            /expiring=true/.test(c.url) &&
+            /sort=users/.test(c.url) &&
+            /order=desc/.test(c.url) &&
+            /trial=ended/.test(c.url),
+        ),
+      ).toBe(true),
+    );
+
+    await user.type(screen.getByRole("searchbox", { name: "Search" }), "33AAPFU0939F1ZV");
+    await user.tab();
+    await vi.waitFor(() => expect(calls.some((c) => /q=33AAPFU0939F1ZV/.test(c.url))).toBe(true));
+  });
+
+  it("hides Add company from Support and shows the owner and last activity", async () => {
+    stubApi(
+      [
+        [
+          /\/admin\/tenants\?/,
+          () =>
+            page([
+              {
+                ...ACME,
+                owner_name: "Ravi Kumar",
+                city: "Coimbatore",
+                last_activity_at: "2026-10-31T09:00:00Z",
+              },
+            ]),
+        ],
+      ],
+      SUPPORT,
+    );
+    renderAt("/admin/companies");
+    expect(await screen.findByText("Ravi Kumar")).toBeInTheDocument();
+    expect(screen.getByText(/Coimbatore/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Add company" })).not.toBeInTheDocument();
   });
 });

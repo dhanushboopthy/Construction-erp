@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router";
 
 import { toFormError, type FormError } from "@/api/errors";
 import { Button } from "@/components/Button";
-import { SelectField, TextField } from "@/components/Field";
+import { CheckField, SelectField, TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
 import { GST_STATES } from "@/lib/gstStates";
 
@@ -31,9 +31,19 @@ export function NewCompanyPage() {
   const [slugTouched, setSlugTouched] = useState(false);
   const [plan, setPlan] = useState<TenantPlan>("trial");
   const [stateCode, setStateCode] = useState("33");
+  const [city, setCity] = useState("");
+  const [legalName, setLegalName] = useState("");
+  const [gstin, setGstin] = useState("");
+  const [shopName, setShopName] = useState("Shop 1");
+  const [shopCode, setShopCode] = useState("S1");
+  const [terms, setTerms] = useState<"trial" | "active">("trial");
+  const [trialDays, setTrialDays] = useState("14");
   const [ownerName, setOwnerName] = useState("");
   const [username, setUsername] = useState("owner");
+  const [ownerEmail, setOwnerEmail] = useState("");
+  const [ownerMobile, setOwnerMobile] = useState("");
   const [password, setPassword] = useState("");
+  const [mustChange, setMustChange] = useState(false);
   const [error, setError] = useState<FormError | null>(null);
 
   const fieldError = (key: string) => (error?.field === key ? error.message : null);
@@ -47,16 +57,29 @@ export function NewCompanyPage() {
       return;
     }
     try {
+      const onTrial = plan === "trial" && terms === "trial";
       const made = await create.mutateAsync({
         name: name.trim(),
         slug: shownSlug,
         plan,
+        trial_days: onTrial ? Number(trialDays) : null,
+        start_active: plan === "trial" && terms === "active",
         state_code: stateCode,
+        city: city.trim() || null,
+        legal_name: legalName.trim() || null,
+        registration_no: gstin.trim().toUpperCase() || null,
+        shop_name: shopName.trim() || "Shop 1",
+        shop_code: shopCode.trim().toUpperCase() || "S1",
         owner_full_name: ownerName.trim(),
         owner_username: username.trim(),
+        owner_email: ownerEmail.trim() || null,
+        owner_mobile: ownerMobile.trim() || null,
         owner_password: password,
+        require_owner_password_change: mustChange,
       });
-      void navigate(`/admin/companies/${made.id}`, { state: { created: true } });
+      void navigate(`/admin/companies/${made.id}`, {
+        state: { created: true, signInUrl: made.sign_in_url },
+      });
     } catch (err) {
       setError(toFormError(err));
     }
@@ -111,6 +134,68 @@ export function NewCompanyPage() {
                 </option>
               ))}
             </SelectField>
+            <TextField
+              label="City"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              error={fieldError("city")}
+            />
+          </div>
+        </fieldset>
+
+        <fieldset className={styles.group}>
+          <div className={styles.groupHead}>
+            <h2>Seller details</h2>
+            <p>Printed on every bill. The company can change them later in its own Settings.</p>
+          </div>
+          <div className={styles.grid}>
+            <TextField
+              label="Name on bills"
+              value={legalName}
+              onChange={(e) => setLegalName(e.target.value)}
+              error={fieldError("legal_name")}
+              hint="Blank: the company name above."
+            />
+            <TextField
+              label="GSTIN"
+              value={gstin}
+              maxLength={15}
+              onChange={(e) => setGstin(e.target.value.toUpperCase())}
+              error={fieldError("registration_no")}
+              hint="Blank if not registered yet. The first two digits are the state."
+            />
+          </div>
+        </fieldset>
+
+        <fieldset className={styles.group}>
+          <div className={styles.groupHead}>
+            <h2>First shop</h2>
+            <p>A godown is added too. More shops are added in the company's Settings.</p>
+          </div>
+          <div className={styles.grid}>
+            <TextField
+              label="Shop name"
+              value={shopName}
+              onChange={(e) => setShopName(e.target.value)}
+              error={fieldError("shop_name")}
+            />
+            <TextField
+              label="Shop code"
+              value={shopCode}
+              maxLength={2}
+              onChange={(e) => setShopCode(e.target.value.toUpperCase())}
+              error={fieldError("shop_code")}
+              hint="1 or 2 letters or digits. Printed at the start of every bill number."
+            />
+          </div>
+        </fieldset>
+
+        <fieldset className={styles.group}>
+          <div className={styles.groupHead}>
+            <h2>Plan</h2>
+            <p>What the company can use, and how it starts.</p>
+          </div>
+          <div className={styles.grid}>
             <SelectField
               label="Plan"
               value={plan}
@@ -123,6 +208,26 @@ export function NewCompanyPage() {
                 </option>
               ))}
             </SelectField>
+            {plan === "trial" ? (
+              <SelectField
+                label="Start"
+                value={terms}
+                onChange={(e) => setTerms(e.target.value as "trial" | "active")}
+              >
+                <option value="trial">On a trial</option>
+                <option value="active">Active, no trial</option>
+              </SelectField>
+            ) : null}
+            {plan === "trial" && terms === "trial" ? (
+              <TextField
+                label="Trial length (days)"
+                inputMode="numeric"
+                value={trialDays}
+                onChange={(e) => setTrialDays(e.target.value.replace(/\D/g, ""))}
+                error={fieldError("trial_days")}
+                hint="1 to 90 days."
+              />
+            ) : null}
           </div>
         </fieldset>
 
@@ -148,14 +253,34 @@ export function NewCompanyPage() {
               required
             />
             <TextField
+              label="Email"
+              type="email"
+              value={ownerEmail}
+              onChange={(e) => setOwnerEmail(e.target.value)}
+              error={fieldError("owner_email")}
+            />
+            <TextField
+              label="Mobile"
+              inputMode="tel"
+              value={ownerMobile}
+              onChange={(e) => setOwnerMobile(e.target.value)}
+              error={fieldError("owner_mobile")}
+            />
+            <TextField
               label="Password"
               type="password"
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               error={fieldError("owner_password")}
-              hint={`At least ${MIN_PASSWORD} characters. They can change it after signing in.`}
+              hint={`At least ${MIN_PASSWORD} characters.`}
               required
+            />
+            <CheckField
+              label="Make them choose a new password at first sign-in"
+              hint="Off by default: an owner onboarded by Duolink gets a working password."
+              checked={mustChange}
+              onChange={(e) => setMustChange(e.target.checked)}
             />
           </div>
         </fieldset>

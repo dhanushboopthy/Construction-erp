@@ -168,3 +168,55 @@ describe("Shops and godown", () => {
     });
   });
 });
+
+describe("PAN and CIN", () => {
+  it("keeps PAN and CIN on save, checks them, and cross-checks the PAN with the GSTIN", async () => {
+    const user = userEvent.setup();
+    const { calls } = mockApi({
+      ...session(OWNER),
+      "GET /settings": () => ({ body: SETTINGS }),
+      "PUT /settings": (body) => ({ body: { ...SETTINGS, ...(body as object) } }),
+    });
+    renderAt("/settings");
+
+    const pan = await screen.findByLabelText("PAN");
+    const cin = screen.getByLabelText("CIN");
+    await user.type(pan, "abc");
+    await user.type(cin, "x123");
+    await user.click(screen.getByRole("button", { name: "Save shop details" }));
+    expect(screen.getByText(/A PAN has 10 characters/)).toBeVisible();
+    expect(screen.getByText(/A CIN has 21 characters/)).toBeVisible();
+    expect(calls.some((c) => c.method === "PUT")).toBe(false);
+
+    await user.clear(pan);
+    await user.clear(cin);
+    await user.type(pan, "aapfu0939f");
+    await user.type(cin, "u45200tn2015ptc098765");
+    await user.type(screen.getByLabelText("GSTIN"), "33ABCDE1234F1Z5");
+    await user.click(screen.getByRole("button", { name: "Save shop details" }));
+    expect(screen.getByText("The PAN must match characters 3 to 12 of the GSTIN.")).toBeVisible();
+
+    await user.clear(screen.getByLabelText("GSTIN"));
+    await user.click(screen.getByRole("button", { name: "Save shop details" }));
+    expect(await screen.findByText("Shop details saved.")).toBeVisible();
+    const put = calls.find((c) => c.method === "PUT")?.body as Record<string, unknown>;
+    expect(put.pan).toBe("AAPFU0939F");
+    expect(put.cin).toBe("U45200TN2015PTC098765");
+  });
+
+  it("sends a blank PAN and CIN as null, so the settings form never invents one", async () => {
+    const user = userEvent.setup();
+    const { calls } = mockApi({
+      ...session(OWNER),
+      "GET /settings": () => ({ body: SETTINGS }),
+      "PUT /settings": (body) => ({ body: { ...SETTINGS, ...(body as object) } }),
+    });
+    renderAt("/settings");
+    await screen.findByLabelText("PAN");
+    await user.click(screen.getByRole("button", { name: "Save shop details" }));
+    await screen.findByText("Shop details saved.");
+    const put = calls.find((c) => c.method === "PUT")?.body as Record<string, unknown>;
+    expect(put.pan).toBeNull();
+    expect(put.cin).toBeNull();
+  });
+});

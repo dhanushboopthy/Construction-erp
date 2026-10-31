@@ -86,6 +86,30 @@ activate, unlock, reset password, sign out). The sign-in routes need no role.
 Until a member has changed a temporary password, every other admin call answers 403
 `PASSWORD_CHANGE_REQUIRED` (only `/auth/me`, `/auth/change-password` and `/auth/logout` work).
 
+## Endpoints (Milestone 18: company profile and onboarding)
+
+Same address and token as Milestone 16. Writes need a **Super Admin**; Support reads (403
+`PERMISSION_DENIED` otherwise).
+
+| Method | Path | Role | What |
+| --- | --- | --- | --- |
+| GET | `/admin/tenants?q&status&plan&trial&expiring&sort&order&limit&offset` | any admin | `q` matches name, code, owner name or email, GSTIN. `trial` = `running\|ending\|ended\|none`; `expiring=true` = trial ends within 30 days; `sort` = `name\|created\|last_activity\|users`; `order` = `asc\|desc`. Rows carry `owner_name`, `city`, `state_code`, `last_activity_at` |
+| POST | `/admin/tenants {name, slug, plan, trial_days?, start_active?, state_code, city?, legal_name?, registration_no?, shop_name = "Shop 1", shop_code = "S1", owner_username, owner_full_name, owner_email?, owner_mobile?, owner_password, require_owner_password_change = false}` | Super Admin | The whole onboarding form in one transaction. 201 with the company and `sign_in_url`. 409 `SLUG_TAKEN`, `SLUG_INVALID`, `TRIAL_CONFLICT`, `TRIAL_ON_PAID_PLAN`, `TRIAL_DAYS`; 422 for a bad GSTIN (check digit, or first digits not the state), shop code, email or mobile |
+| GET / PATCH | `/admin/tenants/{id}` `{name?, plan?, max_users?, max_locations?, trial_ends_at?, owner_name?, owner_email?, owner_mobile?, city?, state_code?, notes?}` | read: any · write: Super Admin | Detail now also has the contact record, internal `notes`, `cancelled_at`, `cancelled_reason`. A blank contact field is cleared |
+| GET | `/admin/tenants/{id}/usage` | any admin | `{users, shops, bills_7d, bills_30d, bills_90d, purchases_30d, attachments, attachment_bytes}`; counts only |
+| GET | `/admin/tenants/{id}/seller-details` | any admin | `{legal_name, registration_no, pan, cin, address, state_code}`; `registration_no` is the GSTIN |
+| PATCH | `/admin/tenants/{id}/seller-details {legal_name?, registration_no?, pan?, cin?, address?, state_code?, reason}` | Super Admin | Send only what changes; null clears `registration_no`, `pan`, `cin`. `reason` required. Validated as the company's Settings form (422 `VALIDATION_ERROR`, `field` names the bad one). Written to the company's audit log as `Duolink: <admin>` and to ours with old and new values |
+| POST / DELETE | `/admin/tenants/{id}/logo` (multipart `file`) | Super Admin | As the owner's own upload: square PNG or plain SVG, up to 200 KB. 4xx `LOGO_NOT_SQUARE`, `LOGO_SVG_UNSAFE`, `FILE_TYPE_NOT_ALLOWED`, `FILE_TOO_LARGE` |
+| POST | `/admin/tenants/{id}/cancel {reason}` | Super Admin | Close the company: sessions end, sign-in answers 403 `TENANT_CANCELLED`, data kept. 409 `ALREADY_CANCELLED` |
+| POST | `/admin/tenants/{id}/reactivate {reason?}` | Super Admin | Undo a suspension, or reopen a cancelled company (reason required: 409 `REASON_REQUIRED`). 409 `NOT_SUSPENDED` |
+| POST | `/admin/tenants/{id}/suspend {reason}` | Super Admin | As before; 409 `ALREADY_SUSPENDED`, or `ALREADY_CANCELLED` for a closed company |
+
+Company side: `GET /auth/me` and the sign-in answer now carry `must_change_password`. While it is
+true, every call except `/auth/me`, `/auth/change-password` and `/auth/logout` answers 403
+`PASSWORD_CHANGE_REQUIRED`; `POST /auth/change-password` answers 409 `PASSWORD_UNCHANGED` for the
+same password. `PUT /settings` and `GET /settings` carry optional `pan` and `cin` (422 if invalid,
+or if the PAN is not characters 3 to 12 of the GSTIN).
+
 Company side: `GET /tenant/plan` (owner) → `{plan, status, trial_ends_at, users, max_users,
 locations, max_locations}`. Adding a user or a shop beyond the plan answers 409
 `PLAN_USER_LIMIT` / `PLAN_LOCATION_LIMIT`.

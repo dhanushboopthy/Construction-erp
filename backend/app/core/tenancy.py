@@ -6,6 +6,9 @@ kept on `Session.info`, like the acting user. Services filter every query on
 if a filter is forgotten (`app/services/tenancy.py` passes the tenant to the database).
 """
 
+from collections.abc import Iterator
+from contextlib import contextmanager
+
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -23,6 +26,22 @@ def set_tenant(db: Session, tenant_id: int) -> None:
         # Already inside a transaction: tell the database now. New transactions are told by
         # the after_begin listener.
         db.execute(select(func.set_config("app.tenant_id", str(tenant_id), True)))
+
+
+@contextmanager
+def tenant_context(db: Session, tenant_id: int) -> Iterator[None]:
+    """Work as one company for a while, then go back. For a Duolink admin writing a company's
+    own rows (Milestone 18): the new rows are stamped with that company, and the session is not
+    left pointing at it afterwards."""
+    previous = db.info.get(TENANT_KEY)
+    set_tenant(db, tenant_id)
+    try:
+        yield
+    finally:
+        if previous is None:
+            db.info.pop(TENANT_KEY, None)
+        else:
+            set_tenant(db, int(previous))
 
 
 def set_platform(db: Session) -> None:

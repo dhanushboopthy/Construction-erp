@@ -6,11 +6,13 @@ Permissions are enforced here, in the API, not only in the screens (rule B4).
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 import jwt
 from fastapi import Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy import update
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
@@ -24,7 +26,7 @@ from app.models.platform import PlatformAdmin
 from app.models.setup import AppUser
 from app.models.tenancy import Tenant
 from app.services import tenants as tenant_service
-from app.services.audit import set_actor
+from app.services.audit import set_actor, set_actor_label
 
 _bearer = HTTPBearer(auto_error=False)
 
@@ -39,6 +41,7 @@ class Principal:
     role: Role
     location_ids: frozenset[int]
     session_id: str
+    must_change_password: bool = False
 
     @property
     def is_owner(self) -> bool:
@@ -67,6 +70,7 @@ def get_tenant(request: Request, db: DbSession) -> Tenant:
     """The company named by the subdomain (ADR 0011). Every later query on this session is for
     that company, and the database refuses rows of any other."""
     clear_platform(db)
+    set_actor_label(db, None)
     tenant = tenant_service.for_host(db, request_host(request))
     set_tenant(db, tenant.id)
     request.state.tenant_id = tenant.id
@@ -76,7 +80,27 @@ def get_tenant(request: Request, db: DbSession) -> Tenant:
 CurrentTenant = Annotated[Tenant, Depends(get_tenant)]
 
 
-def get_principal(
+ACTIVITY_INTERVAL = timedelta(minutes=1)
+
+
+def touch_activity(db: Session, tenant: Tenant) -> None:
+    """Note that someone at the company is active, at most once a minute (Milestone 18). A
+    separate statement that leaves `updated_at` alone, so a busy company costs one cheap write
+    a minute."""
+    now = datetime.now(UTC)
+    if tenant.last_activity_at is not None and now - tenant.last_activity_at < ACTIVITY_INTERVAL:
+        return
+    db.execute(
+        update(Tenant)
+        .where(Tenant.id == tenant.id)
+        .values(last_activity_at=now, updated_at=Tenant.updated_at)
+        .execution_options(synchronize_session=False)
+    )
+    db.commit()
+    tenant.last_activity_at = now
+
+
+def get_principal_any_state(
     request: Request,
     db: DbSession,
     tenant: CurrentTenant,
@@ -98,6 +122,7 @@ def get_principal(
 
     set_actor(db, user.id)
     request.state.user_id = user.id
+    touch_activity(db, tenant)
     return Principal(
         user_id=user.id,
         tenant_id=user.tenant_id,
@@ -105,7 +130,21 @@ def get_principal(
         role=user.role,  # read fresh from the database, not trusted from the token
         location_ids=frozenset(loc.id for loc in user.locations),
         session_id=claims.session_id,
+        must_change_password=user.must_change_password,
     )
+
+
+PrincipalAnyState = Annotated[Principal, Depends(get_principal_any_state)]
+
+
+def get_principal(principal: PrincipalAnyState) -> Principal:
+    """The signed-in user, unless they still have a temporary password to change (Milestone 18):
+    then only /auth/me, /auth/change-password and /auth/logout answer."""
+    if principal.must_change_password:
+        raise PermissionDeniedError(
+            "Change your temporary password to continue.", code="PASSWORD_CHANGE_REQUIRED"
+        )
+    return principal
 
 
 CurrentPrincipal = Annotated[Principal, Depends(get_principal)]
@@ -172,6 +211,7 @@ def get_platform_admin_any_state(
         raise AuthenticationError("This account is not active")
     db.info.pop(TENANT_KEY, None)
     set_actor(db, None)  # company audit rows must not name a company user for an admin's act
+    set_actor_label(db, f"Duolink: {admin.full_name}")  # ...they name the admin instead
     set_platform(db)
     request.state.user_id = f"admin:{admin.id}"
     return PlatformPrincipal(

@@ -40,6 +40,7 @@ def ensure_basics(
     *,
     legal_name: str,
     state_code: str,
+    gstin: str | None = None,
     locations: list[tuple[str, str, LocationKind]] = STARTER_LOCATIONS,
 ) -> tuple[list[str], dict[str, Location]]:
     """Return what was created (for the seed script's report) and the locations by code."""
@@ -47,7 +48,7 @@ def ensure_basics(
     notes: list[str] = []
 
     if db.execute(select(ShopSettings).where(ShopSettings.tenant_id == tenant_id)).first() is None:
-        db.add(ShopSettings(legal_name=legal_name, state_code=state_code, address=""))
+        db.add(ShopSettings(legal_name=legal_name, gstin=gstin, state_code=state_code, address=""))
         notes.append("created shop settings (edit them in Settings)")
 
     by_code: dict[str, Location] = {

@@ -36,13 +36,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const changePassword = useCallback(async (current: string, next: string) => {
+    await api<undefined>("/auth/change-password", {
+      method: "POST",
+      body: json({ current_password: current, new_password: next }),
+    });
+    setAccessToken(null);
+    setUser(null);
+  }, []);
+
   const reloadUser = useCallback(async () => {
     setUser(await api<User>("/auth/me"));
   }, []);
 
   const value = useMemo<AuthState>(
-    () => ({ user, ready, signIn, signOut, reloadUser }),
-    [user, ready, signIn, signOut, reloadUser],
+    () => ({ user, ready, signIn, signOut, changePassword, reloadUser }),
+    [user, ready, signIn, signOut, changePassword, reloadUser],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

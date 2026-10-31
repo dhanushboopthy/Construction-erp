@@ -133,6 +133,52 @@ staff member an action was done to (`target_user_id` stays for company users).
 - **Command.** `python -m app.scripts.create_platform_admin <email> "<name>" [--role
   super_admin|support]`; the default is `super_admin` because it makes the first admin.
 
+**Built (Milestone 18):** Duolink's record of each company, and onboarding in one form.
+
+- **`tenant`** gains `owner_name`, `owner_email`, `owner_mobile`, `city`, `state_code`, internal
+  `notes` (Duolink staff only; no company endpoint returns them), `last_activity_at` and
+  `cancelled_at` / `cancelled_reason`. `last_activity_at` is written by the company request path
+  at most once a minute (one conditional `UPDATE`, which leaves `updated_at` alone).
+  `shop_settings` gains optional `pan` and `cin` (validated; a PAN must equal characters 3 to 12 of
+  the GSTIN; the PAN printed on a bill is the stored one, else the GSTIN's) and the bill prints the
+  CIN under the PAN when there is one. `app_user.must_change_password` is new (see below).
+- **Seller details stay in `shop_settings`.** `PATCH /admin/tenants/{id}/seller-details` (Super
+  Admin, reason required) merges the change into the company's settings, validates it with the
+  same `ShopSettingsUpdate` schema as the company's own form and saves it through
+  `services/shop_settings.update_settings` inside `tenant_context`, so rows are stamped with the
+  right company. The company's `audit_log` row carries `_actor: "Duolink: <admin name>"` in its
+  changes (any `Audited` row written during an admin request does) and `user_id` is empty; the
+  platform log gets the old and new values and the reason. In admin answers the GSTIN is called
+  `registration_no`, because the money-field test rejects names containing `gst`.
+- **Onboarding** (`POST /admin/tenants`, Super Admin) is one transaction: the company and its
+  contact record, shop settings with the legal name and GSTIN, the first shop (name, code) and a
+  godown (`G1`, or `G2` when the shop is `G1`), the starter data, and the first owner. The plan
+  decides the start (`domain/plans.onboarding_terms`): a trial-plan company starts on a trial of
+  `trial_days` (1 to 90, 14 if blank) or, with `start_active`, active with no trial; a paid plan
+  starts active, and a trial length on a paid plan is refused (409 `TRIAL_ON_PAID_PLAN`,
+  `TRIAL_CONFLICT`, `TRIAL_DAYS`). `require_owner_password_change` (default false, as WA) sets
+  the owner's `must_change_password`. The answer carries `sign_in_url`.
+- **Temporary passwords, company side.** A user with `must_change_password` can call only
+  `/auth/me`, `/auth/change-password` and `/auth/logout`; everything else answers 403
+  `PASSWORD_CHANGE_REQUIRED`, and the UI shows "Choose a new password". The new password must
+  differ from the temporary one (409 `PASSWORD_UNCHANGED`); changing it clears the flag and ends
+  every session. M19 builds the Duolink-side reset on this flag.
+- **List and page.** `GET /admin/tenants` searches name, code, owner name and email, and GSTIN;
+  filters `status`, `plan`, `trial` (running, ending, ended, none) and `expiring` (a trial ending
+  within 30 days; subscription expiry joins this in M21); sorts by name, created, last activity or
+  users (`order=asc|desc`, nulls last); pages with `limit` and `offset`. `GET .../usage` returns
+  counts only. The company page's tabs (Overview, Users, Subscription, Usage, Activity) come from
+  one list, `admin/companyTabs.tsx`, so a later milestone adds its tab there.
+- **Status.** `domain/tenancy.status_after` holds the transitions. Suspend works from trial and
+  active only (a closed company answers 409 `ALREADY_CANCELLED`). **Cancel** (`POST
+  /admin/tenants/{id}/cancel`, reason required) ends every session and blocks sign-in with 403
+  `TENANT_CANCELLED`; nothing is deleted. Reactivating a cancelled company needs a reason (409
+  `REASON_REQUIRED`) and returns a trial-plan company to `trial`, any other to `active`.
+- **Logo.** `POST` and `DELETE /admin/tenants/{id}/logo` run `services/tenant_logo` (the same PNG
+  and SVG checks as the owner's upload) in the company's context. The admin never displays it.
+- **Audit.** New platform actions: `tenant_cancel`, `tenant_seller_update`, `tenant_logo_set`,
+  `tenant_logo_remove`. Every M18 write is Super Admin only; Support can read every tab.
+
 **Built (Milestone 1):** `shop_settings` (with `logo_key`, `logo_type`, `logo_sha256`, all set or
 all empty, for the shop's logo: UI refresh T10), `location`, `app_user`, `user_location`,
 `auth_session`, `audit_log`, `document_sequence`. A GSTIN is checked for format and check

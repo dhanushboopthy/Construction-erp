@@ -38,3 +38,32 @@ def slug_from_host(host: str | None, base_domain: str) -> str | None:
     if not label or "." in label:
         return None
     return label
+
+
+class StatusChangeError(ValueError):
+    """A company status change that is not allowed. `code` is the API error code (409)."""
+
+    def __init__(self, code: str, message: str) -> None:
+        super().__init__(message)
+        self.code = code
+
+
+def status_after(current: str, action: str, *, on_trial_plan: bool) -> str:
+    """The company's status after suspend, cancel or reactivate, or StatusChangeError.
+
+    Reactivating returns a trial-plan company to `trial` and any other to `active`. A cancelled
+    company is closed for good until a Super Admin reactivates it (with a reason, checked by the
+    caller); its data is kept."""
+    if action not in {"suspend", "cancel", "reactivate"}:
+        raise ValueError(f"Unknown action {action!r}")
+    if action == "reactivate":
+        if current not in {"suspended", "cancelled"}:
+            raise StatusChangeError("NOT_SUSPENDED", "This company is not suspended or closed")
+        return "trial" if on_trial_plan else "active"
+    if current == "cancelled":
+        raise StatusChangeError("ALREADY_CANCELLED", "This company is already closed")
+    if action == "cancel":
+        return "cancelled"
+    if current == "suspended":
+        raise StatusChangeError("ALREADY_SUSPENDED", "This company is already suspended")
+    return "suspended"

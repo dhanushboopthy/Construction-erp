@@ -20,12 +20,22 @@ from app.models.base import ActorMixin, Audited
 from app.models.enums import AuditAction
 
 ACTOR_KEY = "actor_id"
+ACTOR_LABEL_KEY = "actor_label"
 _ALWAYS_SKIP = frozenset({"created_at", "updated_at", "created_by", "updated_by", "tenant_id"})
 REDACTED = "***"
 
 
 def set_actor(db: Session, user_id: int | None) -> None:
     db.info[ACTOR_KEY] = user_id
+
+
+def set_actor_label(db: Session, label: str | None) -> None:
+    """Name who is acting when it is not a company user, for example "Duolink: Asha". Every audit
+    row written on this session then carries it as `_actor` in its changes (Milestone 18)."""
+    if label is None:
+        db.info.pop(ACTOR_LABEL_KEY, None)
+    else:
+        db.info[ACTOR_LABEL_KEY] = label
 
 
 def _jsonable(value: Any) -> Any:
@@ -76,6 +86,9 @@ def _diff(obj: Any, action: AuditAction) -> dict[str, Any]:
 def _row(
     session: Session, obj: Any, action: AuditAction, changes: dict[str, Any]
 ) -> dict[str, Any]:
+    label = session.info.get(ACTOR_LABEL_KEY)
+    if label:
+        changes = {**changes, "_actor": label}
     return {
         "tenant_id": getattr(obj, "tenant_id", None) or current_tenant_id(session),
         "user_id": session.info.get(ACTOR_KEY),
@@ -136,7 +149,10 @@ def record_event(
             action=action,
             entity=entity,
             entity_id=None if entity_id is None else str(entity_id),
-            changes={k: _jsonable(v) for k, v in (changes or {}).items()},
+            changes={
+                **{k: _jsonable(v) for k, v in (changes or {}).items()},
+                **({"_actor": db.info[ACTOR_LABEL_KEY]} if db.info.get(ACTOR_LABEL_KEY) else {}),
+            },
             request_id=request_id_var.get(),
             ip=client_ip_var.get(),
         )

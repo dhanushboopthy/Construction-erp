@@ -9,7 +9,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Request, Response, status
 
-from app.api.deps import CurrentPrincipal, CurrentTenant, DbSession
+from app.api.deps import CurrentTenant, DbSession, PrincipalAnyState
 from app.core.config import get_settings
 from app.schemas.auth import ChangePasswordRequest, LoginRequest, TokenResponse
 from app.schemas.user import UserOut
@@ -82,13 +82,13 @@ def logout(request: Request, response: Response, _: CurrentTenant, db: DbSession
 
 
 @router.get("/me", response_model=UserOut)
-def me(principal: CurrentPrincipal, db: DbSession) -> UserOut:
+def me(principal: PrincipalAnyState, db: DbSession) -> UserOut:
     return UserOut.model_validate(get_user(db, principal.user_id))
 
 
 @router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT)
 def change_password(
-    body: ChangePasswordRequest, principal: CurrentPrincipal, response: Response, db: DbSession
+    body: ChangePasswordRequest, principal: PrincipalAnyState, response: Response, db: DbSession
 ) -> None:
     """Changing the password signs the user out everywhere, including this browser."""
     user = get_user(db, principal.user_id)

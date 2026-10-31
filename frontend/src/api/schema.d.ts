@@ -252,12 +252,17 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Tenants */
+        /**
+         * List Tenants
+         * @description Search by name, company code, owner or GSTIN. Filter by status, plan, trial state or
+         *     "expiring". Sort by name, created, last activity or users.
+         */
         get: operations["list_tenants_api_v1_admin_tenants_get"];
         put?: never;
         /**
          * Create Tenant
-         * @description A new company with starter data and its first owner, who signs in at <slug>.<domain>.
+         * @description The whole onboarding form in one transaction: a new company with its seller details,
+         *     first shop and godown, plan and first owner. Answers with the owner's sign-in address.
          */
         post: operations["create_tenant_api_v1_admin_tenants_post"];
         delete?: never;
@@ -284,6 +289,73 @@ export interface paths {
         patch: operations["update_tenant_api_v1_admin_tenants__tenant_id__patch"];
         trace?: never;
     };
+    "/api/v1/admin/tenants/{tenant_id}/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Usage
+         * @description Counts only: users, shops, bills in 7, 30 and 90 days, purchases in 30 days, attachments.
+         */
+        get: operations["usage_api_v1_admin_tenants__tenant_id__usage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/tenants/{tenant_id}/seller-details": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Seller Details
+         * @description What prints on the company's bills: legal name, GSTIN, PAN, CIN, address, state.
+         */
+        get: operations["get_seller_details_api_v1_admin_tenants__tenant_id__seller_details_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Seller Details
+         * @description Correct the seller details for a company that cannot reach its own settings. Validated as
+         *     the company's form is; written to the company's audit log as Duolink's and to ours with the
+         *     old and new values. A reason is required.
+         */
+        patch: operations["update_seller_details_api_v1_admin_tenants__tenant_id__seller_details_patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/tenants/{tenant_id}/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Put Logo
+         * @description Set the company's logo: a square PNG or plain SVG, up to 200 KB, checked as the owner's.
+         */
+        post: operations["put_logo_api_v1_admin_tenants__tenant_id__logo_post"];
+        /** Delete Logo */
+        delete: operations["delete_logo_api_v1_admin_tenants__tenant_id__logo_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/tenants/{tenant_id}/suspend": {
         parameters: {
             query?: never;
@@ -304,6 +376,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/tenants/{tenant_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel
+         * @description The company has left: every session ends and nobody can sign in. Its data is kept.
+         */
+        post: operations["cancel_api_v1_admin_tenants__tenant_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/tenants/{tenant_id}/reactivate": {
         parameters: {
             query?: never;
@@ -313,7 +405,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Reactivate */
+        /**
+         * Reactivate
+         * @description Undo a suspension. Reopening a cancelled company needs a reason (409 REASON_REQUIRED).
+         */
         post: operations["reactivate_api_v1_admin_tenants__tenant_id__reactivate_post"];
         delete?: never;
         options?: never;
@@ -3597,6 +3692,11 @@ export interface components {
             /** File */
             file: string;
         };
+        /** Body_put_logo_api_v1_admin_tenants__tenant_id__logo_post */
+        Body_put_logo_api_v1_admin_tenants__tenant_id__logo_post: {
+            /** File */
+            file: string;
+        };
         /** Body_put_logo_api_v1_tenant_logo_put */
         Body_put_logo_api_v1_tenant_logo_put: {
             /** File */
@@ -3648,6 +3748,11 @@ export interface components {
             days_31_60: string;
             /** Over 60 */
             over_60: string;
+        };
+        /** CancelRequest */
+        CancelRequest: {
+            /** Reason */
+            reason: string;
         };
         /** CashBookOut */
         CashBookOut: {
@@ -7130,7 +7235,7 @@ export interface components {
          * @description What a Duolink admin did (platform_audit_log, Milestones 16 and 17).
          * @enum {string}
          */
-        PlatformAction: "login" | "login_failed" | "logout" | "token_reuse" | "tenant_create" | "tenant_update" | "tenant_suspend" | "tenant_reactivate" | "user_activate" | "user_deactivate" | "user_unlock" | "user_reset_password" | "user_sign_out" | "staff_create" | "staff_update" | "staff_reset_password" | "staff_unlock" | "staff_sign_out" | "password_change";
+        PlatformAction: "login" | "login_failed" | "logout" | "token_reuse" | "tenant_create" | "tenant_update" | "tenant_suspend" | "tenant_reactivate" | "user_activate" | "user_deactivate" | "user_unlock" | "user_reset_password" | "user_sign_out" | "staff_create" | "staff_update" | "staff_reset_password" | "staff_unlock" | "staff_sign_out" | "password_change" | "tenant_cancel" | "tenant_seller_update" | "tenant_logo_set" | "tenant_logo_remove";
         /** PlatformAuditRow */
         PlatformAuditRow: {
             /** Id */
@@ -8024,6 +8129,14 @@ export interface components {
             /** Below Min Margin */
             below_min_margin: boolean;
         };
+        /**
+         * ReactivateRequest
+         * @description A reason is needed to reopen a cancelled company; a suspended one needs none.
+         */
+        ReactivateRequest: {
+            /** Reason */
+            reason?: string | null;
+        };
         /** ReasonTotal */
         ReasonTotal: {
             reason: components["schemas"]["AdjustmentReason"];
@@ -8325,6 +8438,45 @@ export interface components {
             /** Total */
             total: string;
         };
+        /**
+         * SellerDetails
+         * @description What prints on the company's bills. `registration_no` is its GSTIN.
+         */
+        SellerDetails: {
+            /** Legal Name */
+            legal_name: string;
+            /** Registration No */
+            registration_no: string | null;
+            /** Pan */
+            pan: string | null;
+            /** Cin */
+            cin: string | null;
+            /** Address */
+            address: string;
+            /** State Code */
+            state_code: string;
+        };
+        /**
+         * SellerDetailsUpdate
+         * @description Send only what changes; a blank `registration_no`, `pan` or `cin` clears it. A reason is
+         *     always needed: these fields are on every bill.
+         */
+        SellerDetailsUpdate: {
+            /** Legal Name */
+            legal_name?: string | null;
+            /** Registration No */
+            registration_no?: string | null;
+            /** Pan */
+            pan?: string | null;
+            /** Cin */
+            cin?: string | null;
+            /** Address */
+            address?: string | null;
+            /** State Code */
+            state_code?: string | null;
+            /** Reason */
+            reason: string;
+        };
         /** ShopSettingsOut */
         ShopSettingsOut: {
             /** Legal Name */
@@ -8338,6 +8490,13 @@ export interface components {
             state_code: string;
             /** Gstin */
             gstin?: string | null;
+            /**
+             * Pan
+             * @description blank: taken from the GSTIN
+             */
+            pan?: string | null;
+            /** Cin */
+            cin?: string | null;
             /**
              * Address
              * @default
@@ -8555,6 +8714,13 @@ export interface components {
             state_code: string;
             /** Gstin */
             gstin?: string | null;
+            /**
+             * Pan
+             * @description blank: taken from the GSTIN
+             */
+            pan?: string | null;
+            /** Cin */
+            cin?: string | null;
             /**
              * Address
              * @default
@@ -9182,7 +9348,11 @@ export interface components {
             /** Temporary Password */
             temporary_password: string;
         };
-        /** TenantCreate */
+        /**
+         * TenantCreate
+         * @description One form, one transaction: the company, its seller details, its first shop and godown,
+         *     the plan and the first owner. `registration_no` is the company's GSTIN.
+         */
         TenantCreate: {
             /** Name */
             name: string;
@@ -9194,10 +9364,37 @@ export interface components {
             /** @default trial */
             plan: components["schemas"]["TenantPlan"];
             /**
+             * Trial Days
+             * @description trial plan only; 14 if blank
+             */
+            trial_days?: number | null;
+            /**
+             * Start Active
+             * @description skip the trial and start active
+             * @default false
+             */
+            start_active: boolean;
+            /**
              * State Code
              * @description GST state code, e.g. 33
              */
             state_code: string;
+            /** City */
+            city?: string | null;
+            /** Legal Name */
+            legal_name?: string | null;
+            /** Registration No */
+            registration_no?: string | null;
+            /**
+             * Shop Name
+             * @default Shop 1
+             */
+            shop_name: string;
+            /**
+             * Shop Code
+             * @default S1
+             */
+            shop_code: string;
             /**
              * Owner Username
              * @description lowercase, 3-50 characters
@@ -9205,11 +9402,20 @@ export interface components {
             owner_username: string;
             /** Owner Full Name */
             owner_full_name: string;
+            /** Owner Email */
+            owner_email?: string | null;
+            /** Owner Mobile */
+            owner_mobile?: string | null;
             /** Owner Password */
             owner_password: string;
+            /**
+             * Require Owner Password Change
+             * @default false
+             */
+            require_owner_password_change: boolean;
         };
-        /** TenantDetail */
-        TenantDetail: {
+        /** TenantCreated */
+        TenantCreated: {
             /** Id */
             id: number;
             /** Slug */
@@ -9218,6 +9424,12 @@ export interface components {
             name: string;
             status: components["schemas"]["TenantStatus"];
             plan: components["schemas"]["TenantPlan"];
+            /** Owner Name */
+            owner_name: string | null;
+            /** City */
+            city: string | null;
+            /** State Code */
+            state_code: string | null;
             /** Trial Ends At */
             trial_ends_at: string | null;
             trial_state: components["schemas"]["TrialState"];
@@ -9233,6 +9445,8 @@ export interface components {
             bills_30d: number;
             /** Last Sign In At */
             last_sign_in_at: string | null;
+            /** Last Activity At */
+            last_activity_at: string | null;
             /**
              * Created At
              * Format: date-time
@@ -9246,6 +9460,77 @@ export interface components {
             suspended_at: string | null;
             /** Suspended Reason */
             suspended_reason: string | null;
+            /** Cancelled At */
+            cancelled_at: string | null;
+            /** Cancelled Reason */
+            cancelled_reason: string | null;
+            /** Owner Email */
+            owner_email: string | null;
+            /** Owner Mobile */
+            owner_mobile: string | null;
+            /** Notes */
+            notes: string | null;
+            /** Open Sessions */
+            open_sessions: number;
+            /** Sign In Url */
+            sign_in_url: string;
+        };
+        /** TenantDetail */
+        TenantDetail: {
+            /** Id */
+            id: number;
+            /** Slug */
+            slug: string;
+            /** Name */
+            name: string;
+            status: components["schemas"]["TenantStatus"];
+            plan: components["schemas"]["TenantPlan"];
+            /** Owner Name */
+            owner_name: string | null;
+            /** City */
+            city: string | null;
+            /** State Code */
+            state_code: string | null;
+            /** Trial Ends At */
+            trial_ends_at: string | null;
+            trial_state: components["schemas"]["TrialState"];
+            /** Users */
+            users: number;
+            /** Max Users */
+            max_users: number;
+            /** Locations */
+            locations: number;
+            /** Max Locations */
+            max_locations: number;
+            /** Bills 30D */
+            bills_30d: number;
+            /** Last Sign In At */
+            last_sign_in_at: string | null;
+            /** Last Activity At */
+            last_activity_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Own Max Users */
+            own_max_users: number | null;
+            /** Own Max Locations */
+            own_max_locations: number | null;
+            /** Suspended At */
+            suspended_at: string | null;
+            /** Suspended Reason */
+            suspended_reason: string | null;
+            /** Cancelled At */
+            cancelled_at: string | null;
+            /** Cancelled Reason */
+            cancelled_reason: string | null;
+            /** Owner Email */
+            owner_email: string | null;
+            /** Owner Mobile */
+            owner_mobile: string | null;
+            /** Notes */
+            notes: string | null;
             /** Open Sessions */
             open_sessions: number;
         };
@@ -9295,6 +9580,12 @@ export interface components {
             name: string;
             status: components["schemas"]["TenantStatus"];
             plan: components["schemas"]["TenantPlan"];
+            /** Owner Name */
+            owner_name: string | null;
+            /** City */
+            city: string | null;
+            /** State Code */
+            state_code: string | null;
             /** Trial Ends At */
             trial_ends_at: string | null;
             trial_state: components["schemas"]["TrialState"];
@@ -9310,6 +9601,8 @@ export interface components {
             bills_30d: number;
             /** Last Sign In At */
             last_sign_in_at: string | null;
+            /** Last Activity At */
+            last_activity_at: string | null;
             /**
              * Created At
              * Format: date-time
@@ -9326,7 +9619,8 @@ export interface components {
         /**
          * TenantUpdate
          * @description Send only what changes. `max_users` / `max_locations` sent as null go back to the plan's
-         *     limit; `trial_ends_at` sent as null ends the trial period.
+         *     limit; `trial_ends_at` sent as null ends the trial period; the contact fields sent as null
+         *     are cleared. The seller's legal details are changed through /seller-details.
          */
         TenantUpdate: {
             /** Name */
@@ -9338,6 +9632,40 @@ export interface components {
             max_locations?: number | null;
             /** Trial Ends At */
             trial_ends_at?: string | null;
+            /** Owner Name */
+            owner_name?: string | null;
+            /** Owner Email */
+            owner_email?: string | null;
+            /** Owner Mobile */
+            owner_mobile?: string | null;
+            /** City */
+            city?: string | null;
+            /** State Code */
+            state_code?: string | null;
+            /** Notes */
+            notes?: string | null;
+        };
+        /**
+         * TenantUsage
+         * @description Counts only (ADR 0012): no amounts.
+         */
+        TenantUsage: {
+            /** Users */
+            users: number;
+            /** Shops */
+            shops: number;
+            /** Bills 7D */
+            bills_7d: number;
+            /** Bills 30D */
+            bills_30d: number;
+            /** Bills 90D */
+            bills_90d: number;
+            /** Purchases 30D */
+            purchases_30d: number;
+            /** Attachments */
+            attachments: number;
+            /** Attachment Bytes */
+            attachment_bytes: number;
         };
         /** TodayOut */
         TodayOut: {
@@ -9561,6 +9889,8 @@ export interface components {
             role: components["schemas"]["Role"];
             /** Is Active */
             is_active: boolean;
+            /** Must Change Password */
+            must_change_password: boolean;
             /** Last Login At */
             last_login_at: string | null;
             /** Locations */
@@ -10845,6 +11175,11 @@ export interface operations {
                 q?: string | null;
                 status?: components["schemas"]["TenantStatus"] | null;
                 plan?: components["schemas"]["TenantPlan"] | null;
+                trial?: components["schemas"]["TrialState"] | null;
+                /** @description trial ends within 30 days */
+                expiring?: boolean;
+                sort?: "name" | "created" | "last_activity" | "users";
+                order?: "asc" | "desc";
                 limit?: number;
                 offset?: number;
             };
@@ -10938,7 +11273,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TenantDetail"];
+                    "application/json": components["schemas"]["TenantCreated"];
                 };
             };
             /** @description Bad Request */
@@ -11153,6 +11488,394 @@ export interface operations {
             };
         };
     };
+    usage_api_v1_admin_tenants__tenant_id__usage_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantUsage"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_seller_details_api_v1_admin_tenants__tenant_id__seller_details_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SellerDetails"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_seller_details_api_v1_admin_tenants__tenant_id__seller_details_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SellerDetailsUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SellerDetails"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_logo_api_v1_admin_tenants__tenant_id__logo_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_put_logo_api_v1_admin_tenants__tenant_id__logo_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantDetail"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_logo_api_v1_admin_tenants__tenant_id__logo_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantDetail"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     suspend_api_v1_admin_tenants__tenant_id__suspend_post: {
         parameters: {
             query?: never;
@@ -11233,6 +11956,86 @@ export interface operations {
             };
         };
     };
+    cancel_api_v1_admin_tenants__tenant_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantDetail"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     reactivate_api_v1_admin_tenants__tenant_id__reactivate_post: {
         parameters: {
             query?: never;
@@ -11242,7 +12045,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ReactivateRequest"] | null;
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

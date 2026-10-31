@@ -23,3 +23,7 @@ export type PlatformRole = Schemas["PlatformRole"];
 export type StaffMember = Schemas["StaffRow"];
 export type StaffCreate = Schemas["StaffCreate"];
 export type StaffUpdate = Schemas["StaffUpdate"];
+export type TenantCreated = Schemas["TenantCreated"];
+export type SellerDetails = Schemas["SellerDetails"];
+export type SellerDetailsUpdate = Schemas["SellerDetailsUpdate"];
+export type TenantUsage = Schemas["TenantUsage"];

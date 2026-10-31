@@ -43,8 +43,25 @@ whoever looks after the server. Commands run in the project folder on the server
   `create_platform_admin` on the server for a second Super Admin, then unlock the first.
 - **A staff member leaves:** Staff, open them, Deactivate. They are signed out at once. The last
   active Super Admin cannot be deactivated, so promote a replacement first.
-- **A new company:** Companies, Add company. Give the legal name, the company code (its address),
-  the GST state, the plan and the first owner. Hand the owner their address and password in person.
+- **A new company:** Companies, Add company (Super Admin). One form does it all: the company name
+  and code (its address), state and city; the seller details that print on bills (name on bills and
+  GSTIN, both optional); the first shop's name and code (a godown is added too); the plan, and
+  either a trial length (1 to 90 days, 14 if blank) or "Active, no trial"; and the first owner's
+  name, username, email, mobile and password. Tick "Make them choose a new password" only if you
+  are sending the password by message; by default an owner gets a working password. When it is
+  saved the page shows the owner's sign-in address.
+- **Find a company:** Companies searches the name, the code, the owner's name or email and the
+  GSTIN. Filter by status, plan, trial state or "ending within 30 days"; sort by name, joined, last
+  activity or users. "Last activity" is the last request from anyone there, to the minute.
+- **The company's page** (Companies, then the name) has tabs: Overview (contact, seller details,
+  logo, status), Users, Subscription (plan and limits), Usage (counts only) and Activity (sign-ins
+  and what admins did there). Support can open every tab and change nothing.
+- **A company cannot get into its own Settings but its GSTIN or bill details are wrong:** open the
+  company, Overview, Seller details on bills, change the field and write the reason. The change is
+  checked as the company's own form is, and recorded in both audit logs. Do not use this to change
+  what a company sells or owes; there is no way to, by design.
+- **A company has left:** Overview, Status, write the reason and Close company. Everyone is signed
+  out and nobody can sign in. The data is kept. To reopen it, write the reason and Reopen company.
 - **A user is locked out or forgot their password:** Users, find them, then use Unlock or Reset
   password. A reset shows a temporary password once. Read it out to them; they change it after
   signing in.

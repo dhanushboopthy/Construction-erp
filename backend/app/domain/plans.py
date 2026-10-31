@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 from enum import StrEnum
 
 TRIAL_DAYS = 14
+MAX_TRIAL_DAYS = 90
 ENDING_SOON_DAYS = 7
 
 
@@ -50,8 +51,40 @@ def can_add(current: int, limit: int) -> bool:
     return current < limit
 
 
-def trial_end(start: datetime) -> datetime:
-    return start + timedelta(days=TRIAL_DAYS)
+def trial_end(start: datetime, days: int = TRIAL_DAYS) -> datetime:
+    return start + timedelta(days=days)
+
+
+class OnboardingError(ValueError):
+    """The onboarding form contradicts itself. `code` is the API error code."""
+
+    def __init__(self, code: str, message: str) -> None:
+        super().__init__(message)
+        self.code = code
+
+
+def onboarding_terms(
+    plan: str, *, start_active: bool, trial_days: int | None, now: datetime
+) -> tuple[str, datetime | None]:
+    """The new company's status and trial end. A trial-plan company is on trial for the chosen
+    number of days (14 if blank), or starts active when Duolink says so. A paid plan starts
+    active and has no trial."""
+    if plan != "trial":
+        if trial_days is not None:
+            raise OnboardingError(
+                "TRIAL_ON_PAID_PLAN", "A paid plan starts active. Leave the trial length blank."
+            )
+        return "active", None
+    if start_active:
+        if trial_days is not None:
+            raise OnboardingError(
+                "TRIAL_CONFLICT", "Choose either a trial length or start active, not both."
+            )
+        return "active", None
+    days = TRIAL_DAYS if trial_days is None else trial_days
+    if not 1 <= days <= MAX_TRIAL_DAYS:
+        raise OnboardingError("TRIAL_DAYS", f"A trial lasts 1 to {MAX_TRIAL_DAYS} days.")
+    return "trial", trial_end(now, days)
 
 
 def trial_state(ends_at: datetime | None, now: datetime) -> TrialState:

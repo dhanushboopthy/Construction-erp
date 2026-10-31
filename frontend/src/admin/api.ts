@@ -12,10 +12,14 @@ import type {
   StaffCreate,
   StaffMember,
   StaffUpdate,
+  SellerDetails,
+  SellerDetailsUpdate,
   TenantCreate,
+  TenantCreated,
   TenantDetail,
   TenantRow,
   TenantUpdate,
+  TenantUsage,
 } from "./types";
 
 /** Query string from the filters that are set. */
@@ -42,12 +46,24 @@ export interface TenantFilters {
   q?: string;
   status?: string;
   plan?: string;
+  trial?: string;
+  expiring?: boolean;
+  sort?: string;
+  order?: string;
+  limit?: number;
+  offset?: number;
 }
 
+export const COMPANY_PAGE_SIZE = 25;
+
 export function useTenants(filters: TenantFilters = {}) {
+  const { expiring, ...rest } = filters;
   return useQuery({
     queryKey: [...keys.tenants, filters],
-    queryFn: () => adminApi<Page<TenantRow>>(`/tenants${query({ ...filters, limit: 200 })}`),
+    queryFn: () =>
+      adminApi<Page<TenantRow>>(
+        `/tenants${query({ limit: COMPANY_PAGE_SIZE, ...rest, expiring: expiring ? "true" : "" })}`,
+      ),
     placeholderData: keepPreviousData,
   });
 }
@@ -72,7 +88,7 @@ export function useCreateTenant() {
   const refresh = useRefreshAll();
   return useMutation({
     mutationFn: (body: TenantCreate) =>
-      adminApi<TenantDetail>("/tenants", { method: "POST", body: json(body) }),
+      adminApi<TenantCreated>("/tenants", { method: "POST", body: json(body) }),
     onSuccess: refresh,
   });
 }
@@ -101,7 +117,66 @@ export function useSuspendTenant(id: number) {
 export function useReactivateTenant(id: number) {
   const refresh = useRefreshAll();
   return useMutation({
-    mutationFn: () => adminApi<TenantDetail>(`/tenants/${id}/reactivate`, { method: "POST" }),
+    mutationFn: (reason?: string) =>
+      adminApi<TenantDetail>(`/tenants/${id}/reactivate`, {
+        method: "POST",
+        body: json(reason ? { reason } : {}),
+      }),
+    onSuccess: refresh,
+  });
+}
+
+export function useCancelTenant(id: number) {
+  const refresh = useRefreshAll();
+  return useMutation({
+    mutationFn: (reason: string) =>
+      adminApi<TenantDetail>(`/tenants/${id}/cancel`, { method: "POST", body: json({ reason }) }),
+    onSuccess: refresh,
+  });
+}
+
+export function useTenantUsage(id: number) {
+  return useQuery({
+    queryKey: [...keys.tenant(id), "usage"],
+    queryFn: () => adminApi<TenantUsage>(`/tenants/${id}/usage`),
+  });
+}
+
+export function useSellerDetails(id: number) {
+  return useQuery({
+    queryKey: [...keys.tenant(id), "seller"],
+    queryFn: () => adminApi<SellerDetails>(`/tenants/${id}/seller-details`),
+  });
+}
+
+export function useUpdateSellerDetails(id: number) {
+  const refresh = useRefreshAll();
+  return useMutation({
+    mutationFn: (body: Partial<SellerDetailsUpdate> & { reason: string }) =>
+      adminApi<SellerDetails>(`/tenants/${id}/seller-details`, {
+        method: "PATCH",
+        body: json(body),
+      }),
+    onSuccess: () => refresh(),
+  });
+}
+
+export function useSetCompanyLogo(id: number) {
+  const refresh = useRefreshAll();
+  return useMutation({
+    mutationFn: (file: File) => {
+      const form = new FormData();
+      form.append("file", file);
+      return adminApi<TenantDetail>(`/tenants/${id}/logo`, { method: "POST", body: form });
+    },
+    onSuccess: refresh,
+  });
+}
+
+export function useRemoveCompanyLogo(id: number) {
+  const refresh = useRefreshAll();
+  return useMutation({
+    mutationFn: () => adminApi<TenantDetail>(`/tenants/${id}/logo`, { method: "DELETE" }),
     onSuccess: refresh,
   });
 }

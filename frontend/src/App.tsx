@@ -9,6 +9,7 @@ import { RequireRole } from "@/components/RequireRole";
 import { MODULES } from "@/modules";
 import { ComingSoonPage } from "@/pages/ComingSoonPage";
 import { ItemsPage } from "@/pages/items/ItemsPage";
+import { ChangePasswordPage } from "@/pages/ChangePasswordPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { PartiesPage } from "@/pages/parties/PartiesPage";
 import { OrdersPage } from "@/pages/purchases/OrdersPage";
@@ -89,6 +90,7 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/change-password" element={<ChangePasswordPage />} />
             <Route
               element={
                 <RequireAuth>

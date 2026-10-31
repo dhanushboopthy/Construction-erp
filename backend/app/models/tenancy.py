@@ -30,6 +30,18 @@ class Tenant(Base, TimestampMixin):
     max_locations: Mapped[int | None] = mapped_column(Integer)
     suspended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     suspended_reason: Mapped[str | None] = mapped_column(Text)
+    cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    cancelled_reason: Mapped[str | None] = mapped_column(Text)
+    # Duolink's own record of its customer (Milestone 18). The seller's legal details that print
+    # on bills stay in shop_settings; these are who to call and where the company is.
+    owner_name: Mapped[str | None] = mapped_column(String(100))
+    owner_email: Mapped[str | None] = mapped_column(String(200))
+    owner_mobile: Mapped[str | None] = mapped_column(String(20))
+    city: Mapped[str | None] = mapped_column(String(100))
+    state_code: Mapped[str | None] = mapped_column(String(2))
+    notes: Mapped[str | None] = mapped_column(Text)  # internal: Duolink staff only
+    # When anyone at the company last made a request; written at most once a minute.
+    last_activity_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 __all__ = ["Tenant"]

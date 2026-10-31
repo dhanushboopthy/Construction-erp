@@ -2,7 +2,7 @@ from typing import Annotated
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field
 
-from app.domain.gst import is_valid_gstin
+from app.domain.gst import is_valid_cin, is_valid_gstin, is_valid_pan
 
 
 class Schema(BaseModel):
@@ -32,6 +32,26 @@ def _gstin(value: str | None) -> str | None:
     return value
 
 
+def _pan(value: str | None) -> str | None:
+    if value is None or value.strip() == "":
+        return None
+    value = value.strip().upper()
+    if not is_valid_pan(value):
+        raise ValueError("PAN is not valid (5 letters, 4 digits, 1 letter)")
+    return value
+
+
+def _cin(value: str | None) -> str | None:
+    if value is None or value.strip() == "":
+        return None
+    value = value.strip().upper()
+    if not is_valid_cin(value):
+        raise ValueError("CIN is not valid (21 characters, e.g. U45200TN2015PTC098765)")
+    return value
+
+
 Gstin = Annotated[str | None, AfterValidator(_gstin)]
+Pan = Annotated[str | None, AfterValidator(_pan)]
+Cin = Annotated[str | None, AfterValidator(_cin)]
 StateCode = Annotated[str, Field(pattern=r"^[0-9]{2}$", description="GST state code, e.g. 33")]
 LimitParam = Annotated[int, Field(ge=1, le=200)]

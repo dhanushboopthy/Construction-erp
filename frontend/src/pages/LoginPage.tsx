@@ -26,7 +26,8 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const from = (location.state as { from?: string } | null)?.from ?? "/";
+  const state = location.state as { from?: string; changed?: boolean } | null;
+  const from = state?.from ?? "/";
   if (user) return <Navigate to={from} replace />;
 
   async function onSubmit(event: FormEvent) {
@@ -88,6 +89,11 @@ export function LoginPage() {
               required
             />
           </label>
+          {state?.changed ? (
+            <p role="status" className={styles.subtitle}>
+              Password changed. Sign in with the new one.
+            </p>
+          ) : null}
           <p id="login-error" role="alert" className={styles.error}>
             {closed ?? error}
           </p>

@@ -15,6 +15,7 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import expression
 
 from app.models.base import (
     ActorMixin,
@@ -47,6 +48,8 @@ class ShopSettings(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
     legal_name: Mapped[str] = mapped_column(String(200))
     trade_name: Mapped[str | None] = mapped_column(String(200))
     gstin: Mapped[str | None] = mapped_column(String(15))
+    pan: Mapped[str | None] = mapped_column(String(10))  # blank: taken from the GSTIN
+    cin: Mapped[str | None] = mapped_column(String(21))  # Corporate Identification Number
     state_code: Mapped[str] = mapped_column(String(2))
     address: Mapped[str] = mapped_column(Text, default="")
     phone: Mapped[str | None] = mapped_column(String(20))
@@ -170,6 +173,11 @@ class AppUser(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
     # The owner approves counter requests by typing this PIN (G18). Hashed like a password.
     pin_hash: Mapped[str | None] = mapped_column(String(255))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Set when Duolink gives the owner a temporary password: the user may only change it until
+    # they have (Milestone 18).
+    must_change_password: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=expression.false()
+    )
     failed_login_count: Mapped[int] = mapped_column(Integer, default=0)
     locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

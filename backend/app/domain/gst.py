@@ -12,6 +12,8 @@ from app.domain.money import ZERO, Numberish, money, round_off, to_decimal
 
 _GSTIN = re.compile(r"^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$")
 _GSTIN_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+_PAN = re.compile(r"^[A-Z]{5}[0-9]{4}[A-Z]$")
+_CIN = re.compile(r"^[LU][0-9]{5}[A-Z]{2}[0-9]{4}[A-Z]{3}[0-9]{6}$")
 
 
 STATE_NAMES = {
@@ -101,6 +103,17 @@ def line_tax(taxable: Numberish, rate: Numberish, kind: SupplyKind) -> LineTax:
         half = money(value * pct / 2 / 100)
         return LineTax(value, pct, cgst=half, sgst=half, igst=ZERO)
     return LineTax(value, pct, cgst=ZERO, sgst=ZERO, igst=money(value * pct / 100))
+
+
+def is_valid_pan(pan: str) -> bool:
+    """Five letters, four digits, one letter."""
+    return bool(_PAN.match(pan.strip().upper()))
+
+
+def is_valid_cin(cin: str) -> bool:
+    """The registrar's 21 characters: listed (L) or unlisted (U), industry code, state, year,
+    ownership type and a serial number. The layout is checked, not the registry."""
+    return bool(_CIN.match(cin.strip().upper()))
 
 
 def pan_of(gstin: str | None) -> str | None:

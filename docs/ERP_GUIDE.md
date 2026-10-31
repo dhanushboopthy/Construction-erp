@@ -55,7 +55,6 @@ Five promises the system keeps:
 
 | Promise | What it means in practice |
 | --- | --- |
-| Every bill is a real GST tax invoice | There is no "rough bill" or hidden mode. Walk-in customers get a B2C tax invoice. |
 | Issued documents are permanent | Bills, purchases, payments and notes cannot be edited or deleted (the database refuses). A mistake is fixed with a credit note, debit note or reversal. |
 | Stock and balances are never typed in | They are worked out from append-only ledgers. You cannot "set stock to 50"; you record the document that moved it. |
 | Counter staff never see cost or profit | The server removes those fields before answering, not just the screen. |

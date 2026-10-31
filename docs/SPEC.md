@@ -29,9 +29,6 @@ rows are kept apart by `tenant_id` and PostgreSQL row-level security (ADR 0011).
 - About 50 e-way bills a day, a daily closing report per shop, GSTR-1 and 3B data for the accountant.
 - The owner sees cost, margin and profit; counter staff do not.
 
-**Permanently out of scope:** any bill that is hidden, unaccounted or not a real GST document.
-Every invoice is a real tax invoice. Test data lives only in development or staging and is
-marked `TEST` (G27, ADR 0005).
 
 ## 2. Users and roles
 

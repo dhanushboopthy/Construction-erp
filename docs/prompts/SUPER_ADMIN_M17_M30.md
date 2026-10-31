@@ -1,7 +1,8 @@
 # Handoff: Duolink super admin, milestones 17 to 30
 
 This is the brief for a Claude Code session (Sonnet) that brings the Duolink super admin of the
-construction ERP up to what the WA project (Duolink AlignSuite, `../WA`) already has. Milestone
+construction ERP up to what the WA project (Duolink AlignSuite) already has. WA's behaviour is
+copied into `docs/reference/WA_SUPER_ADMIN.md`; the WA code is not in this repository. Milestone
 16 built a small admin: companies, users across companies, sign-in activity, plans and limits.
 Read this whole file before you start, then build the milestones in order, one branch and one
 pull request each.
@@ -66,16 +67,17 @@ milestone points to it.
      `test_no_admin_answer_carries_money`) and `test_tenancy.py`.
    - **Frontend:** `frontend/src/admin/` (`AdminApp.tsx`, `AdminShell.tsx`, `pages/*`, `api.ts`,
      `client.ts`).
-6. The WA reference. Read the parts named in each milestone:
-   - `../WA/README.md`: sections "Super Admin company access", "Super Admin company data
-     management", "Document numbering", "Backup & Recovery", "SaaS mode and online renewal",
-     "Company billing templates".
-   - `../WA/backend/src/Duolink.Alignment.Api/Controllers/AdminController.cs`: every
-     `/api/admin` endpoint, plus the request models at the top of the file.
-   - `AdminGstApiController.cs`, `SuperAdminBackupsController.cs`,
-     `AdminInvoiceTemplatesController.cs`, `SupportController.cs` and
-     `SubscriptionBillingController.cs` in the same folder.
-   - `../WA/web/src/pages/admin/*.tsx`: the 14 admin screens.
+6. **The WA reference: `docs/reference/WA_SUPER_ADMIN.md`.** Read it in full before M17, and
+   re-read the sections named in each milestone. It holds:
+   - the roles and the full admin API surface, with request rules (sections 1 and 2);
+   - the bell, maintenance mode, force update and GST API (sections 3 to 6);
+   - Razorpay renewal, "Login as Company", data management, numbering, backups and bill
+     templates, copied from WA's README (sections 7 to 12).
+
+   The WA class and screen names in the "WA reference" lines below (`AdminController.cs`,
+   `Plans.tsx` and so on) are pointers into that file. The WA code itself is not in this
+   repository, so do not look for it. If a sibling checkout `../WA` happens to exist, you may
+   read it, but nothing depends on it.
 
 ## 4. Start of session, environment, git
 
@@ -758,8 +760,8 @@ from the admin, safely.
 **Goal.** A Super Admin can see and set each company's number series, and can delete selected
 kinds of a company's business data, or all of it, under heavy guards.
 
-**WA reference.** README sections "Super Admin company data management" and "Document
-numbering" in full. They are the specification for this milestone, and every rule there
+**WA reference.** `docs/reference/WA_SUPER_ADMIN.md` sections 9 ("Super Admin company data
+management") and 10 ("Document numbering") in full. They are the specification for this milestone, and every rule there
 applies unless this section says otherwise. Endpoints: `GET /companies/{id}/data`,
 `/data/{key}`, `/data/preview`, `/data/delete`, `/data/delete-all`, `GET/PATCH
 /companies/{id}/numbering`. Tests to mirror: `CompanyDataManagementTests`,

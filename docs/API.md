@@ -60,7 +60,7 @@ Only at `admin.<BASE_DOMAIN>` (404 elsewhere), under `/admin`, with a Duolink ad
 | POST | `/admin/tenants {name, slug, plan, state_code, owner_username, owner_full_name, owner_password}` | New company with starter data and its first owner. 409 `SLUG_TAKEN` / `SLUG_INVALID` |
 | GET / PATCH | `/admin/tenants/{id}` `{name?, plan?, max_users?, max_locations?, trial_ends_at?}` | Detail; null limits return to the plan's |
 | POST | `/admin/tenants/{id}/suspend {reason}`, `/admin/tenants/{id}/reactivate` | Suspend ends every session and blocks sign-in |
-| GET | `/admin/users?tenant_id&q&role&state=active\|inactive\|locked` | Users of every company |
+| GET | `/admin/users?tenant_id&q&role&active&locked&never_signed_in&include_removed` | Users of every company (filters changed in M19) |
 | POST | `/admin/users/{id}/deactivate`, `/activate`, `/unlock`, `/sign-out` | Support actions (409 `LAST_OWNER`, `PLAN_USER_LIMIT`) |
 | POST | `/admin/users/{id}/reset-password` | `{temporary_password}`, shown once |
 | GET | `/admin/activity?tenant_id&action` · `/admin/audit?tenant_id&action` | Sign-ins at companies · what admins did |
@@ -85,6 +85,25 @@ activate, unlock, reset password, sign out). The sign-in routes need no role.
 
 Until a member has changed a temporary password, every other admin call answers 403
 `PASSWORD_CHANGE_REQUIRED` (only `/auth/me`, `/auth/change-password` and `/auth/logout` work).
+
+## Endpoints (Milestone 19: user support tools)
+
+Same address and token as Milestone 16. Writes need a **Super Admin**; Support reads (403
+`PERMISSION_DENIED` otherwise). Every action is in the platform audit log and in the company's own
+(as `Duolink: <admin>`). A removed account answers 409 `USER_REMOVED` to every change.
+
+| Method | Path | Role | What |
+| --- | --- | --- | --- |
+| GET | `/admin/users?q&tenant_id&role&active&locked&never_signed_in&include_removed&limit&offset` | any admin | `q` matches username, full name, company name or code. The booleans are `true` or `false`. Ordered by company, then username. Rows carry `mobile`, `must_change_password`, `removed_at` |
+| PATCH | `/admin/users/{id} {full_name?, mobile?, username?, role?, reason}` | Super Admin | Send only what changes; null `mobile` clears it. `reason` required (422). 409 `USERNAME_TAKEN`, `LAST_OWNER`, `COUNTER_NEEDS_LOCATION`, `USER_REMOVED` |
+| POST | `/admin/users/{id}/reset-password` | Super Admin | `{temporary_password}`, shown once. Ends every session; the user must change it (403 `PASSWORD_CHANGE_REQUIRED` until then). 409 `USER_REMOVED` |
+| GET | `/admin/users/{id}/sessions` | any admin | Live sessions, newest first: `[{id, device, user_agent, ip, signed_in_at, last_used_at, expires_at}]` |
+| DELETE | `/admin/users/{id}/sessions/{session_id}` | Super Admin | 204. Ends that session only. 404 `NOT_FOUND` if it is not this user's, or already ended |
+| POST | `/admin/users/{id}/remove {confirm_username, reason}` | Super Admin | Deactivate, end every session, set `removed_at`; the row is kept. 409 `CONFIRMATION_MISMATCH` (case-sensitive), `LAST_OWNER`, `USER_REMOVED` |
+| POST | `/admin/users/{id}/deactivate`, `/activate`, `/unlock`, `/sign-out` | Super Admin | As before; `activate` and `unlock` on a removed account answer 409 `USER_REMOVED` |
+
+Company side: `GET /users?include_removed=true` (owner) also lists removed accounts; by default
+they are hidden. Users now carry `mobile` and `removed_at`.
 
 ## Endpoints (Milestone 18: company profile and onboarding)
 

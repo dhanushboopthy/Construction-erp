@@ -8,8 +8,9 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 
 @router.get("", response_model=list[UserOut])
-def list_users(_: OwnerOnly, db: DbSession) -> list[UserOut]:
-    return [UserOut.model_validate(u) for u in user_service.list_users(db)]
+def list_users(_: OwnerOnly, db: DbSession, include_removed: bool = False) -> list[UserOut]:
+    """Accounts Duolink support removed are hidden unless `include_removed` is set."""
+    return [UserOut.model_validate(u) for u in user_service.list_users(db, include_removed)]
 
 
 @router.post("", response_model=UserOut, status_code=status.HTTP_201_CREATED)

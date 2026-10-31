@@ -62,9 +62,21 @@ whoever looks after the server. Commands run in the project folder on the server
   what a company sells or owes; there is no way to, by design.
 - **A company has left:** Overview, Status, write the reason and Close company. Everyone is signed
   out and nobody can sign in. The data is kept. To reopen it, write the reason and Reopen company.
+- **Find a user:** Users searches the name, username and company; filter by company, role, status
+  (active, deactivated, locked out, never signed in). "Show removed" includes removed accounts.
 - **A user is locked out or forgot their password:** Users, find them, then use Unlock or Reset
-  password. A reset shows a temporary password once. Read it out to them; they change it after
-  signing in.
+  password. A reset shows a temporary password once, with a Copy button. Read it out to them. All
+  their sessions end, and at the next sign-in they must choose their own password before anything
+  else opens. The temporary password cannot be shown again; reset again if it is lost.
+- **A user's name, mobile, username or role is wrong:** open them, Edit user, write the reason. A
+  username must be free in that company. You cannot make the last active owner anything else.
+- **A phone or PC was lost or shared:** open the user, "Signed in on" lists each device and
+  address; End signs out that one device only. Sign out everywhere ends them all.
+- **Someone has left the company:** open the user, Remove access, type their username and write the
+  reason. They are switched off, signed out and hidden from the owner's user list. Their account
+  is never deleted, so their name stays on the bills they made. The last active owner cannot be
+  removed: make another person an owner first. A removed account cannot be brought back from the
+  admin; add the person again with a new username if they return.
 - **A company does not pay:** open the company, write the reason, then Suspend company and
   confirm. Everyone there is signed out. Reactivate company undoes it. Nothing is deleted.
 - **Trials:** the overview lists trials ending this week. Change the plan, or move the trial end, on

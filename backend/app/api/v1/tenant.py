@@ -26,7 +26,8 @@ def plan(_: OwnerOnly, db: DbSession) -> TenantPlanOut:
     """The company's plan and how much of it is in use (Settings, Users)."""
     used = tenant_service.usage(db)
     return TenantPlanOut(
-        plan=used.tenant.plan,
+        plan=used.tenant.plan.code,
+        plan_name=used.tenant.plan.name,
         status=used.tenant.status,
         trial_ends_at=used.tenant.trial_ends_at,
         users=used.users,

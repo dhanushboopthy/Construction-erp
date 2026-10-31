@@ -5,7 +5,7 @@ from fastapi import APIRouter, File, Query, Request, UploadFile, status
 from app.api.deps import DbSession, PlatformAdminUser, SuperAdminOnly, request_host
 from app.core.config import get_settings
 from app.domain.plans import TrialState
-from app.models.enums import TenantPlan, TenantStatus
+from app.models.enums import TenantStatus
 from app.schemas.common import Page
 from app.schemas.platform import (
     CancelRequest,
@@ -44,7 +44,7 @@ def list_tenants(
     db: DbSession,
     q: str | None = None,
     status: TenantStatus | None = None,
-    plan: TenantPlan | None = None,
+    plan: Annotated[str | None, Query(description="a plan's code, e.g. PRO")] = None,
     trial: TrialState | None = None,
     expiring: Annotated[bool, Query(description="trial ends within 30 days")] = False,
     sort: Literal["name", "created", "last_activity", "users"] = "name",

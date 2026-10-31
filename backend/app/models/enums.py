@@ -21,10 +21,12 @@ class TenantStatus(StrEnum):
     CANCELLED = "cancelled"
 
 
-class TenantPlan(StrEnum):
-    TRIAL = "trial"
-    BASIC = "basic"
-    PRO = "pro"
+class DurationUnit(StrEnum):
+    """How long one price of a plan lasts (Milestone 20)."""
+
+    DAY = "day"
+    MONTH = "month"
+    YEAR = "year"
 
 
 class PlatformRole(StrEnum):
@@ -63,6 +65,11 @@ class PlatformAction(StrEnum):
     USER_UPDATE = "user_update"
     USER_SESSION_REVOKE = "user_session_revoke"
     USER_REMOVE = "user_remove"
+    PLAN_CREATE = "plan_create"
+    PLAN_UPDATE = "plan_update"
+    PLAN_DUPLICATE = "plan_duplicate"
+    PLAN_ARCHIVE = "plan_archive"
+    PLAN_DELETE = "plan_delete"
 
 
 class LocationKind(StrEnum):

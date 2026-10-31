@@ -88,34 +88,34 @@ def test_an_unknown_status_action_is_a_programming_error():
 
 def test_a_trial_plan_company_starts_on_a_trial_of_the_chosen_length():
     # 31 Oct 2026 09:00 + 30 days = 30 Nov 2026 09:00; the default is 14 days.
-    status, ends = onboarding_terms("trial", start_active=False, trial_days=30, now=NOW)
+    status, ends = onboarding_terms("TRIAL", start_active=False, trial_days=30, now=NOW)
     assert (status, ends) == ("trial", NOW + timedelta(days=30))
-    status, ends = onboarding_terms("trial", start_active=False, trial_days=None, now=NOW)
+    status, ends = onboarding_terms("TRIAL", start_active=False, trial_days=None, now=NOW)
     assert ends == NOW + timedelta(days=TRIAL_DAYS)
 
 
 def test_start_active_skips_the_trial():
-    assert onboarding_terms("trial", start_active=True, trial_days=None, now=NOW) == (
+    assert onboarding_terms("TRIAL", start_active=True, trial_days=None, now=NOW) == (
         "active",
         None,
     )
 
 
 def test_a_paid_plan_starts_active_with_no_trial():
-    assert onboarding_terms("basic", start_active=False, trial_days=None, now=NOW) == (
+    assert onboarding_terms("BASIC", start_active=False, trial_days=None, now=NOW) == (
         "active",
         None,
     )
-    assert onboarding_terms("pro", start_active=True, trial_days=None, now=NOW) == ("active", None)
+    assert onboarding_terms("PRO", start_active=True, trial_days=None, now=NOW) == ("active", None)
 
 
 @pytest.mark.parametrize(
     ("plan", "start_active", "days", "code"),
     [
-        ("trial", True, 10, "TRIAL_CONFLICT"),  # "start active" and a trial length together
-        ("basic", False, 10, "TRIAL_ON_PAID_PLAN"),
-        ("trial", False, 0, "TRIAL_DAYS"),
-        ("trial", False, MAX_TRIAL_DAYS + 1, "TRIAL_DAYS"),
+        ("TRIAL", True, 10, "TRIAL_CONFLICT"),  # "start active" and a trial length together
+        ("BASIC", False, 10, "TRIAL_ON_PAID_PLAN"),
+        ("TRIAL", False, 0, "TRIAL_DAYS"),
+        ("TRIAL", False, MAX_TRIAL_DAYS + 1, "TRIAL_DAYS"),
     ],
 )
 def test_onboarding_terms_that_contradict_themselves_are_refused(plan, start_active, days, code):

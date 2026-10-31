@@ -6,12 +6,12 @@ import { SelectField, TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
 import { formatDateTime } from "@/lib/format";
 
-import { useUpdateTenant } from "../../api";
+import { usePlans, useUpdateTenant } from "../../api";
 import adminStyles from "../../Admin.module.css";
 import { useAdminAuth } from "../../AdminAuthContext";
 import { Badge } from "../../Badge";
-import { PLAN, STATUS, TRIAL } from "../../labels";
-import type { TenantDetail, TenantPlan, TenantUpdate } from "../../types";
+import { STATUS, TRIAL, limitsNote } from "../../labels";
+import type { TenantDetail, TenantUpdate } from "../../types";
 
 const IST = "Asia/Kolkata";
 
@@ -43,7 +43,7 @@ export function SubscriptionTab({ tenant }: { tenant: TenantDetail }) {
             ) : null}
           </dd>
           <dt>Plan</dt>
-          <dd>{PLAN[tenant.plan].label}</dd>
+          <dd>{tenant.plan_name}</dd>
           <dt>Own user limit</dt>
           <dd>{tenant.own_max_users ?? "The plan's limit"}</dd>
           <dt>Own limit for shops and godowns</dt>
@@ -60,7 +60,11 @@ export function SubscriptionTab({ tenant }: { tenant: TenantDetail }) {
 
 function PlanForm({ tenant }: { tenant: TenantDetail }) {
   const update = useUpdateTenant(tenant.id);
-  const [plan, setPlan] = useState<TenantPlan>(tenant.plan);
+  const plans = usePlans().data ?? [];
+  const [plan, setPlan] = useState(tenant.plan);
+  // Archived plans are not offered, except the one the company is on already.
+  const offered = plans.filter((p) => p.is_active || p.code === tenant.plan);
+  const picked = plans.find((p) => p.code === plan);
   const [maxUsers, setMaxUsers] = useState(tenant.own_max_users?.toString() ?? "");
   const [maxLocations, setMaxLocations] = useState(tenant.own_max_locations?.toString() ?? "");
   const [trialEnds, setTrialEnds] = useState(dayOf(tenant.trial_ends_at));
@@ -95,13 +99,14 @@ function PlanForm({ tenant }: { tenant: TenantDetail }) {
       <SelectField
         label="Plan"
         value={plan}
-        onChange={(e) => setPlan(e.target.value as TenantPlan)}
-        hint={PLAN[plan].note}
+        onChange={(e) => setPlan(e.target.value)}
+        hint={picked ? limitsNote(picked) : undefined}
         error={fieldError("plan")}
       >
-        {(Object.keys(PLAN) as TenantPlan[]).map((p) => (
-          <option key={p} value={p}>
-            {PLAN[p].label}
+        {offered.map((p) => (
+          <option key={p.code} value={p.code}>
+            {p.name}
+            {p.is_active ? "" : " (archived)"}
           </option>
         ))}
       </SelectField>

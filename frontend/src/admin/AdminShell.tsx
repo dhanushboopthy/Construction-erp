@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   LogOut,
   ShieldCheck,
+  Tags,
   Users,
 } from "lucide-react";
 import { useEffect } from "react";
@@ -23,6 +24,7 @@ const NAV = [
   { to: "/admin/users", label: "Users", icon: Users, key: "3", end: false },
   { to: "/admin/activity", label: "Activity", icon: Activity, key: "4", end: false },
   { to: "/admin/staff", label: "Staff", icon: IdCard, key: "5", end: false },
+  { to: "/admin/plans", label: "Plans", icon: Tags, key: "6", end: false },
 ];
 
 function initials(name: string) {
@@ -37,7 +39,7 @@ export function AdminShell() {
   const { admin, signOut } = useAdminAuth();
   const navigate = useNavigate();
 
-  // Alt+1-5 move between sections, as Alt+number does in the company app.
+  // Alt+1-6 move between sections, as Alt+number does in the company app.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (!event.altKey || event.ctrlKey || event.metaKey) return;

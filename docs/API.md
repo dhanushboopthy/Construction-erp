@@ -86,6 +86,30 @@ activate, unlock, reset password, sign out). The sign-in routes need no role.
 Until a member has changed a temporary password, every other admin call answers 403
 `PASSWORD_CHANGE_REQUIRED` (only `/auth/me`, `/auth/change-password` and `/auth/logout` work).
 
+## Endpoints (Milestone 20: plans and pricing catalogue)
+
+Same address and token as Milestone 16. Reads are open to any admin; writes need a **Super Admin**
+(403 `PERMISSION_DENIED` otherwise). These are the only admin paths that carry a price.
+Prices are Decimal strings (`"999.90"`); a JSON number with a fraction answers 422. Every write is
+in the platform audit log.
+
+| Method | Path | Role | What |
+| --- | --- | --- | --- |
+| GET | `/admin/billing/plans?include_archived` | any admin | Plans in order, with `prices[]`, `features[]` and `companies` (how many are on it). `include_archived=false` is what the onboarding picker uses |
+| GET | `/admin/billing/plans/features` | any admin | The feature catalogue `[{code, name, description}]` |
+| GET | `/admin/billing/plans/{id}` | any admin | One plan. 404 `PLAN_NOT_FOUND` |
+| POST | `/admin/billing/plans {code, name, short_description?, long_description?, max_users, max_locations, features?, is_popular?, sort_order?, prices[], reason?}` | Super Admin | 201. `prices[]` is `{duration_value, duration_unit: day\|month\|year, price, is_active?}`. 409 `PLAN_CODE_TAKEN`, `PLAN_CODE_INVALID`, `PLAN_PRICE_COUNT` (1 to 6), `PLAN_PRICE_DUPLICATE`, `PLAN_PRICE_DURATION`, `PLAN_PRICE_AMOUNT`, `PLAN_FEATURE_UNKNOWN`, `PLAN_LIMIT_INVALID` |
+| PATCH | `/admin/billing/plans/{id}` `{name?, short_description?, long_description?, max_users?, max_locations?, features?, prices?, is_active?, is_popular?, sort_order?, reason?}` | Super Admin | Send only what changes; `prices` replaces the whole list; `is_active: true` restores an archived plan. Setting `is_popular` clears it elsewhere. 409 as above, and `PLAN_INACTIVE` for popular on an archived plan. The code never changes |
+| POST | `/admin/billing/plans/{id}/duplicate` | Super Admin | 201. Next free code (`PRO_COPY`, `PRO_COPY_2`), same limits, features and prices, never popular |
+| POST | `/admin/billing/plans/{id}/archive {reason}` | Super Admin | Hidden from pickers; clears `is_popular`. Companies on it keep it |
+| POST | `/admin/billing/plans/{id}/delete {confirmation: "DELETE", reason}` | Super Admin | 204. 409 `CONFIRMATION_MISMATCH` (case-sensitive), `PLAN_IN_USE` while any company is on it |
+
+Changed elsewhere: `plan` on `/admin/tenants` rows, the create and update bodies and the `plan`
+filter is now a plan code (`TRIAL`, `BASIC`, `PRO`, or any code Duolink added; sent in any case,
+answered in capitals), with `plan_id` and `plan_name` on rows. Giving a company an unknown plan
+answers 404 `PLAN_NOT_FOUND`; an archived one, 409 `PLAN_INACTIVE` (a company may stay on its own
+archived plan). `GET /tenant/plan` (owner) answers `plan` as the code and `plan_name`.
+
 ## Endpoints (Milestone 19: user support tools)
 
 Same address and token as Milestone 16. Writes need a **Super Admin**; Support reads (403

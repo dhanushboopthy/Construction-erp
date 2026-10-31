@@ -20,7 +20,13 @@ from app.models.orders import (
     PurchaseOrderLine,
     SalesLineLot,
 )
-from app.models.platform import PlatformAdmin, PlatformAuditLog, PlatformSession
+from app.models.platform import (
+    PlatformAdmin,
+    PlatformAuditLog,
+    PlatformPlan,
+    PlatformPlanPrice,
+    PlatformSession,
+)
 from app.models.purchasing import CostComponent, Payment, Purchase, PurchaseCost, PurchaseLine
 from app.models.rates import CustomerRate, ItemMargin, MarketRate
 from app.models.receivables import BadDebtWriteoff
@@ -81,6 +87,8 @@ __all__ = [
     "Payment",
     "PlatformAdmin",
     "PlatformAuditLog",
+    "PlatformPlan",
+    "PlatformPlanPrice",
     "PlatformSession",
     "Purchase",
     "PurchaseCost",

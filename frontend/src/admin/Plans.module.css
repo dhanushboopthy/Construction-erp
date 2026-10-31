@@ -1,0 +1,152 @@
+/* The plan catalogue: a card per plan, and the editor with a live card beside the form. */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.card {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-raised);
+}
+
+.card[data-popular="true"] {
+  outline: 2px solid var(--color-accent);
+}
+
+.card[data-archived="true"] {
+  opacity: 0.75;
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.cardName {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+}
+
+.code {
+  color: var(--color-secondary);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-caps);
+}
+
+.tagline {
+  margin: 0;
+  color: var(--color-secondary);
+  font-size: var(--text-sm);
+}
+
+.prices {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.prices li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.amount {
+  font-size: var(--text-md);
+  font-weight: 700;
+}
+
+.limits {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.features {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+}
+
+.features li::before {
+  content: "✓ ";
+  color: var(--color-good);
+  font-weight: 700;
+}
+
+.inUse {
+  margin: 0;
+  color: var(--color-secondary);
+  font-size: var(--text-xs);
+}
+
+.cardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* The editor: the form on the left, the card as the company would be sold it on the right. */
+.editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  gap: var(--space-5);
+  align-items: start;
+}
+
+.preview {
+  position: sticky;
+  top: var(--space-4);
+  display: grid;
+  gap: var(--space-2);
+}
+
+.previewLabel {
+  margin: 0;
+  color: var(--color-secondary);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+.priceRow {
+  display: grid;
+  grid-template-columns: 90px 120px minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  align-items: end;
+}
+
+.featureGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-2);
+}
+
+@media (max-width: 900px) {
+  .editor {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .preview {
+    position: static;
+  }
+
+  .priceRow {
+    grid-template-columns: 1fr 1fr;
+  }
+}

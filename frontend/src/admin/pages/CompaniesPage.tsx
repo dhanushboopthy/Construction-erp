@@ -7,10 +7,10 @@ import styles from "@/components/Ledger.module.css";
 import { moveRowFocus, useAltKey } from "@/hooks/useKeys";
 import { formatDateTime } from "@/lib/format";
 
-import { COMPANY_PAGE_SIZE, useTenants } from "../api";
+import { COMPANY_PAGE_SIZE, usePlans, useTenants } from "../api";
 import { useAdminAuth } from "../AdminAuthContext";
 import { Badge, Usage } from "../Badge";
-import { PLAN, STATUS, STATUS_ORDER, TRIAL } from "../labels";
+import { STATUS, STATUS_ORDER, TRIAL } from "../labels";
 
 const TRIAL_STATES = [
   { value: "running", label: "Trial running" },
@@ -24,7 +24,6 @@ const SORTS = [
   { value: "last_activity", label: "Last activity" },
   { value: "users", label: "Users" },
 ];
-import type { TenantPlan } from "../types";
 
 export function CompaniesPage() {
   const navigate = useNavigate();
@@ -38,6 +37,7 @@ export function CompaniesPage() {
   const sort = params.get("sort") ?? "name";
   const order = params.get("order") === "desc" ? "desc" : "asc";
   const page = Math.max(0, Number(params.get("page") ?? 0) || 0);
+  const plans = usePlans();
   const tenants = useTenants({
     q: params.get("q") ?? "",
     status,
@@ -110,9 +110,10 @@ export function CompaniesPage() {
         </SelectField>
         <SelectField label="Plan" value={plan} onChange={(e) => setFilter("plan", e.target.value)}>
           <option value="">Any plan</option>
-          {(Object.keys(PLAN) as TenantPlan[]).map((p) => (
-            <option key={p} value={p}>
-              {PLAN[p].label}
+          {(plans.data ?? []).map((p) => (
+            <option key={p.code} value={p.code}>
+              {p.name}
+              {p.is_active ? "" : " (archived)"}
             </option>
           ))}
         </SelectField>
@@ -199,7 +200,7 @@ export function CompaniesPage() {
                           </div>
                         ) : null}
                       </td>
-                      <td>{PLAN[t.plan].label}</td>
+                      <td>{t.plan_name}</td>
                       <td>
                         <Usage used={t.users} limit={t.max_users} label="active users" />
                       </td>

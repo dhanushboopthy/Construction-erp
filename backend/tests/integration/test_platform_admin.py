@@ -98,7 +98,7 @@ def test_admin_sign_in(client, admin):
 
 
 def test_a_new_company_starts_on_a_trial_and_its_owner_signs_in_at_its_address(client, acme):
-    assert acme["slug"] == "acme" and acme["status"] == "trial" and acme["plan"] == "trial"
+    assert acme["slug"] == "acme" and acme["status"] == "trial" and acme["plan"] == "TRIAL"
     assert acme["trial_state"] == "running" and acme["trial_ends_at"]
     assert (acme["users"], acme["max_users"]) == (1, 5)
     assert (acme["locations"], acme["max_locations"]) == (2, 2)
@@ -121,7 +121,7 @@ def test_the_company_list_shows_usage_and_searches(client, admin, acme):
     rows = client.get("/api/v1/admin/tenants", headers=admin).json()["items"]
     by_slug = {r["slug"]: r for r in rows}
     assert {"main", "acme"} <= set(by_slug)
-    assert by_slug["main"]["users"] == 4 and by_slug["main"]["plan"] == "pro"
+    assert by_slug["main"]["users"] == 4 and by_slug["main"]["plan"] == "PRO"
     found = client.get("/api/v1/admin/tenants", headers=admin, params={"q": "acme"}).json()
     assert [r["slug"] for r in found["items"]] == ["acme"]
     trial = client.get("/api/v1/admin/tenants", headers=admin, params={"status": "trial"}).json()
@@ -297,9 +297,15 @@ def test_every_admin_action_is_written_down_and_kept(client, admin, acme, seeded
         seeded.execute(text("UPDATE platform_audit_log SET action = 'login'"))
 
 
-# Duolink's own revenue (plan prices, subscription payments) may appear only under this prefix
-# (ADR 0013). No such path exists before Milestone 20; every other admin path is checked below.
+# Duolink's own revenue (plan prices, later subscription payments) may appear only on these
+# paths (ADR 0013). A new billing path must be added here on purpose; every other admin path is
+# checked below and must carry no money-like field.
 MONEY_ALLOWED_PREFIX = "/api/v1/admin/billing/"
+MONEY_ALLOWED_PATHS = {
+    "/api/v1/admin/billing/plans",
+    "/api/v1/admin/billing/plans/features",
+    "/api/v1/admin/billing/plans/{plan_id}",
+}
 MONEY_WORDS = re.compile(r"amount|cost|price|rate|profit|margin|balance|taxable|gst|value|paid")
 
 
@@ -315,11 +321,13 @@ def _keys(value):
 
 def test_no_admin_answer_carries_money(client, admin, acme):
     paths = [p for p in app.openapi()["paths"] if p.startswith("/api/v1/admin/")]
-    gets = [
+    billing_gets = {
         p
         for p in paths
-        if "get" in app.openapi()["paths"][p] and not p.startswith(MONEY_ALLOWED_PREFIX)
-    ]
+        if "get" in app.openapi()["paths"][p] and p.startswith(MONEY_ALLOWED_PREFIX)
+    }
+    assert billing_gets == MONEY_ALLOWED_PATHS  # nothing is allowed by accident
+    gets = [p for p in paths if "get" in app.openapi()["paths"][p] and p not in billing_gets]
     checked = 0
     ravi = _user_id(client, admin, "acme", "ravi")
     for path in gets:

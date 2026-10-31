@@ -7,6 +7,10 @@ import type {
   AdminAction,
   Overview,
   Page,
+  Plan,
+  PlanCreate,
+  PlanFeature,
+  PlanUpdate,
   PlatformUser,
   PlatformUserUpdate,
   SignInEvent,
@@ -38,6 +42,7 @@ const keys = {
   activity: ["admin", "activity"] as const,
   audit: ["admin", "audit"] as const,
   staff: ["admin", "staff"] as const,
+  plans: ["admin", "plans"] as const,
 };
 
 export function useOverview() {
@@ -239,6 +244,85 @@ export function useRemoveUser(id: number) {
   return useMutation({
     mutationFn: (body: { confirm_username: string; reason: string }) =>
       adminApi<PlatformUser>(`/users/${id}/remove`, { method: "POST", body: json(body) }),
+    onSuccess: () => refresh(),
+  });
+}
+
+// ------------------------------------------------------------------ plans (Milestone 20)
+
+/** Every plan, archived ones too unless `includeArchived` is false (the onboarding picker). */
+export function usePlans(includeArchived = true) {
+  return useQuery({
+    queryKey: [...keys.plans, includeArchived],
+    queryFn: () =>
+      adminApi<Plan[]>(
+        `/billing/plans${query({ include_archived: includeArchived ? "" : "false" })}`,
+      ),
+  });
+}
+
+/** One plan, fetched afresh each time it is asked for (dialogs show the live count). */
+export function usePlan(id: number) {
+  return useQuery({
+    queryKey: [...keys.plans, "one", id],
+    queryFn: () => adminApi<Plan>(`/billing/plans/${id}`),
+    staleTime: 0,
+    gcTime: 0,
+  });
+}
+
+export function usePlanFeatures() {
+  return useQuery({
+    queryKey: [...keys.plans, "features"],
+    queryFn: () => adminApi<PlanFeature[]>("/billing/plans/features"),
+    staleTime: Infinity,
+  });
+}
+
+export function useCreatePlan() {
+  const refresh = useRefreshAll();
+  return useMutation({
+    mutationFn: (body: PlanCreate) =>
+      adminApi<Plan>("/billing/plans", { method: "POST", body: json(body) }),
+    onSuccess: () => refresh(),
+  });
+}
+
+export function useUpdatePlan(id: number) {
+  const refresh = useRefreshAll();
+  return useMutation({
+    mutationFn: (body: PlanUpdate) =>
+      adminApi<Plan>(`/billing/plans/${id}`, { method: "PATCH", body: json(body) }),
+    onSuccess: () => refresh(),
+  });
+}
+
+export function useDuplicatePlan() {
+  const refresh = useRefreshAll();
+  return useMutation({
+    mutationFn: (id: number) =>
+      adminApi<Plan>(`/billing/plans/${id}/duplicate`, { method: "POST" }),
+    onSuccess: () => refresh(),
+  });
+}
+
+export function useArchivePlan(id: number) {
+  const refresh = useRefreshAll();
+  return useMutation({
+    mutationFn: (reason: string) =>
+      adminApi<Plan>(`/billing/plans/${id}/archive`, {
+        method: "POST",
+        body: json({ reason }),
+      }),
+    onSuccess: () => refresh(),
+  });
+}
+
+export function useDeletePlan(id: number) {
+  const refresh = useRefreshAll();
+  return useMutation({
+    mutationFn: (body: { confirmation: string; reason: string }) =>
+      adminApi<undefined>(`/billing/plans/${id}/delete`, { method: "POST", body: json(body) }),
     onSuccess: () => refresh(),
   });
 }

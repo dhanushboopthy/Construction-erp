@@ -93,7 +93,7 @@ def test_a_super_admin_onboards_a_company_in_one_form_and_its_owner_signs_in(cli
     assert acme["sign_in_url"] == "http://acme.localhost"
     assert (acme["status"], acme["plan"], acme["state_code"], acme["city"]) == (
         "trial",
-        "trial",
+        "TRIAL",
         "33",
         "Coimbatore",
     )
@@ -165,7 +165,7 @@ def test_trial_length_start_active_and_paid_plans(client, boss):
     assert (active["status"], active["trial_ends_at"]) == ("active", None)
 
     paid = onboard(client, boss, slug="paid", plan="basic")
-    assert (paid["status"], paid["plan"], paid["trial_ends_at"]) == ("active", "basic", None)
+    assert (paid["status"], paid["plan"], paid["trial_ends_at"]) == ("active", "BASIC", None)
 
     for changes, code in (
         ({"slug": "xa1", "start_active": True, "trial_days": 10}, "TRIAL_CONFLICT"),

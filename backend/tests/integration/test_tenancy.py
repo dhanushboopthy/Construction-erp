@@ -220,7 +220,16 @@ def test_every_company_table_has_row_level_security(seeded):
 
 def test_every_table_belongs_to_a_company(seeded):
     """New tables must carry tenant_id (TenantMixin); only these are shared by all companies."""
-    shared = {"tenant", "alembic_version", "platform_admin", "platform_session"}
+    shared = {
+        "tenant",
+        "alembic_version",
+        "platform_admin",
+        "platform_session",
+        # What Duolink sells (M20): no company owns a plan, and every company reads its own
+        # plan's limits. Only the admin API (SuperAdminOnly) changes them.
+        "platform_plan",
+        "platform_plan_price",
+    }
     missing = seeded.execute(
         text(
             "SELECT t.table_name FROM information_schema.tables t "

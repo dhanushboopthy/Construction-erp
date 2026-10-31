@@ -20,7 +20,8 @@ from app.core.db import SessionLocal
 from app.core.security import hash_password
 from app.core.tenancy import set_tenant
 from app.domain.tenancy import check_slug
-from app.models.enums import LocationKind, Role, TenantPlan, TenantStatus
+from app.models.enums import LocationKind, Role, TenantStatus
+from app.models.platform import PlatformPlan
 from app.models.setup import AppUser
 from app.models.tenancy import Tenant
 from app.services import onboarding
@@ -59,7 +60,8 @@ def _tenant(db: Session, slug: str | None, shop_name: str, notes: list[str]) -> 
     slug = check_slug(slug or get_settings().default_tenant_slug or "main")
     tenant = db.execute(select(Tenant).where(Tenant.slug == slug)).scalar_one_or_none()
     if tenant is None:
-        tenant = Tenant(slug=slug, name=shop_name, status=TenantStatus.ACTIVE, plan=TenantPlan.PRO)
+        pro = db.execute(select(PlatformPlan.id).where(PlatformPlan.code == "PRO")).scalar_one()
+        tenant = Tenant(slug=slug, name=shop_name, status=TenantStatus.ACTIVE, plan_id=pro)
         db.add(tenant)
         db.flush()
         notes.append(f"created company {slug}")

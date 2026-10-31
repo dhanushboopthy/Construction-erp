@@ -128,7 +128,13 @@ def test_every_route_is_listed_so_none_can_be_forgotten():
 
 @pytest.mark.parametrize(("method", "path"), WRITES, ids=[f"{m} {p}" for m, p in WRITES])
 def test_support_gets_403_on_every_write_route(client, helper, acme, method, path):
-    ids = {"tenant_id": acme["id"], "user_id": 1, "staff_id": 1, "session_id": SESSION_ID}
+    ids = {
+        "tenant_id": acme["id"],
+        "user_id": 1,
+        "staff_id": 1,
+        "session_id": SESSION_ID,
+        "plan_id": 1,
+    }
     response = client.request(method, _fill(path, ids), headers=helper, json={})
     assert response.status_code == 403, f"{method} {path}: {response.status_code}"
     assert response.json()["code"] == "PERMISSION_DENIED"
@@ -137,7 +143,14 @@ def test_support_gets_403_on_every_write_route(client, helper, acme, method, pat
 @pytest.mark.parametrize(("method", "path"), READS, ids=[f"{m} {p}" for m, p in READS])
 def test_support_gets_200_on_every_read_route(client, helper, acme, method, path):
     some_user = client.get("/api/v1/admin/users", headers=helper).json()["items"][0]["id"]
-    ids = {"tenant_id": acme["id"], "user_id": some_user, "staff_id": 1, "session_id": SESSION_ID}
+    some_plan = client.get("/api/v1/admin/billing/plans", headers=helper).json()[0]["id"]
+    ids = {
+        "tenant_id": acme["id"],
+        "user_id": some_user,
+        "staff_id": 1,
+        "session_id": SESSION_ID,
+        "plan_id": some_plan,
+    }
     response = client.get(_fill(path, ids), headers=helper)
     assert response.status_code == 200, f"{path}: {response.text}"
 

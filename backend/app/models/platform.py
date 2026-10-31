@@ -20,9 +20,10 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.sql import expression
 
 from app.models.base import Base, IntPK, TimestampMixin
-from app.models.enums import PlatformAction, str_enum
+from app.models.enums import PlatformAction, PlatformRole, str_enum
 
 
 class PlatformAdmin(Base, TimestampMixin):
@@ -31,7 +32,17 @@ class PlatformAdmin(Base, TimestampMixin):
     id: Mapped[IntPK]
     email: Mapped[str] = mapped_column(String(200), unique=True)
     full_name: Mapped[str] = mapped_column(String(100))
+    mobile: Mapped[str | None] = mapped_column(String(20))
     password_hash: Mapped[str] = mapped_column(String(255))
+    role: Mapped[PlatformRole] = mapped_column(
+        str_enum(PlatformRole, "platform_role"),
+        default=PlatformRole.SUPPORT,
+        server_default=PlatformRole.SUPPORT.value,
+    )
+    # Set for a temporary password: the admin may only change it until they have.
+    must_change_password: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=expression.false()
+    )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     failed_login_count: Mapped[int] = mapped_column(Integer, default=0)
     locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -69,6 +80,8 @@ class PlatformAuditLog(Base):
     action: Mapped[PlatformAction] = mapped_column(str_enum(PlatformAction, "platform_action"))
     tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenant.id"), index=True)
     target_user_id: Mapped[int | None] = mapped_column(Integer)
+    # The staff member an action was done to (M17); target_user_id is a company user.
+    target_admin_id: Mapped[int | None] = mapped_column(ForeignKey("platform_admin.id"))
     details: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     request_id: Mapped[str | None] = mapped_column(String(64))
     ip: Mapped[str | None] = mapped_column(String(64))

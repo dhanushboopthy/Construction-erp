@@ -19,3 +19,7 @@ export type SignInEvent = Schemas["SignInEvent"];
 export type AdminAction = Schemas["PlatformAuditRow"];
 export type AdminActionKind = Schemas["PlatformAction"];
 export type Page<T> = { items: T[]; total: number; limit: number; offset: number };
+export type PlatformRole = Schemas["PlatformRole"];
+export type StaffMember = Schemas["StaffRow"];
+export type StaffCreate = Schemas["StaffCreate"];
+export type StaffUpdate = Schemas["StaffUpdate"];

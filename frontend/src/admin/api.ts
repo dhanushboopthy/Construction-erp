@@ -9,6 +9,9 @@ import type {
   Page,
   PlatformUser,
   SignInEvent,
+  StaffCreate,
+  StaffMember,
+  StaffUpdate,
   TenantCreate,
   TenantDetail,
   TenantRow,
@@ -28,6 +31,7 @@ const keys = {
   users: ["admin", "users"] as const,
   activity: ["admin", "activity"] as const,
   audit: ["admin", "audit"] as const,
+  staff: ["admin", "staff"] as const,
 };
 
 export function useOverview() {
@@ -151,5 +155,49 @@ export function useAdminActions(filters: { tenant_id?: number } = {}) {
     queryKey: [...keys.audit, filters],
     queryFn: () => adminApi<Page<AdminAction>>(`/audit${query({ ...filters, limit: 100 })}`),
     placeholderData: keepPreviousData,
+  });
+}
+
+export function useStaff() {
+  return useQuery({ queryKey: keys.staff, queryFn: () => adminApi<StaffMember[]>("/staff") });
+}
+
+export function useCreateStaff() {
+  const refresh = useRefreshAll();
+  return useMutation({
+    mutationFn: (body: StaffCreate) =>
+      adminApi<StaffMember>("/staff", { method: "POST", body: json(body) }),
+    onSuccess: () => refresh(),
+  });
+}
+
+export function useUpdateStaff() {
+  const refresh = useRefreshAll();
+  return useMutation({
+    mutationFn: ({ id, ...body }: StaffUpdate & { id: number }) =>
+      adminApi<StaffMember>(`/staff/${id}`, { method: "PATCH", body: json(body) }),
+    onSuccess: () => refresh(),
+  });
+}
+
+export type StaffAction = "unlock" | "sign-out";
+
+export function useStaffAction() {
+  const refresh = useRefreshAll();
+  return useMutation({
+    mutationFn: ({ id, action }: { id: number; action: StaffAction }) =>
+      adminApi<StaffMember>(`/staff/${id}/${action}`, { method: "POST" }),
+    onSuccess: () => refresh(),
+  });
+}
+
+export function useResetStaffPassword() {
+  const refresh = useRefreshAll();
+  return useMutation({
+    mutationFn: (id: number) =>
+      adminApi<{ temporary_password: string }>(`/staff/${id}/reset-password`, {
+        method: "POST",
+      }),
+    onSuccess: () => refresh(),
   });
 }

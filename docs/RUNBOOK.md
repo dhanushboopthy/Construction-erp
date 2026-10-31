@@ -33,7 +33,16 @@ whoever looks after the server. Commands run in the project folder on the server
 
 - **First admin:** on the server, `docker compose -f docker-compose.prod.yml exec -e
   PLATFORM_ADMIN_PASSWORD=... backend python -m app.scripts.create_platform_admin
-  you@duolink.app "Your Name"`. Without the variable, a password is printed once.
+  you@duolink.app "Your Name"`. Without the variable, a password is printed once. It creates a
+  Super Admin; add `--role support` for a read-only account.
+- **Two roles:** a Super Admin changes companies, users and staff. Support only reads. Keep the
+  Super Admins few. Add everyone else on the Staff page (Super Admin only) with a temporary
+  password; they must choose their own at the first sign-in.
+- **A staff member forgot their password or is locked out:** Staff, open them, Reset password (a
+  temporary password, shown once) or Unlock. If the only Super Admin is locked out, run
+  `create_platform_admin` on the server for a second Super Admin, then unlock the first.
+- **A staff member leaves:** Staff, open them, Deactivate. They are signed out at once. The last
+  active Super Admin cannot be deactivated, so promote a replacement first.
 - **A new company:** Companies, Add company. Give the legal name, the company code (its address),
   the GST state, the plan and the first owner. Hand the owner their address and password in person.
 - **A user is locked out or forgot their password:** Users, find them, then use Unlock or Reset

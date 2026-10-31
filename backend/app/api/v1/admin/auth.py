@@ -5,7 +5,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Request, Response, status
 
-from app.api.deps import DbSession, PlatformAdminUser
+from app.api.deps import DbSession, PlatformAdminAnyState
 from app.core.config import get_settings
 from app.core.errors import AuthenticationError
 from app.models.platform import PlatformAdmin
@@ -86,13 +86,13 @@ def _admin(db: DbSession, admin_id: int) -> PlatformAdmin:
 
 
 @router.get("/me", response_model=AdminOut)
-def me(principal: PlatformAdminUser, db: DbSession) -> AdminOut:
+def me(principal: PlatformAdminAnyState, db: DbSession) -> AdminOut:
     return AdminOut.model_validate(_admin(db, principal.admin_id))
 
 
 @router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT)
 def change_password(
-    body: AdminChangePassword, principal: PlatformAdminUser, response: Response, db: DbSession
+    body: AdminChangePassword, principal: PlatformAdminAnyState, response: Response, db: DbSession
 ) -> None:
     """Changing the password signs the admin out everywhere, including this browser."""
     admin = _admin(db, principal.admin_id)

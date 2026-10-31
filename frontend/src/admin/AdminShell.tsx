@@ -1,4 +1,12 @@
-import { Activity, Building2, LayoutDashboard, LogOut, ShieldCheck, Users } from "lucide-react";
+import {
+  Activity,
+  Building2,
+  IdCard,
+  LayoutDashboard,
+  LogOut,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 import { useEffect } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router";
 
@@ -7,12 +15,14 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 
 import adminStyles from "./Admin.module.css";
 import { useAdminAuth } from "./AdminAuthContext";
+import { ADMIN_ROLE } from "./labels";
 
 const NAV = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard, key: "1", end: true },
   { to: "/admin/companies", label: "Companies", icon: Building2, key: "2", end: false },
   { to: "/admin/users", label: "Users", icon: Users, key: "3", end: false },
   { to: "/admin/activity", label: "Activity", icon: Activity, key: "4", end: false },
+  { to: "/admin/staff", label: "Staff", icon: IdCard, key: "5", end: false },
 ];
 
 function initials(name: string) {
@@ -27,7 +37,7 @@ export function AdminShell() {
   const { admin, signOut } = useAdminAuth();
   const navigate = useNavigate();
 
-  // Alt+1-4 move between sections, as Alt+number does in the company app.
+  // Alt+1-5 move between sections, as Alt+number does in the company app.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (!event.altKey || event.ctrlKey || event.metaKey) return;
@@ -79,7 +89,9 @@ export function AdminShell() {
           </span>
           <span className={styles.userText}>
             <span className={styles.userName}>{admin.full_name}</span>
-            <span className={styles.userRole}>Duolink admin</span>
+            <span className={styles.userRole} data-role={admin.role}>
+              {ADMIN_ROLE[admin.role].label}
+            </span>
           </span>
           <button
             type="button"

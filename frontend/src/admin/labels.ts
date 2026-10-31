@@ -1,6 +1,6 @@
 // Words for the admin screens, kept in one place (Tamil or other labels can follow).
 
-import type { AdminActionKind, TenantPlan, TenantStatus, TrialState } from "./types";
+import type { AdminActionKind, PlatformRole, TenantPlan, TenantStatus, TrialState } from "./types";
 
 export type Tone = "accent" | "good" | "warn" | "critical" | "neutral";
 
@@ -48,6 +48,26 @@ export const ACTION: Record<AdminActionKind, string> = {
   user_unlock: "Unlocked user",
   user_reset_password: "Reset password",
   user_sign_out: "Signed user out",
+  staff_create: "Added staff member",
+  staff_update: "Changed staff member",
+  staff_reset_password: "Reset staff password",
+  staff_unlock: "Unlocked staff member",
+  staff_sign_out: "Signed staff member out",
+  password_change: "Changed own password",
+};
+
+/** Duolink staff roles: what each may do, in words (ADR 0013). */
+export const ADMIN_ROLE: Record<PlatformRole, { label: string; note: string; tone: Tone }> = {
+  super_admin: {
+    label: "Super Admin",
+    note: "Can change companies, users and staff.",
+    tone: "accent",
+  },
+  support: {
+    label: "Support",
+    note: "Can read everything and answer tickets. Changes nothing else.",
+    tone: "neutral",
+  },
 };
 
 /** The company's own address: acme on admin.duolink.app is acme.duolink.app. */

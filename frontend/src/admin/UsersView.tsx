@@ -9,6 +9,7 @@ import { formatDateTime } from "@/lib/format";
 
 import { useAdminUsers, useResetUserPassword, useUserAction, type UserAction } from "./api";
 import adminStyles from "./Admin.module.css";
+import { useAdminAuth } from "./AdminAuthContext";
 import { Badge } from "./Badge";
 import { ROLE } from "./labels";
 import type { PlatformUser } from "./types";
@@ -122,6 +123,7 @@ const DONE: Record<UserAction, string> = {
 };
 
 function SupportPanel({ user, onClose }: { user: PlatformUser; onClose: () => void }) {
+  const { isSuperAdmin } = useAdminAuth();
   const action = useUserAction();
   const reset = useResetUserPassword();
   const [notice, setNotice] = useState<string | null>(null);
@@ -186,47 +188,51 @@ function SupportPanel({ user, onClose }: { user: PlatformUser; onClose: () => vo
         <dd>{formatDateTime(user.last_login_at)}</dd>
       </dl>
 
-      <div className={adminStyles.rowActions}>
-        {user.is_active ? (
-          <Button disabled={busy} onClick={() => void run("deactivate")}>
-            Deactivate
-          </Button>
-        ) : (
-          <Button disabled={busy} onClick={() => void run("activate")}>
-            Reactivate
-          </Button>
-        )}
-        {user.locked ? (
-          <Button disabled={busy} onClick={() => void run("unlock")}>
-            Unlock
-          </Button>
-        ) : null}
-        <Button disabled={busy || !user.is_active} onClick={() => void run("sign-out")}>
-          Sign out everywhere
-        </Button>
-      </div>
+      {isSuperAdmin ? (
+        <>
+          <div className={adminStyles.rowActions}>
+            {user.is_active ? (
+              <Button disabled={busy} onClick={() => void run("deactivate")}>
+                Deactivate
+              </Button>
+            ) : (
+              <Button disabled={busy} onClick={() => void run("activate")}>
+                Reactivate
+              </Button>
+            )}
+            {user.locked ? (
+              <Button disabled={busy} onClick={() => void run("unlock")}>
+                Unlock
+              </Button>
+            ) : null}
+            <Button disabled={busy || !user.is_active} onClick={() => void run("sign-out")}>
+              Sign out everywhere
+            </Button>
+          </div>
 
-      <div className={styles.subsection}>
-        <h3>Reset password</h3>
-        <p className={styles.note}>
-          Makes a temporary password and signs them out everywhere. You see it once.
-        </p>
-        <div className={styles.actions}>
-          <Button disabled={busy} onClick={() => void resetPassword()}>
-            Reset password
-          </Button>
-        </div>
-        {password ? (
-          <>
-            <p role="status" className={styles.saved}>
-              Password reset. Give them this one in person; they should change it.
+          <div className={styles.subsection}>
+            <h3>Reset password</h3>
+            <p className={styles.note}>
+              Makes a temporary password and signs them out everywhere. You see it once.
             </p>
-            <p className={adminStyles.secret} aria-label="Temporary password">
-              {password}
-            </p>
-          </>
-        ) : null}
-      </div>
+            <div className={styles.actions}>
+              <Button disabled={busy} onClick={() => void resetPassword()}>
+                Reset password
+              </Button>
+            </div>
+            {password ? (
+              <>
+                <p role="status" className={styles.saved}>
+                  Password reset. Give them this one in person; they should change it.
+                </p>
+                <p className={adminStyles.secret} aria-label="Temporary password">
+                  {password}
+                </p>
+              </>
+            ) : null}
+          </div>
+        </>
+      ) : null}
 
       {notice ? (
         <p role="status" className={styles.saved}>

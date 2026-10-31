@@ -14,7 +14,7 @@ from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.core.errors import AccountLockedError, AuthenticationError
+from app.core.errors import AccountLockedError, AuthenticationError, BusinessRuleError
 from app.core.security import (
     DUMMY_PASSWORD_HASH,
     PlatformClaims,
@@ -22,7 +22,7 @@ from app.core.security import (
     hash_password,
     verify_password,
 )
-from app.models.enums import PlatformAction
+from app.models.enums import PlatformAction, PlatformRole
 from app.models.platform import PlatformAdmin, PlatformSession
 from app.services.platform.audit import record
 
@@ -58,7 +58,9 @@ def _issue(
         user_agent=(user_agent or "")[:255] or None,
     )
     db.add(session)
-    access_token, expires_in = create_platform_token(PlatformClaims(admin.id, str(session.id)))
+    access_token, expires_in = create_platform_token(
+        PlatformClaims(admin.id, str(session.id), admin.role.value)
+    )
     return IssuedTokens(access_token, expires_in, refresh_token, session.expires_at, admin), session
 
 
@@ -152,17 +154,38 @@ def logout(db: Session, refresh_token: str | None) -> None:
 def change_password(db: Session, admin: PlatformAdmin, current: str, new: str) -> None:
     if not verify_password(current, admin.password_hash):
         raise AuthenticationError("Current password is wrong", field="current_password")
+    if verify_password(new, admin.password_hash):
+        raise BusinessRuleError(
+            "Choose a password you have not used just now.",
+            code="PASSWORD_UNCHANGED",
+            field="new_password",
+        )
     admin.password_hash = hash_password(new)
+    admin.must_change_password = False
     revoke_all(db, admin.id)
+    record(db, PlatformAction.PASSWORD_CHANGE, admin.id)
     db.commit()
 
 
-def create_admin(db: Session, email: str, full_name: str, password: str) -> PlatformAdmin:
-    """For the server-side command only: there is no sign-up."""
+def create_admin(
+    db: Session,
+    email: str,
+    full_name: str,
+    password: str,
+    *,
+    role: PlatformRole = PlatformRole.SUPER_ADMIN,
+    mobile: str | None = None,
+    must_change_password: bool = False,
+) -> PlatformAdmin:
+    """For the server-side command only: there is no sign-up. Staff are added by a Super Admin
+    through services/platform/staff.py."""
     admin = PlatformAdmin(
         email=email.strip().lower(),
         full_name=full_name.strip(),
+        mobile=mobile,
         password_hash=hash_password(password),
+        role=role,
+        must_change_password=must_change_password,
         is_active=True,
         failed_login_count=0,
     )

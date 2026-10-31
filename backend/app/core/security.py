@@ -56,6 +56,7 @@ def create_access_token(claims: AccessClaims, now: datetime | None = None) -> tu
 class PlatformClaims:
     admin_id: int
     session_id: str
+    role: str = "support"  # informational: the database decides what the admin may do (M17)
 
 
 def create_platform_token(claims: PlatformClaims, now: datetime | None = None) -> tuple[str, int]:
@@ -67,6 +68,7 @@ def create_platform_token(claims: PlatformClaims, now: datetime | None = None) -
     payload: dict[str, Any] = {
         "sub": str(claims.admin_id),
         "sid": claims.session_id,
+        "role": claims.role,
         "typ": "platform",
         "iat": int(now.timestamp()),
         "exp": int((now + ttl).timestamp()),
@@ -86,7 +88,11 @@ def decode_platform_token(token: str) -> PlatformClaims:
     )
     if payload.get("typ") != "platform":
         raise jwt.InvalidTokenError("not a platform token")
-    return PlatformClaims(admin_id=int(payload["sub"]), session_id=str(payload["sid"]))
+    return PlatformClaims(
+        admin_id=int(payload["sub"]),
+        session_id=str(payload["sid"]),
+        role=str(payload.get("role", "support")),  # a token from before M17 reads as Support
+    )
 
 
 def decode_access_token(token: str) -> AccessClaims:

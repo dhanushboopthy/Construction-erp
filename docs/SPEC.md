@@ -102,6 +102,37 @@ company out. A suspended company cannot sign in, and its sessions end. Money `NU
 unit cost `NUMERIC(14,4)`. Stock, balances and average cost are **derived from ledgers**, never
 stored as editable numbers. Enums are `VARCHAR` + `CHECK`.
 
+**Built (Milestone 17, ADR 0013):** Duolink staff have a role. `platform_admin.role` is
+`super_admin` or `support` (default `support`; migration 0030 made every existing admin a Super
+Admin), plus `mobile` and `must_change_password`. `platform_audit_log.target_admin_id` names the
+staff member an action was done to (`target_user_id` stays for company users).
+
+- **Roles.** Support reads every admin screen. Every write in `/api/v1/admin` (company create,
+  update, suspend, reactivate; user deactivate, activate, unlock, reset password, sign out; all
+  staff changes) needs `SuperAdminOnly` and answers 403 `PERMISSION_DENIED` to Support. The
+  access token carries the role for display; the server reads it from the database on each
+  request, so a demotion applies at once. Staff can read the staff list; only a Super Admin
+  changes it.
+- **Staff** (`/admin/staff`, Staff page): create (name, email, mobile, a temporary password, role;
+  default Support), edit name, mobile, role and active, reset password, unlock, sign out
+  everywhere. Rules in `domain/platform_staff.py`: the last active Super Admin cannot be demoted
+  or deactivated (409 `LAST_SUPER_ADMIN`), nobody demotes or deactivates themselves (409
+  `SELF_CHANGE`). They are checked under a row lock on the Super Admins, so two at once cannot
+  leave none. Deactivating a member signs them out. An email is unique whatever its case (409
+  `EMAIL_TAKEN`).
+- **Temporary passwords.** A member created by a Super Admin, or whose password a Super Admin
+  reset, has `must_change_password`. Until they change it, every call except `/auth/me`,
+  `/auth/change-password` and `/auth/logout` answers 403 `PASSWORD_CHANGE_REQUIRED` and the UI
+  shows the change-password screen. Changing it signs the admin out everywhere; the new password
+  must differ from the old one (409 `PASSWORD_UNCHANGED`). The first admin made by
+  `create_platform_admin` is not forced to change it.
+- **Audit.** Each staff change writes a `platform_audit_log` row with the admin, the target and,
+  for an edit, the old and new values and the reason. New actions: `staff_create`,
+  `staff_update`, `staff_reset_password`, `staff_unlock`, `staff_sign_out` and
+  `password_change`. No password is ever put in `details` (a test reads every row).
+- **Command.** `python -m app.scripts.create_platform_admin <email> "<name>" [--role
+  super_admin|support]`; the default is `super_admin` because it makes the first admin.
+
 **Built (Milestone 1):** `shop_settings` (with `logo_key`, `logo_type`, `logo_sha256`, all set or
 all empty, for the shop's logo: UI refresh T10), `location`, `app_user`, `user_location`,
 `auth_session`, `audit_log`, `document_sequence`. A GSTIN is checked for format and check

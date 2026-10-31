@@ -65,6 +65,27 @@ Only at `admin.<BASE_DOMAIN>` (404 elsewhere), under `/admin`, with a Duolink ad
 | POST | `/admin/users/{id}/reset-password` | `{temporary_password}`, shown once |
 | GET | `/admin/activity?tenant_id&action` · `/admin/audit?tenant_id&action` | Sign-ins at companies · what admins did |
 
+## Endpoints (Milestone 17: Duolink staff and roles, ADR 0013)
+
+Same address and token as Milestone 16. **Support** can read (`GET`) everything in `/admin`; every
+other method below needs a **Super Admin** and answers 403 `PERMISSION_DENIED` to Support. That
+includes the Milestone 16 writes (company create, update, suspend, reactivate; user deactivate,
+activate, unlock, reset password, sign out). The sign-in routes need no role.
+
+| Method | Path | Role | What |
+| --- | --- | --- | --- |
+| GET | `/admin/staff` | any admin | Staff with role, active, locked, must-change-password, open sessions |
+| POST | `/admin/staff {full_name, email, mobile?, password, role = support}` | Super Admin | New member with a temporary password. 409 `EMAIL_TAKEN`; 422 on a bad email, mobile or short password |
+| PATCH | `/admin/staff/{id} {full_name?, mobile?, role?, is_active?, reason?}` | Super Admin | Send only what changes; `mobile: null` clears it. 409 `LAST_SUPER_ADMIN`, `SELF_CHANGE`; 404 |
+| POST | `/admin/staff/{id}/reset-password` | Super Admin | `{temporary_password}`, shown once; their sessions end and they must change it |
+| POST | `/admin/staff/{id}/unlock`, `/admin/staff/{id}/sign-out` | Super Admin | Clear a lockout · end every session |
+| GET | `/admin/auth/me` | any admin, even before the change | Now also `mobile`, `role`, `must_change_password` |
+| POST | `/admin/auth/change-password {current_password, new_password}` | any admin, even before the change | 204; signs the admin out everywhere. 401 wrong current password; 409 `PASSWORD_UNCHANGED` |
+| GET | `/admin/audit` | any admin | Rows now also carry `target_admin_email` |
+
+Until a member has changed a temporary password, every other admin call answers 403
+`PASSWORD_CHANGE_REQUIRED` (only `/auth/me`, `/auth/change-password` and `/auth/logout` work).
+
 Company side: `GET /tenant/plan` (owner) → `{plan, status, trial_ends_at, users, max_users,
 locations, max_locations}`. Adding a user or a shop beyond the plan answers 409
 `PLAN_USER_LIMIT` / `PLAN_LOCATION_LIMIT`.

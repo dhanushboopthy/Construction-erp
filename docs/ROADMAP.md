@@ -42,12 +42,29 @@ From [FINANCE_REVIEW.md](FINANCE_REVIEW.md); one branch and PR each.
 
 ## SaaS milestones
 
-Duolink hosts the ERP for many companies. One branch and PR each.
+Duolink hosts the ERP for many companies. One branch and PR each. Milestones 17 to 30 bring the
+Duolink super admin up to the WA project's; the brief is
+[prompts/SUPER_ADMIN_M17_M30.md](prompts/SUPER_ADMIN_M17_M30.md) (order and dependencies in its
+section 8; migrations chain from 0030).
 
 | # | Milestone | Acceptance test | Status |
 | --- | --- | --- | --- |
 | 15 | Multi-tenancy foundation: `tenant` table, company by subdomain, tenant on the session, row-level security, `--tenant` on the scripts (ADR 0011) | A second company on `beta.localhost` signs in with the same usernames, sees none of the first company's rows on any screen, and the database refuses a cross-company row | **Done** (`feat/m15-multi-tenancy`) |
 | 16 | Duolink super admin on `admin.<domain>/admin`: companies, users across companies, activity, plans and limits | Create a company and sign in at its subdomain; suspend it and its users are signed out; the plan's user limit is enforced | **Done** (`feat/m16-platform-admin`; ADR 0012) |
+| 17 | Super admin foundation: ADR 0013, Super Admin and Support roles, platform staff, forced password change | Support gets 403 on every write route and 200 on every read; the last Super Admin cannot be demoted (409); a temporary password must be changed first | **Done** (`feat/m17-foundation`; ADR 0013; migration 0030) |
+| 18 | Company profile, onboarding form and the company page with tabs | Onboard a company in one form; a GSTIN corrected from the admin shows as done by Duolink in the company's audit log; search finds a company by GSTIN | Planned |
+| 19 | User support tools: directory filters, edit user, sessions, remove access | A reset password works once and forces a change; the last owner cannot be removed; a removed counter user's bills keep their name | Planned |
+| 20 | Plans and pricing catalogue (`platform_plan`, prices) | Every company keeps its limits after the migration; deleting a plan in use answers 409; prices are decimal strings | Planned |
+| 21 | Subscriptions, manual renewals, Duolink revenue, read-only on expiry | An expired company can read and export but a bill save answers 403 `SUBSCRIPTION_EXPIRED`; renewal makes it writable at once; a payment cannot be edited | Planned |
+| 22 | Support tickets, from the company and in the admin | A counter user raises a ticket, Duolink replies, another counter user cannot see it; an expired company can still raise one | Planned |
+| 23 | Owner-granted support access ("Login as Company", read-only, with consent) | No grant answers 409; every write under a support token answers 403; the owner revokes and the next request answers 401 | Planned |
+| 24 | System health, notifications bell, maintenance mode, audit log with filters | Maintenance on gives 503 on company requests while the admin and health stay up, and survives a restart; health returns no secret | Planned |
+| 25 | Backup and restore from the admin, including one company | Restore company A without touching company B; a corrupted archive leaves A as it was; no password in any process argument | Planned |
+| 26 | Document numbering and company data management (as WA) | Delete quotations for A and nothing else changes; delete everything for A keeps users, settings and audit; next number must exceed the highest existing | Planned |
+| 27 | GSP and GSTIN-lookup API admin | The saved key shows only its last 4 characters anywhere; database settings win over the environment; over the daily limit answers 429 | Planned |
+| 28 | Bill templates per company | A hostile template runs no script; a bill issued under v1 reprints identically after v2 is active; company A's template never prints for B | Planned |
+| 29 | PWA shell and "force update" | The app installs; offline shows "No connection" and saves nothing; forcing an update shows the toast without reloading an open bill | Planned |
+| 30 | Razorpay online renewal (optional, last) | A forged signature answers 400; verify and webhook in either order give one payment; an expired company can pay and is writable at once | Planned |
 
 ## Owner requests (October 2026)
 

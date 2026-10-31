@@ -17,7 +17,8 @@ export function AdminLoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const from = (location.state as { from?: string } | null)?.from ?? "/admin";
+  const state = location.state as { from?: string; changed?: boolean } | null;
+  const from = state?.from ?? "/admin";
   if (admin) return <Navigate to={from} replace />;
 
   async function onSubmit(event: FormEvent) {
@@ -51,6 +52,11 @@ export function AdminLoginPage() {
         <p className={styles.subtitle}>
           For Duolink staff. Shop users sign in at their own address.
         </p>
+        {state?.changed ? (
+          <p role="status" className={styles.subtitle}>
+            Password changed. Sign in with the new one.
+          </p>
+        ) : null}
         <label className={styles.field}>
           Email
           <input

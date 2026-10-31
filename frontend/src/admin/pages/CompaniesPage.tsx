@@ -8,12 +8,14 @@ import { moveRowFocus, useAltKey } from "@/hooks/useKeys";
 import { formatDateTime } from "@/lib/format";
 
 import { useTenants } from "../api";
+import { useAdminAuth } from "../AdminAuthContext";
 import { Badge, Usage } from "../Badge";
 import { PLAN, STATUS, STATUS_ORDER, TRIAL } from "../labels";
 import type { TenantPlan } from "../types";
 
 export function CompaniesPage() {
   const navigate = useNavigate();
+  const { isSuperAdmin } = useAdminAuth();
   const [params, setParams] = useSearchParams();
   const [q, setQ] = useState(params.get("q") ?? "");
   const status = params.get("status") ?? "";
@@ -21,7 +23,7 @@ export function CompaniesPage() {
   const tenants = useTenants({ q: params.get("q") ?? "", status, plan });
 
   const openNew = useCallback(() => void navigate("/admin/companies/new"), [navigate]);
-  useAltKey("n", openNew);
+  useAltKey("n", isSuperAdmin ? openNew : () => undefined);
 
   const setFilter = (key: string, value: string) =>
     setParams(
@@ -40,10 +42,12 @@ export function CompaniesPage() {
         <h1 id="companies-title" className={styles.title}>
           Companies
         </h1>
-        <Button variant="primary" onClick={openNew} aria-keyshortcuts="Alt+N">
-          Add company
-        </Button>
-        <p className={styles.keys}>Alt+N new · ↑↓ move · Enter open</p>
+        {isSuperAdmin ? (
+          <Button variant="primary" onClick={openNew} aria-keyshortcuts="Alt+N">
+            Add company
+          </Button>
+        ) : null}
+        <p className={styles.keys}>{isSuperAdmin ? "Alt+N new · " : ""}↑↓ move · Enter open</p>
       </div>
 
       <form
@@ -147,7 +151,9 @@ export function CompaniesPage() {
                   <td colSpan={7} className={styles.empty}>
                     {params.toString()
                       ? "No company matches. Clear the search or filters."
-                      : "No companies yet. Add the first one."}
+                      : isSuperAdmin
+                        ? "No companies yet. Add the first one."
+                        : "No companies yet."}
                   </td>
                 </tr>
               )}

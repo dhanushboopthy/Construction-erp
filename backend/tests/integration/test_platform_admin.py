@@ -297,6 +297,9 @@ def test_every_admin_action_is_written_down_and_kept(client, admin, acme, seeded
         seeded.execute(text("UPDATE platform_audit_log SET action = 'login'"))
 
 
+# Duolink's own revenue (plan prices, subscription payments) may appear only under this prefix
+# (ADR 0013). No such path exists before Milestone 20; every other admin path is checked below.
+MONEY_ALLOWED_PREFIX = "/api/v1/admin/billing/"
 MONEY_WORDS = re.compile(r"amount|cost|price|rate|profit|margin|balance|taxable|gst|value|paid")
 
 
@@ -312,7 +315,11 @@ def _keys(value):
 
 def test_no_admin_answer_carries_money(client, admin, acme):
     paths = [p for p in app.openapi()["paths"] if p.startswith("/api/v1/admin/")]
-    gets = [p for p in paths if "get" in app.openapi()["paths"][p]]
+    gets = [
+        p
+        for p in paths
+        if "get" in app.openapi()["paths"][p] and not p.startswith(MONEY_ALLOWED_PREFIX)
+    ]
     checked = 0
     for path in gets:
         url = path.replace("{tenant_id}", str(acme["id"]))

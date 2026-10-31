@@ -7,6 +7,10 @@ export interface AdminAuthState {
   ready: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  /** Only a Super Admin changes things; Support reads. A courtesy: the server enforces it. */
+  isSuperAdmin: boolean;
+  /** Sets a new password. The server signs the admin out everywhere, this browser included. */
+  changePassword: (current: string, next: string) => Promise<void>;
 }
 
 export const AdminAuthContext = createContext<AdminAuthState | null>(null);

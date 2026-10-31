@@ -38,9 +38,25 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const changePassword = useCallback(async (current: string, next: string) => {
+    await adminApi<undefined>("/auth/change-password", {
+      method: "POST",
+      body: json({ current_password: current, new_password: next }),
+    });
+    adminClient.setAccessToken(null);
+    setAdmin(null);
+  }, []);
+
   const value = useMemo<AdminAuthState>(
-    () => ({ admin, ready, signIn, signOut }),
-    [admin, ready, signIn, signOut],
+    () => ({
+      admin,
+      ready,
+      signIn,
+      signOut,
+      changePassword,
+      isSuperAdmin: admin?.role === "super_admin",
+    }),
+    [admin, ready, signIn, signOut, changePassword],
   );
   return <AdminAuthContext.Provider value={value}>{children}</AdminAuthContext.Provider>;
 }

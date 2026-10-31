@@ -9,6 +9,7 @@ import { formatDateTime } from "@/lib/format";
 
 import { useReactivateTenant, useSuspendTenant, useTenant, useUpdateTenant } from "../api";
 import adminStyles from "../Admin.module.css";
+import { useAdminAuth } from "../AdminAuthContext";
 import { Badge, Usage } from "../Badge";
 import { PLAN, STATUS, TRIAL, companyAddress } from "../labels";
 import type { TenantDetail, TenantPlan, TenantUpdate } from "../types";
@@ -31,6 +32,7 @@ export function CompanyPage() {
   const id = Number(useParams().id);
   const location = useLocation();
   const tenant = useTenant(id);
+  const { isSuperAdmin } = useAdminAuth();
   const created = (location.state as { created?: boolean } | null)?.created === true;
 
   if (tenant.isPending) return <p role="status">Loading the company…</p>;
@@ -88,10 +90,27 @@ export function CompanyPage() {
             <dd>{formatDateTime(t.created_at)}</dd>
           </dl>
         </div>
-        <PlanForm tenant={t} />
+        {isSuperAdmin ? (
+          <PlanForm tenant={t} />
+        ) : (
+          <div className={styles.panel}>
+            <h2 className={styles.panelHead}>Plan and limits</h2>
+            <dl className={adminStyles.facts}>
+              <dt>Plan</dt>
+              <dd>{PLAN[t.plan].label}</dd>
+              <dt>Own user limit</dt>
+              <dd>{t.own_max_users ?? "The plan's limit"}</dd>
+              <dt>Own limit for shops and godowns</dt>
+              <dd>{t.own_max_locations ?? "The plan's limit"}</dd>
+              <dt>Trial ends</dt>
+              <dd>{formatDateTime(t.trial_ends_at)}</dd>
+            </dl>
+            <p className={styles.note}>Only a Super Admin changes a company.</p>
+          </div>
+        )}
       </div>
 
-      <Suspension tenant={t} />
+      {isSuperAdmin ? <Suspension tenant={t} /> : null}
 
       <h2 className={styles.title}>Users</h2>
       <UsersView tenantId={t.id} />

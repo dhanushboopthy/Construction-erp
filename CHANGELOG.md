@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.11.0 (M17): Duolink staff roles
+
+For Duolink staff (the admin at `admin.<domain>/admin`):
+
+- Two roles. A **Super Admin** can change things. **Support** can read every screen but changes
+  nothing: the buttons are hidden, and the server refuses the request as well. Admins that
+  existed before this version became Super Admins.
+- New **Staff** page (Alt 5): add a member with a temporary password, change their name, mobile
+  and role, deactivate or reactivate them, unlock them, sign them out, or reset their password.
+  New members are Support unless you choose otherwise.
+- A member with a temporary password must choose their own before anything else opens.
+- The last active Super Admin cannot be demoted or deactivated, and nobody can demote or
+  deactivate themselves.
+- Every staff change is written in "What Duolink admins did", naming who did it and to whom.
+- Your role shows beside your name.
+- `create_platform_admin` has a `--role` option (Super Admin unless you say `support`).
+- Decision record: [ADR 0013](docs/adr/0013-platform-admin-v2.md) sets out the plan for
+  milestones 17 to 30 (plans and renewals, tickets, owner-granted support access, backups,
+  data management, integrations, bill templates, installable app).
+
+For companies: nothing changes.
+
 ## 1.10.0 (FM10): orders, lots and demand
 
 (FM9, the cash forecast and rebate accrual, was not built: the owner does not need it. This is the

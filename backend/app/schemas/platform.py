@@ -11,7 +11,7 @@ from pydantic import Field
 
 from app.core.security import MIN_PASSWORD_LENGTH
 from app.domain.plans import TrialState
-from app.models.enums import PlatformAction, Role, TenantPlan, TenantStatus
+from app.models.enums import PlatformAction, PlatformRole, Role, TenantPlan, TenantStatus
 from app.schemas.common import Schema, StateCode
 from app.schemas.user import Username
 
@@ -27,6 +27,9 @@ class AdminOut(Schema):
     id: int
     email: str
     full_name: str
+    mobile: str | None
+    role: PlatformRole
+    must_change_password: bool
     last_login_at: datetime | None
 
 
@@ -40,6 +43,46 @@ class AdminTokenResponse(Schema):
 class AdminChangePassword(Schema):
     current_password: str = Field(min_length=1, max_length=128)
     new_password: str = Field(min_length=MIN_PASSWORD_LENGTH, max_length=128)
+
+
+# ------------------------------------------------------------------ Duolink staff (M17)
+
+EmailAddress = Field(min_length=3, max_length=200, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+MobileNumber = Field(default=None, max_length=20, pattern=r"^\+?[0-9 ]{7,15}$")
+
+
+class StaffRow(Schema):
+    id: int
+    email: str
+    full_name: str
+    mobile: str | None
+    role: PlatformRole
+    is_active: bool
+    locked: bool
+    must_change_password: bool
+    open_sessions: int
+    last_login_at: datetime | None
+    created_at: datetime
+
+
+class StaffCreate(Schema):
+    """The password is temporary: the new member must change it before anything else."""
+
+    full_name: str = Field(min_length=1, max_length=100)
+    email: str = EmailAddress
+    mobile: str | None = MobileNumber
+    password: str = Field(min_length=MIN_PASSWORD_LENGTH, max_length=128)
+    role: PlatformRole = PlatformRole.SUPPORT
+
+
+class StaffUpdate(Schema):
+    """Send only what changes. `mobile` sent as null clears it."""
+
+    full_name: str | None = Field(default=None, min_length=1, max_length=100)
+    mobile: str | None = MobileNumber
+    role: PlatformRole | None = None
+    is_active: bool | None = None
+    reason: str | None = Field(default=None, min_length=3, max_length=500)
 
 
 # ------------------------------------------------------------------ companies
@@ -157,6 +200,7 @@ class PlatformAuditRow(Schema):
     action: PlatformAction
     tenant_slug: str | None
     target_user_id: int | None
+    target_admin_email: str | None
     details: dict[str, Any] | None
     ip: str | None
 

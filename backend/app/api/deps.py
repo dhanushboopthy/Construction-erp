@@ -19,7 +19,7 @@ from app.core.errors import AuthenticationError, NotFoundError, PermissionDenied
 from app.core.security import decode_access_token, decode_platform_token
 from app.core.tenancy import TENANT_KEY, clear_platform, set_platform, set_tenant
 from app.domain.tenancy import slug_from_host
-from app.models.enums import Role
+from app.models.enums import PlatformRole, Role
 from app.models.platform import PlatformAdmin
 from app.models.setup import AppUser
 from app.models.tenancy import Tenant
@@ -142,14 +142,24 @@ class PlatformPrincipal:
     admin_id: int
     email: str
     session_id: str
+    role: PlatformRole = PlatformRole.SUPPORT
+    must_change_password: bool = False
+
+    @property
+    def is_super_admin(self) -> bool:
+        return self.role is PlatformRole.SUPER_ADMIN
 
 
-def get_platform_admin(
+def get_platform_admin_any_state(
     request: Request,
     db: DbSession,
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
 ) -> PlatformPrincipal:
-    """A signed-in Duolink admin. The session is put in platform mode: it reads every company."""
+    """A signed-in Duolink admin, even one who must still change a temporary password. Only
+    /auth/me and /auth/change-password use this; every other route uses get_platform_admin.
+
+    The session is put in platform mode: it reads every company. The role is read fresh from
+    the database, not trusted from the token, so a demotion takes effect on the next request."""
     require_admin_host(request)
     if credentials is None:
         raise AuthenticationError("Sign in to continue")
@@ -164,7 +174,35 @@ def get_platform_admin(
     set_actor(db, None)  # company audit rows must not name a company user for an admin's act
     set_platform(db)
     request.state.user_id = f"admin:{admin.id}"
-    return PlatformPrincipal(admin_id=admin.id, email=admin.email, session_id=claims.session_id)
+    return PlatformPrincipal(
+        admin_id=admin.id,
+        email=admin.email,
+        session_id=claims.session_id,
+        role=admin.role,
+        must_change_password=admin.must_change_password,
+    )
+
+
+PlatformAdminAnyState = Annotated[PlatformPrincipal, Depends(get_platform_admin_any_state)]
+
+
+def get_platform_admin(principal: PlatformAdminAnyState) -> PlatformPrincipal:
+    """A signed-in Duolink admin who has no temporary password left to change (M17)."""
+    if principal.must_change_password:
+        raise PermissionDeniedError(
+            "Change your temporary password to continue.", code="PASSWORD_CHANGE_REQUIRED"
+        )
+    return principal
 
 
 PlatformAdminUser = Annotated[PlatformPrincipal, Depends(get_platform_admin)]
+
+
+def require_super_admin(principal: PlatformAdminUser) -> PlatformPrincipal:
+    """Every write in the admin API (ADR 0013). Support reads and answers tickets only."""
+    if not principal.is_super_admin:
+        raise PermissionDeniedError("Only a Duolink Super Admin can do this")
+    return principal
+
+
+SuperAdminOnly = Annotated[PlatformPrincipal, Depends(require_super_admin)]

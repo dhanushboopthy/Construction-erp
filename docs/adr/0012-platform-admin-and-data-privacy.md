@@ -1,6 +1,6 @@
 # ADR 0012: A Duolink admin that sees counts, never the books
 
-**Status:** Accepted, Milestone 16.
+**Status:** Accepted, Milestone 16. Amended by [ADR 0013](0013-platform-admin-v2.md).
 
 **Context.** With many companies on one server (ADR 0011), Duolink needs to onboard companies,
 watch usage, help users who are locked out, and stop a company that does not pay. Companies trust

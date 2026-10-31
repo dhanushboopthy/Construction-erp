@@ -4,7 +4,7 @@ and what Duolink's own admins did. Counts and events only (ADR 0012)."""
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import ColumnElement, func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 
 from app.domain.plans import ENDING_SOON_DAYS
 from app.models.audit import AuditLog
@@ -129,9 +129,11 @@ def admin_actions(
     total = db.execute(
         select(func.count()).select_from(PlatformAuditLog).where(*filters)
     ).scalar_one()
+    target = aliased(PlatformAdmin)
     rows = db.execute(
-        select(PlatformAuditLog, PlatformAdmin.email, Tenant.slug)
+        select(PlatformAuditLog, PlatformAdmin.email, Tenant.slug, target.email)
         .outerjoin(PlatformAdmin, PlatformAdmin.id == PlatformAuditLog.admin_id)
+        .outerjoin(target, target.id == PlatformAuditLog.target_admin_id)
         .outerjoin(Tenant, Tenant.id == PlatformAuditLog.tenant_id)
         .where(*filters)
         .order_by(PlatformAuditLog.id.desc())
@@ -146,9 +148,10 @@ def admin_actions(
             action=log.action,
             tenant_slug=slug,
             target_user_id=log.target_user_id,
+            target_admin_email=target_email,
             details=log.details,
             ip=log.ip,
         )
-        for log, email, slug in rows
+        for log, email, slug, target_email in rows
     ]
     return entries, total

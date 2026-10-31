@@ -27,8 +27,15 @@ class TenantPlan(StrEnum):
     PRO = "pro"
 
 
+class PlatformRole(StrEnum):
+    """What a Duolink staff member may do (Milestone 17, ADR 0013)."""
+
+    SUPER_ADMIN = "super_admin"  # everything
+    SUPPORT = "support"  # reads, and answers tickets; changes nothing else
+
+
 class PlatformAction(StrEnum):
-    """What a Duolink admin did (platform_audit_log, Milestone 16)."""
+    """What a Duolink admin did (platform_audit_log, Milestones 16 and 17)."""
 
     LOGIN = "login"
     LOGIN_FAILED = "login_failed"
@@ -43,6 +50,12 @@ class PlatformAction(StrEnum):
     USER_UNLOCK = "user_unlock"
     USER_RESET_PASSWORD = "user_reset_password"  # noqa: S105 - an audit action name
     USER_SIGN_OUT = "user_sign_out"
+    STAFF_CREATE = "staff_create"
+    STAFF_UPDATE = "staff_update"
+    STAFF_RESET_PASSWORD = "staff_reset_password"  # noqa: S105 - an audit action name
+    STAFF_UNLOCK = "staff_unlock"
+    STAFF_SIGN_OUT = "staff_sign_out"
+    PASSWORD_CHANGE = "password_change"  # noqa: S105 - an audit action name
 
 
 class LocationKind(StrEnum):

@@ -10,9 +10,11 @@ import { AdminShell } from "./AdminShell";
 import { ActivityPage } from "./pages/ActivityPage";
 import { AdminLoginPage } from "./pages/AdminLoginPage";
 import { CompaniesPage } from "./pages/CompaniesPage";
+import { ChangePasswordPage } from "./pages/ChangePasswordPage";
 import { CompanyPage } from "./pages/CompanyPage";
 import { NewCompanyPage } from "./pages/NewCompanyPage";
 import { OverviewPage } from "./pages/OverviewPage";
+import { StaffPage } from "./pages/StaffPage";
 import { UsersPage } from "./pages/UsersPage";
 
 const queryClient = createQueryClient();
@@ -22,6 +24,15 @@ function RequireAdmin({ children }: { children: ReactNode }) {
   const location = useLocation();
   if (!ready) return <p role="status">Loading…</p>;
   if (!admin) return <Navigate to="/admin/login" replace state={{ from: location.pathname }} />;
+  // A temporary password has to be changed first; the server refuses everything else.
+  if (admin.must_change_password) return <Navigate to="/admin/change-password" replace />;
+  return children;
+}
+
+/** Writes belong to a Super Admin. Support who open such a page by address are sent back. */
+function RequireSuperAdmin({ children }: { children: ReactNode }) {
+  const { isSuperAdmin } = useAdminAuth();
+  if (!isSuperAdmin) return <Navigate to="/admin/companies" replace />;
   return children;
 }
 
@@ -33,6 +44,7 @@ export function AdminApp({ client = queryClient }: { client?: QueryClient }) {
         <BrowserRouter>
           <Routes>
             <Route path="/admin/login" element={<AdminLoginPage />} />
+            <Route path="/admin/change-password" element={<ChangePasswordPage />} />
             <Route
               path="/admin"
               element={
@@ -43,9 +55,17 @@ export function AdminApp({ client = queryClient }: { client?: QueryClient }) {
             >
               <Route index element={<OverviewPage />} />
               <Route path="companies" element={<CompaniesPage />} />
-              <Route path="companies/new" element={<NewCompanyPage />} />
+              <Route
+                path="companies/new"
+                element={
+                  <RequireSuperAdmin>
+                    <NewCompanyPage />
+                  </RequireSuperAdmin>
+                }
+              />
               <Route path="companies/:id" element={<CompanyPage />} />
               <Route path="users" element={<UsersPage />} />
+              <Route path="staff" element={<StaffPage />} />
               <Route path="activity" element={<ActivityPage />} />
             </Route>
             <Route path="*" element={<Navigate to="/admin" replace />} />

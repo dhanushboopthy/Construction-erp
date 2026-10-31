@@ -29,7 +29,7 @@ import { PartyEditor } from "@/pages/parties/PartyEditor";
  * item without leaving the bill. */
 type Side = { kind: "totals" } | { kind: "customer" } | { kind: "item" };
 
-/** What is being made: a tax invoice, or a quotation or proforma that is not one (ADR 0005). */
+/** What is being made: a tax invoice, or a quotation or proforma that is not one. */
 type Doc = "invoice" | QuoteKind;
 
 interface PayRow {

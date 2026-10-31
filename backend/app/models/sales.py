@@ -1,4 +1,4 @@
-"""Sales invoices (Milestone 6). Every invoice is a real GST tax invoice (ADR 0005); it is
+"""Sales invoices (Milestone 6). Every invoice is a real GST tax invoice; it is
 never edited or deleted, only corrected by credit notes (Milestone 8)."""
 
 from datetime import date
@@ -140,7 +140,7 @@ class SalesLine(Base, TenantMixin):
 class SalesQuote(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
     """A quotation (estimate) or a proforma invoice. Priced and taxed like a bill, but it is not
     a tax invoice: it moves no stock and puts nothing on the customer's account. It can become
-    a bill once; the bill is a separate, real invoice (ADR 0005)."""
+    a bill once; the bill is a separate, real invoice."""
 
     __tablename__ = "sales_quote"
     __table_args__ = (

@@ -164,7 +164,7 @@ QUOTE_DOCS = {
 
 def render_quote(db: Session, quote: SalesQuote) -> bytes:
     """A quotation or proforma invoice on the bill's A4 layout, plainly titled as not a tax
-    invoice (ADR 0005)."""
+    invoice."""
     header = {
         "number": quote.number,
         "date": _day(quote.quote_date),
@@ -353,7 +353,7 @@ def _render(
         copy_label=copy_label,
         irn=irn,
         previous_balance=previous_balance,
-        # Test data never leaves dev or staging unmarked (ADR 0005).
+        # Test data never leaves dev or staging unmarked.
         test_mark=not get_settings().is_production,
     )
     return HTML(string=html).write_pdf()  # type: ignore[no-any-return]

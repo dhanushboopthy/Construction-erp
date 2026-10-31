@@ -48,7 +48,7 @@ the behaviour reference; its code is not copied (`docs/reference/WA_SUPER_ADMIN.
    and the company restore (M25) set. It runs after a protected backup, behind typed
    confirmations (`DELETE`, and the company's exact name for everything), with a preview and a
    full audit trail. It never creates or hides a bill: it removes records, and the safety backup
-   keeps a copy. ADR 0005 is unchanged: every bill that exists is a real GST tax invoice, and
+   keeps a copy. Every bill that exists is a real GST tax invoice, and
    there is no hidden, dummy or unaccounted billing mode.
 6. **Backups (M25).** Per-company backup and restore run from the admin (a manifest-checked
    archive of that company's rows and files, restored in one transaction). **Restoring the whole
@@ -62,7 +62,7 @@ the behaviour reference; its code is not copied (`docs/reference/WA_SUPER_ADMIN.
    never a Jinja template and never executes code. An issued document pins the template version
    it was printed with, so reprinting never changes an old bill.
 
-**What does not change.** ADR 0011 (row-level security on every company table), ADR 0005 and
+**What does not change.** ADR 0011 (row-level security on every company table) and
 ADR 0012's other points: separate accounts, separate tokens, the admin address, reading across
 companies only through platform mode, and "counts and statuses only" for every admin answer
 outside `/billing`, `/support` (ticket text) and a live support session. Money stays `Decimal`

@@ -315,7 +315,7 @@ not, run everything natively, as CI does (`.github/workflows`):
 
 - The production steps waiting on the owner: GSP API keys, S3 storage, accountant month,
   production machine, backup drill.
-- Any change to how bills are issued beyond what an FM needs. ADR 0005 applies: every bill is a
+- Any change to how bills are issued beyond what an FM needs. Every bill is a
   real GST tax invoice, with no hidden or dummy billing.
 
 ## 11. How to work and report

@@ -1,5 +1,5 @@
 """A pretend GSP for development and tests. It never talks to the government portal, so it is
-refused in production (ADR 0005: no unaccounted documents). Numbers are made from the document
+refused in production (no unaccounted documents). Numbers are made from the document
 number and the call count, so they are unique and repeatable in a test run."""
 
 import hashlib

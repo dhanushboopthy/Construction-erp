@@ -251,7 +251,7 @@ class DocType(StrEnum):
 
 
 class QuoteKind(StrEnum):
-    """A priced offer that is not a tax invoice (ADR 0005 still holds: the bill is separate)."""
+    """A priced offer that is not a tax invoice (the bill is separate)."""
 
     QUOTATION = "quotation"
     PROFORMA = "proforma"

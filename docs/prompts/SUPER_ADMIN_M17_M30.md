@@ -40,7 +40,7 @@ milestone points to it.
 ### Rules that stay exactly as they are
 
 - **Every bill is a real GST tax invoice. There is no hidden, dummy or unaccounted billing mode**
-  (ADR 0005, CLAUDE.md). Nothing in this brief relaxes that.
+  (CLAUDE.md). Nothing in this brief relaxes that.
 - **Row-level security** stays on every tenant table (ADR 0011).
 - **Money** is `Decimal` and `NUMERIC`.
 - **Cost and margin never reach non-owner roles.** That includes Duolink support inside a
@@ -989,7 +989,7 @@ credit and debit note) and a second logo, without changing what was already issu
    holds: it is set once at insert. Check that `forbid_issued_edit` is not tripped.
 5. **Rendering.** `invoice_pdf` picks the pinned template (else the active one, else the built-in
    `invoice_a4.html`). It fills placeholders with the escaped values and renders with
-   WeasyPrint. The TEST watermark outside production still applies (ADR 0005).
+   WeasyPrint. The TEST watermark outside production still applies.
 6. **Admin API** (`/api/v1/admin/tenants/{id}/bill-templates`; Super Admin writes, Support
    reads):
    - field registry;
@@ -1128,7 +1128,7 @@ Consequences). The Decision section covers:
    documents are never deleted" and "ledgers are append-only". It is done through a
    transaction-local purge switch that only the platform data-management and company-restore
    services set, after a protected backup, under typed confirmations, and fully audited. It
-   never creates or hides a bill. ADR 0005 is unchanged.
+   never creates or hides a bill.
 6. **Backups:** per-company backup and restore from the admin; platform restore stays on the
    command line.
 7. **Integrations:** credentials encrypted at rest, never returned, usage counted without bodies.

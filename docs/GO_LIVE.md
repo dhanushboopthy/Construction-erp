@@ -123,4 +123,4 @@ The owner signs when all of these are true:
 
 Until sign-off the paper book is the record, so going back costs nothing: stop using the system,
 keep the data, and fix the cause. After sign-off, restore from the last good backup is the only
-route; there is no switch that makes the system forget a bill, by design (ADR 0005, 0010).
+route; there is no switch that makes the system forget a bill, by design (ADR 0010).

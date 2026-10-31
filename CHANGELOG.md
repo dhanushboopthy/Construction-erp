@@ -326,4 +326,4 @@ next version after 1.9.0.)
 - Business rules with unit tests: money, financial year, GST split and totals, units, landed
   cost, weighted-average stock, pricing, credit, weight check, compliance thresholds.
 - Docs: spec v1.1 with gap fixes G1–G27, roadmap, architecture, API, design, deployment,
-  glossary, ADRs 0001–0005. Claude Code `/milestone` command and two UI skills.
+  glossary, ADRs 0001–0004. Claude Code `/milestone` command and two UI skills.

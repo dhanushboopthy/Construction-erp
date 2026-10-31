@@ -10,7 +10,7 @@
           "backend/app/templates/invoice_a4.html"
         ],
         "createdAt": "2026-10-27T08:19:29.127Z",
-        "reason": "Claude: the faint TEST watermark on dev/staging PDFs is intentional (ADR 0005), pre-existing"
+        "reason": "Claude: the faint TEST watermark on dev/staging PDFs is intentional, pre-existing"
       },
       {
         "rule": "overused-font",

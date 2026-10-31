@@ -253,7 +253,7 @@ stock ledger moved here from Milestone 4 because opening stock is its first writ
   customer's account (and site), commit.
 - Place of supply is the ship-to site's state, else the billing shop's; the seller state is the
   shop settings' state; same state means CGST + SGST, otherwise IGST (G5). A customer with a GSTIN
-  makes a B2B bill, otherwise a B2C tax invoice: still a real bill (ADR 0005).
+  makes a B2B bill, otherwise a B2C tax invoice: still a real bill.
 - Counter staff cannot choose a price, give a discount or back-date; the API answers 409
   `DISCOUNT_NEEDS_OWNER` or `BACKDATE_NEEDS_OWNER` with `requires_owner_approval` (owner PIN in
   Milestone 7). A price below average cost needs the owner (`BELOW_COST`, message without figures).
@@ -264,8 +264,7 @@ stock ledger moved here from Milestone 4 because opening stock is its first writ
 - `Idempotency-Key` on create: a repeat returns the first bill; the same key for another customer
   or shop is a conflict (G19).
 - A4 PDF: `GET /invoices/{id}/pdf?copy=` via WeasyPrint, template `app/templates/invoice_a4.html`
-  behind the `InvoiceRenderer` interface (a thermal layout can be added). Outside production the PDF
-  carries a TEST watermark (ADR 0005). Layout is the owner's Tally-style template (October 2026):
+  behind the `InvoiceRenderer` interface (a thermal layout can be added). Layout is the owner's Tally-style template (October 2026):
   title and copy label; e-invoice IRN, acknowledgement and QR when there is one; seller (with
   GSTIN and state), consignee (ship to, or the buyer when collected) and buyer (bill to) with
   GSTIN and state; the details grid (number, e-way bill no., date, mode/terms of payment, the
@@ -289,7 +288,7 @@ stock ledger moved here from Milestone 4 because opening stock is its first writ
   Own number series per shop and year: `S1Q/26-27/00001` (quotation), `S1PI/26-27/00001`
   (proforma). Optional valid-until date (not in the past). The A4 print uses the bill layout
   titled Estimate/Quotation or Proforma Invoice, with "Valid Until" in place of the terms of
-  delivery, and its declaration says it is not a tax invoice (ADR 0005). "Make the
+  delivery, and its declaration says it is not a tax invoice. "Make the
   bill" opens a new bill with its customer, shop and lines; the bill is priced again at that
   day's rates and saves `quote_id`, which links it (`invoice_id` on the quote). A quote is billed
   once (409 `QUOTE_ALREADY_BILLED`) and only for its own customer (`QUOTE_OTHER_CUSTOMER`).
@@ -337,7 +336,7 @@ line is the sum of its note lines.
   exceed what is held (B13, 409 `INSUFFICIENT_STOCK`; direct purchases touch no stock). The
   supplier payable is debited against the purchase number. Accountant may read debit notes.
 - Numbers: `<location>C/<fy>/<seq>` for credit notes and `<location>D/<fy>/<seq>` for debit
-  notes. Notes print as A4 PDFs with the TEST watermark outside production.
+  notes. Notes print as A4 PDFs.
 
 **Built (Milestone 9):** `vehicle`, `trip`, `drop_ship_link`.
 

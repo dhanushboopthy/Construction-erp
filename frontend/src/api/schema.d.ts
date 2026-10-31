@@ -7854,7 +7854,7 @@ export interface components {
         };
         /**
          * QuoteKind
-         * @description A priced offer that is not a tax invoice (ADR 0005 still holds: the bill is separate).
+         * @description A priced offer that is not a tax invoice (the bill is separate).
          * @enum {string}
          */
         QuoteKind: "quotation" | "proforma";

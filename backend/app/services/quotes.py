@@ -1,6 +1,6 @@
 """Quotations (estimates) and proforma invoices. Priced, taxed and numbered like a bill, but not
 a tax invoice: they move no stock and put nothing on the customer's account. One can become a
-bill (`InvoiceCreate.quote_id`); the bill is a separate, real GST invoice (ADR 0005)."""
+bill (`InvoiceCreate.quote_id`); the bill is a separate, real GST invoice."""
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session

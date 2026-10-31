@@ -67,7 +67,7 @@ def ensure_basics(
             db.add(CostComponent(name=name, basis=basis, default_amount=Decimal(amount)))
             notes.append(f"created charge type {name}")
 
-    # Walk-in sales are normal B2C tax invoices to this party (ADR 0005).
+    # Walk-in sales are normal B2C tax invoices to this party.
     if not db.execute(
         select(Party.id).where(Party.tenant_id == tenant_id, Party.name == WALK_IN)
     ).first():

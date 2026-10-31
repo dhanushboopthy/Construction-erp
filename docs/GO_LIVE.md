@@ -30,8 +30,7 @@ shown, but the people named must confirm them before real bills are made.
 ### Set up
 
 1. Install on the chosen machine ([DEPLOYMENT](DEPLOYMENT.md)): `APP_ENV=production`, strong
-   `JWT_SECRET`, HTTPS, seed passwords set. In production the system makes no TEST-stamped PDFs and
-   refuses the pretend e-way provider.
+   `JWT_SECRET`, HTTPS, seed passwords set. In production the system refuses the pretend e-way provider.
 2. Settings: shop name, **GSTIN**, state, address, bank details, invoice terms; shops and godown;
    one user per person (counter staff are linked to their own shop); each person's phone or note.
 3. Owner sets the approval PIN. Set a backup off-site copy: cron for `scripts/offsite-sync.sh`.
@@ -46,8 +45,7 @@ shown, but the people named must confirm them before real bills are made.
 
 ## 2. Training (half a day per group, on a test copy, never on live data)
 
-Use a copy running with `APP_ENV=staging`: every PDF is stamped TEST. Nobody trains on the live
-system.
+Use a separate copy running with `APP_ENV=staging`. Nobody trains on the live system.
 
 | Group | Learn | Practise until they can do it without help |
 | --- | --- | --- |
@@ -123,4 +121,4 @@ The owner signs when all of these are true:
 
 Until sign-off the paper book is the record, so going back costs nothing: stop using the system,
 keep the data, and fix the cause. After sign-off, restore from the last good backup is the only
-route; there is no switch that makes the system forget a bill, by design (ADR 0005, 0010).
+route; there is no switch that makes the system forget a bill, by design (ADR 0010).

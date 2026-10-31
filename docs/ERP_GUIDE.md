@@ -1233,8 +1233,7 @@ Owner: Reports → Daily closing → Reopen, with a reason. Make the bill, then 
 
 **Where are PDFs saved?**
 Closing PDFs under `closing/<shop>/<yyyy>/<mm>/<date>.pdf` in the storage folder or S3 bucket.
-Bills and notes are generated on demand (`GET /invoices/{id}/pdf`). Outside production every PDF
-carries a TEST watermark.
+Bills and notes are generated on demand (`GET /invoices/{id}/pdf`).
 
 **How do I know the books are right?**
 Settings → System → check the books, or `make prod-verify FULL=1`. It checks number gaps, totals,

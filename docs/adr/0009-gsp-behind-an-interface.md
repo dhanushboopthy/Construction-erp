@@ -4,8 +4,8 @@
 
 **Context.** E-way bills and IRNs come from the government portal through a GSP (GST Suvidha
 Provider) that the owner has not chosen yet (GAP_ANALYSIS). Each GSP words its API differently,
-sandbox keys are needed to test, and ADR 0005 forbids documents that exist only inside our system
-while looking real.
+sandbox keys are needed to test, and documents that exist only inside our system while looking real are
+forbidden.
 
 **Decision.**
 

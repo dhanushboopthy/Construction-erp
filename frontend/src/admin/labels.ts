@@ -1,6 +1,12 @@
 // Words for the admin screens, kept in one place (Tamil or other labels can follow).
 
-import type { AdminActionKind, PlatformRole, TenantPlan, TenantStatus, TrialState } from "./types";
+import type {
+  AdminActionKind,
+  DurationUnit,
+  PlatformRole,
+  TenantStatus,
+  TrialState,
+} from "./types";
 
 export type Tone = "accent" | "good" | "warn" | "critical" | "neutral";
 
@@ -13,11 +19,29 @@ export const STATUS: Record<TenantStatus, { label: string; tone: Tone }> = {
 
 export const STATUS_ORDER: TenantStatus[] = ["active", "trial", "suspended", "cancelled"];
 
-export const PLAN: Record<TenantPlan, { label: string; note: string }> = {
-  trial: { label: "Trial", note: "14 days, 5 users, 2 shops and godowns" },
-  basic: { label: "Basic", note: "10 users, 3 shops and godowns" },
-  pro: { label: "Pro", note: "50 users, 10 shops and godowns" },
-};
+/** The plan a new company starts on; the only one that has a trial. */
+export const TRIAL_PLAN = "TRIAL";
+
+/** "10 users, 3 shops and godowns": a plan's limits in words. */
+export function limitsNote(plan: { max_users: number; max_locations: number }): string {
+  const users = plan.max_users === 1 ? "1 user" : `${plan.max_users} users`;
+  return `${users}, ${plan.max_locations} ${plan.max_locations === 1 ? "shop or godown" : "shops and godowns"}`;
+}
+
+/** "1 month", "14 days", "1 year". */
+export function durationLabel(value: number, unit: DurationUnit): string {
+  return `${value} ${unit}${value === 1 ? "" : "s"}`;
+}
+
+/** A price kept as the text the server sent: "9999.00" becomes "₹9,999.00" (Indian grouping).
+ * Never parsed to a number, so no digit can change on the way to the screen. */
+export function rupees(price: string): string {
+  const [whole = "0", fraction] = price.split(".");
+  const last3 = whole.slice(-3);
+  const rest = whole.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ",");
+  const grouped = rest ? `${rest},${last3}` : last3;
+  return `₹${grouped}${fraction === undefined ? "" : `.${fraction}`}`;
+}
 
 export const TRIAL: Record<TrialState, { label: string; tone: Tone } | null> = {
   none: null,
@@ -61,6 +85,11 @@ export const ACTION: Record<AdminActionKind, string> = {
   user_update: "Edited user",
   user_session_revoke: "Ended one session",
   user_remove: "Removed user's access",
+  plan_create: "Added a plan",
+  plan_update: "Edited a plan",
+  plan_duplicate: "Copied a plan",
+  plan_archive: "Archived a plan",
+  plan_delete: "Deleted a plan",
 };
 
 /** Duolink staff roles: what each may do, in words (ADR 0013). */

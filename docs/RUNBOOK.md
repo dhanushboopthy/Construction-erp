@@ -77,6 +77,15 @@ whoever looks after the server. Commands run in the project folder on the server
   is never deleted, so their name stays on the bills they made. The last active owner cannot be
   removed: make another person an owner first. A removed account cannot be brought back from the
   admin; add the person again with a new username if they return.
+- **Change what you sell:** Plans (Super Admin edits, Support looks). Each card is a plan: users and
+  shops allowed, one to six prices, and the features it lists. Edit shows the card as you type.
+  Prices are rupees, two decimals, no commas. The seeded Trial, Basic and Pro start at 0.00; fill
+  them in before you rely on them. Nothing charges a company yet.
+- **Raise or lower a plan's limit:** edit the plan. Companies with their own limit (company page,
+  Subscription) keep it. Lowering a limit switches nobody off; the owner just cannot add past it.
+- **Stop selling a plan:** Archive it, with a reason. Companies on it keep it and its limits; it is
+  no longer offered when adding a company or changing a plan. Restore brings it back. Delete is
+  only offered for a plan no company is on, and needs DELETE typed.
 - **A company does not pay:** open the company, write the reason, then Suspend company and
   confirm. Everyone there is signed out. Reactivate company undoes it. Nothing is deleted.
 - **Trials:** the overview lists trials ending this week. Change the plan, or move the trial end, on

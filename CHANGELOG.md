@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.14.0 (M20): plans and pricing catalogue
+
+For Duolink staff:
+
+- **Plans are now edited, not coded.** A new Plans page shows a card per plan: users and shops
+  allowed, prices and the features it lists. A Super Admin adds a plan (with a live card preview
+  beside the form), edits it, copies it, archives or restores it, and deletes one nobody is on.
+  Support can look.
+- **Prices** are rupees with two decimals, kept exactly as typed. A plan has one to six prices,
+  each for a number of days, months or years. The three plans that existed (Trial, Basic, Pro)
+  keep their limits; their prices start at 0.00 for you to fill in. Nothing is charged yet.
+- Only one plan is "Popular". Archiving a plan hides it when adding a company or changing a plan;
+  companies already on it keep it. A plan with companies on it cannot be deleted.
+- Lowering a plan's limit switches nobody off. The owner simply cannot add past it.
+- Every plan change is in Duolink's audit log.
+
+For companies:
+
+- Nothing changes on screen. Limits are what they were.
+
 ## 1.13.0 (M19): user support tools
 
 For Duolink staff:

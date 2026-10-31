@@ -48,6 +48,14 @@ class Usage:
     locations: int  # active
 
 
+def limits_of(tenant: Tenant) -> PlanLimits:
+    """The plan's limits, or the company's own where Duolink set one (Milestones 16 and 20)."""
+    plan = tenant.plan
+    return limits_for(
+        PlanLimits(plan.max_users, plan.max_locations), tenant.max_users, tenant.max_locations
+    )
+
+
 def usage(db: Session) -> Usage:
     """The session's company: its plan's limits and what is in use (Milestone 16)."""
     tenant_id = current_tenant_id(db)
@@ -60,8 +68,7 @@ def usage(db: Session) -> Usage:
     locations = db.execute(
         select(func.count()).where(Location.tenant_id == tenant_id, Location.is_active.is_(True))
     ).scalar_one()
-    limits = limits_for(tenant.plan.value, tenant.max_users, tenant.max_locations)
-    return Usage(tenant, limits, users, locations)
+    return Usage(tenant, limits_of(tenant), users, locations)
 
 
 def ensure_can_add_user(db: Session) -> None:

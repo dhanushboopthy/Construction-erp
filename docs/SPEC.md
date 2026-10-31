@@ -218,6 +218,45 @@ company's own audit log. No password, token or key is ever put in either.
 - **Rules** (`domain/user_support.py`, 100% covered): the typed confirmation, the last-owner
   check for a removal, the removed-account guard, whether a session is live, the device label.
 
+**Built (M20: plans and pricing catalogue, migration 0033):** what Duolink sells is data it edits,
+not code. Plans and their prices are Duolink's own records (platform-only tables, no `tenant_id`,
+no row-level security; the exclusion is listed in `test_tenancy.py`).
+
+- **Tables.** `platform_plan` (`code` unique upper snake case, `name`, short and long description,
+  `max_users`, `max_locations`, `features` JSONB list of codes, `is_active`, `is_popular`,
+  `sort_order`) and `platform_plan_price` (`duration_value`, `duration_unit` day|month|year,
+  `price NUMERIC(12,2)`, `currency` always `INR`, `is_active`, `sort_order`; one row per duration).
+  A partial unique index allows one popular plan.
+- **Migration.** Seeds TRIAL (5 users, 2 locations), BASIC (10, 3) and PRO (50, 10), the limits the
+  old `domain/plans.PLANS` held, so no company's limits change. Each seeded plan has one price of
+  `0.00` as a placeholder for Duolink to edit; nothing charges anyone before M21. `tenant.plan`
+  (enum) becomes `tenant.plan_id` (FK), mapped by code. `tenant.max_users` and
+  `tenant.max_locations` stay as the company's own limit. The downgrade restores the old names;
+  a plan added since maps to `basic`.
+- **Domain** (`domain/plans.py`, `domain/plan_features.py`, 100% covered). `limits_for` takes the
+  plan's `PlanLimits` plus the company's overrides. New: `check_plan_code`, `check_limits`,
+  `check_features`, `check_prices` (1 to 6, a whole positive duration in days, months or years, an
+  amount of at most two decimals between 0 and 9999999999.99, no two with the same duration, no
+  float), `copy_code`, `check_deletable`, `check_assignable`. The feature catalogue is code:
+  `EWAY_BILL`, `GST_EXPORTS`, `TALLY_EXPORT`, `MULTI_SHOP`, `ATTACHMENTS`. Features are listed on
+  the plan card only; nothing is gated by them yet.
+- **API** (`/admin/billing/plans`, the only admin paths allowed to carry a price). List and read:
+  any admin. Create, update, duplicate, archive and delete: Super Admin. The plan code in company
+  answers is the plan's `code` (`TRIAL`, `PRO`), with `plan_id` and `plan_name`; requests accept
+  the code in any case.
+- **Rules.** A plan in use cannot be deleted (409 `PLAN_IN_USE`); deletion also needs `DELETE`
+  typed (409 `CONFIRMATION_MISMATCH`). Archiving hides a plan from the onboarding picker and from
+  "change plan", and clears its popular flag; companies on it keep it. A company cannot be
+  given an archived plan (409 `PLAN_INACTIVE`). Making a plan popular clears it on the one that had
+  it; an archived plan cannot be popular. Lowering a plan's limit deactivates nobody; the next add
+  answers 409 `PLAN_USER_LIMIT` or `PLAN_LOCATION_LIMIT`. A company's own limit still beats its
+  plan's. `TRIAL` is the one plan that starts a company on a trial.
+- **Money.** Prices are `Decimal` in and out, as text (`"999.90"`); a JSON number with a fraction is
+  refused (422). `test_no_admin_answer_carries_money` now holds an explicit list of billing paths
+  that may carry a price; every other admin path must still be free of money-like names.
+- **Audit.** New platform actions `plan_create`, `plan_update` (with the old and new values),
+  `plan_duplicate`, `plan_archive`, `plan_delete`.
+
 **Built (Milestone 1):** `shop_settings` (with `logo_key`, `logo_type`, `logo_sha256`, all set or
 all empty, for the shop's logo: UI refresh T10), `location`, `app_user`, `user_location`,
 `auth_session`, `audit_log`, `document_sequence`. A GSTIN is checked for format and check

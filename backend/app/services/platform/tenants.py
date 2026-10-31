@@ -17,14 +17,15 @@ from app.domain.plans import (
     ENDING_SOON_DAYS,
     OnboardingError,
     TrialState,
-    limits_for,
+    is_trial_plan,
     onboarding_terms,
     trial_state,
 )
 from app.domain.tenancy import StatusChangeError, check_slug, status_after
 from app.models.auth import AuthSession
 from app.models.documents import Attachment
-from app.models.enums import LocationKind, PlatformAction, Role, TenantPlan, TenantStatus
+from app.models.enums import LocationKind, PlatformAction, Role, TenantStatus
+from app.models.platform import PlatformPlan
 from app.models.purchasing import Purchase
 from app.models.sales import SalesInvoice
 from app.models.setup import AppUser, Location, ShopSettings
@@ -38,6 +39,8 @@ from app.schemas.platform import (
 )
 from app.services import onboarding, tenant_logo
 from app.services.platform.audit import record
+from app.services.platform.plans import plan_for_company
+from app.services.tenants import limits_of
 
 
 def _now() -> datetime:
@@ -84,13 +87,15 @@ def _last_sign_ins(db: Session, tenant_ids: list[int]) -> dict[int, datetime | N
 def _row(
     tenant: Tenant, usage: dict[str, dict[int, int]], last: dict[int, datetime | None]
 ) -> TenantRow:
-    limits = limits_for(tenant.plan.value, tenant.max_users, tenant.max_locations)
+    limits = limits_of(tenant)
     return TenantRow(
         id=tenant.id,
         slug=tenant.slug,
         name=tenant.name,
         status=tenant.status,
-        plan=tenant.plan,
+        plan=tenant.plan.code,
+        plan_id=tenant.plan_id,
+        plan_name=tenant.plan.name,
         owner_name=tenant.owner_name,
         city=tenant.city,
         state_code=tenant.state_code,
@@ -136,7 +141,7 @@ def list_tenants(
     *,
     q: str | None = None,
     status: TenantStatus | None = None,
-    plan: TenantPlan | None = None,
+    plan: str | None = None,
     trial: TrialState | None = None,
     expiring: bool = False,
     sort: str = "name",
@@ -165,7 +170,11 @@ def list_tenants(
     if status:
         filters.append(Tenant.status == status)
     if plan:
-        filters.append(Tenant.plan == plan)
+        filters.append(
+            Tenant.plan_id.in_(
+                select(PlatformPlan.id).where(PlatformPlan.code == plan.strip().upper())
+            )
+        )
     if trial:
         filters.append(_trial_filter(trial, now))
     if expiring:
@@ -235,9 +244,10 @@ def create_tenant(db: Session, data: TenantCreate, admin_id: int) -> Tenant:
         raise BusinessRuleError(str(exc), code="SLUG_INVALID", field="slug") from exc
     if db.execute(select(Tenant.id).where(Tenant.slug == slug)).first():
         raise ConflictError("That company code is taken", code="SLUG_TAKEN", field="slug")
+    plan = plan_for_company(db, data.plan)
     try:
         status, trial_ends_at = onboarding_terms(
-            data.plan.value,
+            plan.code,
             start_active=data.start_active,
             trial_days=data.trial_days,
             now=_now(),
@@ -249,7 +259,7 @@ def create_tenant(db: Session, data: TenantCreate, admin_id: int) -> Tenant:
     tenant = Tenant(
         slug=slug,
         name=data.name,
-        plan=data.plan,
+        plan=plan,
         status=TenantStatus(status),
         trial_ends_at=trial_ends_at,
         owner_name=data.owner_full_name,
@@ -292,7 +302,7 @@ def create_tenant(db: Session, data: TenantCreate, admin_id: int) -> Tenant:
             tenant_id=tenant.id,
             details={
                 "slug": slug,
-                "plan": data.plan,
+                "plan": plan.code,
                 "status": status,
                 "owner": data.owner_username,
                 "shop": data.shop_code,
@@ -310,13 +320,19 @@ def update_tenant(db: Session, tenant_id: int, data: TenantUpdate, admin_id: int
         value = getattr(data, key)
         if key in {"name", "plan"} and value is None:
             continue  # these cannot be blank
+        if key == "plan":
+            if value.strip().upper() != tenant.plan.code:  # staying on a plan needs it active
+                new_plan = plan_for_company(db, value)
+                changes["plan"] = {"from": tenant.plan.code, "to": new_plan.code}
+                tenant.plan = new_plan
+            continue
         if isinstance(value, str) and not value.strip():
             value = None  # a blank contact field is cleared
         before = getattr(tenant, key)
         if before != value:
             changes[key] = {"from": _text(before), "to": _text(value)}
             setattr(tenant, key, value)
-    paid = tenant.plan is not TenantPlan.TRIAL
+    paid = not is_trial_plan(tenant.plan.code)
     if "plan" in changes and paid and tenant.status is TenantStatus.TRIAL:
         tenant.status = TenantStatus.ACTIVE  # a paid plan ends the trial
     if changes:
@@ -336,7 +352,7 @@ def _text(value: object) -> str | None:
 def _transition(tenant: Tenant, action: str) -> TenantStatus:
     try:
         return TenantStatus(
-            status_after(tenant.status.value, action, on_trial_plan=tenant.plan is TenantPlan.TRIAL)
+            status_after(tenant.status.value, action, on_trial_plan=is_trial_plan(tenant.plan.code))
         )
     except StatusChangeError as exc:
         raise BusinessRuleError(str(exc), code=exc.code) from exc

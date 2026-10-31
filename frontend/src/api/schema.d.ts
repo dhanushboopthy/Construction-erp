@@ -92,6 +92,132 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/billing/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Plans
+         * @description Every plan with its prices and how many companies are on it. Archived plans are
+         *     included unless `include_archived` is false (the onboarding picker uses that).
+         */
+        get: operations["list_plans_api_v1_admin_billing_plans_get"];
+        put?: never;
+        /**
+         * Create Plan
+         * @description 409 PLAN_CODE_TAKEN, PLAN_CODE_INVALID, PLAN_PRICE_COUNT, PLAN_PRICE_DUPLICATE,
+         *     PLAN_PRICE_DURATION, PLAN_PRICE_AMOUNT, PLAN_FEATURE_UNKNOWN, PLAN_LIMIT_INVALID.
+         */
+        post: operations["create_plan_api_v1_admin_billing_plans_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/billing/plans/features": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Plan Features
+         * @description The features a plan can list. Listing one does not switch anything on or off.
+         */
+        get: operations["plan_features_api_v1_admin_billing_plans_features_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/billing/plans/{plan_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Plan */
+        get: operations["get_plan_api_v1_admin_billing_plans__plan_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Plan
+         * @description Lowering a limit never deactivates anyone: the next add past it answers 409
+         *     PLAN_USER_LIMIT or PLAN_LOCATION_LIMIT, as before. `is_active: true` restores an archived
+         *     plan.
+         */
+        patch: operations["update_plan_api_v1_admin_billing_plans__plan_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/billing/plans/{plan_id}/duplicate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Duplicate Plan */
+        post: operations["duplicate_plan_api_v1_admin_billing_plans__plan_id__duplicate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/billing/plans/{plan_id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Archive Plan
+         * @description Hides the plan from the onboarding picker. Companies on it keep it.
+         */
+        post: operations["archive_plan_api_v1_admin_billing_plans__plan_id__archive_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/billing/plans/{plan_id}/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Delete Plan
+         * @description Type DELETE. 409 PLAN_IN_USE while any company is on the plan.
+         */
+        post: operations["delete_plan_api_v1_admin_billing_plans__plan_id__delete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/overview": {
         parameters: {
             query?: never;
@@ -4795,6 +4921,12 @@ export interface components {
             /** Oldest Date */
             oldest_date: string | null;
         };
+        /**
+         * DurationUnit
+         * @description How long one price of a plan lasts (Milestone 20).
+         * @enum {string}
+         */
+        DurationUnit: "day" | "month" | "year";
         /** EInvoiceCreate */
         EInvoiceCreate: {
             /** From Pincode */
@@ -7321,11 +7453,171 @@ export interface components {
             pin: string;
         };
         /**
+         * PlanCreate
+         * @description `code` is upper snake case; spaces and hyphens become underscores. A plan has 1 to 6
+         *     prices, each with its own duration.
+         */
+        PlanCreate: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /**
+             * Short Description
+             * @default
+             */
+            short_description: string;
+            /**
+             * Long Description
+             * @default
+             */
+            long_description: string;
+            /** Max Users */
+            max_users: number;
+            /** Max Locations */
+            max_locations: number;
+            /** Features */
+            features?: string[];
+            /**
+             * Is Popular
+             * @default false
+             */
+            is_popular: boolean;
+            /**
+             * Sort Order
+             * @default 0
+             */
+            sort_order: number;
+            /** Prices */
+            prices: components["schemas"]["PlanPriceIn"][];
+            /** Reason */
+            reason?: string | null;
+        };
+        /**
+         * PlanDelete
+         * @description `confirmation` must be the word DELETE, typed exactly.
+         */
+        PlanDelete: {
+            /** Confirmation */
+            confirmation: string;
+            /** Reason */
+            reason: string;
+        };
+        /** PlanFeatureOut */
+        PlanFeatureOut: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description: string;
+        };
+        /** PlanOut */
+        PlanOut: {
+            /** Id */
+            id: number;
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Short Description */
+            short_description: string;
+            /** Long Description */
+            long_description: string;
+            /** Max Users */
+            max_users: number;
+            /** Max Locations */
+            max_locations: number;
+            /** Features */
+            features: string[];
+            /** Is Active */
+            is_active: boolean;
+            /** Is Popular */
+            is_popular: boolean;
+            /** Sort Order */
+            sort_order: number;
+            /** Prices */
+            prices: components["schemas"]["PlanPriceOut"][];
+            /** Companies */
+            companies: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** PlanPriceIn */
+        PlanPriceIn: {
+            /** Duration Value */
+            duration_value: number;
+            duration_unit: components["schemas"]["DurationUnit"];
+            /** Price */
+            price: number | string;
+            /**
+             * Is Active
+             * @default true
+             */
+            is_active: boolean;
+        };
+        /** PlanPriceOut */
+        PlanPriceOut: {
+            /** Id */
+            id: number;
+            /** Duration Value */
+            duration_value: number;
+            duration_unit: components["schemas"]["DurationUnit"];
+            /** Price */
+            price: string;
+            /** Currency */
+            currency: string;
+            /** Is Active */
+            is_active: boolean;
+        };
+        /** PlanReason */
+        PlanReason: {
+            /** Reason */
+            reason: string;
+        };
+        /**
+         * PlanUpdate
+         * @description Send only what changes. `prices`, when sent, replaces the whole list. Setting
+         *     `is_popular` clears it on the plan that had it; an archived plan cannot be popular.
+         */
+        PlanUpdate: {
+            /** Name */
+            name?: string | null;
+            /** Short Description */
+            short_description?: string | null;
+            /** Long Description */
+            long_description?: string | null;
+            /** Max Users */
+            max_users?: number | null;
+            /** Max Locations */
+            max_locations?: number | null;
+            /** Features */
+            features?: string[] | null;
+            /** Is Active */
+            is_active?: boolean | null;
+            /** Is Popular */
+            is_popular?: boolean | null;
+            /** Sort Order */
+            sort_order?: number | null;
+            /** Prices */
+            prices?: components["schemas"]["PlanPriceIn"][] | null;
+            /** Reason */
+            reason?: string | null;
+        };
+        /**
          * PlatformAction
          * @description What a Duolink admin did (platform_audit_log, Milestones 16 and 17).
          * @enum {string}
          */
-        PlatformAction: "login" | "login_failed" | "logout" | "token_reuse" | "tenant_create" | "tenant_update" | "tenant_suspend" | "tenant_reactivate" | "user_activate" | "user_deactivate" | "user_unlock" | "user_reset_password" | "user_sign_out" | "staff_create" | "staff_update" | "staff_reset_password" | "staff_unlock" | "staff_sign_out" | "password_change" | "tenant_cancel" | "tenant_seller_update" | "tenant_logo_set" | "tenant_logo_remove" | "user_update" | "user_session_revoke" | "user_remove";
+        PlatformAction: "login" | "login_failed" | "logout" | "token_reuse" | "tenant_create" | "tenant_update" | "tenant_suspend" | "tenant_reactivate" | "user_activate" | "user_deactivate" | "user_unlock" | "user_reset_password" | "user_sign_out" | "staff_create" | "staff_update" | "staff_reset_password" | "staff_unlock" | "staff_sign_out" | "password_change" | "tenant_cancel" | "tenant_seller_update" | "tenant_logo_set" | "tenant_logo_remove" | "user_update" | "user_session_revoke" | "user_remove" | "plan_create" | "plan_update" | "plan_duplicate" | "plan_archive" | "plan_delete";
         /** PlatformAuditRow */
         PlatformAuditRow: {
             /** Id */
@@ -9482,8 +9774,12 @@ export interface components {
              * @description the subdomain: acme.duolink.app
              */
             slug: string;
-            /** @default trial */
-            plan: components["schemas"]["TenantPlan"];
+            /**
+             * Plan
+             * @description the code of an active plan (404/409 if not)
+             * @default TRIAL
+             */
+            plan: string;
             /**
              * Trial Days
              * @description trial plan only; 14 if blank
@@ -9544,7 +9840,12 @@ export interface components {
             /** Name */
             name: string;
             status: components["schemas"]["TenantStatus"];
-            plan: components["schemas"]["TenantPlan"];
+            /** Plan */
+            plan: string;
+            /** Plan Id */
+            plan_id: number;
+            /** Plan Name */
+            plan_name: string;
             /** Owner Name */
             owner_name: string | null;
             /** City */
@@ -9605,7 +9906,12 @@ export interface components {
             /** Name */
             name: string;
             status: components["schemas"]["TenantStatus"];
-            plan: components["schemas"]["TenantPlan"];
+            /** Plan */
+            plan: string;
+            /** Plan Id */
+            plan_id: number;
+            /** Plan Name */
+            plan_name: string;
             /** Owner Name */
             owner_name: string | null;
             /** City */
@@ -9671,14 +9977,12 @@ export interface components {
             /** Logo Url */
             logo_url?: string | null;
         };
-        /**
-         * TenantPlan
-         * @enum {string}
-         */
-        TenantPlan: "trial" | "basic" | "pro";
         /** TenantPlanOut */
         TenantPlanOut: {
-            plan: components["schemas"]["TenantPlan"];
+            /** Plan */
+            plan: string;
+            /** Plan Name */
+            plan_name: string;
             status: components["schemas"]["TenantStatus"];
             /** Trial Ends At */
             trial_ends_at: string | null;
@@ -9700,7 +10004,12 @@ export interface components {
             /** Name */
             name: string;
             status: components["schemas"]["TenantStatus"];
-            plan: components["schemas"]["TenantPlan"];
+            /** Plan */
+            plan: string;
+            /** Plan Id */
+            plan_id: number;
+            /** Plan Name */
+            plan_name: string;
             /** Owner Name */
             owner_name: string | null;
             /** City */
@@ -9746,7 +10055,11 @@ export interface components {
         TenantUpdate: {
             /** Name */
             name?: string | null;
-            plan?: components["schemas"]["TenantPlan"] | null;
+            /**
+             * Plan
+             * @description the code of an active plan
+             */
+            plan?: string | null;
             /** Max Users */
             max_users?: number | null;
             /** Max Locations */
@@ -10649,6 +10962,615 @@ export interface operations {
             };
         };
     };
+    list_plans_api_v1_admin_billing_plans_get: {
+        parameters: {
+            query?: {
+                include_archived?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanOut"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_plan_api_v1_admin_billing_plans_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    plan_features_api_v1_admin_billing_plans_features_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanFeatureOut"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_plan_api_v1_admin_billing_plans__plan_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_plan_api_v1_admin_billing_plans__plan_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    duplicate_plan_api_v1_admin_billing_plans__plan_id__duplicate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    archive_plan_api_v1_admin_billing_plans__plan_id__archive_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanReason"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_plan_api_v1_admin_billing_plans__plan_id__delete_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanDelete"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     overview_api_v1_admin_overview_get: {
         parameters: {
             query?: never;
@@ -11328,7 +12250,8 @@ export interface operations {
             query?: {
                 q?: string | null;
                 status?: components["schemas"]["TenantStatus"] | null;
-                plan?: components["schemas"]["TenantPlan"] | null;
+                /** @description a plan's code, e.g. PRO */
+                plan?: string | null;
                 trial?: components["schemas"]["TrialState"] | null;
                 /** @description trial ends within 30 days */
                 expiring?: boolean;

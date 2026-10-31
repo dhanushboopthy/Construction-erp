@@ -55,7 +55,9 @@ const ACME = {
   slug: "acme",
   name: "Acme Steels",
   status: "trial",
-  plan: "trial",
+  plan: "TRIAL",
+  plan_id: 1,
+  plan_name: "Trial",
   trial_ends_at: "2026-11-07T09:00:00Z",
   trial_state: "running",
   users: 1,
@@ -464,7 +466,40 @@ function formSection(heading: string): HTMLElement {
   return section;
 }
 
+const planOf = (id: number, code: string, name: string, active = true) => ({
+  id,
+  code,
+  name,
+  short_description: "",
+  long_description: "",
+  max_users: 5 * id,
+  max_locations: 2 * id,
+  features: [],
+  is_active: active,
+  is_popular: false,
+  sort_order: id,
+  prices: [
+    {
+      id,
+      duration_value: 1,
+      duration_unit: "month",
+      price: "0.00",
+      currency: "INR",
+      is_active: true,
+    },
+  ],
+  companies: 1,
+  created_at: "2026-10-24T09:00:00Z",
+  updated_at: "2026-10-24T09:00:00Z",
+});
+const PLANS = [
+  planOf(1, "TRIAL", "Trial"),
+  planOf(2, "BASIC", "Basic"),
+  planOf(3, "PRO", "Pro", false),
+];
+
 const COMPANY_ROUTES: [RegExp, Route][] = [
+  [/\/admin\/billing\/plans/, (url) => PLANS.filter((p) => p.is_active || !url.includes("false"))],
   [/\/admin\/tenants\/7\/seller-details$/, () => SELLER],
   [/\/admin\/tenants\/7\/usage$/, () => USAGE],
   [/\/admin\/tenants\/7$/, () => FULL_DETAIL],
@@ -687,7 +722,7 @@ describe("AdminApp add company (M18)", () => {
     expect(sent).toEqual({
       name: "Acme Steels",
       slug: "acme-steels",
-      plan: "trial",
+      plan: "TRIAL",
       trial_days: 30,
       start_active: false,
       state_code: "33",
@@ -718,8 +753,10 @@ describe("AdminApp add company (M18)", () => {
     await user.type(await screen.findByLabelText("Legal name"), "Beta");
     await user.selectOptions(screen.getByLabelText("Start"), "active");
     expect(screen.queryByLabelText("Trial length (days)")).not.toBeInTheDocument();
-    await user.selectOptions(screen.getByLabelText("Plan"), "basic");
+    await user.selectOptions(screen.getByLabelText("Plan"), "BASIC");
     expect(screen.queryByLabelText("Start")).not.toBeInTheDocument();
+    // The archived plan is not offered when adding a company.
+    expect(within(screen.getByLabelText("Plan")).queryByText("Pro")).not.toBeInTheDocument();
     const owner = formSection("First owner");
     await user.type(within(owner).getByLabelText("Full name"), "Bala");
     await user.type(within(owner).getByLabelText("Password"), "bala-pass-123");
@@ -727,7 +764,7 @@ describe("AdminApp add company (M18)", () => {
     const sent = JSON.parse(
       calls.find((c) => c.method === "POST" && c.url.endsWith("/admin/tenants"))?.body ?? "{}",
     );
-    expect(sent).toMatchObject({ plan: "basic", trial_days: null, start_active: false });
+    expect(sent).toMatchObject({ plan: "BASIC", trial_days: null, start_active: false });
   });
 });
 

@@ -7,9 +7,8 @@ import { CheckField, SelectField, TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
 import { GST_STATES } from "@/lib/gstStates";
 
-import { useCreateTenant } from "../api";
-import { PLAN, companyAddress } from "../labels";
-import type { TenantPlan } from "../types";
+import { useCreateTenant, usePlans } from "../api";
+import { TRIAL_PLAN, companyAddress, limitsNote } from "../labels";
 
 const MIN_PASSWORD = 8; // backend app/core/security.py MIN_PASSWORD_LENGTH
 
@@ -29,7 +28,10 @@ export function NewCompanyPage() {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
-  const [plan, setPlan] = useState<TenantPlan>("trial");
+  const plans = usePlans(false).data ?? []; // archived plans are not offered
+  const [chosenPlan, setPlan] = useState(TRIAL_PLAN);
+  const picked = plans.find((p) => p.code === chosenPlan) ?? plans[0];
+  const plan = picked?.code ?? chosenPlan;
   const [stateCode, setStateCode] = useState("33");
   const [city, setCity] = useState("");
   const [legalName, setLegalName] = useState("");
@@ -57,13 +59,13 @@ export function NewCompanyPage() {
       return;
     }
     try {
-      const onTrial = plan === "trial" && terms === "trial";
+      const onTrial = plan === TRIAL_PLAN && terms === "trial";
       const made = await create.mutateAsync({
         name: name.trim(),
         slug: shownSlug,
         plan,
         trial_days: onTrial ? Number(trialDays) : null,
-        start_active: plan === "trial" && terms === "active",
+        start_active: plan === TRIAL_PLAN && terms === "active",
         state_code: stateCode,
         city: city.trim() || null,
         legal_name: legalName.trim() || null,
@@ -199,16 +201,17 @@ export function NewCompanyPage() {
             <SelectField
               label="Plan"
               value={plan}
-              onChange={(e) => setPlan(e.target.value as TenantPlan)}
-              hint={PLAN[plan].note}
+              onChange={(e) => setPlan(e.target.value)}
+              hint={picked ? limitsNote(picked) : undefined}
+              error={fieldError("plan")}
             >
-              {(Object.keys(PLAN) as TenantPlan[]).map((p) => (
-                <option key={p} value={p}>
-                  {PLAN[p].label}
+              {plans.map((p) => (
+                <option key={p.code} value={p.code}>
+                  {p.name}
                 </option>
               ))}
             </SelectField>
-            {plan === "trial" ? (
+            {plan === TRIAL_PLAN ? (
               <SelectField
                 label="Start"
                 value={terms}
@@ -218,7 +221,7 @@ export function NewCompanyPage() {
                 <option value="active">Active, no trial</option>
               </SelectField>
             ) : null}
-            {plan === "trial" && terms === "trial" ? (
+            {plan === TRIAL_PLAN && terms === "trial" ? (
               <TextField
                 label="Trial length (days)"
                 inputMode="numeric"

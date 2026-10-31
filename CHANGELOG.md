@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.13.0 (M19): user support tools
+
+For Duolink staff:
+
+- **Find a user** by name, username or company, and filter by company, role, active, locked out or
+  never signed in. The list pages 50 at a time.
+- **Edit a user** (name, mobile, username, role) with a reason. The username must be free in that
+  company, and the company still keeps at least one active owner.
+- **Reset a password.** The temporary password is shown once, with a copy button. The person's
+  sessions all end and they must choose their own password at the next sign-in.
+- **See where a user is signed in** (device, address, first sign-in, last use) and end one session
+  without signing them out elsewhere. Support can look but not end.
+- **Remove someone who has left.** Type their username to confirm. They are switched off, signed
+  out and hidden from the company's user list. The account is never deleted, so the bills they
+  made still carry their name. The last active owner cannot be removed.
+- Every one of these is in Duolink's audit log and in the company's own, as "Duolink: <your name>".
+
+For companies:
+
+- The owner's user list no longer shows people Duolink removed.
+- Someone whose password Duolink reset sees "Choose a new password" first, as a new owner does.
+- Signing out a device (or Duolink ending it) no longer signs the same person out of their other
+  devices if the old device later tries to refresh.
+
 ## 1.12.0 (M18): company profile, onboarding and the company page
 
 For Duolink staff:

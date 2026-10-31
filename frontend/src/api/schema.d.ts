@@ -423,7 +423,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Users */
+        /**
+         * List Users
+         * @description Removed accounts are hidden unless `include_removed` is set.
+         */
         get: operations["list_users_api_v1_admin_users_get"];
         put?: never;
         post?: never;
@@ -431,6 +434,27 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update User
+         * @description Name, mobile, username (409 USERNAME_TAKEN) and role (409 LAST_OWNER,
+         *     COUNTER_NEEDS_LOCATION). A reason is required.
+         */
+        patch: operations["update_user_api_v1_admin_users__user_id__patch"];
         trace?: never;
     };
     "/api/v1/admin/users/{user_id}/deactivate": {
@@ -464,7 +488,7 @@ export interface paths {
         put?: never;
         /**
          * Activate
-         * @description Counts against the company's plan (PLAN_USER_LIMIT).
+         * @description Counts against the company's plan (PLAN_USER_LIMIT). A removed account stays removed.
          */
         post: operations["activate_api_v1_admin_users__user_id__activate_post"];
         delete?: never;
@@ -501,7 +525,8 @@ export interface paths {
         put?: never;
         /**
          * Reset Password
-         * @description A temporary password, shown once. The user's sessions end; they should change it.
+         * @description A temporary password, shown once. Every session of the user ends and the user must
+         *     choose their own password before anything else (403 PASSWORD_CHANGE_REQUIRED).
          */
         post: operations["reset_password_api_v1_admin_users__user_id__reset_password_post"];
         delete?: never;
@@ -521,6 +546,68 @@ export interface paths {
         put?: never;
         /** Sign Out */
         post: operations["sign_out_api_v1_admin_users__user_id__sign_out_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/{user_id}/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Sessions
+         * @description Where the user is signed in: device, address, first sign-in and last use.
+         */
+        get: operations["list_sessions_api_v1_admin_users__user_id__sessions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/{user_id}/sessions/{session_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke Session
+         * @description End one session. Its access token runs out within minutes.
+         */
+        delete: operations["revoke_session_api_v1_admin_users__user_id__sessions__session_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/{user_id}/remove": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Remove User
+         * @description Remove access: the account is deactivated, signed out and hidden, never deleted, so old
+         *     documents keep the name. `confirm_username` must match exactly (409 CONFIRMATION_MISMATCH);
+         *     the last active owner cannot be removed (409 LAST_OWNER).
+         */
+        post: operations["remove_user_api_v1_admin_users__user_id__remove_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -732,7 +819,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Users */
+        /**
+         * List Users
+         * @description Accounts Duolink support removed are hidden unless `include_removed` is set.
+         */
         get: operations["list_users_api_v1_users_get"];
         put?: never;
         /** Create User */
@@ -7235,7 +7325,7 @@ export interface components {
          * @description What a Duolink admin did (platform_audit_log, Milestones 16 and 17).
          * @enum {string}
          */
-        PlatformAction: "login" | "login_failed" | "logout" | "token_reuse" | "tenant_create" | "tenant_update" | "tenant_suspend" | "tenant_reactivate" | "user_activate" | "user_deactivate" | "user_unlock" | "user_reset_password" | "user_sign_out" | "staff_create" | "staff_update" | "staff_reset_password" | "staff_unlock" | "staff_sign_out" | "password_change" | "tenant_cancel" | "tenant_seller_update" | "tenant_logo_set" | "tenant_logo_remove";
+        PlatformAction: "login" | "login_failed" | "logout" | "token_reuse" | "tenant_create" | "tenant_update" | "tenant_suspend" | "tenant_reactivate" | "user_activate" | "user_deactivate" | "user_unlock" | "user_reset_password" | "user_sign_out" | "staff_create" | "staff_update" | "staff_reset_password" | "staff_unlock" | "staff_sign_out" | "password_change" | "tenant_cancel" | "tenant_seller_update" | "tenant_logo_set" | "tenant_logo_remove" | "user_update" | "user_session_revoke" | "user_remove";
         /** PlatformAuditRow */
         PlatformAuditRow: {
             /** Id */
@@ -7290,6 +7380,27 @@ export interface components {
             failed_login_count: number;
             /** Last Login At */
             last_login_at: string | null;
+            /** Mobile */
+            mobile: string | null;
+            /** Must Change Password */
+            must_change_password: boolean;
+            /** Removed At */
+            removed_at: string | null;
+        };
+        /**
+         * PlatformUserUpdate
+         * @description Send only what changes. `mobile` sent as null clears it. A reason is always needed.
+         */
+        PlatformUserUpdate: {
+            /** Full Name */
+            full_name?: string | null;
+            /** Mobile */
+            mobile?: string | null;
+            /** Username */
+            username?: string | null;
+            role?: components["schemas"]["Role"] | null;
+            /** Reason */
+            reason: string;
         };
         /** PnlExpense */
         PnlExpense: {
@@ -8292,6 +8403,16 @@ export interface components {
             last_balance: string | null;
             /** Last Balance Date */
             last_balance_date: string | null;
+        };
+        /**
+         * RemoveUserRequest
+         * @description `confirm_username` must be the user's username, typed exactly.
+         */
+        RemoveUserRequest: {
+            /** Confirm Username */
+            confirm_username: string;
+            /** Reason */
+            reason: string;
         };
         /** ReopenIn */
         ReopenIn: {
@@ -9891,10 +10012,43 @@ export interface components {
             is_active: boolean;
             /** Must Change Password */
             must_change_password: boolean;
+            /** Mobile */
+            mobile: string | null;
+            /** Removed At */
+            removed_at: string | null;
             /** Last Login At */
             last_login_at: string | null;
             /** Locations */
             locations: components["schemas"]["LocationOut"][];
+        };
+        /** UserSessionRow */
+        UserSessionRow: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Device */
+            device: string;
+            /** User Agent */
+            user_agent: string | null;
+            /** Ip */
+            ip: string | null;
+            /**
+             * Signed In At
+             * Format: date-time
+             */
+            signed_in_at: string;
+            /**
+             * Last Used At
+             * Format: date-time
+             */
+            last_used_at: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
         };
         /** UserUpdate */
         UserUpdate: {
@@ -12120,9 +12274,13 @@ export interface operations {
         parameters: {
             query?: {
                 tenant_id?: number | null;
+                /** @description username, full name or company */
                 q?: string | null;
                 role?: components["schemas"]["Role"] | null;
-                state?: ("active" | "inactive" | "locked") | null;
+                active?: boolean | null;
+                locked?: boolean | null;
+                never_signed_in?: boolean | null;
+                include_removed?: boolean;
                 limit?: number;
                 offset?: number;
             };
@@ -12139,6 +12297,86 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Page_PlatformUserRow_"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_user_api_v1_admin_users__user_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlatformUserUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformUserRow"];
                 };
             };
             /** @description Bad Request */
@@ -12511,6 +12749,237 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformUserRow"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_sessions_api_v1_admin_users__user_id__sessions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserSessionRow"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_session_api_v1_admin_users__user_id__sessions__session_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_user_api_v1_admin_users__user_id__remove_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RemoveUserRequest"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
@@ -13396,7 +13865,9 @@ export interface operations {
     };
     list_users_api_v1_users_get: {
         parameters: {
-            query?: never;
+            query?: {
+                include_removed?: boolean;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -13455,6 +13926,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

@@ -58,6 +58,9 @@ export const ACTION: Record<AdminActionKind, string> = {
   tenant_seller_update: "Corrected seller details",
   tenant_logo_set: "Set company logo",
   tenant_logo_remove: "Removed company logo",
+  user_update: "Edited user",
+  user_session_revoke: "Ended one session",
+  user_remove: "Removed user's access",
 };
 
 /** Duolink staff roles: what each may do, in words (ADR 0013). */

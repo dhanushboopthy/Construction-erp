@@ -16,6 +16,9 @@ class AuthSession(Base, TenantMixin):
     user_id: Mapped[int] = mapped_column(ForeignKey("app_user.id", ondelete="CASCADE"), index=True)
     token_hash: Mapped[str] = mapped_column(String(64), unique=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # When the person signed in. A refresh makes a new row, so `created_at` is the last use and
+    # this carries the first sign-in forward (Milestone 19). Null on rows from before.
+    signed_in_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     replaced_by: Mapped[uuid.UUID | None] = mapped_column(Uuid)

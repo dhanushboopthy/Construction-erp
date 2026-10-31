@@ -39,7 +39,6 @@ They change; keep them in settings, not code.
 | G29 | A supplier rebate is a financial credit note under GST; the spec only says "supplier credit note". | The rebate is booked by the owner (not automatically) as a debit to the supplier's payable (`RB-<scheme>`); GST treatment of the rebate is left to the accountant. | Accountant |
 | G30 | A weighbridge slip on a sale could override the billed quantity (G7). | Not overridden: the slip weight is checked against the bill, flagged above the setting and needs a note; the bill quantity stands. | Owner |
 | G31 | The GST portal's file layouts and thresholds were written from the public offline-tool formats, not a real filing. | GSTR-1 JSON and the 2B reader follow those formats; B2CL threshold is ₹1,00,000; 2B match tolerance is ₹1. All are in `domain/gstr.py` and `services/gst_returns.py`. | Accountant (test with a real month and a sample 2B file) |
-| G27 | "Dummy" bills. | Dropped. Test data only in dev/staging, watermarked `TEST`, separate series; no hidden modes. | Decided (ADR 0005) |
 
 ## Still open from the owner interview
 

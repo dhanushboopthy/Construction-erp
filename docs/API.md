@@ -131,6 +131,39 @@ answered in capitals), with `plan_id` and `plan_name` on rows. Giving a company 
 answers 404 `PLAN_NOT_FOUND`; an archived one, 409 `PLAN_INACTIVE` (a company may stay on its own
 archived plan). `GET /tenant/plan` (owner) answers `plan` as the code and `plan_name`.
 
+## Endpoints (Milestone 22: support tickets)
+
+Two sets. Neither carries an amount. Ticket numbers read `T-000012`. Categories: `sign_in`,
+`billing`, `gst_eway`, `stock`, `printing`, `other`. Priorities: `low`, `normal`, `high`,
+`urgent`. Statuses: `open`, `in_progress`, `waiting_on_company`, `resolved`, `closed`.
+
+**Company side, `/support`.** Any signed-in role. The owner and accountant see every ticket of the
+company; a counter user only their own (another's is 404 `TICKET_NOT_FOUND`). These work while the
+company is read-only. Messages from Duolink always show `author_name` "Duolink Support".
+
+| Method | Path | What |
+| --- | --- | --- |
+| GET | `/support/tickets?status` | `{items, total, limit, offset}`, newest activity first. A row: `id`, `number`, `subject`, `category`, `priority`, `status`, `raised_by_name`, `created_at`, `last_reply_at`, `unread` |
+| GET | `/support/tickets/unread-count` | `{unread}`: tickets with a Duolink message not yet opened. The Help menu polls it every 60 s |
+| POST | `/support/tickets {subject (3-200), category, priority = normal, body (1-5000)}` | 201 with the detail |
+| GET | `/support/tickets/{id}` | The row plus `assigned_admin_name`, `closed_at`, `can_close` (you raised it and it is not closed) and `messages[]` (`id`, `author_kind`, `author_name`, `body`, `created_at`). Opening it marks it read |
+| POST | `/support/tickets/{id}/reply {body}` | Returns a waiting or resolved ticket to `open`. 409 `TICKET_CLOSED` |
+| POST | `/support/tickets/{id}/close` | Only the person who raised it: 403 `TICKET_NOT_YOURS`. 409 `TICKET_CLOSED` |
+
+**Duolink side, `/admin/support`.** Any admin role, Support included, may reply and update (the
+only admin writes Support may do).
+
+| Method | Path | What |
+| --- | --- | --- |
+| GET | `/admin/support/tickets?status&priority&tenant_id&assigned=me\|unassigned&q&limit&offset` | `{items, total, limit, offset, counts}`. `limit` 1 to 200, default 50. `q` matches subject, number, company name or code. A row adds `tenant_id`, `tenant_name`, `tenant_slug`, `assigned_admin_id`, `assigned_admin_name`. `counts`: `open`, `in_progress`, `waiting_on_company`, `resolved`, `closed`, `urgent_open`, `unassigned` (the last two exclude resolved and closed); they ignore the `status` filter |
+| GET | `/admin/support/tickets/{id}` | Row plus `closed_at` and `messages[]` with real author names. Opening it marks the company's messages read. 404 `TICKET_NOT_FOUND` |
+| POST | `/admin/support/tickets/{id}/reply {body?, status?}` | At least one of the two (422 otherwise). A message alone moves `open` or `in_progress` to `waiting_on_company`. A message on a closed ticket needs a `status` (409 `TICKET_CLOSED`) |
+| PATCH | `/admin/support/tickets/{id} {status?, priority?, assigned_admin_id?}` | Send only what changes; `assigned_admin_id: null` unassigns. 404 `ADMIN_NOT_FOUND` for an unknown or inactive admin |
+
+`POST /support/tickets` and `/support/tickets/{id}/reply|close` are on the read-only exception
+list (M21). Reply and update are audited as `support_reply` and `support_update` (ticket number,
+status change, whether a message was sent; never the text).
+
 ## Endpoints (Milestone 19: user support tools)
 
 Same address and token as Milestone 16. Writes need a **Super Admin**; Support reads (403

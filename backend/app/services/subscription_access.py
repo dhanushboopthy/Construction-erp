@@ -26,6 +26,9 @@ READ_ONLY_EXCEPTIONS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("POST", re.compile(r"^/api/v1/auth/refresh$")),
     ("POST", re.compile(r"^/api/v1/auth/logout$")),
     ("POST", re.compile(r"^/api/v1/auth/change-password$")),
+    # Milestone 22: a company that cannot save can still ask Duolink for help.
+    ("POST", re.compile(r"^/api/v1/support/tickets$")),
+    ("POST", re.compile(r"^/api/v1/support/tickets/\d+/(reply|close)$")),
 )
 
 

@@ -11,7 +11,7 @@ from app.models.compliance import EInvoice, EwayBill
 from app.models.documents import Attachment, DailyClosing, Gstr2bImport
 from app.models.ledgers import PartyLedger, StockLedger
 from app.models.masters import Item, ItemUnit, Party, Site
-from app.models.numbering import DocumentSequence
+from app.models.numbering import CompanyCounter, DocumentSequence
 from app.models.opening import OpeningBalance
 from app.models.orders import (
     GoodsReceipt,
@@ -45,6 +45,7 @@ from app.models.stock_ops import (
     StockWritedown,
     StockWritedownLine,
 )
+from app.models.support import SupportMessage, SupportTicket
 from app.models.tally import TallyLedger
 from app.models.tenancy import Tenant
 from app.models.transport import DropShipLink, Trip, Vehicle
@@ -61,6 +62,7 @@ __all__ = [
     "BankStatementLine",
     "Base",
     "CashEntry",
+    "CompanyCounter",
     "CostComponent",
     "CreditNote",
     "CreditNoteLine",
@@ -115,6 +117,8 @@ __all__ = [
     "Subscription",
     "SubscriptionPayment",
     "SupplierScheme",
+    "SupportMessage",
+    "SupportTicket",
     "TallyLedger",
     "Tenant",
     "Trip",

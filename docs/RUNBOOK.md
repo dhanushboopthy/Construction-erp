@@ -106,6 +106,22 @@ whoever looks after the server. Commands run in the project folder on the server
 - **Companies that were active before this version** got an expiry one year out, shown as "needs
   review". Open each, compare with what they have really paid, and record a renewal (it sets the real
   end date and clears the flag). Until then they run normally and nothing is read-only before that date.
+- **Answer a ticket:** Support (Alt 9) lists every company's tickets; the tiles show open, urgent
+  and unassigned counts. Open one, read the thread, type your reply and send. A reply alone makes
+  the ticket "waiting on company"; the company's own reply puts it back to open. Any admin,
+  Support accounts included, can reply.
+- **Take a ticket:** press "Assign to me" (a Super Admin can pick any active admin from the
+  select). Filter "Assigned to me" or "Unassigned" to find yours. Change the priority the same way.
+- **Resolve a ticket:** send the reply with the status Resolved. The company sees it as resolved
+  and a reply from them reopens it. The company closes tickets they raised themselves; you can set
+  Closed too.
+- **A closed ticket needs a reopen:** you cannot just write on it (409 `TICKET_CLOSED`). Choose a
+  status such as Open or In progress with the message. The company cannot reply to a closed ticket
+  and must raise a new one.
+- **What the company sees:** the thread, with your answers signed "Duolink Support" (never your
+  name), a dot on Help until they open it, and the status. The owner and accountant see all the
+  company's tickets, counter staff only their own. A company whose plan has ended can still raise
+  and reply to tickets. The audit log records each reply and change but not the message text.
 - **A company does not pay:** open the company, write the reason, then Suspend company and
   confirm. Everyone there is signed out. Reactivate company undoes it. Nothing is deleted.
 - **Trials:** the overview lists trials ending this week. Change the plan, or move the trial end, on

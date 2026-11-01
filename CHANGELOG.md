@@ -1,5 +1,43 @@
 # Changelog
 
+## 1.16.0 (M22): support tickets
+
+For companies:
+
+- **Help.** A new Help item in the user menu opens your company's tickets. Raise a ticket with a
+  subject, a category (sign-in, billing, GST and e-way bill, stock, printing, other), a priority
+  (low, normal, high, urgent) and your message. Each ticket gets a number like T-000012.
+- **Duolink's answers appear in the thread.** Messages from Duolink are signed "Duolink Support";
+  you do not see which person answered. When an answer arrives that you have not opened, a dot
+  shows on Help (it refreshes about once a minute). Opening the ticket clears it for everyone in
+  your company.
+- **Reply** on the ticket at any time. A reply to a ticket that was waiting on you, or marked
+  resolved, puts it back with Duolink as open.
+- **Close** a ticket you raised yourself when you no longer need it. A closed ticket takes no more
+  replies; raise a new one.
+- **Who sees what.** The owner and the accountant see every ticket of the company. Counter staff
+  see only their own.
+- **You can ask for help even when your plan has ended.** A read-only company can still raise a
+  ticket, reply and close.
+
+For Duolink staff:
+
+- **Support page** (Alt 9) with tiles for open, in progress, waiting on the company, urgent and
+  unassigned tickets, filters (status, priority, company, assigned to me or unassigned, search by
+  subject, number or company), and the full thread. Reply, change the status or priority, or
+  assign the ticket to yourself. A Super Admin can assign it to any active admin.
+- **A message alone hands the ticket to the company** (it becomes "waiting on company"). Choose a
+  status with the reply to override that. To write on a closed ticket, choose a status that
+  reopens it.
+- **Support accounts may reply and update tickets.** This is the one place a Support account
+  writes; every other admin write still needs a Super Admin.
+- **Company page, Support tab** lists that company's tickets.
+- Every reply and change is in the audit log (ticket number, status change, whether a message was
+  sent). The message text is not copied there.
+
+Not in this version: the notifications bell for new and urgent tickets (M24), attachments on
+tickets, and email notifications.
+
 ## 1.15.0 (M21): subscriptions, manual renewals, revenue, read-only on expiry
 
 For Duolink staff:

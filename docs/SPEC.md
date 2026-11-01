@@ -314,6 +314,63 @@ company pays, sees its own revenue, and a lapsed company can read its books but 
   year, new companies and renewals this month, subscriptions expiring in 30 days, a 12-month trend
   of revenue and sign-ups, companies per plan, and the next expiries.
 
+**Built (M22: support tickets, migration 0035):** a company raises a question from inside the ERP
+and Duolink answers it from the admin.
+
+- **Tables** (all company-owned: `tenant_id`, row-level security, `tenant_isolation` and
+  `platform_admin` policies).
+  - `support_ticket`: `number` (`T-000012`), `subject` (3 to 200 characters), `category`,
+    `priority`, `status`, `raised_by_user_id`, `assigned_admin_id`, `last_reply_at`,
+    `company_seen_at`, `admin_seen_at`, `closed_at`.
+  - `support_message`: `ticket_id`, `body` (1 to 5000 characters), `author_kind` (`company_user`
+    or `platform_admin`), `author_user_id` or `author_admin_id`, `created_at`. It is
+    **append-only**: the `forbid_ledger_change` trigger refuses UPDATE and DELETE.
+  - `company_counter`: `tenant_id`, `name`, `next_value`. A gapless counter per company,
+    allocated by `allocate_company_number` in `services/numbering.py` inside the saving
+    transaction.
+- **Decision: ticket numbers.** The `DocType` series is scoped to a shop (the number carries the
+  location code). A ticket belongs to the company, not to a shop, so it uses the new per-company
+  counter instead and reads `T-000012`.
+- **Vocabulary.** Categories: `sign_in`, `billing`, `gst_eway`, `stock`, `printing`, `other`.
+  Priorities: `low`, `normal` (default), `high`, `urgent`. Statuses: `open`, `in_progress`,
+  `waiting_on_company`, `resolved`, `closed`.
+- **Rules** (`domain/support.py`, unit tested).
+  - A company reply returns a `waiting_on_company` or `resolved` ticket to `open`. A closed
+    ticket takes no company reply (409 `TICKET_CLOSED`).
+  - A Duolink reply with a message and no status moves an `open` or `in_progress` ticket to
+    `waiting_on_company`; other statuses stay. A status sent with the reply wins.
+  - Neither a message nor a status is 422. A message on a closed ticket needs a status that
+    reopens it, otherwise 409 `TICKET_CLOSED`. Setting a status moves `closed_at` with it.
+  - Only the person who raised a ticket can close it (403 `TICKET_NOT_YOURS`).
+  - The owner and the accountant see every ticket of the company; a counter user sees only their
+    own. Another counter user's ticket answers 404 `TICKET_NOT_FOUND`, the same as a missing one.
+- **Unread.** Each ticket keeps `company_seen_at` and `admin_seen_at`. A ticket is unread for the
+  company when Duolink's newest message is later than `company_seen_at`; for Duolink when the
+  company's newest message is later than `admin_seen_at`. Opening a ticket sets the timestamp, so
+  it is read for the whole company side, not per user. `GET /support/tickets/unread-count` feeds
+  the dot on Help and is polled every 60 seconds.
+- **Names.** The company never sees which admin answered: every Duolink message and the assignee
+  show as "Duolink Support". Duolink sees the real names.
+- **Read-only companies.** Raising a ticket, replying and closing work while the company is
+  read-only. `POST /support/tickets` and `POST /support/tickets/{id}/reply|close` joined the
+  exception list in `services/subscription_access.py` (M21).
+- **Duolink side.** Any admin role, Support included, may reply to and update tickets. The
+  Support-403 test (`test_platform_staff.py`) lists these two writes as the explicit exceptions.
+  The list can be filtered by status, priority, company, assigned to me or unassigned, and
+  search; its `counts` (by status, plus `urgent_open` and `unassigned`, which count tickets not
+  resolved or closed) ignore the status filter itself. The counts are what the M24 bell will use.
+- **ADR 0013 note.** The admin may read ticket subjects and messages, because the company writes
+  them to Duolink. The money-field test is unchanged, and no support answer carries an
+  amount-like key.
+- **Audit.** New platform actions `support_reply` and `support_update`. They record the ticket
+  number, the status change and whether a message was sent, never the text.
+- **UI.** Company: Help in the user menu (with the unread dot), `/help` list, `/help/:id` thread
+  with Close, and the new-ticket form. Admin: Support page (Alt 9) with tiles, filters and the
+  thread, "Assign to me" and, for a Super Admin, an assignee select; and a Support tab on the
+  company page.
+- **Not built.** The notifications bell for new and urgent tickets (M24), attachments on tickets,
+  and email notifications.
+
 **Built (Milestone 1):** `shop_settings` (with `logo_key`, `logo_type`, `logo_sha256`, all set or
 all empty, for the shop's logo: UI refresh T10), `location`, `app_user`, `user_location`,
 `auth_session`, `audit_log`, `document_sequence`. A GSTIN is checked for format and check

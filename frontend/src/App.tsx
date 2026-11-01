@@ -7,6 +7,8 @@ import { AppShell } from "@/components/AppShell";
 import { RequireAuth } from "@/components/RequireAuth";
 import { RequireRole } from "@/components/RequireRole";
 import { MODULES } from "@/modules";
+import { HelpPage } from "@/support/HelpPage";
+import { TicketThreadPage } from "@/support/TicketThreadPage";
 import { ComingSoonPage } from "@/pages/ComingSoonPage";
 import { ItemsPage } from "@/pages/items/ItemsPage";
 import { ChangePasswordPage } from "@/pages/ChangePasswordPage";
@@ -99,6 +101,8 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
               }
             >
               <Route index element={<TodayPage />} />
+              <Route path="/help" element={<HelpPage />} />
+              <Route path="/help/:id" element={<TicketThreadPage />} />
               <Route
                 path="/metrics"
                 element={

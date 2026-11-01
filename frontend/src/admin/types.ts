@@ -35,6 +35,17 @@ export type SellerDetails = Schemas["SellerDetails"];
 export type SellerDetailsUpdate = Schemas["SellerDetailsUpdate"];
 export type TenantUsage = Schemas["TenantUsage"];
 
+// Milestone 22 (support tickets): written by hand in src/support/types.ts, shared with the company app.
+export type {
+  AdminTicketDetail,
+  AdminTicketFilters,
+  AdminTicketPage,
+  AdminTicketPatch,
+  AdminTicketReply,
+  AdminTicketRow,
+  TicketCounts,
+} from "@/support/types";
+
 // Milestone 21 (subscriptions and payments). Written by hand until `make gen-api` runs; money
 // is always the server's decimal text, never a number.
 export type SubscriptionStatus = "trial" | "active" | "expired" | "cancelled";

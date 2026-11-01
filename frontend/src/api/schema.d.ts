@@ -495,6 +495,72 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/support/tickets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Tickets
+         * @description Newest activity first. `counts` are for every filter except `status`.
+         */
+        get: operations["list_tickets_api_v1_admin_support_tickets_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/support/tickets/{ticket_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Ticket
+         * @description Opening it marks the company's messages as read by Duolink.
+         */
+        get: operations["get_ticket_api_v1_admin_support_tickets__ticket_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Ticket
+         * @description Change the status, the priority or the assignee (`assigned_admin_id: null` unassigns).
+         */
+        patch: operations["update_ticket_api_v1_admin_support_tickets__ticket_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/support/tickets/{ticket_id}/reply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reply
+         * @description A message, a new status, or both; neither is 422. A message with no status
+         *     moves an open or in-progress ticket to waiting on the company. 409 TICKET_CLOSED for a
+         *     message on a closed ticket (send a status to reopen it).
+         */
+        post: operations["reply_api_v1_admin_support_tickets__ticket_id__reply_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/tenants": {
         parameters: {
             query?: never;
@@ -966,6 +1032,109 @@ export interface paths {
          * @description Go back to the initials tile (owner only).
          */
         delete: operations["delete_logo_api_v1_tenant_logo_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/support/tickets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Tickets
+         * @description The company's tickets, newest activity first (a counter user: only their own).
+         */
+        get: operations["list_tickets_api_v1_support_tickets_get"];
+        put?: never;
+        /** Create Ticket */
+        post: operations["create_ticket_api_v1_support_tickets_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/support/tickets/unread-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Unread Count
+         * @description Tickets with an answer from Duolink not yet opened. The Help menu polls this.
+         */
+        get: operations["unread_count_api_v1_support_tickets_unread_count_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/support/tickets/{ticket_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Ticket
+         * @description 404 TICKET_NOT_FOUND for a missing ticket and for another counter user's. Opening it marks
+         *     Duolink's answers as read.
+         */
+        get: operations["get_ticket_api_v1_support_tickets__ticket_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/support/tickets/{ticket_id}/reply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reply
+         * @description 409 TICKET_CLOSED. A reply to a resolved ticket, or one waiting on the company, reopens
+         *     it.
+         */
+        post: operations["reply_api_v1_support_tickets__ticket_id__reply_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/support/tickets/{ticket_id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Close
+         * @description Only the person who raised the ticket: 403 TICKET_NOT_YOURS. 409 TICKET_CLOSED.
+         */
+        post: operations["close_api_v1_support_tickets__ticket_id__close_post"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -3713,6 +3882,110 @@ export interface components {
             /** Last Login At */
             last_login_at: string | null;
         };
+        /**
+         * AdminReply
+         * @description At least one of the two is needed.
+         */
+        AdminReply: {
+            /** Body */
+            body?: string | null;
+            status?: components["schemas"]["SupportStatus"] | null;
+        };
+        /** AdminTicketDetail */
+        AdminTicketDetail: {
+            /** Id */
+            id: number;
+            /** Number */
+            number: string;
+            /** Subject */
+            subject: string;
+            category: components["schemas"]["SupportCategory"];
+            priority: components["schemas"]["SupportPriority"];
+            status: components["schemas"]["SupportStatus"];
+            /** Raised By Name */
+            raised_by_name: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Last Reply At
+             * Format: date-time
+             */
+            last_reply_at: string;
+            /** Unread */
+            unread: boolean;
+            /** Tenant Id */
+            tenant_id: number;
+            /** Tenant Name */
+            tenant_name: string;
+            /** Tenant Slug */
+            tenant_slug: string;
+            /** Assigned Admin Id */
+            assigned_admin_id: number | null;
+            /** Assigned Admin Name */
+            assigned_admin_name: string | null;
+            /** Closed At */
+            closed_at: string | null;
+            /** Messages */
+            messages: components["schemas"]["MessageOut"][];
+        };
+        /** AdminTicketPage */
+        AdminTicketPage: {
+            /** Items */
+            items: components["schemas"]["AdminTicketRow"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            counts: components["schemas"]["TicketCounts"];
+        };
+        /** AdminTicketRow */
+        AdminTicketRow: {
+            /** Id */
+            id: number;
+            /** Number */
+            number: string;
+            /** Subject */
+            subject: string;
+            category: components["schemas"]["SupportCategory"];
+            priority: components["schemas"]["SupportPriority"];
+            status: components["schemas"]["SupportStatus"];
+            /** Raised By Name */
+            raised_by_name: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Last Reply At
+             * Format: date-time
+             */
+            last_reply_at: string;
+            /** Unread */
+            unread: boolean;
+            /** Tenant Id */
+            tenant_id: number;
+            /** Tenant Name */
+            tenant_name: string;
+            /** Tenant Slug */
+            tenant_slug: string;
+            /** Assigned Admin Id */
+            assigned_admin_id: number | null;
+            /** Assigned Admin Name */
+            assigned_admin_name: string | null;
+        };
+        /** AdminTicketUpdate */
+        AdminTicketUpdate: {
+            status?: components["schemas"]["SupportStatus"] | null;
+            priority?: components["schemas"]["SupportPriority"] | null;
+            /** Assigned Admin Id */
+            assigned_admin_id?: number | null;
+        };
         /** AdminTokenResponse */
         AdminTokenResponse: {
             /** Access Token */
@@ -3855,6 +4128,12 @@ export interface components {
             /** Ip */
             ip: string | null;
         };
+        /**
+         * AuthorKind
+         * @description Who wrote a support message: a user of the company, or a Duolink admin.
+         * @enum {string}
+         */
+        AuthorKind: "company_user" | "platform_admin";
         /** B2bInvoice */
         B2bInvoice: {
             /** Ctin */
@@ -6701,6 +6980,21 @@ export interface components {
             /** Difference Tax */
             difference_tax: string;
         };
+        /** MessageOut */
+        MessageOut: {
+            /** Id */
+            id: number;
+            author_kind: components["schemas"]["AuthorKind"];
+            /** Author Name */
+            author_name: string;
+            /** Body */
+            body: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
         /** ModeTotals */
         ModeTotals: {
             /** Cash */
@@ -7385,6 +7679,17 @@ export interface components {
             /** Offset */
             offset: number;
         };
+        /** Page[TicketRow] */
+        Page_TicketRow_: {
+            /** Items */
+            items: components["schemas"]["TicketRow"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+        };
         /** Page[TripOut] */
         Page_TripOut_: {
             /** Items */
@@ -7802,7 +8107,7 @@ export interface components {
          * @description What a Duolink admin did (platform_audit_log, Milestones 16 and 17).
          * @enum {string}
          */
-        PlatformAction: "login" | "login_failed" | "logout" | "token_reuse" | "tenant_create" | "tenant_update" | "tenant_suspend" | "tenant_reactivate" | "user_activate" | "user_deactivate" | "user_unlock" | "user_reset_password" | "user_sign_out" | "staff_create" | "staff_update" | "staff_reset_password" | "staff_unlock" | "staff_sign_out" | "password_change" | "tenant_cancel" | "tenant_seller_update" | "tenant_logo_set" | "tenant_logo_remove" | "user_update" | "user_session_revoke" | "user_remove" | "plan_create" | "plan_update" | "plan_duplicate" | "plan_archive" | "plan_delete" | "subscription_renew" | "subscription_cancel" | "payment_reverse";
+        PlatformAction: "login" | "login_failed" | "logout" | "token_reuse" | "tenant_create" | "tenant_update" | "tenant_suspend" | "tenant_reactivate" | "user_activate" | "user_deactivate" | "user_unlock" | "user_reset_password" | "user_sign_out" | "staff_create" | "staff_update" | "staff_reset_password" | "staff_unlock" | "staff_sign_out" | "password_change" | "tenant_cancel" | "tenant_seller_update" | "tenant_logo_set" | "tenant_logo_remove" | "user_update" | "user_session_revoke" | "user_remove" | "plan_create" | "plan_update" | "plan_duplicate" | "plan_archive" | "plan_delete" | "subscription_renew" | "subscription_cancel" | "payment_reverse" | "support_reply" | "support_update";
         /** PlatformAuditRow */
         PlatformAuditRow: {
             /** Id */
@@ -9920,6 +10225,22 @@ export interface components {
          * @enum {string}
          */
         SupplyType: "B2B" | "B2C";
+        /**
+         * SupportCategory
+         * @description What a support ticket is about (Milestone 22).
+         * @enum {string}
+         */
+        SupportCategory: "sign_in" | "billing" | "gst_eway" | "stock" | "printing" | "other";
+        /**
+         * SupportPriority
+         * @enum {string}
+         */
+        SupportPriority: "low" | "normal" | "high" | "urgent";
+        /**
+         * SupportStatus
+         * @enum {string}
+         */
+        SupportStatus: "open" | "in_progress" | "waiting_on_company" | "resolved" | "closed";
         /** SuspendRequest */
         SuspendRequest: {
             /** Reason */
@@ -10368,6 +10689,98 @@ export interface components {
             /** Attachment Bytes */
             attachment_bytes: number;
         };
+        /** TicketCounts */
+        TicketCounts: {
+            /** Open */
+            open: number;
+            /** In Progress */
+            in_progress: number;
+            /** Waiting On Company */
+            waiting_on_company: number;
+            /** Resolved */
+            resolved: number;
+            /** Closed */
+            closed: number;
+            /** Urgent Open */
+            urgent_open: number;
+            /** Unassigned */
+            unassigned: number;
+        };
+        /** TicketCreate */
+        TicketCreate: {
+            /** Subject */
+            subject: string;
+            category: components["schemas"]["SupportCategory"];
+            /** @default normal */
+            priority: components["schemas"]["SupportPriority"];
+            /** Body */
+            body: string;
+        };
+        /** TicketDetail */
+        TicketDetail: {
+            /** Id */
+            id: number;
+            /** Number */
+            number: string;
+            /** Subject */
+            subject: string;
+            category: components["schemas"]["SupportCategory"];
+            priority: components["schemas"]["SupportPriority"];
+            status: components["schemas"]["SupportStatus"];
+            /** Raised By Name */
+            raised_by_name: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Last Reply At
+             * Format: date-time
+             */
+            last_reply_at: string;
+            /** Unread */
+            unread: boolean;
+            /** Assigned Admin Name */
+            assigned_admin_name: string | null;
+            /** Closed At */
+            closed_at: string | null;
+            /** Can Close */
+            can_close: boolean;
+            /** Messages */
+            messages: components["schemas"]["MessageOut"][];
+        };
+        /** TicketReply */
+        TicketReply: {
+            /** Body */
+            body: string;
+        };
+        /** TicketRow */
+        TicketRow: {
+            /** Id */
+            id: number;
+            /** Number */
+            number: string;
+            /** Subject */
+            subject: string;
+            category: components["schemas"]["SupportCategory"];
+            priority: components["schemas"]["SupportPriority"];
+            status: components["schemas"]["SupportStatus"];
+            /** Raised By Name */
+            raised_by_name: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Last Reply At
+             * Format: date-time
+             */
+            last_reply_at: string;
+            /** Unread */
+            unread: boolean;
+        };
         /** TodayOut */
         TodayOut: {
             /**
@@ -10572,6 +10985,11 @@ export interface components {
             pay_ref: string | null;
             /** Note */
             note: string | null;
+        };
+        /** UnreadCount */
+        UnreadCount: {
+            /** Unread */
+            unread: number;
         };
         /** UserCreate */
         UserCreate: {
@@ -13065,6 +13483,325 @@ export interface operations {
             };
         };
     };
+    list_tickets_api_v1_admin_support_tickets_get: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["SupportStatus"] | null;
+                priority?: components["schemas"]["SupportPriority"] | null;
+                tenant_id?: number | null;
+                assigned?: ("me" | "unassigned") | null;
+                /** @description subject, ticket number or company */
+                q?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminTicketPage"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_ticket_api_v1_admin_support_tickets__ticket_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminTicketDetail"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_ticket_api_v1_admin_support_tickets__ticket_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminTicketUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminTicketDetail"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reply_api_v1_admin_support_tickets__ticket_id__reply_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminReply"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminTicketDetail"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_tenants_api_v1_admin_tenants_get: {
         parameters: {
             query?: {
@@ -15255,6 +15992,457 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_tickets_api_v1_support_tickets_get: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["SupportStatus"] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_TicketRow_"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_ticket_api_v1_support_tickets_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TicketCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketDetail"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unread_count_api_v1_support_tickets_unread_count_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnreadCount"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_ticket_api_v1_support_tickets__ticket_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketDetail"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reply_api_v1_support_tickets__ticket_id__reply_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TicketReply"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketDetail"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    close_api_v1_support_tickets__ticket_id__close_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketDetail"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

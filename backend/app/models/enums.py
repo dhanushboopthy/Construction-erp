@@ -73,6 +73,41 @@ class PlatformAction(StrEnum):
     SUBSCRIPTION_RENEW = "subscription_renew"
     SUBSCRIPTION_CANCEL = "subscription_cancel"
     PAYMENT_REVERSE = "payment_reverse"
+    SUPPORT_REPLY = "support_reply"
+    SUPPORT_UPDATE = "support_update"
+
+
+class SupportCategory(StrEnum):
+    """What a support ticket is about (Milestone 22)."""
+
+    SIGN_IN = "sign_in"
+    BILLING = "billing"
+    GST_EWAY = "gst_eway"
+    STOCK = "stock"
+    PRINTING = "printing"
+    OTHER = "other"
+
+
+class SupportPriority(StrEnum):
+    LOW = "low"
+    NORMAL = "normal"
+    HIGH = "high"
+    URGENT = "urgent"
+
+
+class SupportStatus(StrEnum):
+    OPEN = "open"
+    IN_PROGRESS = "in_progress"
+    WAITING_ON_COMPANY = "waiting_on_company"
+    RESOLVED = "resolved"
+    CLOSED = "closed"
+
+
+class AuthorKind(StrEnum):
+    """Who wrote a support message: a user of the company, or a Duolink admin."""
+
+    COMPANY_USER = "company_user"
+    PLATFORM_ADMIN = "platform_admin"
 
 
 class SubscriptionStatus(StrEnum):

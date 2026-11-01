@@ -17,3 +17,14 @@ class DocumentSequence(Base, TenantMixin):
     doc_type: Mapped[DocType] = mapped_column(str_enum(DocType, "doc_type"))
     financial_year: Mapped[str] = mapped_column(String(5))  # e.g. "26-27"
     next_value: Mapped[int] = mapped_column(Integer, default=1)
+
+
+class CompanyCounter(Base, TenantMixin):
+    """A gapless counter for something that belongs to the company, not to a shop (support
+    tickets, Milestone 22). One row per company and name."""
+
+    __tablename__ = "company_counter"
+    __table_args__ = (PrimaryKeyConstraint("tenant_id", "name"),)
+
+    name: Mapped[str] = mapped_column(String(30))
+    next_value: Mapped[int] = mapped_column(Integer, default=1)

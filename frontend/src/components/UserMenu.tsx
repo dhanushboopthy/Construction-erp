@@ -1,7 +1,9 @@
-import { ChevronDown, LogOut, Moon, Sun } from "lucide-react";
+import { ChevronDown, LifeBuoy, LogOut, Moon, Sun } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router";
 
 import type { User } from "@/api/types";
+import { useUnreadTickets } from "@/support/api";
 import { currentTheme, setTheme, type Theme } from "@/theme";
 
 import { Avatar } from "./Avatar";
@@ -15,6 +17,7 @@ export function UserMenu({ user, onSignOut }: { user: User; onSignOut: () => voi
   const menu = usePopover();
   const [theme, setState] = useState<Theme>(currentTheme);
   const next: Theme = theme === "dark" ? "light" : "dark";
+  const unread = useUnreadTickets().data?.unread ?? 0;
 
   return (
     <div className={styles.root} ref={menu.rootRef}>
@@ -33,6 +36,7 @@ export function UserMenu({ user, onSignOut }: { user: User; onSignOut: () => voi
           <span className={styles.role}>{ROLE_LABEL[user.role]}</span>
         </span>
         <ChevronDown size={16} strokeWidth={2.2} aria-hidden="true" />
+        {unread > 0 ? <span className={styles.triggerDot} aria-hidden="true" /> : null}
       </button>
       {menu.open ? (
         <div className={styles.menu} role="dialog" aria-label="Account">
@@ -57,6 +61,18 @@ export function UserMenu({ user, onSignOut }: { user: User; onSignOut: () => voi
             )}
             {next === "dark" ? "Dark mode" : "Light mode"}
           </button>
+          <Link to="/help" className={styles.item} onClick={() => menu.close()}>
+            <LifeBuoy size={18} strokeWidth={2} aria-hidden="true" />
+            Help
+            {unread > 0 ? (
+              <>
+                <span className={styles.dot} aria-hidden="true" data-testid="help-dot" />
+                <span className="visually-hidden">
+                  {unread === 1 ? "1 new reply" : `${unread} new replies`}
+                </span>
+              </>
+            ) : null}
+          </Link>
           <button type="button" className={styles.item} onClick={onSignOut}>
             <LogOut size={18} strokeWidth={2} aria-hidden="true" />
             Sign out

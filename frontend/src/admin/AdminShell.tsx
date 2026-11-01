@@ -4,6 +4,7 @@ import {
   CalendarClock,
   IdCard,
   LayoutDashboard,
+  LifeBuoy,
   LogOut,
   Receipt,
   ShieldCheck,
@@ -29,6 +30,7 @@ const NAV = [
   { to: "/admin/plans", label: "Plans", icon: Tags, key: "6", end: false },
   { to: "/admin/subscriptions", label: "Subscriptions", icon: CalendarClock, key: "7", end: false },
   { to: "/admin/payments", label: "Payments", icon: Receipt, key: "8", end: false },
+  { to: "/admin/support", label: "Support", icon: LifeBuoy, key: "9", end: false },
 ];
 
 function initials(name: string) {
@@ -43,7 +45,7 @@ export function AdminShell() {
   const { admin, signOut } = useAdminAuth();
   const navigate = useNavigate();
 
-  // Alt+1-8 move between sections, as Alt+number does in the company app.
+  // Alt+1-9 move between sections, as Alt+number does in the company app.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (!event.altKey || event.ctrlKey || event.metaKey) return;

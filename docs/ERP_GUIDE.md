@@ -117,6 +117,24 @@ PDFs. You cannot save anything new (bills, receipts, entries), and the save butt
 off. Nothing is lost. Contact Duolink to renew; once they record it, saving works again straight
 away. A trial that ends without a payment works the same way.
 
+### Help: asking Duolink a question
+
+Open your name in the top corner and choose **Help**. You see the tickets your company has raised.
+
+- **Raise a ticket:** press New ticket, write a short subject, pick what it is about (sign-in,
+  billing, GST and e-way bill, stock, printing, other), pick how urgent it is, and describe the
+  problem. Say what you were doing and what you saw. Do not write passwords.
+- **Who sees it:** the owner and the accountant see every ticket of the company. Counter staff see
+  only the tickets they raised themselves. Duolink sees all of them. Answers are signed "Duolink
+  Support".
+- **The dot:** a dot on Help means Duolink has answered a ticket you have not opened yet. Open the
+  ticket and the dot goes away for everyone in your company.
+- **Reply** on the ticket to add more. If it was marked resolved, your reply reopens it.
+- **Close** a ticket you raised once you are sorted. A closed ticket takes no more replies; raise a
+  new one if the problem comes back.
+- **Even when your plan has ended**, you can raise tickets, reply and close them, so you can ask
+  Duolink about renewing.
+
 ---
 
 ## 3. What is what: the building blocks

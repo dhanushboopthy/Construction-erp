@@ -5,6 +5,11 @@ import { json } from "@/api/client";
 import { adminApi } from "./client";
 import type {
   AdminAction,
+  AdminTicketDetail,
+  AdminTicketFilters,
+  AdminTicketPage,
+  AdminTicketPatch,
+  AdminTicketReply,
   BillingDashboard,
   Overview,
   Page,
@@ -54,6 +59,7 @@ const keys = {
   subscriptions: ["admin", "subscriptions"] as const,
   payments: ["admin", "payments"] as const,
   billingDashboard: ["admin", "billing-dashboard"] as const,
+  support: ["admin", "support"] as const,
 };
 
 export function useOverview() {
@@ -443,8 +449,64 @@ export function useAdminActions(filters: { tenant_id?: number } = {}) {
   });
 }
 
-export function useStaff() {
-  return useQuery({ queryKey: keys.staff, queryFn: () => adminApi<StaffMember[]>("/staff") });
+export function useStaff(enabled = true) {
+  return useQuery({
+    queryKey: keys.staff,
+    queryFn: () => adminApi<StaffMember[]>("/staff"),
+    enabled,
+  });
+}
+
+export const TICKET_PAGE_SIZE = 25;
+
+export function useAdminTickets(filters: AdminTicketFilters = {}) {
+  return useQuery({
+    queryKey: [...keys.support, "list", filters],
+    queryFn: () =>
+      adminApi<AdminTicketPage>(
+        `/support/tickets${query({ limit: TICKET_PAGE_SIZE, ...filters })}`,
+      ),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useAdminTicket(id: number) {
+  return useQuery({
+    queryKey: [...keys.support, "ticket", id],
+    queryFn: () => adminApi<AdminTicketDetail>(`/support/tickets/${id}`),
+  });
+}
+
+function useAfterTicketChange() {
+  const client = useQueryClient();
+  return (detail: AdminTicketDetail) => {
+    client.setQueryData([...keys.support, "ticket", detail.id], detail);
+    void client.invalidateQueries({ queryKey: keys.support });
+  };
+}
+
+export function useAdminTicketReply(id: number) {
+  const after = useAfterTicketChange();
+  return useMutation({
+    mutationFn: (body: AdminTicketReply) =>
+      adminApi<AdminTicketDetail>(`/support/tickets/${id}/reply`, {
+        method: "POST",
+        body: json(body),
+      }),
+    onSuccess: after,
+  });
+}
+
+export function useAdminTicketPatch(id: number) {
+  const after = useAfterTicketChange();
+  return useMutation({
+    mutationFn: (body: AdminTicketPatch) =>
+      adminApi<AdminTicketDetail>(`/support/tickets/${id}`, {
+        method: "PATCH",
+        body: json(body),
+      }),
+    onSuccess: after,
+  });
 }
 
 export function useCreateStaff() {

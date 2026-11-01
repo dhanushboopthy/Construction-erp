@@ -16,6 +16,7 @@ from app.main import app
 from app.models.enums import PlatformRole
 from app.scripts import create_platform_admin as script
 from app.services.platform import auth as platform_auth
+from tests.conftest import login
 
 pytestmark = pytest.mark.integration
 
@@ -43,6 +44,12 @@ NOT_ADMIN_WRITES = {
     ("POST", "/api/v1/admin/auth/refresh"),
     ("POST", "/api/v1/admin/auth/logout"),
     ("POST", "/api/v1/admin/auth/change-password"),
+}
+# Answering a company's support ticket is a Support admin's job (Milestone 22), so these two
+# writes are open to every admin role. They are listed here so no other write can slip in.
+SUPPORT_MAY_WRITE = {
+    ("POST", "/api/v1/admin/support/tickets/{ticket_id}/reply"),
+    ("PATCH", "/api/v1/admin/support/tickets/{ticket_id}"),
 }
 
 
@@ -105,7 +112,11 @@ def _admin_routes():
     ]
 
 
-WRITES = [r for r in _admin_routes() if r[0] != "GET" and r not in NOT_ADMIN_WRITES]
+WRITES = [
+    r
+    for r in _admin_routes()
+    if r[0] != "GET" and r not in NOT_ADMIN_WRITES and r not in SUPPORT_MAY_WRITE
+]
 READS = [r for r in _admin_routes() if r[0] == "GET"]
 
 
@@ -119,6 +130,19 @@ def _fill(path, ids):
 
 
 # ------------------------------------------------------------------ roles
+
+
+def test_the_only_writes_support_may_do_are_the_ticket_replies(client, helper, acme):
+    assert set(_admin_routes()) >= SUPPORT_MAY_WRITE  # the names above are real routes
+    owner = login(client, "ravi", "ravi-pass-123", host="acme.localhost")
+    ticket = client.post(
+        "/api/v1/support/tickets",
+        headers=owner,
+        json={"subject": "A question", "category": "other", "body": "Hello"},
+    ).json()["id"]
+    base = f"/api/v1/admin/support/tickets/{ticket}"
+    assert client.post(f"{base}/reply", headers=helper, json={"body": "Hi"}).status_code == 200
+    assert client.patch(base, headers=helper, json={"priority": "high"}).status_code == 200
 
 
 def test_every_route_is_listed_so_none_can_be_forgotten():
@@ -136,6 +160,7 @@ def test_support_gets_403_on_every_write_route(client, helper, acme, method, pat
         "plan_id": 1,
         "subscription_id": 1,
         "payment_id": 1,
+        "ticket_id": 1,
     }
     response = client.request(method, _fill(path, ids), headers=helper, json={})
     assert response.status_code == 403, f"{method} {path}: {response.status_code}"
@@ -146,12 +171,19 @@ def test_support_gets_403_on_every_write_route(client, helper, acme, method, pat
 def test_support_gets_200_on_every_read_route(client, helper, acme, method, path):
     some_user = client.get("/api/v1/admin/users", headers=helper).json()["items"][0]["id"]
     some_plan = client.get("/api/v1/admin/billing/plans", headers=helper).json()[0]["id"]
+    owner = login(client, "ravi", "ravi-pass-123", host="acme.localhost")
+    some_ticket = client.post(
+        "/api/v1/support/tickets",
+        headers=owner,
+        json={"subject": "A question", "category": "other", "body": "Hello"},
+    ).json()["id"]
     ids = {
         "tenant_id": acme["id"],
         "user_id": some_user,
         "staff_id": 1,
         "session_id": SESSION_ID,
         "plan_id": some_plan,
+        "ticket_id": some_ticket,
     }
     response = client.get(_fill(path, ids), headers=helper)
     assert response.status_code == 200, f"{path}: {response.text}"

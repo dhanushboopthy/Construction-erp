@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from app.core.tenancy import current_tenant_id
 from app.domain.fiscal import format_doc_number, fy_label
 from app.models.enums import DocType
-from app.models.numbering import DocumentSequence
+from app.models.numbering import CompanyCounter, DocumentSequence
 from app.models.setup import Location
 
 # Suffix added to the location code so each document type has its own series.
@@ -35,6 +35,22 @@ SERIES_SUFFIX: dict[DocType, str] = {
     DocType.QUOTATION: "Q",
     DocType.PROFORMA: "PI",
 }
+
+
+def allocate_company_number(db: Session, name: str) -> int:
+    """The next number of a counter that belongs to the company, not to a shop (support
+    tickets). Gapless for the same reason as `allocate_number`: call it in the SAME transaction
+    that saves the row."""
+    stmt = (
+        insert(CompanyCounter)
+        .values(tenant_id=current_tenant_id(db), name=name, next_value=2)
+        .on_conflict_do_update(
+            index_elements=["tenant_id", "name"],
+            set_={"next_value": CompanyCounter.next_value + 1},
+        )
+        .returning(CompanyCounter.next_value)
+    )
+    return db.execute(stmt).scalar_one() - 1
 
 
 def allocate_number(

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import { ActivityTab } from "./pages/company/ActivityTab";
 import { OverviewTab } from "./pages/company/OverviewTab";
+import { SupportTab } from "./pages/company/SupportTab";
 import { SubscriptionTab } from "./pages/company/SubscriptionTab";
 import { UsageTab } from "./pages/company/UsageTab";
 import type { TenantDetail } from "./types";
@@ -27,4 +28,5 @@ export const COMPANY_TABS: CompanyTab[] = [
   { key: "subscription", label: "Subscription", render: (t) => <SubscriptionTab tenant={t} /> },
   { key: "usage", label: "Usage", render: (t) => <UsageTab tenant={t} /> },
   { key: "activity", label: "Activity", render: (t) => <ActivityTab tenant={t} /> },
+  { key: "support", label: "Support", render: (t) => <SupportTab tenant={t} /> },
 ];

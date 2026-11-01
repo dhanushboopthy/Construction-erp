@@ -90,6 +90,21 @@ inside a company.
 - Existing admins become Super Admins when migration 0030 runs, because before it every admin
   could change everything. Add Support accounts for read-only staff.
 
+## Update, 2026-11-04 (Milestone 22): support tickets
+
+- **The admin may read ticket subjects and messages.** The company writes them to Duolink on
+  purpose, so this is not the company's books being read. The rest of ADR 0012 is unchanged: no
+  amount, cost or document content from the books.
+- **The money-field test is unchanged.** `test_no_admin_answer_carries_money` now also walks the
+  ticket list and detail, and no support answer carries an amount-like key.
+- **Support may write here.** Replying to and updating a ticket is a Support admin's job, so those
+  two routes are open to every admin role. The Support-403 test lists them as the explicit
+  exceptions; any other new admin write still needs a Super Admin.
+- **The company does not see which admin answered.** Messages show "Duolink Support"; Duolink sees
+  the real names.
+- **Audit.** `support_reply` and `support_update` record the ticket number, the status change and
+  whether a message was sent, never the text.
+
 ## Update, 2026-10-31 (Milestone 21): read-only on expiry is now enforced
 
 - **An ended trial with no payment is now read-only.** ADR 0012 only flagged a trial that had

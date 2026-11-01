@@ -18,6 +18,8 @@ import { PaymentsPage } from "./pages/PaymentsPage";
 import { PlansPage } from "./pages/PlansPage";
 import { StaffPage } from "./pages/StaffPage";
 import { SubscriptionsPage } from "./pages/SubscriptionsPage";
+import { SupportPage } from "./pages/SupportPage";
+import { SupportThreadPage } from "./pages/SupportThreadPage";
 import { UsersPage } from "./pages/UsersPage";
 
 const queryClient = createQueryClient();
@@ -70,6 +72,8 @@ export function AdminApp({ client = queryClient }: { client?: QueryClient }) {
               <Route path="plans" element={<PlansPage />} />
               <Route path="subscriptions" element={<SubscriptionsPage />} />
               <Route path="payments" element={<PaymentsPage />} />
+              <Route path="support" element={<SupportPage />} />
+              <Route path="support/:id" element={<SupportThreadPage />} />
               <Route path="users" element={<UsersPage />} />
               <Route path="staff" element={<StaffPage />} />
               <Route path="activity" element={<ActivityPage />} />

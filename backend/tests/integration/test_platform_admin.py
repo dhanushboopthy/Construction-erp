@@ -333,8 +333,18 @@ def test_no_admin_answer_carries_money(client, admin, acme):
     gets = [p for p in paths if "get" in app.openapi()["paths"][p] and p not in billing_gets]
     checked = 0
     ravi = _user_id(client, admin, "acme", "ravi")
+    owner = login(client, "ravi", "ravi-pass-123", host="acme.localhost")
+    ticket = client.post(
+        "/api/v1/support/tickets",
+        headers=owner,
+        json={"subject": "A question", "category": "other", "body": "Hello"},
+    ).json()["id"]
     for path in gets:
-        url = path.replace("{tenant_id}", str(acme["id"])).replace("{user_id}", str(ravi))
+        url = (
+            path.replace("{tenant_id}", str(acme["id"]))
+            .replace("{user_id}", str(ravi))
+            .replace("{ticket_id}", str(ticket))
+        )
         response = client.get(url, headers=admin)
         assert response.status_code == 200, f"{path}: {response.text}"
         money = [k for k in _keys(response.json()) if MONEY_WORDS.search(k)]

@@ -5,6 +5,7 @@ from app.models.audit import AuditLog
 from app.models.auth import AuthSession
 from app.models.banking import BankAccount, BankStatement, BankStatementLine
 from app.models.base import Base
+from app.models.billing import Subscription, SubscriptionPayment
 from app.models.cashbook import CashEntry, ExpenseCategory
 from app.models.compliance import EInvoice, EwayBill
 from app.models.documents import Attachment, DailyClosing, Gstr2bImport
@@ -111,6 +112,8 @@ __all__ = [
     "StockTransferLine",
     "StockWritedown",
     "StockWritedownLine",
+    "Subscription",
+    "SubscriptionPayment",
     "SupplierScheme",
     "TallyLedger",
     "Tenant",

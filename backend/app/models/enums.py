@@ -70,6 +70,30 @@ class PlatformAction(StrEnum):
     PLAN_DUPLICATE = "plan_duplicate"
     PLAN_ARCHIVE = "plan_archive"
     PLAN_DELETE = "plan_delete"
+    SUBSCRIPTION_RENEW = "subscription_renew"
+    SUBSCRIPTION_CANCEL = "subscription_cancel"
+    PAYMENT_REVERSE = "payment_reverse"
+
+
+class SubscriptionStatus(StrEnum):
+    """Stored status of a company's subscription (Milestone 21). Whether it has run out is
+    worked out from `expires_at`; `expired` is never written, it is what `trial` and `active`
+    become when the date passes."""
+
+    TRIAL = "trial"
+    ACTIVE = "active"
+    EXPIRED = "expired"
+    CANCELLED = "cancelled"
+
+
+class PaymentMethod(StrEnum):
+    """How Duolink received a subscription payment (Milestone 21)."""
+
+    CASH = "cash"
+    BANK = "bank"
+    UPI = "upi"
+    CHEQUE = "cheque"
+    RAZORPAY = "razorpay"
 
 
 class LocationKind(StrEnum):

@@ -3,7 +3,9 @@
 import type {
   AdminActionKind,
   DurationUnit,
+  PaymentMethod,
   PlatformRole,
+  SubscriptionStatus,
   TenantStatus,
   TrialState,
 } from "./types";
@@ -36,11 +38,49 @@ export function durationLabel(value: number, unit: DurationUnit): string {
 /** A price kept as the text the server sent: "9999.00" becomes "₹9,999.00" (Indian grouping).
  * Never parsed to a number, so no digit can change on the way to the screen. */
 export function rupees(price: string): string {
+  if (price.startsWith("-")) return `-${rupees(price.slice(1))}`;
   const [whole = "0", fraction] = price.split(".");
   const last3 = whole.slice(-3);
   const rest = whole.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ",");
   const grouped = rest ? `${rest},${last3}` : last3;
   return `₹${grouped}${fraction === undefined ? "" : `.${fraction}`}`;
+}
+
+export const SUBSCRIPTION: Record<SubscriptionStatus, { label: string; tone: Tone }> = {
+  trial: { label: "On trial", tone: "accent" },
+  active: { label: "Active", tone: "good" },
+  expired: { label: "Expired", tone: "critical" },
+  cancelled: { label: "Cancelled", tone: "neutral" },
+};
+
+export const SUBSCRIPTION_ORDER: SubscriptionStatus[] = ["active", "trial", "expired", "cancelled"];
+
+export const METHODS: { value: PaymentMethod; label: string }[] = [
+  { value: "cash", label: "Cash" },
+  { value: "bank", label: "Bank transfer" },
+  { value: "upi", label: "UPI" },
+  { value: "cheque", label: "Cheque" },
+  { value: "razorpay", label: "Razorpay" },
+];
+
+export const methodLabel = (m: PaymentMethod) => METHODS.find((o) => o.value === m)?.label ?? m;
+
+/** "2026-11" as "Nov 2026" (no time zone shift: it is a calendar month). */
+export function monthLabel(month: string): string {
+  const [y = "1970", m = "1"] = month.split("-");
+  const name = new Intl.DateTimeFormat("en-IN", { timeZone: "UTC", month: "short" }).format(
+    new Date(Date.UTC(Number(y), Number(m) - 1, 1)),
+  );
+  return `${name} ${y}`;
+}
+
+/** Days left as words: "12 days left", "ended 3 days ago", "ends today". */
+export function daysLeftLabel(days: number | null): string {
+  if (days === null) return "No end date";
+  if (days === 0) return "Ends today";
+  if (days > 0) return `${days} ${days === 1 ? "day" : "days"} left`;
+  const ago = -days;
+  return `Ended ${ago} ${ago === 1 ? "day" : "days"} ago`;
 }
 
 export const TRIAL: Record<TrialState, { label: string; tone: Tone } | null> = {

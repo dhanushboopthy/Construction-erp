@@ -4,6 +4,7 @@ import { NavLink, Outlet } from "react-router";
 
 import { useTenant } from "@/api/tenant";
 import { useAuth } from "@/auth/AuthContext";
+import { ReadOnlyContext } from "@/auth/ReadOnlyContext";
 import { useAlerts } from "@/hooks/useAlerts";
 import { useModuleShortcuts } from "@/hooks/useModuleShortcuts";
 import { modulesFor, type ModuleLink } from "@/modules";
@@ -11,6 +12,7 @@ import { modulesFor, type ModuleLink } from "@/modules";
 import styles from "./AppShell.module.css";
 import { BrandMark } from "./BrandMark";
 import { iconFor } from "./moduleIcons";
+import { SubscriptionBanner } from "./SubscriptionBanner";
 import { TopBar } from "./TopBar";
 import { usePopover } from "./usePopover";
 
@@ -110,8 +112,11 @@ export function AppShell() {
           alerts={alerts}
           alertsMenu={alertsMenu}
         />
+        <SubscriptionBanner tenant={tenant.data} />
         <main className={styles.content}>
-          <Outlet />
+          <ReadOnlyContext value={tenant.data?.access_state === "read_only"}>
+            <Outlet />
+          </ReadOnlyContext>
         </main>
       </div>
     </div>

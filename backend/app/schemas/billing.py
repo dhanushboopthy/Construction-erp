@@ -7,11 +7,11 @@ Prices are Decimal in and out; a JSON number with a fraction is refused so no fl
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import Field, field_validator
 
-from app.models.enums import DurationUnit
+from app.models.enums import DurationUnit, PaymentMethod
 from app.schemas.common import Schema
 
 
@@ -109,3 +109,127 @@ class PlanFeatureOut(Schema):
     code: str
     name: str
     description: str
+
+
+# ---------------------------------------------------------------- subscriptions (Milestone 21)
+
+
+class SubscriptionRow(Schema):
+    id: int
+    tenant_id: int
+    tenant_slug: str
+    tenant_name: str
+    plan_id: int
+    plan_code: str
+    plan_name: str
+    status: Literal["trial", "active", "expired", "cancelled"]  # worked out from the dates
+    starts_at: datetime
+    expires_at: datetime | None
+    days_left: int | None  # negative once it has ended
+    needs_review: bool
+    duration_value: int | None
+    duration_unit: str | None
+    price: Decimal | None
+    cancelled_at: datetime | None
+    cancel_reason: str | None
+
+
+class RenewRequest(Schema):
+    """Record a renewal Duolink received by hand. Choose one of the plan's price options
+    (`price_id`) or `custom_days`. `amount` is what was actually received, as text."""
+
+    plan_id: int
+    price_id: int | None = None
+    custom_days: int | None = Field(default=None, ge=1, le=3650)
+    amount: Decimal = Field(max_digits=12, decimal_places=2)
+    method: PaymentMethod
+    reference: str | None = Field(default=None, max_length=100)
+    notes: str | None = Field(default=None, max_length=1000)
+    paid_at: datetime | None = None
+
+    @field_validator("amount", mode="before")
+    @classmethod
+    def _text_not_float(cls, value: Any) -> Any:
+        return _no_float(value)
+
+
+class CancelRequest(Schema):
+    reason: str = Field(min_length=3, max_length=500)
+
+
+class ReverseRequest(Schema):
+    reason: str = Field(min_length=3, max_length=500)
+
+
+class PaymentOut(Schema):
+    id: int
+    subscription_id: int
+    tenant_id: int
+    tenant_name: str
+    plan_code: str
+    plan_name: str
+    amount: Decimal  # negative on a reversal
+    method: PaymentMethod
+    reference: str | None
+    notes: str | None
+    paid_at: datetime
+    period_starts_at: datetime | None
+    period_ends_at: datetime | None
+    reverses_id: int | None
+    reversed: bool
+    recorded_by: str
+
+
+class PaymentTotals(Schema):
+    received: Decimal
+    reversed: Decimal  # as a positive amount
+    net: Decimal
+
+
+class PaymentPage(Schema):
+    items: list[PaymentOut]
+    total: int
+    limit: int
+    offset: int
+    totals: PaymentTotals  # for the whole filter, not just this page
+
+
+class CompaniesByStatus(Schema):
+    trial: int
+    active: int
+    suspended: int
+    cancelled: int
+
+
+class TrendPoint(Schema):
+    month: str  # 2026-11
+    revenue: Decimal
+    signups: int
+
+
+class PlanShare(Schema):
+    plan_id: int
+    plan_code: str
+    plan_name: str
+    companies: int
+
+
+class ExpiringSoon(Schema):
+    tenant_id: int
+    tenant_name: str
+    plan_code: str
+    expires_at: datetime
+    days_left: int
+
+
+class BillingDashboard(Schema):
+    companies_by_status: CompaniesByStatus
+    active_subscriptions: int
+    revenue_month: Decimal
+    revenue_fy: Decimal
+    new_companies_month: int
+    renewals_month: int
+    expiring_30: int
+    trend: list[TrendPoint]
+    plan_breakdown: list[PlanShare]
+    expiring_soon: list[ExpiringSoon]

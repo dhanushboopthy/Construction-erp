@@ -1,5 +1,36 @@
 # Changelog
 
+## 1.15.0 (M21): subscriptions, manual renewals, revenue, read-only on expiry
+
+For Duolink staff:
+
+- **Every company now has a subscription with an end date.** A new Subscriptions page lists them
+  with plan, status, end date and days left, and filters by status, plan and "ending within N
+  days". Companies that were already active got an end date one year out, marked "needs review":
+  check each one and correct it.
+- **Record a renewal by hand** (Super Admin): pick the plan and a price option, or a number of
+  days, then the amount received, how it was paid (cash, bank, UPI, cheque), a reference and notes.
+  Paying during a trial starts the paid period today. Renewing early adds the time on top of the
+  current end date. Renewing after the end starts today. Month ends are handled (31 Jan plus one
+  month is 28 or 29 Feb).
+- **Cancel** a subscription with a reason. The company becomes read-only.
+- **Payments page** lists every payment with totals received, reversed and net, filtered by date,
+  method and company. A mistaken payment is corrected with **Reverse**, which adds a negative row
+  and keeps the original. Reversing does not shorten the end date. Payments cannot be edited or
+  deleted.
+- **Dashboard** shows companies by status, revenue this month and this financial year, renewals,
+  new companies, a 12-month trend, companies per plan and the next expiries.
+- A payment row is your receipt record. Duolink's GST tax invoice for the subscription is raised
+  in your own books, outside this ERP.
+
+For companies:
+
+- From 7 days before the end date a banner says "Your Duolink plan ends on ...  Contact Duolink
+  to renew."
+- **After the end date the company is read-only.** Everyone can still sign in, read, run reports
+  and download GST exports, the Tally export and PDFs. Saving anything is refused until Duolink
+  records a renewal, which works at once. An ended trial with no payment is read-only too.
+
 ## 1.14.0 (M20): plans and pricing catalogue
 
 For Duolink staff:

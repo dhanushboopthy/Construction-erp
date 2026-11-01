@@ -14,8 +14,10 @@ import { ChangePasswordPage } from "./pages/ChangePasswordPage";
 import { CompanyPage } from "./pages/CompanyPage";
 import { NewCompanyPage } from "./pages/NewCompanyPage";
 import { OverviewPage } from "./pages/OverviewPage";
+import { PaymentsPage } from "./pages/PaymentsPage";
 import { PlansPage } from "./pages/PlansPage";
 import { StaffPage } from "./pages/StaffPage";
+import { SubscriptionsPage } from "./pages/SubscriptionsPage";
 import { UsersPage } from "./pages/UsersPage";
 
 const queryClient = createQueryClient();
@@ -66,6 +68,8 @@ export function AdminApp({ client = queryClient }: { client?: QueryClient }) {
               />
               <Route path="companies/:id" element={<CompanyPage />} />
               <Route path="plans" element={<PlansPage />} />
+              <Route path="subscriptions" element={<SubscriptionsPage />} />
+              <Route path="payments" element={<PaymentsPage />} />
               <Route path="users" element={<UsersPage />} />
               <Route path="staff" element={<StaffPage />} />
               <Route path="activity" element={<ActivityPage />} />

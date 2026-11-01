@@ -10,12 +10,18 @@ import type { ApiErrorBody, TokenResponse } from "./types";
  * admin's (src/admin/client.ts), which has its own token and refresh path.
  */
 
+/** Codes whose server wording is replaced by one plain sentence everywhere. */
+const FRIENDLY: Record<string, string> = {
+  SUBSCRIPTION_EXPIRED:
+    "Your Duolink plan has ended, so this company is read-only. Contact Duolink to renew.",
+};
+
 export class ApiError extends Error {
   readonly status: number;
   readonly body: ApiErrorBody;
 
   constructor(status: number, body: ApiErrorBody) {
-    super(body.message);
+    super(FRIENDLY[body.code] ?? body.message);
     this.status = status;
     this.body = body;
   }

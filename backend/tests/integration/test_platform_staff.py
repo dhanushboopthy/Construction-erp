@@ -134,6 +134,8 @@ def test_support_gets_403_on_every_write_route(client, helper, acme, method, pat
         "staff_id": 1,
         "session_id": SESSION_ID,
         "plan_id": 1,
+        "subscription_id": 1,
+        "payment_id": 1,
     }
     response = client.request(method, _fill(path, ids), headers=helper, json={})
     assert response.status_code == 403, f"{method} {path}: {response.status_code}"

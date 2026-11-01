@@ -20,7 +20,18 @@ OWNER = ("owner", "owner-pass-123")
 def test_everyone_gets_only_the_company_the_name_the_tagline_and_the_logo_address(client):
     for headers in ({}, login(client, *OWNER), login(client, *COUNTER)):
         body = client.get("/api/v1/tenant", headers=headers).json()
-        assert set(body) == {"slug", "status", "name", "tagline", "logo_url"}
+        # The name, the logo and the subscription's dates and state; never an amount.
+        assert set(body) == {
+            "slug",
+            "status",
+            "name",
+            "tagline",
+            "logo_url",
+            "access_state",
+            "subscription_status",
+            "expires_at",
+            "days_left",
+        }
         assert body["tagline"] == DEFAULT_TAGLINE
         assert body["logo_url"] is None
 

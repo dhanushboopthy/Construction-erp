@@ -25,6 +25,7 @@ from app.models.enums import PlatformRole, Role
 from app.models.platform import PlatformAdmin
 from app.models.setup import AppUser
 from app.models.tenancy import Tenant
+from app.services import subscription_access
 from app.services import tenants as tenant_service
 from app.services.audit import set_actor, set_actor_label
 
@@ -74,6 +75,7 @@ def get_tenant(request: Request, db: DbSession) -> Tenant:
     tenant = tenant_service.for_host(db, request_host(request))
     set_tenant(db, tenant.id)
     request.state.tenant_id = tenant.id
+    subscription_access.enforce(db, tenant, request.method, request.url.path)
     return tenant
 
 

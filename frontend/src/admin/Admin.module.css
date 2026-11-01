@@ -194,6 +194,10 @@
   color: var(--color-critical);
 }
 
+.stat[data-tone="warn"] .statValue {
+  color: var(--color-warn);
+}
+
 .statNote {
   color: var(--color-secondary);
   font-size: var(--text-xs);

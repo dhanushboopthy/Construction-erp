@@ -67,6 +67,11 @@ def test_each_address_names_its_company(client, beta):
         "name": "Demo Construction Materials",
         "tagline": DEFAULT_TAGLINE,
         "logo_url": None,
+        # Seeded active with no end date (Milestone 21): never read-only until a renewal.
+        "access_state": "full",
+        "subscription_status": "active",
+        "expires_at": None,
+        "days_left": None,
     }
 
 

@@ -5,9 +5,17 @@ import { json } from "@/api/client";
 import { adminApi } from "./client";
 import type {
   AdminAction,
+  BillingDashboard,
   Overview,
   Page,
+  Payment,
+  PaymentFilters,
+  PaymentPage,
   Plan,
+  RenewBody,
+  SubscriptionFilters,
+  SubscriptionPage,
+  SubscriptionRow,
   PlanCreate,
   PlanFeature,
   PlanUpdate,
@@ -43,6 +51,9 @@ const keys = {
   audit: ["admin", "audit"] as const,
   staff: ["admin", "staff"] as const,
   plans: ["admin", "plans"] as const,
+  subscriptions: ["admin", "subscriptions"] as const,
+  payments: ["admin", "payments"] as const,
+  billingDashboard: ["admin", "billing-dashboard"] as const,
 };
 
 export function useOverview() {
@@ -323,6 +334,73 @@ export function useDeletePlan(id: number) {
   return useMutation({
     mutationFn: (body: { confirmation: string; reason: string }) =>
       adminApi<undefined>(`/billing/plans/${id}/delete`, { method: "POST", body: json(body) }),
+    onSuccess: () => refresh(),
+  });
+}
+
+export const SUBSCRIPTION_PAGE_SIZE = 25;
+export const PAYMENT_PAGE_SIZE = 25;
+
+export function useSubscriptions(filters: SubscriptionFilters = {}) {
+  return useQuery({
+    queryKey: [...keys.subscriptions, filters],
+    queryFn: () =>
+      adminApi<SubscriptionPage>(
+        `/billing/subscriptions${query({ limit: SUBSCRIPTION_PAGE_SIZE, ...filters })}`,
+      ),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function usePayments(filters: PaymentFilters = {}) {
+  return useQuery({
+    queryKey: [...keys.payments, filters],
+    queryFn: () =>
+      adminApi<PaymentPage>(`/billing/payments${query({ limit: PAYMENT_PAGE_SIZE, ...filters })}`),
+    placeholderData: keepPreviousData,
+  });
+}
+
+/** Revenue and sign-up figures. Only this call feeds money onto the Overview. */
+export function useBillingDashboard() {
+  return useQuery({
+    queryKey: keys.billingDashboard,
+    queryFn: () => adminApi<BillingDashboard>("/billing/dashboard"),
+  });
+}
+
+export function useRenewSubscription(id: number) {
+  const refresh = useRefreshAll();
+  return useMutation({
+    mutationFn: (body: RenewBody) =>
+      adminApi<SubscriptionRow>(`/billing/subscriptions/${id}/renew`, {
+        method: "POST",
+        body: json(body),
+      }),
+    onSuccess: () => refresh(),
+  });
+}
+
+export function useCancelSubscription(id: number) {
+  const refresh = useRefreshAll();
+  return useMutation({
+    mutationFn: (reason: string) =>
+      adminApi<SubscriptionRow>(`/billing/subscriptions/${id}/cancel`, {
+        method: "POST",
+        body: json({ reason }),
+      }),
+    onSuccess: () => refresh(),
+  });
+}
+
+export function useReversePayment(id: number) {
+  const refresh = useRefreshAll();
+  return useMutation({
+    mutationFn: (reason: string) =>
+      adminApi<Payment>(`/billing/payments/${id}/reverse`, {
+        method: "POST",
+        body: json({ reason }),
+      }),
     onSuccess: () => refresh(),
   });
 }

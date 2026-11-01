@@ -106,6 +106,17 @@ Five promises the system keeps:
 | Transport | Alt+T | ✓ | | ✓ (read) |
 | Metrics explained | Alt+M | ✓ | | |
 
+### When your Duolink plan ends
+
+Your company has a plan with an end date. From 7 days before it, a banner at the top says "Your
+Duolink plan ends on 12 Nov 2026. Contact Duolink to renew."
+
+If the date passes, the company becomes **read-only**, and the banner says so. You can still sign
+in, look at bills, stock, reports and the books, and download GST exports, the Tally export and
+PDFs. You cannot save anything new (bills, receipts, entries), and the save buttons are switched
+off. Nothing is lost. Contact Duolink to renew; once they record it, saving works again straight
+away. A trial that ends without a payment works the same way.
+
 ---
 
 ## 3. What is what: the building blocks

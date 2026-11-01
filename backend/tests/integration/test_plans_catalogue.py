@@ -396,6 +396,13 @@ def test_only_the_billing_paths_may_carry_a_price():
         "/plans/{plan_id}/duplicate",
         "/plans/{plan_id}/archive",
         "/plans/{plan_id}/delete",
+        # Milestone 21: subscriptions, payments and the revenue dashboard.
+        "/subscriptions",
+        "/subscriptions/{subscription_id}/renew",
+        "/subscriptions/{subscription_id}/cancel",
+        "/payments",
+        "/payments/{payment_id}/reverse",
+        "/dashboard",
     }
 
 

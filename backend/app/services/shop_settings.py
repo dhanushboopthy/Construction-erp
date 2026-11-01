@@ -1,14 +1,18 @@
 """Shop-wide settings (one row per tenant)."""
 
+from datetime import UTC, datetime
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.errors import NotFoundError
 from app.core.tenancy import current_tenant_id
+from app.domain.subscriptions import AccessState
 from app.models.setup import ShopSettings
 from app.models.tenancy import Tenant
 from app.schemas.settings import ShopSettingsUpdate
 from app.schemas.tenant import TenantOut
+from app.services import subscription_access
 
 # One line for every shop until the owner can set their own (docs/UI_REFACTOR_PLAN.md, section 7).
 DEFAULT_TAGLINE = "Bill fast. Close on time."
@@ -29,7 +33,14 @@ def get_tenant(db: Session, tenant: Tenant) -> TenantOut:
     row = db.execute(
         select(ShopSettings).where(ShopSettings.tenant_id == current_tenant_id(db))
     ).scalar_one_or_none()
+    access = subscription_access.access_of(
+        tenant, subscription_access.subscription_of(db, tenant.id), datetime.now(UTC)
+    )
     return TenantOut(
+        access_state="read_only" if access.state is AccessState.READ_ONLY else "full",
+        subscription_status=access.subscription_status,
+        expires_at=access.expires_at,
+        days_left=access.days_left,
         slug=tenant.slug,
         status=tenant.status,
         name=(row.trade_name or row.legal_name) if row else tenant.name,

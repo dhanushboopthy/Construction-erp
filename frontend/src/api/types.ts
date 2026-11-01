@@ -16,7 +16,13 @@ export type UserCreate = Schemas["UserCreate"];
 export type UserUpdate = Schemas["UserUpdate"];
 export type PasswordReset = Schemas["PasswordReset"];
 export type ShopSettings = Schemas["ShopSettingsOut"];
-export type Tenant = Schemas["TenantOut"];
+/** M21 adds the subscription fields; written by hand until `make gen-api` runs. */
+export type Tenant = Schemas["TenantOut"] & {
+  access_state?: "full" | "read_only";
+  subscription_status?: "trial" | "active" | "expired" | "cancelled";
+  expires_at?: string | null;
+  days_left?: number | null;
+};
 export type ShopSettingsUpdate = Schemas["ShopSettingsUpdate"];
 export type TokenResponse = Schemas["TokenResponse"];
 export type TenantPlanUsage = Schemas["TenantPlanOut"];

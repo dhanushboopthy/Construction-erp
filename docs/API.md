@@ -104,6 +104,27 @@ in the platform audit log.
 | POST | `/admin/billing/plans/{id}/archive {reason}` | Super Admin | Hidden from pickers; clears `is_popular`. Companies on it keep it |
 | POST | `/admin/billing/plans/{id}/delete {confirmation: "DELETE", reason}` | Super Admin | 204. 409 `CONFIRMATION_MISMATCH` (case-sensitive), `PLAN_IN_USE` while any company is on it |
 
+### Endpoints (Milestone 21: subscriptions, payments, revenue)
+
+Under `/admin/billing`. Reads: any admin. Writes: Super Admin (403 `PERMISSION_DENIED` otherwise).
+Money is a Decimal string (`"999.90"`), dates are ISO strings. These are the only admin paths that
+carry revenue. Every write is in the platform audit log.
+
+| Method | Path | Role | What |
+| --- | --- | --- | --- |
+| GET | `/admin/billing/subscriptions?status&plan&expiring_within&tenant_id&search&limit&offset` | any admin | `{items, total}`. A row: `id`, `tenant_id`, `tenant_slug`, `tenant_name`, `plan_id`, `plan_code`, `plan_name`, `status` (`trial\|active\|expired\|cancelled`, worked out from the dates), `starts_at`, `expires_at`, `days_left` (negative once ended), `needs_review`, `duration_value`, `duration_unit`, `price`, `cancelled_at`, `cancel_reason` |
+| POST | `/admin/billing/subscriptions/{id}/renew {plan_id, price_id?, custom_days?, amount, method: cash\|bank\|upi\|cheque\|razorpay, reference?, notes?, paid_at?}` | Super Admin | Send exactly one of `price_id` and `custom_days`. Answers the updated row. 409 `RENEWAL_CHOICE`, `RENEWAL_DURATION`, `PAYMENT_AMOUNT`, `PAYMENT_METHOD`, `PLAN_INACTIVE`, `PRICE_NOT_FOUND` |
+| POST | `/admin/billing/subscriptions/{id}/cancel {reason}` | Super Admin | The company becomes read-only. 409 `ALREADY_CANCELLED` |
+| GET | `/admin/billing/payments?from&to&method&tenant_id&limit&offset` | any admin | `{items, total, totals: {received, reversed, net}}`. A payment: `id`, `subscription_id`, `tenant_id`, `tenant_name`, `plan_code`, `plan_name`, `amount` (negative on a reversal), `method`, `reference`, `notes`, `paid_at`, `period_starts_at`, `period_ends_at`, `reverses_id`, `reversed`, `recorded_by` |
+| POST | `/admin/billing/payments/{id}/reverse {reason}` | Super Admin | Adds a negative row that points at the payment; answers that row. The expiry does not change. 409 `PAYMENT_REVERSED`, `PAYMENT_IS_REVERSAL` |
+| GET | `/admin/billing/dashboard` | any admin | `companies_by_status` (`trial`, `active`, `suspended`, `cancelled`), `active_subscriptions`, `revenue_month`, `revenue_fy`, `new_companies_month`, `renewals_month`, `expiring_30`, `trend[12]` (`month`, `revenue`, `signups`, oldest first), `plan_breakdown[]`, `expiring_soon[]` |
+
+Company side. `GET /tenant` (no sign-in) also answers `access_state` (`full` or `read_only`),
+`subscription_status`, `expires_at` and `days_left`; no amount. A `read_only` company answers
+**403 `SUBSCRIPTION_EXPIRED`** to every non-GET request. Still allowed: sign-in, refresh, logout,
+and change-password (every PDF and export is a GET). A suspended or closed company is still
+blocked outright, as before.
+
 Changed elsewhere: `plan` on `/admin/tenants` rows, the create and update bodies and the `plan`
 filter is now a plan code (`TRIAL`, `BASIC`, `PRO`, or any code Duolink added; sent in any case,
 answered in capitals), with `plan_id` and `plan_name` on rows. Giving a company an unknown plan

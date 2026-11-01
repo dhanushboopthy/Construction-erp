@@ -305,6 +305,9 @@ MONEY_ALLOWED_PATHS = {
     "/api/v1/admin/billing/plans",
     "/api/v1/admin/billing/plans/features",
     "/api/v1/admin/billing/plans/{plan_id}",
+    "/api/v1/admin/billing/subscriptions",
+    "/api/v1/admin/billing/payments",
+    "/api/v1/admin/billing/dashboard",
 }
 MONEY_WORDS = re.compile(r"amount|cost|price|rate|profit|margin|balance|taxable|gst|value|paid")
 

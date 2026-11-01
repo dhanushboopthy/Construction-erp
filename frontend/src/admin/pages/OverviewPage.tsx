@@ -3,10 +3,91 @@ import { Link } from "react-router";
 import styles from "@/components/Ledger.module.css";
 import { formatDateTime, plural } from "@/lib/format";
 
-import { useOverview } from "../api";
+import { useBillingDashboard, useOverview } from "../api";
 import adminStyles from "../Admin.module.css";
-import { STATUS, STATUS_ORDER } from "../labels";
+import chartStyles from "../Chart.module.css";
+import { STATUS, STATUS_ORDER, monthLabel, rupees } from "../labels";
+import { TrendChart } from "../TrendChart";
 import type { TenantStatus } from "../types";
+
+/** Duolink's own income, from /billing/dashboard only: revenue, subscriptions and a 12-month trend. */
+function RevenueSection() {
+  const dash = useBillingDashboard();
+  if (dash.isPending) return <p role="status">Loading revenue…</p>;
+  if (dash.isError) {
+    return (
+      <p role="alert" className={styles.formError}>
+        Revenue figures could not be loaded.
+      </p>
+    );
+  }
+  const d = dash.data;
+  return (
+    <>
+      <dl className={adminStyles.stats} aria-label="Revenue and subscriptions">
+        <div className={adminStyles.stat}>
+          <dt>Revenue this month</dt>
+          <dd className={adminStyles.statValue}>{rupees(d.revenue_month)}</dd>
+          <dd className={adminStyles.statNote}>
+            <Link to="/admin/payments">See payments</Link>
+          </dd>
+        </div>
+        <div className={adminStyles.stat}>
+          <dt>Revenue this financial year</dt>
+          <dd className={adminStyles.statValue}>{rupees(d.revenue_fy)}</dd>
+          <dd className={adminStyles.statNote}>April to March</dd>
+        </div>
+        <div className={adminStyles.stat}>
+          <dt>Active subscriptions</dt>
+          <dd className={adminStyles.statValue}>{d.active_subscriptions}</dd>
+          <dd className={adminStyles.statNote}>
+            <Link to="/admin/subscriptions?status=active">See them</Link>
+          </dd>
+        </div>
+        <div className={adminStyles.stat}>
+          <dt>Renewals this month</dt>
+          <dd className={adminStyles.statValue}>{d.renewals_month}</dd>
+          <dd className={adminStyles.statNote}>Payments recorded</dd>
+        </div>
+        <div className={adminStyles.stat}>
+          <dt>New companies this month</dt>
+          <dd className={adminStyles.statValue}>{d.new_companies_month}</dd>
+          <dd className={adminStyles.statNote}>Signed up</dd>
+        </div>
+        <div className={adminStyles.stat} data-tone={d.expiring_30 > 0 ? "warn" : undefined}>
+          <dt>Expiring in 30 days</dt>
+          <dd className={adminStyles.statValue}>{d.expiring_30}</dd>
+          <dd className={adminStyles.statNote}>
+            <Link to="/admin/subscriptions?expiring_within=30">See who</Link>
+          </dd>
+        </div>
+      </dl>
+      <div className={chartStyles.charts}>
+        <TrendChart
+          title="Revenue, last 12 months"
+          series="Revenue"
+          tone={1}
+          bars={d.trend.map((p) => ({
+            label: monthLabel(p.month),
+            // Height only; the figure written is the server's text.
+            height: Number(p.revenue),
+            text: rupees(p.revenue),
+          }))}
+        />
+        <TrendChart
+          title="New companies, last 12 months"
+          series="Sign-ups"
+          tone={2}
+          bars={d.trend.map((p) => ({
+            label: monthLabel(p.month),
+            height: p.signups,
+            text: String(p.signups),
+          }))}
+        />
+      </div>
+    </>
+  );
+}
 
 /** What Duolink checks first: how many companies, in what state, and who is signing in. */
 export function OverviewPage() {
@@ -88,6 +169,8 @@ export function OverviewPage() {
           </dd>
         </div>
       </dl>
+
+      <RevenueSection />
 
       <div className={styles.tableWrap}>
         <table className={styles.table}>

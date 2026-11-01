@@ -218,6 +218,130 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/billing/subscriptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Subscriptions
+         * @description Every company's subscription, soonest to end first. `status` is worked out from the end
+         *     date, so an unrenewed subscription shows as expired without any job having run.
+         */
+        get: operations["list_subscriptions_api_v1_admin_billing_subscriptions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/billing/subscriptions/{subscription_id}/renew": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Renew Subscription
+         * @description Record a payment received by hand and extend the subscription. Paying during a trial
+         *     starts the paid period today; renewing early adds to the current end date; renewing after it
+         *     ended starts today. 409 RENEWAL_CHOICE, RENEWAL_DURATION, PAYMENT_AMOUNT, PAYMENT_METHOD,
+         *     PLAN_INACTIVE; 404 PRICE_NOT_FOUND.
+         */
+        post: operations["renew_subscription_api_v1_admin_billing_subscriptions__subscription_id__renew_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/billing/subscriptions/{subscription_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel Subscription
+         * @description The company becomes read-only. 409 ALREADY_CANCELLED.
+         */
+        post: operations["cancel_subscription_api_v1_admin_billing_subscriptions__subscription_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/billing/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Payments
+         * @description Payments newest first, with totals for the whole filter (received, reversed, net).
+         */
+        get: operations["list_payments_api_v1_admin_billing_payments_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/billing/payments/{payment_id}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reverse Payment
+         * @description Cancel a mistaken payment with a negative row. 409 PAYMENT_REVERSED, PAYMENT_IS_REVERSAL.
+         */
+        post: operations["reverse_payment_api_v1_admin_billing_payments__payment_id__reverse_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/billing/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Dashboard
+         * @description Duolink's revenue and customer numbers for the overview page.
+         */
+        get: operations["dashboard_api_v1_admin_billing_dashboard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/overview": {
         parameters: {
             query?: never;
@@ -3889,6 +4013,28 @@ export interface components {
              */
             bill_date: string;
         };
+        /** BillingDashboard */
+        BillingDashboard: {
+            companies_by_status: components["schemas"]["CompaniesByStatus"];
+            /** Active Subscriptions */
+            active_subscriptions: number;
+            /** Revenue Month */
+            revenue_month: string;
+            /** Revenue Fy */
+            revenue_fy: string;
+            /** New Companies Month */
+            new_companies_month: number;
+            /** Renewals Month */
+            renewals_month: number;
+            /** Expiring 30 */
+            expiring_30: number;
+            /** Trend */
+            trend: components["schemas"]["TrendPoint"][];
+            /** Plan Breakdown */
+            plan_breakdown: components["schemas"]["PlanShare"][];
+            /** Expiring Soon */
+            expiring_soon: components["schemas"]["ExpiringSoon"][];
+        };
         /** Body_import_gstr2b_api_v1_gst_gstr2b_post */
         Body_import_gstr2b_api_v1_gst_gstr2b_post: {
             /** Period */
@@ -4273,6 +4419,17 @@ export interface components {
          * @enum {string}
          */
         ClosingStatus: "closed" | "reopened";
+        /** CompaniesByStatus */
+        CompaniesByStatus: {
+            /** Trial */
+            trial: number;
+            /** Active */
+            active: number;
+            /** Suspended */
+            suspended: number;
+            /** Cancelled */
+            cancelled: number;
+        };
         /**
          * ComplianceStatus
          * @description State of an e-way bill or an e-invoice (IRN) at the government portal.
@@ -5182,6 +5339,22 @@ export interface components {
          * @enum {string}
          */
         ExpenseNature: "fixed" | "variable" | "interest";
+        /** ExpiringSoon */
+        ExpiringSoon: {
+            /** Tenant Id */
+            tenant_id: number;
+            /** Tenant Name */
+            tenant_name: string;
+            /** Plan Code */
+            plan_code: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Days Left */
+            days_left: number;
+        };
         /** FifoAgeOut */
         FifoAgeOut: {
             /**
@@ -7190,6 +7363,17 @@ export interface components {
             /** Offset */
             offset: number;
         };
+        /** Page[SubscriptionRow] */
+        Page_SubscriptionRow_: {
+            /** Items */
+            items: components["schemas"]["SubscriptionRow"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+        };
         /** Page[TenantRow] */
         Page_TenantRow_: {
             /** Items */
@@ -7356,46 +7540,36 @@ export interface components {
          */
         PaymentDirection: "received" | "paid";
         /**
+         * PaymentMethod
+         * @description How Duolink received a subscription payment (Milestone 21).
+         * @enum {string}
+         */
+        PaymentMethod: "cash" | "bank" | "upi" | "cheque" | "razorpay";
+        /**
          * PaymentMode
          * @enum {string}
          */
         PaymentMode: "cash" | "upi" | "bank";
-        /** PaymentOut */
-        PaymentOut: {
-            /** Id */
-            id: number;
-            /** Number */
-            number: string;
-            direction: components["schemas"]["PaymentDirection"];
-            /** Party Id */
-            party_id: number;
-            /** Party Name */
-            party_name: string;
-            /** Location Id */
-            location_id: number;
-            /** Amount */
-            amount: string;
-            mode: components["schemas"]["PaymentMode"];
-            /** Reference */
-            reference: string | null;
-            /**
-             * Payment Date
-             * Format: date
-             */
-            payment_date: string;
-            /** Note */
-            note: string | null;
-            /** Site Id */
-            site_id?: number | null;
-            /** Applied */
-            applied?: components["schemas"]["AllocationOut"][];
-            /**
-             * Advance
-             * @default 0
-             */
-            advance: string;
-            /** Warnings */
-            warnings?: string[];
+        /** PaymentPage */
+        PaymentPage: {
+            /** Items */
+            items: components["schemas"]["app__schemas__billing__PaymentOut"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            totals: components["schemas"]["PaymentTotals"];
+        };
+        /** PaymentTotals */
+        PaymentTotals: {
+            /** Received */
+            received: string;
+            /** Reversed */
+            reversed: string;
+            /** Net */
+            net: string;
         };
         /** PendingEwayOut */
         PendingEwayOut: {
@@ -7583,6 +7757,17 @@ export interface components {
             /** Reason */
             reason: string;
         };
+        /** PlanShare */
+        PlanShare: {
+            /** Plan Id */
+            plan_id: number;
+            /** Plan Code */
+            plan_code: string;
+            /** Plan Name */
+            plan_name: string;
+            /** Companies */
+            companies: number;
+        };
         /**
          * PlanUpdate
          * @description Send only what changes. `prices`, when sent, replaces the whole list. Setting
@@ -7617,7 +7802,7 @@ export interface components {
          * @description What a Duolink admin did (platform_audit_log, Milestones 16 and 17).
          * @enum {string}
          */
-        PlatformAction: "login" | "login_failed" | "logout" | "token_reuse" | "tenant_create" | "tenant_update" | "tenant_suspend" | "tenant_reactivate" | "user_activate" | "user_deactivate" | "user_unlock" | "user_reset_password" | "user_sign_out" | "staff_create" | "staff_update" | "staff_reset_password" | "staff_unlock" | "staff_sign_out" | "password_change" | "tenant_cancel" | "tenant_seller_update" | "tenant_logo_set" | "tenant_logo_remove" | "user_update" | "user_session_revoke" | "user_remove" | "plan_create" | "plan_update" | "plan_duplicate" | "plan_archive" | "plan_delete";
+        PlatformAction: "login" | "login_failed" | "logout" | "token_reuse" | "tenant_create" | "tenant_update" | "tenant_suspend" | "tenant_reactivate" | "user_activate" | "user_deactivate" | "user_unlock" | "user_reset_password" | "user_sign_out" | "staff_create" | "staff_update" | "staff_reset_password" | "staff_unlock" | "staff_sign_out" | "password_change" | "tenant_cancel" | "tenant_seller_update" | "tenant_logo_set" | "tenant_logo_remove" | "user_update" | "user_session_revoke" | "user_remove" | "plan_create" | "plan_update" | "plan_duplicate" | "plan_archive" | "plan_delete" | "subscription_renew" | "subscription_cancel" | "payment_reverse";
         /** PlatformAuditRow */
         PlatformAuditRow: {
             /** Id */
@@ -8706,6 +8891,28 @@ export interface components {
             /** Reason */
             reason: string;
         };
+        /**
+         * RenewRequest
+         * @description Record a renewal Duolink received by hand. Choose one of the plan's price options
+         *     (`price_id`) or `custom_days`. `amount` is what was actually received, as text.
+         */
+        RenewRequest: {
+            /** Plan Id */
+            plan_id: number;
+            /** Price Id */
+            price_id?: number | null;
+            /** Custom Days */
+            custom_days?: number | null;
+            /** Amount */
+            amount: number | string;
+            method: components["schemas"]["PaymentMethod"];
+            /** Reference */
+            reference?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Paid At */
+            paid_at?: string | null;
+        };
         /** ReopenIn */
         ReopenIn: {
             /** Reason */
@@ -8734,6 +8941,11 @@ export interface components {
             line_id: number;
             /** Quantity */
             quantity: number | string;
+        };
+        /** ReverseRequest */
+        ReverseRequest: {
+            /** Reason */
+            reason: string;
         };
         /**
          * Role
@@ -9638,6 +9850,49 @@ export interface components {
             /** Quantity */
             quantity: string;
         };
+        /** SubscriptionRow */
+        SubscriptionRow: {
+            /** Id */
+            id: number;
+            /** Tenant Id */
+            tenant_id: number;
+            /** Tenant Slug */
+            tenant_slug: string;
+            /** Tenant Name */
+            tenant_name: string;
+            /** Plan Id */
+            plan_id: number;
+            /** Plan Code */
+            plan_code: string;
+            /** Plan Name */
+            plan_name: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "trial" | "active" | "expired" | "cancelled";
+            /**
+             * Starts At
+             * Format: date-time
+             */
+            starts_at: string;
+            /** Expires At */
+            expires_at: string | null;
+            /** Days Left */
+            days_left: number | null;
+            /** Needs Review */
+            needs_review: boolean;
+            /** Duration Value */
+            duration_value: number | null;
+            /** Duration Unit */
+            duration_unit: string | null;
+            /** Price */
+            price: string | null;
+            /** Cancelled At */
+            cancelled_at: string | null;
+            /** Cancel Reason */
+            cancel_reason: string | null;
+        };
         /** SupplierShortageOut */
         SupplierShortageOut: {
             /** Party Id */
@@ -9976,6 +10231,18 @@ export interface components {
             tagline: string;
             /** Logo Url */
             logo_url?: string | null;
+            /**
+             * Access State
+             * @default full
+             * @enum {string}
+             */
+            access_state: "full" | "read_only";
+            /** Subscription Status */
+            subscription_status?: ("trial" | "active" | "expired" | "cancelled") | null;
+            /** Expires At */
+            expires_at?: string | null;
+            /** Days Left */
+            days_left?: number | null;
         };
         /** TenantPlanOut */
         TenantPlanOut: {
@@ -10218,6 +10485,15 @@ export interface components {
             note: string | null;
             /** Lines */
             lines: components["schemas"]["TransferLineOut"][];
+        };
+        /** TrendPoint */
+        TrendPoint: {
+            /** Month */
+            month: string;
+            /** Revenue */
+            revenue: string;
+            /** Signups */
+            signups: number;
         };
         /** TrialEnding */
         TrialEnding: {
@@ -10605,6 +10881,80 @@ export interface components {
             reason: string;
             /** Created By Name */
             created_by_name: string | null;
+        };
+        /** PaymentOut */
+        app__schemas__billing__PaymentOut: {
+            /** Id */
+            id: number;
+            /** Subscription Id */
+            subscription_id: number;
+            /** Tenant Id */
+            tenant_id: number;
+            /** Tenant Name */
+            tenant_name: string;
+            /** Plan Code */
+            plan_code: string;
+            /** Plan Name */
+            plan_name: string;
+            /** Amount */
+            amount: string;
+            method: components["schemas"]["PaymentMethod"];
+            /** Reference */
+            reference: string | null;
+            /** Notes */
+            notes: string | null;
+            /**
+             * Paid At
+             * Format: date-time
+             */
+            paid_at: string;
+            /** Period Starts At */
+            period_starts_at: string | null;
+            /** Period Ends At */
+            period_ends_at: string | null;
+            /** Reverses Id */
+            reverses_id: number | null;
+            /** Reversed */
+            reversed: boolean;
+            /** Recorded By */
+            recorded_by: string;
+        };
+        /** PaymentOut */
+        app__schemas__purchases__PaymentOut: {
+            /** Id */
+            id: number;
+            /** Number */
+            number: string;
+            direction: components["schemas"]["PaymentDirection"];
+            /** Party Id */
+            party_id: number;
+            /** Party Name */
+            party_name: string;
+            /** Location Id */
+            location_id: number;
+            /** Amount */
+            amount: string;
+            mode: components["schemas"]["PaymentMode"];
+            /** Reference */
+            reference: string | null;
+            /**
+             * Payment Date
+             * Format: date
+             */
+            payment_date: string;
+            /** Note */
+            note: string | null;
+            /** Site Id */
+            site_id?: number | null;
+            /** Applied */
+            applied?: components["schemas"]["AllocationOut"][];
+            /**
+             * Advance
+             * @default 0
+             */
+            advance: string;
+            /** Warnings */
+            warnings?: string[];
         };
     };
     responses: never;
@@ -11567,6 +11917,476 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_subscriptions_api_v1_admin_billing_subscriptions_get: {
+        parameters: {
+            query?: {
+                status?: ("trial" | "active" | "expired" | "cancelled") | null;
+                /** @description a plan's code, e.g. PRO */
+                plan?: string | null;
+                /** @description days */
+                expiring_within?: number | null;
+                tenant_id?: number | null;
+                search?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_SubscriptionRow_"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    renew_subscription_api_v1_admin_billing_subscriptions__subscription_id__renew_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                subscription_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RenewRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionRow"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_subscription_api_v1_admin_billing_subscriptions__subscription_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                subscription_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionRow"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_payments_api_v1_admin_billing_payments_get: {
+        parameters: {
+            query?: {
+                from?: string | null;
+                to?: string | null;
+                method?: components["schemas"]["PaymentMethod"] | null;
+                tenant_id?: number | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentPage"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reverse_payment_api_v1_admin_billing_payments__payment_id__reverse_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                payment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["app__schemas__billing__PaymentOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dashboard_api_v1_admin_billing_dashboard_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillingDashboard"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -21751,7 +22571,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaymentOut"][];
+                    "application/json": components["schemas"]["app__schemas__purchases__PaymentOut"][];
                 };
             };
             /** @description Bad Request */
@@ -21831,7 +22651,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaymentOut"];
+                    "application/json": components["schemas"]["app__schemas__purchases__PaymentOut"];
                 };
             };
             /** @description Bad Request */

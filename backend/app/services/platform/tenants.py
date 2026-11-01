@@ -38,6 +38,7 @@ from app.schemas.platform import (
     TenantUsage,
 )
 from app.services import onboarding, tenant_logo
+from app.services.platform import billing
 from app.services.platform.audit import record
 from app.services.platform.plans import plan_for_company
 from app.services.tenants import limits_of
@@ -274,6 +275,7 @@ def create_tenant(db: Session, data: TenantCreate, admin_id: int) -> Tenant:
     except IntegrityError as exc:  # two admins took the same code at once
         db.rollback()
         raise ConflictError("That company code is taken", code="SLUG_TAKEN", field="slug") from exc
+    billing.start_subscription(db, tenant, trial_ends_at=trial_ends_at, now=_now())
 
     with tenant_context(db, tenant.id):
         onboarding.ensure_basics(
@@ -335,6 +337,12 @@ def update_tenant(db: Session, tenant_id: int, data: TenantUpdate, admin_id: int
     paid = not is_trial_plan(tenant.plan.code)
     if "plan" in changes and paid and tenant.status is TenantStatus.TRIAL:
         tenant.status = TenantStatus.ACTIVE  # a paid plan ends the trial
+    billing.follow_tenant_change(
+        db,
+        tenant,
+        plan_changed="plan" in changes,
+        trial_moved="trial_ends_at" in changes,
+    )
     if changes:
         record(db, PlatformAction.TENANT_UPDATE, admin_id, tenant_id=tenant.id, details=changes)
     db.commit()

@@ -86,6 +86,26 @@ whoever looks after the server. Commands run in the project folder on the server
 - **Stop selling a plan:** Archive it, with a reason. Companies on it keep it and its limits; it is
   no longer offered when adding a company or changing a plan. Restore brings it back. Delete is
   only offered for a plan no company is on, and needs DELETE typed.
+- **Record a renewal** (Super Admin): money has reached you. Open Billing, Subscriptions, Renew on
+  the company's row. Choose the plan and a price, or a number of days; type the amount you
+  received, how it was paid and the reference (UTR, cheque number). The new end date shows before
+  you confirm. It works at once: the company can save again on its next request. Raise Duolink's
+  own GST invoice in your books; the payment row here is only your receipt record.
+- **Cancel a subscription:** Subscriptions, Cancel, write the reason. The company becomes
+  read-only (it can still read and export), not locked out. A later renewal makes it writable.
+- **A payment was recorded wrongly:** Payments, Reverse, write the reason. A negative row is added
+  and the original stays; revenue nets to zero. The end date does not move back. Then record the
+  correct renewal; if the date is wrong, that renewal sets it. Payments are never edited or deleted.
+- **What a company sees when its plan has ended:** a banner says it is read-only. They can sign in,
+  look at everything, run reports and download GST exports, the Tally export and PDFs. Every save
+  is refused with 403 `SUBSCRIPTION_EXPIRED` ("Your plan has ended, contact Duolink to renew").
+  Suspended companies are different: they cannot sign in at all.
+- **Ended trials are now read-only.** A trial that ended with no payment used to be only flagged;
+  from this version it is read-only like any lapsed plan. Check the Subscriptions list for ended
+  trials before you roll this out.
+- **Companies that were active before this version** got an expiry one year out, shown as "needs
+  review". Open each, compare with what they have really paid, and record a renewal (it sets the real
+  end date and clears the flag). Until then they run normally and nothing is read-only before that date.
 - **A company does not pay:** open the company, write the reason, then Suspend company and
   confirm. Everyone there is signed out. Reactivate company undoes it. Nothing is deleted.
 - **Trials:** the overview lists trials ending this week. Change the plan, or move the trial end, on

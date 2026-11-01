@@ -257,6 +257,63 @@ no row-level security; the exclusion is listed in `test_tenancy.py`).
 - **Audit.** New platform actions `plan_create`, `plan_update` (with the old and new values),
   `plan_duplicate`, `plan_archive`, `plan_delete`.
 
+**Built (M21: subscriptions, manual renewals, revenue, read-only on expiry, migration 0034):**
+every company has one subscription with an end date. Duolink records a renewal by hand when a
+company pays, sees its own revenue, and a lapsed company can read its books but not write.
+
+- **Scope note.** A `subscription_payment` row is Duolink's receipt record of money received. The
+  GST tax invoice for the subscription itself is raised in Duolink's own books, outside this ERP.
+- **Tables** (both company-owned: `tenant_id`, row-level security, `tenant_isolation` policy).
+  - `subscription`: one per company (`tenant_id` unique), `plan_id`, `duration_value`,
+    `duration_unit`, `price NUMERIC(12,2)` (the plan price it was bought at; null for a trial or a
+    custom-days renewal), `status` (`trial`, `active`, `cancelled`), `starts_at`, `expires_at`,
+    `needs_review`, `cancelled_at`, `cancel_reason`.
+  - `subscription_payment`: `subscription_id`, `plan_id`, `amount NUMERIC(12,2)` (negative on a
+    reversal), `method` (cash, bank, upi, cheque, razorpay), `reference`, `notes`, `paid_at`,
+    `period_starts_at`, `period_ends_at`, `reverses_id` (set on a reversal), `recorded_by_admin_id`.
+    It is **append-only**: the `forbid_ledger_change` trigger refuses UPDATE and DELETE. A mistaken
+    payment is corrected with a negative reversal row that points at it.
+- **Migration.** One subscription is created for each existing company. A trial gets
+  `expires_at = trial_ends_at` (so a trial that had already ended is read-only from the day the
+  migration runs). Every other company, suspended or closed ones included, gets an `active`
+  subscription with an expiry one year out and `needs_review = true`, for Duolink to confirm by
+  recording its first renewal (a renewal clears the flag). A company added by Duolink as "Active,
+  no trial" has no end date and is flagged the same way; with no end date it is never read-only
+  until a renewal gives it one.
+- **Stored status and the expired state.** The stored status is only `trial`, `active` or
+  `cancelled`. "Expired" is worked out from `expires_at` on every request, so nothing has to run at
+  midnight and a renewal applies on the next request.
+- **Renewal rules** (`domain/subscriptions.py`, unit tested with worked dates).
+  - Paying during a trial starts the paid period today; the unused trial days are not carried over.
+  - Renewing early adds the time on top of the current expiry.
+  - Renewing after the expiry (or after a cancellation) starts today.
+  - Months clamp the day: 31 Jan + 1 month = 28 Feb (29 in a leap year). A year is 12 months.
+  - A renewal is a plan price option or a custom number of days (exactly one of the two). The
+    amount received is recorded as typed and may differ from the list price.
+- **Access states.** `full`; `read_only` (a paid subscription past its expiry, or a trial that has
+  ended with no payment, or a cancelled subscription); `blocked` (company suspended or closed:
+  unchanged, every call answers 403). Days left is negative once ended. The banner shows from 7
+  days before the end.
+- **Read-only.** In `get_tenant`, any non-GET request from a `read_only` company answers 403
+  `SUBSCRIPTION_EXPIRED`. Reads, reports, GST exports, Tally export and PDF downloads keep working.
+  The exceptions, listed in one place (`services/subscription_access.py`) and tested: sign-in,
+  refresh and logout; changing one's own password. Every PDF and export is a GET today, so none
+  needs an entry; a future POST export must be added to the list. Later milestones add the renewal
+  endpoints (M30) and raising a support ticket (M22).
+- **Decisions.** A cancelled subscription makes the company read-only, not blocked (cancelling is a
+  Duolink decision about billing; closing the company is the separate block). Reversing a payment
+  nets the revenue to zero but does not shorten the expiry: Duolink moves the date by recording a
+  correct renewal, or for a trial by moving the trial end on the company's page. A payment cannot be edited or
+  deleted.
+- **Revenue is Duolink's, and stays out of the company.** Revenue figures appear only under
+  `/api/v1/admin/billing/*`. Company screens and company answers carry the dates and the access
+  state only, never an amount. Revenue is the sum of payments by `paid_at`, reversals included
+  (net). The financial year runs April to March.
+- **Audit.** New platform actions `subscription_renew`, `subscription_cancel`, `payment_reverse`.
+- **Dashboard.** Companies by status, active subscriptions, revenue this month and this financial
+  year, new companies and renewals this month, subscriptions expiring in 30 days, a 12-month trend
+  of revenue and sign-ups, companies per plan, and the next expiries.
+
 **Built (Milestone 1):** `shop_settings` (with `logo_key`, `logo_type`, `logo_sha256`, all set or
 all empty, for the shop's logo: UI refresh T10), `location`, `app_user`, `user_location`,
 `auth_session`, `audit_log`, `document_sequence`. A GSTIN is checked for format and check

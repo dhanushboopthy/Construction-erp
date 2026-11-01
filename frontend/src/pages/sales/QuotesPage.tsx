@@ -170,7 +170,7 @@ export function QuotesPage() {
               </p>
             ) : null}
             <div className={styles.actions}>
-              <Button variant="primary" onClick={() => void print(quote.id)}>
+              <Button variant="primary" allowWhenReadOnly onClick={() => void print(quote.id)}>
                 Print
               </Button>
               {canBill && !quote.invoice_id ? (

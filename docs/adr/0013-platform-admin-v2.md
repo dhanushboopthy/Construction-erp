@@ -89,3 +89,25 @@ inside a company.
   the Staff page shows who they are.
 - Existing admins become Super Admins when migration 0030 runs, because before it every admin
   could change everything. Add Support accounts for read-only staff.
+
+## Update, 2026-10-31 (Milestone 21): read-only on expiry is now enforced
+
+- **An ended trial with no payment is now read-only.** ADR 0012 only flagged a trial that had
+  ended; from M21 the server acts on it. The company can read and export but every write answers
+  403 `SUBSCRIPTION_EXPIRED`. Companies whose trial had already ended when migration 0034 ran
+  become read-only on that day.
+- **The rule.** The stored subscription status is `trial`, `active` or `cancelled`. "Expired" is
+  derived from `expires_at` on every request, so a renewal applies on the next request and nothing
+  runs at midnight. A company whose subscription is expired, an unpaid ended trial, or cancelled is
+  **read-only**: GET requests work (reports, GST exports, Tally export, PDFs) and any other method
+  answers 403, except sign-in, refresh, logout and changing one's own password. The list lives in
+  one place and is tested; every PDF and export is a GET, so none is listed. A suspended or closed company is
+  still blocked completely.
+- **Cancelled means read-only, not blocked.** Cancelling is a billing decision; closing the company
+  is the separate block.
+- **Payments.** `subscription_payment` is append-only by database trigger. A mistake is corrected
+  with a negative reversal row. Reversing nets the revenue but does not shorten the expiry.
+- **Revenue stays under `/api/v1/admin/billing/*`.** No other admin path and no company answer
+  carries a payment or revenue figure; `test_no_admin_answer_carries_money` keeps its list of
+  allowed billing paths. A payment row is Duolink's receipt record; Duolink's GST tax invoice for
+  the subscription is raised in Duolink's own books, outside this ERP.

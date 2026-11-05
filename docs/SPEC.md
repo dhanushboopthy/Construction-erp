@@ -371,6 +371,82 @@ and Duolink answers it from the admin.
 - **Not built.** The notifications bell for new and urgent tickets (M24), attachments on tickets,
   and email notifications.
 
+**Built (M28: bill templates per company, migration 0041):** Duolink gives a company its own bill
+design for each kind of document, and a second logo, without changing anything already issued.
+
+- **Uploaded HTML is data, never a template engine.** The placeholder grammar lives in
+  `domain/bill_template.py` and `domain/bill_html.py` (pure, 100% covered). A placeholder is
+  `{{key}}` or `{{key|format}}` with a key from the field registry and a format of `symbol`
+  (prefix ₹) or `upper`. Anything else between `{{ }}`, `{% %}` or `{# #}` is unknown: it prints
+  blank and the diagnostics list it. Nothing is evaluated, no value is read twice (a customer
+  called `{{company.gstin}}` prints as written), and every value is escaped.
+- **Slots.** `tax_invoice`, `proforma`, `quotation`, `credit_note`, `debit_note`. A slot has one
+  active design per company (partial unique index) and versions that count up per company and
+  slot.
+- **Field registry.** About 110 fields in nine groups (`invoice`, `note`, `einvoice`, `company`,
+  `customer`, `consignee`, `item`, `hsn`, `totals`), each with a description, a sample value and
+  the slots that fill it. It is built from what `invoice_a4.html` and `note_a4.html` print:
+  `services/bill_data.py` turns the context the built-in layouts get into the registry's text
+  values, so a design and the built-in layout cannot disagree about a figure. A tax that does not
+  apply (IGST on an intra-state document, CGST and SGST on an inter-state one) prints blank, never
+  0.00.
+- **Repeating rows.** The `<tr>` holding `{{item.*}}` is cloned once per line with its classes,
+  styles and cells kept; the same for `{{hsn.*}}`. A design that is not a table marks the section
+  with `<!-- items:start -->` and `<!-- items:end -->` (`hsn:start` and `hsn:end` for HSN).
+- **Sanitizer** (tinyhtml5, the parser WeasyPrint uses, with tinycss2). Removed and listed back to
+  the uploader: `<script>`, every `on*` attribute, unsafe links, `<iframe>`, `<object>`,
+  `<embed>`, `<base>`, `<link>`, forms (their content stays), meta refresh, inline SVG and
+  MathML, CSS `@import`, `expression()`, `behavior`, `-moz-binding` and any `url()` that is not
+  one of the design's own images. An image may be the design's own uploaded file or a company
+  image placeholder (`{{company.logo}}`, `{{company.secondaryLogo}}`, `{{einvoice.qr}}`);
+  anything else loses only that image. Nesting is capped at 200 and elements at 20,000. A style
+  sheet with nothing to remove is kept byte for byte, and cleaning settles after one pass. The
+  renderer cleans again before it draws, and WeasyPrint is given a fetcher that serves only
+  `asset:<name>` from the design's own images and refuses every file and network address.
+- **Limits.** 500 KB of HTML (UTF-8), 2 MB and PNG or JPEG per image (by content, not name),
+  20 images, unique image names of letters, digits, dot, dash and underscore.
+- **The GST fields stay.** A design for a tax invoice, credit note or debit note is refused
+  (409 `TEMPLATE_MISSING_FIELDS`, listing what is missing) when it leaves out a field the rules
+  require: seller's name, address and GSTIN; document name, number and date; copy marking and
+  the e-Invoice IRN or QR (tax invoice); buyer's name, address and GSTIN; place of supply; each
+  item's description, HSN, quantity and unit, taxable value; the rate of tax; the amount of CGST,
+  SGST and IGST (shown per item, per HSN or in the totals); the total; and, for a note, the
+  original document's number and date. A proforma or quotation must carry its not-a-tax-invoice
+  declaration and may not call itself a tax invoice (409 `TEMPLATE_WORDING`). Anything else a
+  design omits is a warning at most.
+- **Tables.** `bill_template` (`slot`, `name`, `version`, `html_key`, `html_sha256`, `html_size`,
+  `is_active`, `uploaded_by_admin_id`, `removed`, the second-logo snapshot, `activated_at`) and
+  `bill_template_asset`; both company-owned with the two policies. The HTML is stored through
+  `services/storage.py`, content-addressed.
+- **Pinning.** `sales_invoice`, `sales_quote`, `credit_note` and `debit_note` gained a nullable
+  `bill_template_id` (RESTRICT), set once in the insert from the slot's active design. No row is
+  rewritten and `forbid_issued_edit` is never fired, because it is only set at insert. A reprint
+  uses the pinned design; a null pin is the built-in layout, so a design activated later never
+  restyles a bill issued before it. A design some document points at is immutable and cannot be
+  deleted (409 `TEMPLATE_IN_USE`); an active design must be deactivated before deleting (409
+  `TEMPLATE_ACTIVE`). Deactivating sends new documents back to the built-in layout. If a pinned
+  design's files are lost from storage, the bill still prints on the built-in layout and the
+  loss is logged.
+- **Second logo.** `shop_settings.secondary_logo_*`. Each design snapshots it when uploaded;
+  setting or removing the logo re-points only the designs no document uses, so a printed bill
+  keeps its logo.
+- **Preview.** `POST .../{id}/preview` draws the design with sample data through the renderer
+  real bills use, marked as a sample on every page. It reads nothing of the company's, so
+  Support may ask for it (the second explicit Support write exception, next to ticket replies).
+- **Diagnostics.** Unknown placeholders, placeholders of another slot, line or HSN placeholders
+  outside a row, placeholders in styles (never filled), item and HSN row counts, images used,
+  images missing from the upload or unused, the page size, what cleaning removed, and warnings.
+- **ADR 0012.** The admin answers names, counts and sample text only, never a figure from the
+  company's books; no answer key matches the money words.
+- **Audit.** New platform actions `bill_template_upload`, `bill_template_activate`,
+  `bill_template_deactivate`, `bill_template_delete`, `secondary_logo_set`,
+  `secondary_logo_remove`: slot, version, name, sizes and counts, never the HTML.
+- **UI.** A Bill design tab on the company page: a card per slot with its versions, preview in a
+  frame, the checks list, the upload form (HTML and images), the second logo and the
+  placeholder table.
+- **Not built.** An editor for the HTML in the browser, a primary-logo snapshot (the primary logo
+  is the company's current one), thermal-printer layouts and a per-shop design.
+
 **Built (Milestone 1):** `shop_settings` (with `logo_key`, `logo_type`, `logo_sha256`, all set or
 all empty, for the shop's logo: UI refresh T10), `location`, `app_user`, `user_location`,
 `auth_session`, `audit_log`, `document_sequence`. A GSTIN is checked for format and check

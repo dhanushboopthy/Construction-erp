@@ -32,6 +32,7 @@ from app.domain.units import to_base
 from app.models.enums import (
     ApprovalAction,
     AuditAction,
+    BillSlot,
     DocType,
     FulfilmentSource,
     InvoiceStatus,
@@ -59,6 +60,7 @@ from app.schemas.sales import (
     PreviewLineOut,
 )
 from app.services import approvals as approval_service
+from app.services import bill_templates as bill_template_service
 from app.services import closing as closing_service
 from app.services import credit as credit_service
 from app.services import items as item_service
@@ -621,6 +623,7 @@ def create(
         remark=data.remark,
         idempotency_key=idempotency_key,
         status=InvoiceStatus.POSTED,
+        bill_template_id=bill_template_service.pin_for(db, BillSlot.TAX_INVOICE),
         lines=[
             SalesLine(
                 tenant_id=current_tenant_id(db),

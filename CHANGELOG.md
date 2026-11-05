@@ -1,5 +1,37 @@
 # Changelog
 
+## 1.17.0 (M28): bill templates per company
+
+For companies:
+
+- **Your bills can carry your own design.** Duolink can set up a design for your tax invoice,
+  proforma invoice, quotation, credit note and debit note, and a second logo. Nothing else
+  changes: the figures, numbers and tax are the same, and a design cannot leave out what a GST
+  document must show.
+- **A bill keeps the design it was issued with.** Printing an old bill again gives the same bill
+  even after Duolink brings in a new design. Bills issued before a design was set up keep the
+  standard layout.
+
+For Duolink staff:
+
+- **Bill design tab** on the company page: a card for each kind of document with every version,
+  a preview drawn from sample figures, a checks list, upload, activate, deactivate and delete.
+  Support can read and preview; a Super Admin changes.
+- **Upload an HTML file and its images.** The file is used as written with placeholders such as
+  `{{invoice.number}}` filled in; the row holding `{{item.*}}` repeats for each item. Scripts,
+  event handlers, outside links, forms and frames are removed and listed back to you. The file is
+  refused if it leaves out a required GST field, or if a proforma or quotation calls itself a tax
+  invoice. Limits: 500 KB of HTML, 2 MB and PNG or JPEG per image, 20 images.
+- **Versions.** Each upload is the next version of its kind of document, inactive until you
+  activate it. A design that a bill was issued with cannot be deleted; deactivate it and new
+  documents return to the standard layout.
+- **Second logo** per company, printed where a design uses `{{company.secondaryLogo}}`.
+- **Placeholder list** on the same tab, with a description and a sample for every field.
+- Every upload, activation, deactivation, deletion and logo change is in the audit log.
+
+Not in this version: editing a design in the browser, thermal-printer layouts and a design per
+shop.
+
 ## 1.16.0 (M22): support tickets
 
 For companies:

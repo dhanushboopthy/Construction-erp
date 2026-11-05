@@ -164,6 +164,33 @@ only admin writes Support may do).
 list (M21). Reply and update are audited as `support_reply` and `support_update` (ticket number,
 status change, whether a message was sent; never the text).
 
+## Endpoints (Milestone 28: bill templates)
+
+All under `/api/v1/admin/tenants/{tenant_id}/bill-templates` (404 `TENANT_NOT_FOUND` for an
+unknown company). Support reads and previews; every other write needs a Super Admin (403
+`PERMISSION_DENIED`). Uploaded HTML is data with a placeholder grammar, never a Jinja template.
+No answer carries a figure from the company's books.
+
+| Method | Path | What |
+| --- | --- | --- |
+| GET | `/field-registry` | `{fields[], formats, slots, required, limits}`. A field: `key`, `group`, `description`, `sample`, `slots`, `image`. `required` is what each slot may not leave out |
+| GET | `` (list) | `{templates[], secondary_logo}`, slot then newest version first. A template: `id`, `slot`, `name`, `version`, `is_active`, `used` (an issued document points at it), `html_bytes`, `images`, `removed`, `uploaded_by_name`, `created_at`, `activated_at` |
+| POST | `` (upload, multipart: `slot`, `name`, `html`, `images[]`) | 201 with the template and its `diagnostics`. Not active until activated. 409 `TEMPLATE_MISSING_FIELDS` (with `missing_fields`), `TEMPLATE_WORDING`, `TEMPLATE_EMPTY`, `TEMPLATE_NOT_UTF8`, `TEMPLATE_TOO_LARGE`, `TEMPLATE_TOO_DEEP`, `TEMPLATE_TOO_BIG`, `TEMPLATE_NAME`, `SLOT_UNKNOWN`, `ASSET_NAME`, `ASSET_EMPTY`, `ASSET_TOO_LARGE`, `ASSET_TYPE`, `ASSET_DUPLICATE`, `ASSET_TOO_MANY` |
+| GET | `/{id}` | One template. 404 `TEMPLATE_NOT_FOUND` |
+| GET | `/{id}/diagnostics` | `unknown`, `other_slot`, `outside_rows`, `in_styles`, `item_rows`, `hsn_rows`, `images`, `missing_images`, `unused_images`, `page_size`, `removed`, `missing_fields`, `warnings` |
+| POST | `/{id}/preview` | `application/pdf` drawn from sample data. A read: Support may call it |
+| POST | `/{id}/activate` | New documents of the slot use it; the slot's previous design is stood down |
+| POST | `/{id}/deactivate` | New documents of the slot use the built-in layout again |
+| DELETE | `/{id}` | 204. 409 `TEMPLATE_IN_USE` (a document was issued with it), 409 `TEMPLATE_ACTIVE` |
+| PUT | `/secondary-logo` (multipart `file`) | PNG or JPEG up to 2 MB. Returns the list. Designs no document uses follow it |
+| DELETE | `/secondary-logo` | Removes it, the same way |
+
+Documents pin the design at issue time (`bill_template_id`), so the existing PDF routes
+(`/invoices/{id}/pdf`, `/quotes/{id}/pdf`, `/credit-notes/{id}/pdf`, `/debit-notes/{id}/pdf`) are
+unchanged and reprint on the pinned design. Audited as `bill_template_upload`,
+`bill_template_activate`, `bill_template_deactivate`, `bill_template_delete`,
+`secondary_logo_set` and `secondary_logo_remove`.
+
 ## Endpoints (Milestone 19: user support tools)
 
 Same address and token as Milestone 16. Writes need a **Super Admin**; Support reads (403

@@ -5,6 +5,13 @@ import type { components } from "@/api/schema";
 type Schemas = components["schemas"];
 
 export type Admin = Schemas["AdminOut"];
+export type BillSlot = Schemas["BillSlot"];
+export type BillField = Schemas["FieldOut"];
+export type BillRegistry = Schemas["RegistryOut"];
+export type BillTemplate = Schemas["TemplateOut"];
+export type BillTemplateList = Schemas["TemplateList"];
+export type BillUpload = Schemas["UploadOut"];
+export type BillDiagnostics = Schemas["Diagnostics"];
 export type AdminTokenResponse = Schemas["AdminTokenResponse"];
 export type Overview = Schemas["OverviewOut"];
 export type TenantRow = Schemas["TenantRow"];

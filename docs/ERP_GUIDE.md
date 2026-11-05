@@ -117,6 +117,15 @@ PDFs. You cannot save anything new (bills, receipts, entries), and the save butt
 off. Nothing is lost. Contact Duolink to renew; once they record it, saving works again straight
 away. A trial that ends without a payment works the same way.
 
+### Your own bill design
+
+Duolink can set up your own design for the tax invoice, proforma invoice, quotation, credit note
+and debit note, and a second logo. Ask Duolink through Help. The figures, numbers and GST on a
+bill are the same as on the standard layout, and a design cannot leave out what a GST document must
+show. A bill keeps the design it was issued with: printing it again later, even after Duolink
+changes your design, gives the same bill. Bills issued before a design was set up print on the
+standard layout.
+
 ### Help: asking Duolink a question
 
 Open your name in the top corner and choose **Help**. You see the tickets your company has raised.

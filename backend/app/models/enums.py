@@ -75,6 +75,22 @@ class PlatformAction(StrEnum):
     PAYMENT_REVERSE = "payment_reverse"
     SUPPORT_REPLY = "support_reply"
     SUPPORT_UPDATE = "support_update"
+    BILL_TEMPLATE_UPLOAD = "bill_template_upload"
+    BILL_TEMPLATE_ACTIVATE = "bill_template_activate"
+    BILL_TEMPLATE_DEACTIVATE = "bill_template_deactivate"
+    BILL_TEMPLATE_DELETE = "bill_template_delete"
+    SECONDARY_LOGO_SET = "secondary_logo_set"
+    SECONDARY_LOGO_REMOVE = "secondary_logo_remove"
+
+
+class BillSlot(StrEnum):
+    """Which kind of document a bill template designs (Milestone 28)."""
+
+    TAX_INVOICE = "tax_invoice"
+    PROFORMA = "proforma"
+    QUOTATION = "quotation"
+    CREDIT_NOTE = "credit_note"
+    DEBIT_NOTE = "debit_note"
 
 
 class SupportCategory(StrEnum):

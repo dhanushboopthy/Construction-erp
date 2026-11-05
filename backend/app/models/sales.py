@@ -76,6 +76,11 @@ class SalesInvoice(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
     status: Mapped[InvoiceStatus] = mapped_column(
         str_enum(InvoiceStatus, "invoice_status"), default=InvoiceStatus.POSTED
     )
+    # The bill design this bill was issued with (Milestone 28); null is the built-in layout. Set
+    # once, at insert, so a reprint never changes.
+    bill_template_id: Mapped[int | None] = mapped_column(
+        ForeignKey("bill_template.id", ondelete="RESTRICT")
+    )
 
     lines: Mapped[list["SalesLine"]] = relationship(
         lazy="selectin", cascade="all, delete-orphan", order_by="SalesLine.line_no"
@@ -175,6 +180,9 @@ class SalesQuote(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
     # The bill it became, if it did.
     invoice_id: Mapped[int | None] = mapped_column(
         ForeignKey("sales_invoice.id", ondelete="RESTRICT")
+    )
+    bill_template_id: Mapped[int | None] = mapped_column(
+        ForeignKey("bill_template.id", ondelete="RESTRICT")
     )
 
     lines: Mapped[list["SalesQuoteLine"]] = relationship(

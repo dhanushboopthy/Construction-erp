@@ -138,7 +138,7 @@ describe("AdminApp Support page (M22)", () => {
       ["Waiting on company", "1"],
       ["Urgent open", "1"],
       ["Unassigned", "3"],
-    ]) {
+    ] as const) {
       expect(within(counts).getByText(label).parentElement).toHaveTextContent(`${label}${value}`);
     }
     expect(screen.getByRole("link", { name: "Cannot print the bill" })).toHaveAttribute(

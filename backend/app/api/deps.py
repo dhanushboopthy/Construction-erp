@@ -25,9 +25,10 @@ from app.models.enums import PlatformRole, Role
 from app.models.platform import PlatformAdmin
 from app.models.setup import AppUser
 from app.models.tenancy import Tenant
-from app.services import subscription_access
+from app.services import maintenance, subscription_access
 from app.services import tenants as tenant_service
 from app.services.audit import set_actor, set_actor_label
+from app.services.maintenance import MaintenanceSwitch
 
 _bearer = HTTPBearer(auto_error=False)
 
@@ -67,11 +68,23 @@ def request_host(request: Request) -> str | None:
     return request.headers.get("host")
 
 
+def maintenance_switch(request: Request) -> MaintenanceSwitch:
+    """This process's maintenance switch (Milestone 24), made by `create_app`."""
+    switch: MaintenanceSwitch = request.app.state.maintenance
+    return switch
+
+
+Maintenance = Annotated[MaintenanceSwitch, Depends(maintenance_switch)]
+
+
 def get_tenant(request: Request, db: DbSession) -> Tenant:
     """The company named by the subdomain (ADR 0011). Every later query on this session is for
-    that company, and the database refuses rows of any other."""
+    that company, and the database refuses rows of any other.
+
+    Every company request passes here, so this is where maintenance mode answers 503 (M24)."""
     clear_platform(db)
     set_actor_label(db, None)
+    maintenance.enforce(maintenance_switch(request), db, request.method, request.url.path)
     tenant = tenant_service.for_host(db, request_host(request))
     set_tenant(db, tenant.id)
     request.state.tenant_id = tenant.id

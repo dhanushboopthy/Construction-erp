@@ -102,6 +102,11 @@ def _counts(db: Session, filters: list[ColumnElement[bool]]) -> TicketCounts:
     )
 
 
+def ticket_counts(db: Session) -> TicketCounts:
+    """Every company's tickets by status, as the Support list counts them (the bell, M24)."""
+    return _counts(db, [])
+
+
 def list_tickets(
     db: Session,
     admin_id: int,

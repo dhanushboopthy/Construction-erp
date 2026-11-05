@@ -35,6 +35,21 @@ export type SellerDetails = Schemas["SellerDetails"];
 export type SellerDetailsUpdate = Schemas["SellerDetailsUpdate"];
 export type TenantUsage = Schemas["TenantUsage"];
 
+// Milestone 24: system health, the bell, maintenance mode, platform settings.
+export type SystemHealth = Schemas["SystemHealth"];
+export type DiskHealth = Schemas["DiskHealth"];
+export type AdminNotification = Schemas["NotificationOut"];
+export type Notifications = Schemas["NotificationsOut"];
+export type Maintenance = Schemas["MaintenanceOut"];
+export type PlatformSettings = Schemas["PlatformSettingsOut"];
+export interface AuditFilters {
+  admin_id?: number;
+  tenant_id?: number;
+  action?: string;
+  date_from?: string;
+  date_to?: string;
+}
+
 // Milestone 22 (support tickets): written by hand in src/support/types.ts, shared with the company app.
 export type {
   AdminTicketDetail,

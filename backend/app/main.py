@@ -1,5 +1,7 @@
 """FastAPI application factory."""
 
+from datetime import UTC, datetime
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -10,6 +12,7 @@ from app.core.errors import register_error_handlers
 from app.core.logging import configure_logging
 from app.core.middleware import register_middleware
 from app.schemas.common import ErrorResponse
+from app.services.maintenance import MaintenanceSwitch
 
 
 def create_app() -> FastAPI:
@@ -43,6 +46,10 @@ def create_app() -> FastAPI:
     register_middleware(application)
     register_error_handlers(application)
     application.include_router(api_router)
+    # Milestone 24: uptime is counted from here, and the maintenance switch starts unread, so a
+    # restarted process reads the persisted row on its first company request.
+    application.state.started_at = datetime.now(UTC)
+    application.state.maintenance = MaintenanceSwitch()
     return application
 
 

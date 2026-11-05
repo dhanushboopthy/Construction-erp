@@ -371,6 +371,60 @@ and Duolink answers it from the admin.
 - **Not built.** The notifications bell for new and urgent tickets (M24), attachments on tickets,
   and email notifications.
 
+**Built (M24: system health, notifications, maintenance mode, audit log, migration 0037):** how
+Duolink watches and, when it must, closes the platform. Rules in `domain/platform_health.py`
+(100% covered); admin routes in `api/v1/admin/system.py` and `monitoring.py`; services in
+`services/platform/system.py` and `services/maintenance.py`.
+
+- **Table.** `platform_maintenance`: one row (`CHECK id = 1`, inserted by the migration, off):
+  `enabled`, `message`, `changed_by` (a name, not a key), `enabled_at`, `updated_at`. Platform-only,
+  so no `tenant_id`; it is in the shared-table set of `test_tenancy.py`.
+- **Health** (`GET /admin/system/health`, every admin role): API (`started_at`, uptime, `APP_VERSION`
+  as the build stamp, the newest release in `CHANGELOG.md` when the file is shipped, Python
+  version, environment); database (up, round trip in ms, size, connections in use, server
+  version, the migrations check of the company System page); disks (free space on `BACKUP_DIR` and
+  a local `STORAGE_DIR`; a folder that is not configured shows "not watched"); backup (the
+  `.last-success` marker the backup loop writes, else the newest dump, as the company System page
+  reads it; the `.offsite-success` marker `scripts/offsite-sync.sh` writes); the e-way bill provider
+  check; counters (companies, active users, open sessions, audit events today and admin actions
+  today counted from midnight in India, open tickets). It reuses `verify.py`'s checks. No key
+  carries a secret, a URL or a connection string (tested by key and by value).
+- **Bell** (`GET /admin/notifications`, computed on read, no table). Items, each with `id`, `level`
+  (`critical`, `warning`, `info`), `title`, `body`, `link`, most serious first:
+  expired companies (critical); backup older than 26 hours or none recorded, when `BACKUP_DIR` is
+  set (critical); a watched disk under 20% free (critical); subscriptions ending within 7 days,
+  trials ending within 7 days, urgent open tickets, support sessions left open (warning); more
+  than 10 failed admin sign-ins in 24 hours (warning); new tickets, that is status `open` (info).
+  Subscription counts are the Subscriptions list's own, and the ticket counts are the Support list's
+  own `counts`, so the bell and the lists agree.
+- **Maintenance.** `GET /admin/system/maintenance` (any admin) and `POST` (Super Admin; `enabled`,
+  optional `message` up to 300 characters, 409 `MESSAGE_TOO_LONG`), audited as `maintenance_on` and
+  `maintenance_off`. Each API process holds a `MaintenanceSwitch` on `app.state` that reads the row
+  at most every 5 seconds and takes its own changes at once, so it survives a restart (a rebuilt
+  app reads the row) and a change made by another process shows within 5 seconds. `get_tenant`,
+  which every company route passes, answers 503 `MAINTENANCE` (`message`, `maintenance_message`,
+  `retry_after_seconds`) while it is on. Never closed: `/admin/*` (a separate dependency), `/health`,
+  `/health/live`, `/health/ready`, `GET /tenant`, `GET /tenant/logo` and `GET /maintenance` (the
+  open notice the company screen polls). The switch has a second, in-memory `restoring` flag for
+  Milestone 25's restore; it is never stored, so a restart forgets it, and the two are shown apart
+  (`operator_enabled` and `restoring`). A restore wins when both are set.
+- **Audit log.** `GET /admin/audit` gained `admin_id`, `date_from` and `date_to` next to `tenant_id`
+  and `action`; `GET /admin/activity` (sign-ins) gained the dates. Dates are whole days in India,
+  both ends included; an end before the start is 409 `DATE_RANGE`. `GET /admin/audit/export` (Super
+  Admin) returns the same filtered rows as CSV, up to 50,000, with cells that start with `=`, `+`,
+  `-`, `@`, tab or carriage return prefixed so a spreadsheet does not run them; the export is
+  audited as `audit_export` with the filters and the row count.
+- **Platform settings** (`GET /admin/system/settings`, read-only): the environment's security
+  configuration (never a secret, key or URL) and the lifecycle numbers (trial days, banner days,
+  bell thresholds).
+- **UI.** Admin: a bell with a count in the top bar; System (Alt 0) with the health cards and the
+  maintenance switch (Super Admin, with a confirmation); Audit log with the tabs Admin actions,
+  Company access and Sign-ins; Platform settings. Company: a full-page "Back soon: message"
+  screen that asks again every 30 seconds and at once when a call is answered 503 `MAINTENANCE`.
+- **Not built.** The "Company access" tab and the open-support-session bell item need Milestone
+  23's tables (a parallel branch): the tab says so, and `services/platform/system.open_support_sessions`
+  returns 0 until the merge wires it. Disk space is the server's, not per company.
+
 **Built (Milestone 1):** `shop_settings` (with `logo_key`, `logo_type`, `logo_sha256`, all set or
 all empty, for the shop's logo: UI refresh T10), `location`, `app_user`, `user_location`,
 `auth_session`, `audit_log`, `document_sequence`. A GSTIN is checked for format and check

@@ -234,6 +234,8 @@ def test_every_table_belongs_to_a_company(seeded):
         # plan's limits. Only the admin API (SuperAdminOnly) changes them.
         "platform_plan",
         "platform_plan_price",
+        # Duolink's own maintenance switch (M24): one row, read before any company is known.
+        "platform_maintenance",
     }
     missing = seeded.execute(
         text(

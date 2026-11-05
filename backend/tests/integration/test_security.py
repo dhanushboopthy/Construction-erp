@@ -12,6 +12,8 @@ pytestmark = pytest.mark.integration
 PUBLIC = {
     ("GET", "/api/v1/health"),
     ("GET", "/api/v1/health/ready"),
+    ("GET", "/api/v1/health/live"),
+    ("GET", "/api/v1/maintenance"),  # the "Back soon" notice: a message, nothing else (M24)
     # The company, its business name, tagline and logo, for the sign-in page (ADR 0011; T8, T10).
     ("GET", "/api/v1/tenant"),
     ("GET", "/api/v1/tenant/logo"),

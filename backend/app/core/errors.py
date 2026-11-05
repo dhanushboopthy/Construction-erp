@@ -59,6 +59,13 @@ class UpstreamError(AppError):
     code = "UPSTREAM_ERROR"
 
 
+class MaintenanceError(AppError):
+    """Duolink has closed the platform to companies for a while (Milestone 24)."""
+
+    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    code = "MAINTENANCE"
+
+
 class AuthenticationError(AppError):
     status_code = status.HTTP_401_UNAUTHORIZED
     code = "NOT_AUTHENTICATED"

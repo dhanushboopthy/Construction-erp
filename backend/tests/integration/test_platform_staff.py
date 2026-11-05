@@ -117,7 +117,10 @@ WRITES = [
     for r in _admin_routes()
     if r[0] != "GET" and r not in NOT_ADMIN_WRITES and r not in SUPPORT_MAY_WRITE
 ]
-READS = [r for r in _admin_routes() if r[0] == "GET"]
+# The one read only a Super Admin has (the audit CSV, Milestone 24); Support gets 403, tested in
+# test_system_health.py.
+SUPER_ADMIN_READS = {("GET", "/api/v1/admin/audit/export")}
+READS = [r for r in _admin_routes() if r[0] == "GET" and r not in SUPER_ADMIN_READS]
 
 
 def _fill(path, ids):

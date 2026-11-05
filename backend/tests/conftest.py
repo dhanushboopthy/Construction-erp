@@ -75,9 +75,13 @@ def client(seeded) -> Iterator:
     from app.main import app
 
     app.dependency_overrides[get_db] = lambda: seeded
+    # The maintenance switch is cached per process (M24); each test reads its own database.
+    app.state.maintenance.forget()
+    app.state.maintenance.set_restoring(False)
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+    app.state.maintenance.forget()
 
 
 def login(client, username: str, password: str, host: str | None = None) -> dict[str, str]:

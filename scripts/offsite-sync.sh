@@ -13,4 +13,5 @@ rclone check backups "$remote" --include 'erp-*.dump' --include 'erp-files-*.tar
 
 newest="$(ls -1t backups/erp-2*.dump | head -1)"
 rclone lsf "$remote" | grep -qx "$(basename "$newest")" || { echo "FAIL: $newest is not at $remote"; exit 1; }
+date -u +%s > backups/.offsite-success  # the admin's System health page shows when this last worked
 echo "OK: $(basename "$newest") is safe at $remote"

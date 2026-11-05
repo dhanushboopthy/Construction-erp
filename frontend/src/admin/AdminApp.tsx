@@ -9,6 +9,9 @@ import { AdminAuthProvider } from "./AdminAuthProvider";
 import { AdminShell } from "./AdminShell";
 import { ActivityPage } from "./pages/ActivityPage";
 import { AdminLoginPage } from "./pages/AdminLoginPage";
+import { AuditPage } from "./pages/AuditPage";
+import { PlatformSettingsPage } from "./pages/PlatformSettingsPage";
+import { SystemPage } from "./pages/SystemPage";
 import { CompaniesPage } from "./pages/CompaniesPage";
 import { ChangePasswordPage } from "./pages/ChangePasswordPage";
 import { CompanyPage } from "./pages/CompanyPage";
@@ -77,6 +80,9 @@ export function AdminApp({ client = queryClient }: { client?: QueryClient }) {
               <Route path="users" element={<UsersPage />} />
               <Route path="staff" element={<StaffPage />} />
               <Route path="activity" element={<ActivityPage />} />
+              <Route path="system" element={<SystemPage />} />
+              <Route path="audit" element={<AuditPage />} />
+              <Route path="settings" element={<PlatformSettingsPage />} />
             </Route>
             <Route path="*" element={<Navigate to="/admin" replace />} />
           </Routes>

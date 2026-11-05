@@ -1,4 +1,4 @@
-import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router";
 
 import { createQueryClient } from "@/api/queryClient";
@@ -6,6 +6,7 @@ import { AuthProvider } from "@/auth/AuthProvider";
 import { AppShell } from "@/components/AppShell";
 import { RequireAuth } from "@/components/RequireAuth";
 import { RequireRole } from "@/components/RequireRole";
+import { QueryProviders } from "@/maintenance/QueryProviders";
 import { MODULES } from "@/modules";
 import { HelpPage } from "@/support/HelpPage";
 import { TicketThreadPage } from "@/support/TicketThreadPage";
@@ -87,7 +88,7 @@ const BUILT = new Set([
 
 export function App({ client = queryClient }: { client?: QueryClient }) {
   return (
-    <QueryClientProvider client={client}>
+    <QueryProviders client={client}>
       <AuthProvider>
         <BrowserRouter>
           <Routes>
@@ -431,6 +432,6 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
           </Routes>
         </BrowserRouter>
       </AuthProvider>
-    </QueryClientProvider>
+    </QueryProviders>
   );
 }

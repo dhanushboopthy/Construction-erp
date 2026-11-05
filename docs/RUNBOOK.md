@@ -127,7 +127,26 @@ whoever looks after the server. Commands run in the project folder on the server
 - **Trials:** the overview lists trials ending this week. Change the plan, or move the trial end, on
   the company's page.
 - **Who did what:** Activity shows sign-ins at every company, and every admin action is listed
-  under "What Duolink admins did".
+  under "What Duolink admins did". The Audit log page (sidebar) has the same plus filters by dates,
+  admin, company and action; a Super Admin presses Export CSV for the filtered rows. The export is
+  recorded in the log too.
+- **Look at the bell:** the bell in the top bar counts what needs you: expired companies, a backup
+  older than 26 hours, a disk under 20% free, subscriptions and trials ending within 7 days,
+  urgent and new tickets, more than 10 failed admin sign-ins in a day. Each item links to where to
+  act. It is recalculated each minute and when you open it.
+- **Check the platform:** System (Alt 0) shows uptime, the database's answer time and size, disk
+  space, the last backup and the last off-site copy, and counters. "Copied off-site: not known"
+  means `scripts/offsite-sync.sh` has not run since this version; run it once.
+- **Close the ERP for maintenance:** System, "Turn maintenance on", optionally type what companies
+  should read (for example "Back at 9 pm"), confirm. Every company sees Back soon and their saves
+  are refused with 503; the admin, `/api/v1/health/live` and `/ready` keep answering, so load
+  balancers keep the server in rotation. It stays on through a restart. Turn it off from the same
+  page; companies return within 30 seconds, no restart needed. With several API processes, a
+  switch reaches all of them within 5 seconds. A restore (Milestone 25) uses a separate switch in
+  memory that a restart forgets.
+- **If the platform will not come back from maintenance:** the switch is the one row of
+  `platform_maintenance`. As the database owner, `UPDATE platform_maintenance SET enabled = false;`
+  opens it within 5 seconds, with no restart.
 
 ## Several companies on one server
 

@@ -130,7 +130,48 @@ export const ACTION: Record<AdminActionKind, string> = {
   plan_duplicate: "Copied a plan",
   plan_archive: "Archived a plan",
   plan_delete: "Deleted a plan",
+  subscription_renew: "Renewed a subscription",
+  subscription_cancel: "Cancelled a subscription",
+  payment_reverse: "Reversed a payment",
+  support_reply: "Answered a ticket",
+  support_update: "Changed a ticket",
+  maintenance_on: "Turned maintenance mode on",
+  maintenance_off: "Turned maintenance mode off",
+  audit_export: "Exported the audit log",
 };
+
+/** How serious a bell item is, in words as well as colour (Milestone 24). */
+export const NOTIFICATION_LEVEL: Record<
+  "critical" | "warning" | "info",
+  { label: string; tone: Tone }
+> = {
+  critical: { label: "Urgent", tone: "critical" },
+  warning: { label: "Warning", tone: "warn" },
+  info: { label: "For information", tone: "neutral" },
+};
+
+/** Bytes as "12.4 GB", for the health page's disk and database figures. */
+export function formatBytes(bytes: number | null | undefined): string {
+  if (bytes === null || bytes === undefined) return "—";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let value = bytes;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
+  return `${unit === 0 ? value : value.toFixed(1)} ${units[unit]}`;
+}
+
+/** "3 d 4 h" or "12 min": how long the API has been up. */
+export function formatUptime(seconds: number): string {
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  if (days > 0) return `${days} d ${hours} h`;
+  if (hours > 0) return `${hours} h ${minutes} min`;
+  return `${minutes} min`;
+}
 
 /** Duolink staff roles: what each may do, in words (ADR 0013). */
 export const ADMIN_ROLE: Record<PlatformRole, { label: string; note: string; tone: Tone }> = {

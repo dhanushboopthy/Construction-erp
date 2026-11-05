@@ -17,7 +17,12 @@ _SECURITY_HEADERS = {
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "same-origin",
 }
-_QUIET_PATHS = {"/api/v1/health", "/api/v1/health/ready"}
+_QUIET_PATHS = {
+    "/api/v1/health",
+    "/api/v1/health/live",
+    "/api/v1/health/ready",
+    "/api/v1/maintenance",
+}
 
 
 def register_middleware(app: FastAPI) -> None:

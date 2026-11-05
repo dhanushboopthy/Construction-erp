@@ -369,6 +369,7 @@ export interface paths {
         /**
          * Sign Ins
          * @description Sign-ins, failed sign-ins and reused tokens across every company, newest first.
+         *     409 DATE_RANGE when `date_to` is before `date_from`.
          */
         get: operations["sign_ins_api_v1_admin_activity_get"];
         put?: never;
@@ -388,9 +389,31 @@ export interface paths {
         };
         /**
          * Admin Actions
-         * @description What Duolink's admins did, newest first.
+         * @description What Duolink's admins did, newest first, filtered by company, admin, action and dates.
+         *     409 DATE_RANGE when `date_to` is before `date_from`.
          */
         get: operations["admin_actions_api_v1_admin_audit_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/audit/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Admin Actions
+         * @description The same rows as `GET /audit` with the same filters, as CSV, up to 50,000 (Super Admin).
+         *     The export is itself audited (`audit_export`).
+         */
+        get: operations["export_admin_actions_api_v1_admin_audit_export_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -555,6 +578,91 @@ export interface paths {
          *     message on a closed ticket (send a status to reopen it).
          */
         post: operations["reply_api_v1_admin_support_tickets__ticket_id__reply_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/system/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Health
+         * @description API uptime and version, database round trip, size and connections, free disk space,
+         *     the last backup and off-site copy, and counters across every company. No secret and no
+         *     connection string is ever in it.
+         */
+        get: operations["health_api_v1_admin_system_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Notifications
+         * @description The bell: what needs attention, most serious first. Worked out on every read.
+         */
+        get: operations["notifications_api_v1_admin_notifications_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/system/maintenance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Maintenance */
+        get: operations["get_maintenance_api_v1_admin_system_maintenance_get"];
+        put?: never;
+        /**
+         * Set Maintenance
+         * @description Close the platform to companies (`enabled: true`, with an optional message) or open it
+         *     again (Super Admin). Kept across restarts until turned off. Audited. 409 MESSAGE_TOO_LONG.
+         */
+        post: operations["set_maintenance_api_v1_admin_system_maintenance_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/system/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Platform Settings
+         * @description How the platform is configured, from the environment (never a secret), and the numbers
+         *     behind the subscription lifecycle.
+         */
+        get: operations["platform_settings_api_v1_admin_system_settings_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -947,6 +1055,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/health/live": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Liveness: the process is up (same as /health) */
+        get: operations["live_api_v1_health_live_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/health/ready": {
         parameters: {
             query?: never;
@@ -956,6 +1081,27 @@ export interface paths {
         };
         /** Readiness: the database answers */
         get: operations["ready_api_v1_health_ready_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Notice
+         * @description Is the platform closed for maintenance, and Duolink's message (Milestone 24). Open to
+         *     anyone and never closed itself: the company's "Back soon" screen asks it every 30 seconds.
+         */
+        get: operations["notice_api_v1_maintenance_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4034,6 +4180,24 @@ export interface components {
             /** Amount */
             amount: string;
         };
+        /** ApiHealth */
+        ApiHealth: {
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Uptime Seconds */
+            uptime_seconds: number;
+            /** Version */
+            version: string;
+            /** Changelog Version */
+            changelog_version: string | null;
+            /** Python Version */
+            python_version: string;
+            /** Environment */
+            environment: string;
+        };
         /**
          * ApprovalAction
          * @description What an owner PIN can approve at the counter (G18).
@@ -4181,6 +4345,18 @@ export interface components {
             cgst: string;
             /** Sgst */
             sgst: string;
+        };
+        /** BackupHealth */
+        BackupHealth: {
+            check: components["schemas"]["Check"];
+            /** Last Success At */
+            last_success_at: string | null;
+            /** Age Hours */
+            age_hours: number | null;
+            /** Stale */
+            stale: boolean;
+            /** Offsite Synced At */
+            offsite_synced_at: string | null;
         };
         /** BankAccountCreate */
         BankAccountCreate: {
@@ -5152,6 +5328,20 @@ export interface components {
             /** Short By */
             short_by: string | null;
         };
+        /** DatabaseHealth */
+        DatabaseHealth: {
+            /** Up */
+            up: boolean;
+            /** Round Trip Ms */
+            round_trip_ms: string;
+            /** Size Bytes */
+            size_bytes: number;
+            /** Connections In Use */
+            connections_in_use: number;
+            /** Server Version */
+            server_version: string;
+            migrations: components["schemas"]["Check"];
+        };
         /** DebitNoteCreate */
         DebitNoteCreate: {
             /** Purchase Id */
@@ -5272,6 +5462,21 @@ export interface components {
          * @enum {string}
          */
         Direction: "in" | "out";
+        /** DiskHealth */
+        DiskHealth: {
+            /** Name */
+            name: string;
+            /** Watched */
+            watched: boolean;
+            /** Total Bytes */
+            total_bytes: number | null;
+            /** Free Bytes */
+            free_bytes: number | null;
+            /** Free Percent */
+            free_percent: string | null;
+            /** Low */
+            low: boolean;
+        };
         /** DocRow */
         DocRow: {
             /** Nature */
@@ -5796,6 +6001,21 @@ export interface components {
             cgst: string;
             /** Sgst */
             sgst: string;
+        };
+        /** HealthCounters */
+        HealthCounters: {
+            /** Companies */
+            companies: number;
+            /** Active Users */
+            active_users: number;
+            /** Open Sessions */
+            open_sessions: number;
+            /** Audit Events Today */
+            audit_events_today: number;
+            /** Admin Actions Today */
+            admin_actions_today: number;
+            /** Open Tickets */
+            open_tickets: number;
         };
         /** HistoryPoint */
         HistoryPoint: {
@@ -6686,6 +6906,32 @@ export interface components {
             /** Narration */
             narration: string | null;
         };
+        /**
+         * Level
+         * @enum {string}
+         */
+        Level: "critical" | "warning" | "info";
+        /** LifecycleSettings */
+        LifecycleSettings: {
+            /** Trial Days */
+            trial_days: number;
+            /** Max Trial Days */
+            max_trial_days: number;
+            /** Banner Days */
+            banner_days: number;
+            /** Ending Soon Days */
+            ending_soon_days: number;
+            /** Notice Days */
+            notice_days: number;
+            /** Backup Stale Hours */
+            backup_stale_hours: number;
+            /** Disk Low Free Percent */
+            disk_low_free_percent: number;
+            /** Failed Admin Sign Ins Limit */
+            failed_admin_sign_ins_limit: number;
+            /** Maintenance Cache Seconds */
+            maintenance_cache_seconds: number;
+        };
         /** LinkCreate */
         LinkCreate: {
             /** Sales Line Id */
@@ -6886,6 +7132,44 @@ export interface components {
             /** Quantity */
             quantity: string;
         };
+        /** MaintenanceIn */
+        MaintenanceIn: {
+            /** Enabled */
+            enabled: boolean;
+            /** Message */
+            message?: string | null;
+        };
+        /**
+         * MaintenanceNotice
+         * @description What a company's screen needs: is it closed, and Duolink's message.
+         */
+        MaintenanceNotice: {
+            /** Enabled */
+            enabled: boolean;
+            /** Message */
+            message: string | null;
+        };
+        /** MaintenanceOut */
+        MaintenanceOut: {
+            /** Enabled */
+            enabled: boolean;
+            /** Message */
+            message: string | null;
+            /** Cause */
+            cause: ("operator" | "restore") | null;
+            /** Operator Enabled */
+            operator_enabled: boolean;
+            /** Operator Message */
+            operator_message: string | null;
+            /** Changed By */
+            changed_by: string | null;
+            /** Enabled At */
+            enabled_at: string | null;
+            /** Updated At */
+            updated_at: string | null;
+            /** Restoring */
+            restoring: boolean;
+        };
         /** MarginOut */
         MarginOut: {
             /** Item Id */
@@ -7040,6 +7324,25 @@ export interface components {
             sgst: string;
             /** Rates */
             rates: components["schemas"]["RateRow"][];
+        };
+        /** NotificationOut */
+        NotificationOut: {
+            /** Id */
+            id: string;
+            level: components["schemas"]["Level"];
+            /** Title */
+            title: string;
+            /** Body */
+            body: string;
+            /** Link */
+            link: string;
+        };
+        /** NotificationsOut */
+        NotificationsOut: {
+            /** Count */
+            count: number;
+            /** Items */
+            items: components["schemas"]["NotificationOut"][];
         };
         /** NrvReportOut */
         NrvReportOut: {
@@ -8107,7 +8410,7 @@ export interface components {
          * @description What a Duolink admin did (platform_audit_log, Milestones 16 and 17).
          * @enum {string}
          */
-        PlatformAction: "login" | "login_failed" | "logout" | "token_reuse" | "tenant_create" | "tenant_update" | "tenant_suspend" | "tenant_reactivate" | "user_activate" | "user_deactivate" | "user_unlock" | "user_reset_password" | "user_sign_out" | "staff_create" | "staff_update" | "staff_reset_password" | "staff_unlock" | "staff_sign_out" | "password_change" | "tenant_cancel" | "tenant_seller_update" | "tenant_logo_set" | "tenant_logo_remove" | "user_update" | "user_session_revoke" | "user_remove" | "plan_create" | "plan_update" | "plan_duplicate" | "plan_archive" | "plan_delete" | "subscription_renew" | "subscription_cancel" | "payment_reverse" | "support_reply" | "support_update";
+        PlatformAction: "login" | "login_failed" | "logout" | "token_reuse" | "tenant_create" | "tenant_update" | "tenant_suspend" | "tenant_reactivate" | "user_activate" | "user_deactivate" | "user_unlock" | "user_reset_password" | "user_sign_out" | "staff_create" | "staff_update" | "staff_reset_password" | "staff_unlock" | "staff_sign_out" | "password_change" | "tenant_cancel" | "tenant_seller_update" | "tenant_logo_set" | "tenant_logo_remove" | "user_update" | "user_session_revoke" | "user_remove" | "plan_create" | "plan_update" | "plan_duplicate" | "plan_archive" | "plan_delete" | "subscription_renew" | "subscription_cancel" | "payment_reverse" | "support_reply" | "support_update" | "maintenance_on" | "maintenance_off" | "audit_export";
         /** PlatformAuditRow */
         PlatformAuditRow: {
             /** Id */
@@ -8139,6 +8442,11 @@ export interface components {
          * @enum {string}
          */
         PlatformRole: "super_admin" | "support";
+        /** PlatformSettingsOut */
+        PlatformSettingsOut: {
+            security: components["schemas"]["SecuritySettings"];
+            lifecycle: components["schemas"]["LifecycleSettings"];
+        };
         /** PlatformUserRow */
         PlatformUserRow: {
             /** Id */
@@ -9342,6 +9650,45 @@ export interface components {
             /** Is Active */
             is_active?: boolean | null;
         };
+        /** SecuritySettings */
+        SecuritySettings: {
+            /** Environment */
+            environment: string;
+            /** Base Domain */
+            base_domain: string;
+            /** Admin Subdomain */
+            admin_subdomain: string;
+            /** Default Company */
+            default_company: string | null;
+            /** Api Docs Enabled */
+            api_docs_enabled: boolean;
+            /** Cookie Secure */
+            cookie_secure: boolean;
+            /** Insecure Cookies Allowed */
+            insecure_cookies_allowed: boolean;
+            /** Row Level Security Role Set */
+            row_level_security_role_set: boolean;
+            /** Jwt Algorithm */
+            jwt_algorithm: string;
+            /** Access Token Minutes */
+            access_token_minutes: number;
+            /** Refresh Token Hours */
+            refresh_token_hours: number;
+            /** Login Max Attempts */
+            login_max_attempts: number;
+            /** Login Lock Minutes */
+            login_lock_minutes: number;
+            /** Cors Origins */
+            cors_origins: string[];
+            /** Storage Provider */
+            storage_provider: string;
+            /** Gsp Provider */
+            gsp_provider: string;
+            /** Backups Watched */
+            backups_watched: boolean;
+            /** Max Upload Mb */
+            max_upload_mb: number;
+        };
         /** SegmentMonth */
         SegmentMonth: {
             /** Month */
@@ -10245,6 +10592,22 @@ export interface components {
         SuspendRequest: {
             /** Reason */
             reason: string;
+        };
+        /** SystemHealth */
+        SystemHealth: {
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            api: components["schemas"]["ApiHealth"];
+            database: components["schemas"]["DatabaseHealth"];
+            /** Disks */
+            disks: components["schemas"]["DiskHealth"][];
+            backup: components["schemas"]["BackupHealth"];
+            gsp: components["schemas"]["Check"];
+            counters: components["schemas"]["HealthCounters"];
+            maintenance: components["schemas"]["MaintenanceNotice"];
         };
         /** TallyCheckOut */
         TallyCheckOut: {
@@ -12879,6 +13242,10 @@ export interface operations {
             query?: {
                 tenant_id?: number | null;
                 action?: components["schemas"]["AuditAction"] | null;
+                /** @description first day, India time, included */
+                date_from?: string | null;
+                /** @description last day, India time, included */
+                date_to?: string | null;
                 limit?: number;
                 offset?: number;
             };
@@ -12957,7 +13324,12 @@ export interface operations {
         parameters: {
             query?: {
                 tenant_id?: number | null;
+                admin_id?: number | null;
                 action?: components["schemas"]["PlatformAction"] | null;
+                /** @description first day, India time, included */
+                date_from?: string | null;
+                /** @description last day, India time, included */
+                date_to?: string | null;
                 limit?: number;
                 offset?: number;
             };
@@ -12974,6 +13346,88 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Page_PlatformAuditRow_"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_admin_actions_api_v1_admin_audit_export_get: {
+        parameters: {
+            query?: {
+                tenant_id?: number | null;
+                admin_id?: number | null;
+                action?: components["schemas"]["PlatformAction"] | null;
+                /** @description first day, India time, included */
+                date_from?: string | null;
+                /** @description last day, India time, included */
+                date_to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The filtered rows as CSV */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": unknown;
                 };
             };
             /** @description Bad Request */
@@ -13798,6 +14252,344 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    health_api_v1_admin_system_health_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SystemHealth"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    notifications_api_v1_admin_notifications_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationsOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_maintenance_api_v1_admin_system_maintenance_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    set_maintenance_api_v1_admin_system_maintenance_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MaintenanceIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    platform_settings_api_v1_admin_system_settings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformSettingsOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -15593,6 +16385,73 @@ export interface operations {
             };
         };
     };
+    live_api_v1_health_live_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     ready_api_v1_health_ready_get: {
         parameters: {
             query?: never;
@@ -15611,6 +16470,71 @@ export interface operations {
                     "application/json": {
                         [key: string]: string;
                     };
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    notice_api_v1_maintenance_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceNotice"];
                 };
             };
             /** @description Bad Request */

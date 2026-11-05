@@ -131,6 +131,29 @@ answered in capitals), with `plan_id` and `plan_name` on rows. Giving a company 
 answers 404 `PLAN_NOT_FOUND`; an archived one, 409 `PLAN_INACTIVE` (a company may stay on its own
 archived plan). `GET /tenant/plan` (owner) answers `plan` as the code and `plan_name`.
 
+## Endpoints (Milestone 24: system health, notifications, maintenance, audit)
+
+No answer carries an amount, a secret, a key or a connection string. All under `/api/v1/admin`
+unless stated; "any admin" includes Support.
+
+| Method | Path | Role | What |
+| --- | --- | --- | --- |
+| GET | `/admin/system/health` | any admin | `as_of`; `api` (`started_at`, `uptime_seconds`, `version`, `changelog_version`, `python_version`, `environment`); `database` (`up`, `round_trip_ms`, `size_bytes`, `connections_in_use`, `server_version`, `migrations` check); `disks[]` (`name` backups or files, `watched`, `total_bytes`, `free_bytes`, `free_percent`, `low`); `backup` (`check`, `last_success_at`, `age_hours`, `stale`, `offsite_synced_at`); `gsp` check; `counters` (`companies`, `active_users`, `open_sessions`, `audit_events_today`, `admin_actions_today`, `open_tickets`); `maintenance` |
+| GET | `/admin/notifications` | any admin | `{count, items[]}`; an item is `id`, `level` (`critical`, `warning`, `info`), `title`, `body`, `link`; most serious first. Worked out on each call |
+| GET | `/admin/system/maintenance` | any admin | `enabled`, `message`, `cause` (`operator`, `restore`, or null), `operator_enabled`, `operator_message`, `changed_by`, `enabled_at`, `updated_at`, `restoring` |
+| POST | `/admin/system/maintenance {enabled, message?}` | Super Admin | Turns the operator switch on or off; 409 `MESSAGE_TOO_LONG` over 300 characters. Audited |
+| GET | `/admin/system/settings` | any admin | `security` (environment, domains, cookie and token settings, login limits, providers; no secret) and `lifecycle` (trial days, banner days, bell thresholds) |
+| GET | `/admin/audit?tenant_id&admin_id&action&date_from&date_to&limit&offset` | any admin | Admin actions, newest first. Dates are whole days in India, both ends included. 409 `DATE_RANGE` when the end is before the start |
+| GET | `/admin/audit/export?` the same filters | Super Admin | The same rows as CSV (`id`, `at`, `admin`, `action`, `company`, `target_user_id`, `target_admin`, `details`, `ip`), up to 50,000. Audited as `audit_export` |
+| GET | `/admin/activity?tenant_id&action&date_from&date_to&limit&offset` | any admin | Sign-ins, with the same date filter |
+| GET | `/maintenance` | open (company host) | `{enabled, message}`: the notice the company's "Back soon" screen polls. Never closed by maintenance |
+| GET | `/health/live` | open | `{status: ok}`; same as `/health`. `/health/ready` also checks the database |
+
+**Maintenance on.** Every company route answers 503 `MAINTENANCE` with `message`,
+`maintenance_message` (Duolink's text or null) and `retry_after_seconds`. Still answering: every
+`/admin/*` route, `/health`, `/health/live`, `/health/ready`, `GET /tenant`, `GET /tenant/logo` and
+`GET /maintenance`. New platform audit actions: `maintenance_on`, `maintenance_off`, `audit_export`.
+
 ## Endpoints (Milestone 22: support tickets)
 
 Two sets. Neither carries an amount. Ticket numbers read `T-000012`. Categories: `sign_in`,

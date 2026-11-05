@@ -75,6 +75,9 @@ class PlatformAction(StrEnum):
     PAYMENT_REVERSE = "payment_reverse"
     SUPPORT_REPLY = "support_reply"
     SUPPORT_UPDATE = "support_update"
+    MAINTENANCE_ON = "maintenance_on"
+    MAINTENANCE_OFF = "maintenance_off"
+    AUDIT_EXPORT = "audit_export"
 
 
 class SupportCategory(StrEnum):

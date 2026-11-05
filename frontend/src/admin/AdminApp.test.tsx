@@ -744,6 +744,38 @@ describe("AdminApp add company (M18)", () => {
     );
   });
 
+  it("fills the seller details from the GST registry without overwriting what was typed", async () => {
+    const calls = stubApi([
+      [
+        /\/admin\/integrations\/gstin-lookup$/,
+        () => ({
+          gstin: "33AAPFU0939F1ZV",
+          legal_name: "Acme Steels Private Limited",
+          trade_name: "Acme Steels",
+          address: "Coimbatore",
+          state_code: "29",
+          status: "Active",
+          fetched_at: "2026-11-03T10:00:00Z",
+          cached: false,
+          lookups_left_today: null,
+          near_limit: false,
+        }),
+      ],
+      ...COMPANY_ROUTES,
+    ]);
+    const user = userEvent.setup();
+    renderAt("/admin/companies/new");
+    await user.type(await screen.findByLabelText("Name on bills"), "Typed by hand");
+    await user.type(screen.getByLabelText("GSTIN"), "33aapfu0939f1zv");
+    await user.click(screen.getByRole("button", { name: "Fetch details" }));
+    expect(await screen.findByText(/Acme Steels Private Limited · Active/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Name on bills")).toHaveValue("Typed by hand");
+    expect(screen.getByLabelText("Legal name")).toHaveValue("Acme Steels");
+    expect(screen.getByLabelText("State (GST)")).toHaveValue("29");
+    const sent = calls.find((c) => c.url.endsWith("/integrations/gstin-lookup"));
+    expect(JSON.parse(sent?.body ?? "{}")).toEqual({ gstin: "33AAPFU0939F1ZV" });
+  });
+
   it("starts active with no trial length, and a paid plan sends neither", async () => {
     const calls = stubApi([
       [/\/admin\/tenants$/, () => ({ ...FULL_DETAIL, sign_in_url: "https://acme.duolink.app" })],

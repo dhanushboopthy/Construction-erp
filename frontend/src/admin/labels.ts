@@ -3,6 +3,10 @@
 import type {
   AdminActionKind,
   DurationUnit,
+  Integration,
+  IntegrationKind,
+  IntegrationProvider,
+  IntegrationStatus,
   PaymentMethod,
   PlatformRole,
   SubscriptionStatus,
@@ -130,7 +134,66 @@ export const ACTION: Record<AdminActionKind, string> = {
   plan_duplicate: "Copied a plan",
   plan_archive: "Archived a plan",
   plan_delete: "Deleted a plan",
+  subscription_renew: "Renewed a subscription",
+  subscription_cancel: "Cancelled a subscription",
+  payment_reverse: "Reversed a payment",
+  support_reply: "Replied to a ticket",
+  support_update: "Updated a ticket",
+  integration_connect: "Saved integration settings",
+  integration_test: "Tested an integration",
+  integration_disconnect: "Disconnected an integration",
+  integration_limits: "Changed integration limits",
+  gstin_lookup: "Looked up a GSTIN",
 };
+
+/** Milestone 27: the two shared integrations, in words. */
+export const INTEGRATION: Record<IntegrationKind, { title: string; about: string }> = {
+  gsp: {
+    title: "GSP (e-way bill and IRN)",
+    about: "Duolink's shared account for e-way bills and e-invoices.",
+  },
+  gstin_lookup: {
+    title: "GSTIN lookup",
+    about: "Fills a party or a company form from the public GST registry.",
+  },
+};
+
+export const INTEGRATION_ORDER: IntegrationKind[] = ["gsp", "gstin_lookup"];
+
+export const INTEGRATION_STATUS: Record<IntegrationStatus, { label: string; tone: Tone }> = {
+  not_connected: { label: "Not connected here", tone: "neutral" },
+  connected: { label: "Connected", tone: "good" },
+  failing: { label: "Failing", tone: "critical" },
+};
+
+export const PROVIDER: Record<IntegrationProvider, string> = {
+  fake: "Pretend (development only)",
+  sandbox: "Provider sandbox",
+  live: "Live",
+};
+
+/** Which settings are in force, in words. */
+export const SOURCE: Record<Integration["source"], string> = {
+  database: "Using the settings saved here.",
+  gsp_account: "Using the GSP account's settings.",
+  environment: "Using the server's environment settings (the fallback).",
+  none: "Nothing is set up. Documents that need it cannot be made.",
+};
+
+export const FIELD_LABEL: Record<string, string> = {
+  client_id: "Client ID",
+  client_secret: "Client secret",
+  username: "Username",
+  password: "Password",
+  api_key: "API key",
+};
+
+export const OUTCOME_LABEL = {
+  ok: "Succeeded",
+  failed: "Failed",
+  cached: "From cache",
+  blocked: "Blocked",
+} as const;
 
 /** Duolink staff roles: what each may do, in words (ADR 0013). */
 export const ADMIN_ROLE: Record<PlatformRole, { label: string; note: string; tone: Tone }> = {

@@ -35,6 +35,20 @@ export type SellerDetails = Schemas["SellerDetails"];
 export type SellerDetailsUpdate = Schemas["SellerDetailsUpdate"];
 export type TenantUsage = Schemas["TenantUsage"];
 
+// Milestone 27 (GSP and GSTIN lookup).
+export type Integration = Schemas["IntegrationOut"];
+export type IntegrationKind = Schemas["IntegrationKind"];
+export type IntegrationProvider = Schemas["IntegrationProvider"];
+export type IntegrationStatus = Schemas["IntegrationStatus"];
+export type IntegrationConnect = Schemas["IntegrationConnect"];
+export type IntegrationLimits = Schemas["IntegrationLimitsIn"];
+export type IntegrationTest = Schemas["IntegrationTestOut"];
+export type IntegrationUsage = Schemas["IntegrationUsage"];
+export type OutcomeCounts = Schemas["OutcomeCounts"];
+export type CompanyUsageRow = Schemas["CompanyUsageRow"];
+export type IntegrationFailure = Schemas["IntegrationFailureRow"];
+export type GstinDetails = Schemas["GstinLookupOut"];
+
 // Milestone 22 (support tickets): written by hand in src/support/types.ts, shared with the company app.
 export type {
   AdminTicketDetail,

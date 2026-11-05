@@ -64,7 +64,7 @@ def settings(**kw):
 
 
 def adapter(handler):
-    return SandboxGsp(settings(), transport=httpx.MockTransport(handler))
+    return SandboxGsp(gsp.env_config(settings()), transport=httpx.MockTransport(handler))
 
 
 def test_sandbox_logs_in_once_and_sends_the_bill():
@@ -166,8 +166,8 @@ def test_sandbox_reads_the_irn_answer_and_needs_a_base_url():
     out = adapter(handler).generate_irn(IRN)
     assert (out.irn, out.ack_no, out.signed_qr) == ("a" * 64, "112", "QR")
     assert out.ack_date.tzinfo is not None
-    with pytest.raises(GspError, match="GSP_BASE_URL"):
-        SandboxGsp(Settings(gsp_provider=GspProvider.SANDBOX))
+    with pytest.raises(GspError, match="base URL"):
+        SandboxGsp(gsp.env_config(Settings(gsp_provider=GspProvider.SANDBOX)))
 
 
 def test_fake_gsp_is_repeatable_and_can_be_told_to_fail():
@@ -202,3 +202,89 @@ def test_the_pretend_gsp_is_never_used_in_production():
             assert caught.value.code == "GSP_NOT_CONFIGURED"
     finally:
         gsp.reset_client()
+
+
+# ------------------------------------------------------------------ Milestone 27
+
+
+GSTIN = "33AAPFU0939F1Z2"
+
+
+def test_the_fake_looks_up_the_same_sample_for_the_same_gstin():
+    fake = FakeGsp(source="database")
+    first = fake.lookup_gstin(GSTIN)
+    assert first == fake.lookup_gstin(GSTIN)
+    assert first.gstin == GSTIN and first.state_code == "33" and first.status == "Active"
+    assert first.legal_name.endswith("Private Limited") and "Tamil Nadu" in first.address
+    assert fake.lookup_gstin("99AAPFU0939F1Z2").address.endswith("India")  # unknown state
+    fake.check_connection()
+    assert fake.generate_eway(EWAY).raw["source"] == "database"
+    fake.failures.append(GspError("down", code="GSP_DOWN"))
+    with pytest.raises(GspError):
+        fake.lookup_gstin(GSTIN)
+
+
+def test_the_config_never_prints_its_secrets():
+    config = gsp.env_config(settings())
+    assert config.source == "environment" and config.provider == "sandbox"
+    assert "secret" not in repr(config) and "pass" not in repr(config)
+    assert set(config.secrets()) == {"id", "secret", "user", "pass"}
+
+
+def key_adapter(handler):
+    config = gsp.GspConfig(
+        provider="live", source="database", base_url="https://lookup.test/v1", api_key="k" * 12
+    )
+    return SandboxGsp(config, transport=httpx.MockTransport(handler))
+
+
+def test_a_lookup_service_is_signed_in_by_key_without_a_login():
+    seen = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append((request.method, request.url.path, request.headers.get("x-api-key")))
+        if request.url.path == "/v1/ping":
+            return httpx.Response(200, json={"ok": True})
+        return httpx.Response(
+            200,
+            json={
+                "gstin": GSTIN.lower(),
+                "legal_name": "Kaveri Cement Agencies LLP",
+                "trade_name": "Kaveri Cement",
+                "address": "Salem",
+                "state_code": "33",
+                "status": "Active",
+            },
+        )
+
+    client = key_adapter(handler)
+    client.check_connection()
+    found = client.lookup_gstin(GSTIN)
+    assert found.gstin == GSTIN and found.legal_name == "Kaveri Cement Agencies LLP"
+    assert seen == [
+        ("GET", "/v1/ping", "k" * 12),
+        ("GET", f"/v1/taxpayer/{GSTIN}", "k" * 12),
+    ]
+
+
+def test_a_refused_key_and_an_empty_answer():
+    with pytest.raises(GspError) as caught:
+        key_adapter(lambda r: httpx.Response(401, json={})).check_connection()
+    assert caught.value.code == "GSP_AUTH_FAILED"
+    with pytest.raises(GspError) as caught:
+        key_adapter(lambda r: httpx.Response(200, json=["not", "an", "object"])).lookup_gstin(GSTIN)
+    assert caught.value.code == "GSP_BAD_RESPONSE"
+    sparse = key_adapter(lambda r: httpx.Response(200, json={"legal_name": "X Traders"}))
+    found = sparse.lookup_gstin(GSTIN)
+    assert (found.trade_name, found.state_code, found.status) == ("", "33", "Unknown")
+
+
+def test_a_gsp_account_test_is_a_login():
+    paths = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        paths.append(request.url.path)
+        return httpx.Response(200, json={"access_token": "tok"})
+
+    adapter(handler).check_connection()
+    assert paths == ["/api/auth"]

@@ -234,6 +234,10 @@ def test_every_table_belongs_to_a_company(seeded):
         # plan's limits. Only the admin API (SuperAdminOnly) changes them.
         "platform_plan",
         "platform_plan_price",
+        # Duolink's own GSP and GSTIN-lookup accounts (M27), and the public registry answers
+        # cached for every company. Neither holds a company's data.
+        "platform_integration",
+        "gstin_cache",
     }
     missing = seeded.execute(
         text(

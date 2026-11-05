@@ -75,6 +75,39 @@ class PlatformAction(StrEnum):
     PAYMENT_REVERSE = "payment_reverse"
     SUPPORT_REPLY = "support_reply"
     SUPPORT_UPDATE = "support_update"
+    INTEGRATION_CONNECT = "integration_connect"
+    INTEGRATION_TEST = "integration_test"
+    INTEGRATION_DISCONNECT = "integration_disconnect"
+    INTEGRATION_LIMITS = "integration_limits"
+    GSTIN_LOOKUP = "gstin_lookup"
+
+
+class IntegrationKind(StrEnum):
+    """A shared integration Duolink runs for every company (Milestone 27)."""
+
+    GSP = "gsp"  # e-way bills and IRN
+    GSTIN_LOOKUP = "gstin_lookup"
+
+
+class IntegrationProvider(StrEnum):
+    FAKE = "fake"  # pretend; never in production
+    SANDBOX = "sandbox"
+    LIVE = "live"
+
+
+class IntegrationStatus(StrEnum):
+    NOT_CONNECTED = "not_connected"
+    CONNECTED = "connected"
+    FAILING = "failing"
+
+
+class IntegrationOutcome(StrEnum):
+    """How one call ended. Only ok and failed reached the provider."""
+
+    OK = "ok"
+    FAILED = "failed"
+    CACHED = "cached"
+    BLOCKED = "blocked"
 
 
 class SupportCategory(StrEnum):

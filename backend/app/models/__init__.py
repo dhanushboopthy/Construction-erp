@@ -9,6 +9,7 @@ from app.models.billing import Subscription, SubscriptionPayment
 from app.models.cashbook import CashEntry, ExpenseCategory
 from app.models.compliance import EInvoice, EwayBill
 from app.models.documents import Attachment, DailyClosing, Gstr2bImport
+from app.models.integrations import GstinCache, IntegrationCall, PlatformIntegration
 from app.models.ledgers import PartyLedger, StockLedger
 from app.models.masters import Item, ItemUnit, Party, Site
 from app.models.numbering import CompanyCounter, DocumentSequence
@@ -77,7 +78,9 @@ __all__ = [
     "ExpenseCategory",
     "GoodsReceipt",
     "GoodsReceiptLine",
+    "GstinCache",
     "Gstr2bImport",
+    "IntegrationCall",
     "Item",
     "ItemMargin",
     "ItemUnit",
@@ -90,6 +93,7 @@ __all__ = [
     "Payment",
     "PlatformAdmin",
     "PlatformAuditLog",
+    "PlatformIntegration",
     "PlatformPlan",
     "PlatformPlanPrice",
     "PlatformSession",

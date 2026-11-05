@@ -15,6 +15,8 @@ export type User = Schemas["UserOut"];
 export type UserCreate = Schemas["UserCreate"];
 export type UserUpdate = Schemas["UserUpdate"];
 export type PasswordReset = Schemas["PasswordReset"];
+/** Registry details for a GSTIN (Milestone 27). */
+export type GstinDetails = Schemas["GstinLookupOut"];
 export type ShopSettings = Schemas["ShopSettingsOut"];
 /** M21 adds the subscription fields; written by hand until `make gen-api` runs. */
 export type Tenant = Schemas["TenantOut"] & {

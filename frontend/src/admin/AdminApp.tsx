@@ -12,6 +12,7 @@ import { AdminLoginPage } from "./pages/AdminLoginPage";
 import { CompaniesPage } from "./pages/CompaniesPage";
 import { ChangePasswordPage } from "./pages/ChangePasswordPage";
 import { CompanyPage } from "./pages/CompanyPage";
+import { IntegrationsPage } from "./pages/IntegrationsPage";
 import { NewCompanyPage } from "./pages/NewCompanyPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { PaymentsPage } from "./pages/PaymentsPage";
@@ -72,6 +73,7 @@ export function AdminApp({ client = queryClient }: { client?: QueryClient }) {
               <Route path="plans" element={<PlansPage />} />
               <Route path="subscriptions" element={<SubscriptionsPage />} />
               <Route path="payments" element={<PaymentsPage />} />
+              <Route path="integrations" element={<IntegrationsPage />} />
               <Route path="support" element={<SupportPage />} />
               <Route path="support/:id" element={<SupportThreadPage />} />
               <Route path="users" element={<UsersPage />} />

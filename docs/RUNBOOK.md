@@ -182,8 +182,27 @@ corrected with a **debit note** (Purchases, Return to supplier).
 
 The bill still saves. On the bill, try again in a few minutes. If the provider stays down, make the
 e-way bill on the government portal by hand and type its number on the bill ("The portal made it by
-hand? Enter the number"). If it says no provider is set, `GSP_PROVIDER` and the provider keys are
-missing from `.env` (see DEPLOYMENT).
+hand? Enter the number"). If it says no provider is set, connect one in the Duolink admin
+(Integrations) or set `GSP_PROVIDER` and the provider keys in `.env` (see DEPLOYMENT).
+
+### Connecting or changing the GSP account or the GSTIN lookup (Duolink staff)
+
+Super Admin, admin `Integrations` (Alt 0). The saved settings win over `.env`; disconnecting
+returns to `.env`.
+
+1. Set `INTEGRATION_SECRET_KEY` in the server's `.env` first (a Fernet key; the command is in
+   `.env.example`) and restart. Without it the Connect form answers 409
+   `INTEGRATION_KEY_MISSING`, and the app will not start if keys are already saved.
+2. Choose the provider, enter the address and the keys, Save connection, then **Test connection**
+   (one real call). A saved key shows only its last 4 characters; leave a field empty to keep the
+   saved value.
+3. Limits sets the per-company calls a day and a month and the GSTIN cache hours. Only the GSTIN
+   lookup refuses a company over its limit (429 `GSTIN_LOOKUP_LIMIT`); the GSP limit only warns.
+4. If a company says e-way bills fail: Integrations, Recent failures shows the operation, the
+   company and the error code (no request or response text is kept).
+5. **If the secret key is lost**, the saved keys cannot be read: the test answers
+   `INTEGRATION_KEY_MISMATCH`. Set the right key, or Disconnect and enter the keys again.
+   Changing the key never needs a database change; saved keys are simply re-entered.
 
 ### Someone forgot their password or PIN
 

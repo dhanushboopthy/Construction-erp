@@ -118,6 +118,13 @@ WRITES = [
     if r[0] != "GET" and r not in NOT_ADMIN_WRITES and r not in SUPPORT_MAY_WRITE
 ]
 READS = [r for r in _admin_routes() if r[0] == "GET"]
+# Support reads the integrations' status only (M27); usage, companies and failures are the
+# Super Admin's view.
+SUPER_ONLY_READS = {
+    ("GET", "/api/v1/admin/integrations/usage"),
+    ("GET", "/api/v1/admin/integrations/{kind}/companies"),
+    ("GET", "/api/v1/admin/integrations/{kind}/failures"),
+}
 
 
 def _fill(path, ids):
@@ -161,6 +168,7 @@ def test_support_gets_403_on_every_write_route(client, helper, acme, method, pat
         "subscription_id": 1,
         "payment_id": 1,
         "ticket_id": 1,
+        "kind": "gsp",
     }
     response = client.request(method, _fill(path, ids), headers=helper, json={})
     assert response.status_code == 403, f"{method} {path}: {response.status_code}"
@@ -184,8 +192,12 @@ def test_support_gets_200_on_every_read_route(client, helper, acme, method, path
         "session_id": SESSION_ID,
         "plan_id": some_plan,
         "ticket_id": some_ticket,
+        "kind": "gsp",
     }
     response = client.get(_fill(path, ids), headers=helper)
+    if (method, path) in SUPER_ONLY_READS:
+        assert response.status_code == 403, f"{path}: {response.status_code}"
+        return
     assert response.status_code == 200, f"{path}: {response.text}"
 
 

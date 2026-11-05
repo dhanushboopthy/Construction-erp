@@ -164,6 +164,32 @@ only admin writes Support may do).
 list (M21). Reply and update are audited as `support_reply` and `support_update` (ticket number,
 status change, whether a message was sent; never the text).
 
+## Endpoints (Milestone 27: GSP and GSTIN lookup)
+
+Duolink side, `/admin/integrations`. `{kind}` is `gsp` or `gstin_lookup`. No answer carries a
+credential: a saved key shows as `key_last4`.
+
+| Method | Path | Who and notes |
+| --- | --- | --- |
+| GET | `/admin/integrations` | Any admin. Both integrations: status, which settings are in force (`source`), limits, last success and failure |
+| PUT | `/admin/integrations/{kind}` | Super Admin. Connect or update `{provider, base_url, client_id?, client_secret?, username?, password?, api_key?}`; a blank credential keeps the saved one. 409 `INTEGRATION_KEY_MISSING`, `INTEGRATION_KEY_INVALID`, `INTEGRATION_KEY_MISMATCH`, `CREDENTIALS_MISSING`, `KEY_TOO_SHORT`, `BASE_URL_REQUIRED`, `BASE_URL_INVALID`, `BASE_URL_NOT_HTTPS`, `FAKE_NOT_IN_PRODUCTION` |
+| POST | `/admin/integrations/{kind}/test` | Super Admin. One live call; a failure is 200 with `ok: false` and an `error_code` |
+| POST | `/admin/integrations/{kind}/disconnect` | Super Admin. 409 `NOT_CONNECTED` |
+| PATCH | `/admin/integrations/{kind}/limits` | Super Admin. `{daily_limit, monthly_limit, warn_at_percent, cache_hours}`; 409 `LIMIT_DAILY_OVER_MONTHLY` |
+| GET | `/admin/integrations/usage` | Super Admin. Today, week and month by outcome |
+| GET | `/admin/integrations/{kind}/companies` | Super Admin. Per-company calls this month, `near_limit`, `over_limit` |
+| GET | `/admin/integrations/{kind}/failures` | Super Admin. Last 50 failed calls: operation, company, `error_code`; no bodies |
+| POST | `/admin/integrations/gstin-lookup {gstin}` | Super Admin. Registry details for onboarding; no company limit |
+
+Company side:
+
+| Method | Path | Who and notes |
+| --- | --- | --- |
+| POST | `/parties/gstin-lookup {gstin}` | Owner, counter. `{legal_name, trade_name, address, state_code, status, cached, lookups_left_today, near_limit}`. 429 `GSTIN_LOOKUP_LIMIT`; 502 with the provider's code |
+
+Actions audited: `integration_connect`, `integration_test`, `integration_disconnect`,
+`integration_limits`, `gstin_lookup`.
+
 ## Endpoints (Milestone 19: user support tools)
 
 Same address and token as Milestone 16. Writes need a **Super Admin**; Support reads (403

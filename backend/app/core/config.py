@@ -6,6 +6,8 @@ from functools import lru_cache
 from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from app.core.crypto import IntegrationKeyError, check_key
+
 
 class Environment(StrEnum):
     DEVELOPMENT = "development"
@@ -73,6 +75,10 @@ class Settings(BaseSettings):
     gsp_username: str = ""
     gsp_password: SecretStr = SecretStr("")
     gsp_timeout_seconds: float = 20.0
+    # Milestone 27: provider keys saved from the Duolink admin are encrypted with this Fernet
+    # key. Settings saved there win over the GSP_* variables above, which stay the fallback for
+    # a single-shop install. The app refuses to start if saved keys exist and this is blank.
+    integration_secret_key: SecretStr = SecretStr("")
 
     # Where uploaded files (weighbridge slips, delivery proof) are kept; back this folder up.
     storage_provider: StorageProvider = StorageProvider.LOCAL
@@ -98,6 +104,10 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def _check_production_safety(self) -> "Settings":
+        try:
+            check_key(self.integration_secret_key.get_secret_value())
+        except IntegrationKeyError as exc:
+            raise ValueError(exc.message) from exc
         if self.app_env is Environment.PRODUCTION:
             if self.jwt_secret == _DEV_SECRET or len(self.jwt_secret) < 32:
                 raise ValueError("JWT_SECRET must be set to a random value of 32+ characters")

@@ -59,6 +59,13 @@ class UpstreamError(AppError):
     code = "UPSTREAM_ERROR"
 
 
+class TooManyRequestsError(AppError):
+    """Over a usage limit (Milestone 27: a company's GSTIN lookups). Try again later."""
+
+    status_code = status.HTTP_429_TOO_MANY_REQUESTS
+    code = "TOO_MANY_REQUESTS"
+
+
 class AuthenticationError(AppError):
     status_code = status.HTTP_401_UNAUTHORIZED
     code = "NOT_AUTHENTICATED"

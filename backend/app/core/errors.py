@@ -47,6 +47,14 @@ class ConflictError(AppError):
     code = "CONFLICT"
 
 
+class UnprocessableError(AppError):
+    """The request is well formed but wrong: a confirmation that does not match, an unknown
+    kind (Milestone 26)."""
+
+    status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
+    code = "UNPROCESSABLE"
+
+
 class PayloadTooLargeError(AppError):
     status_code = status.HTTP_413_CONTENT_TOO_LARGE
     code = "FILE_TOO_LARGE"

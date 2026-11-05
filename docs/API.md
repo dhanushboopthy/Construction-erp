@@ -178,6 +178,24 @@ carry on; `GET /tenant` stays open). New platform audit actions: `backup_create`
 `backup_download`, `backup_upload`, `backup_delete`, `backup_restore`, `backup_restore_failed`,
 `backup_schedule_update`.
 
+## Endpoints (Milestone 26: company data and numbering)
+
+Super Admin only, **reads included**: Support gets 403 `PERMISSION_DENIED` on every route. No
+amount is ever returned. `{id}` is a company; an unknown one is 404 `TENANT_NOT_FOUND`.
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/tenants/{id}/data` | `company_name`, `total`, `items[]`: `key`, `label`, `count`, `tables[]` (`table`, `count`), `blocked_by[]` (`key`, `label`, `count`), `can_delete` |
+| GET | `/tenants/{id}/data/preview?keys=a&keys=b` | `keys` omitted or `all`: everything. `tables[]`, `total`, `files`, `blocked[]`, `message`. 422 `UNKNOWN_DATA_KIND`, `NOTHING_SELECTED` |
+| GET | `/tenants/{id}/data/{key}` | `columns` (four), `rows` (latest 25), `total`. 422 `UNKNOWN_DATA_KIND` |
+| POST | `/tenants/{id}/data/delete {keys, confirm}` | `confirm` must be `DELETE` exactly. 200 `operation`, `kinds`, `tables[]`, `total`, `backup_id`, `series_reset[]` (`series`, `from_number`, `to_number`), `files_removed`. 409 `DATA_BLOCKED` (names the blocker), `SAFETY_BACKUP_FAILED`; 422 `CONFIRMATION_MISMATCH`, `UNKNOWN_DATA_KIND`; 400 `DATA_DELETE_FAILED` (nothing removed) |
+| POST | `/tenants/{id}/data/delete-all {confirm, company_name, acknowledged}` | `DELETE`, the company's exact name and `true`. 422 `CONFIRMATION_MISMATCH`, `COMPANY_NAME_MISMATCH`, `ACKNOWLEDGEMENT_REQUIRED`; the 409 and 400 codes above |
+| GET | `/tenants/{id}/numbering` | `items[]`: `location_id`, `location_code`, `doc_type`, `doc_label`, `financial_year`, `prefix`, `highest_existing`, `highest_number`, `configured_next`, `minimum_next`, `next_document`, `ahead_of_documents`, `suggested_next` |
+| PATCH | `/tenants/{id}/numbering {location_id, doc_type, financial_year, next_number, reason}` | Returns the row. 409 `NUMBER_TOO_LOW`; 422 `REASON_REQUIRED`; 404 `LOCATION_NOT_FOUND`. Audited with old and new values |
+
+New platform audit actions: `numbering_set`, `company_data_deleted`, `company_data_deleted_all`,
+`company_data_delete_failed`.
+
 ## Endpoints (Milestone 22: support tickets)
 
 Two sets. Neither carries an amount. Ticket numbers read `T-000012`. Categories: `sign_in`,

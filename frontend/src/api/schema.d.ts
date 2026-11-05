@@ -514,6 +514,140 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/tenants/{tenant_id}/data": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Inventory
+         * @description Every kind of business data with its row count and what blocks its deletion (the real
+         *     foreign-key graph, for example "Parties: blocked by 120 Sales bills").
+         */
+        get: operations["inventory_api_v1_admin_tenants__tenant_id__data_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/tenants/{tenant_id}/data/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Preview
+         * @description What a deletion of these kinds (default `all`) would remove, per table, with the files
+         *     and the blockers. Fetched when a dialog opens. 422 UNKNOWN_DATA_KIND.
+         */
+        get: operations["preview_api_v1_admin_tenants__tenant_id__data_preview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/tenants/{tenant_id}/data/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * View
+         * @description The latest 25 rows of one kind as four identifying columns (never an amount).
+         *     422 UNKNOWN_DATA_KIND.
+         */
+        get: operations["view_api_v1_admin_tenants__tenant_id__data__key__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/tenants/{tenant_id}/data/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Delete Selected
+         * @description Delete the chosen kinds. `confirm` must be `DELETE`. A protected safety backup is taken
+         *     first. 409 DATA_BLOCKED (a kind that is not chosen still points at one that is),
+         *     SAFETY_BACKUP_FAILED; 422 CONFIRMATION_MISMATCH, UNKNOWN_DATA_KIND; 500 DATA_DELETE_FAILED
+         *     (nothing was removed). Audited.
+         */
+        post: operations["delete_selected_api_v1_admin_tenants__tenant_id__data_delete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/tenants/{tenant_id}/data/delete-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Delete All
+         * @description Delete every kind. `confirm` must be `DELETE`, `company_name` the company's exact name
+         *     and `acknowledged` true. Counters of the emptied series go back to 1. 422
+         *     CONFIRMATION_MISMATCH, COMPANY_NAME_MISMATCH, ACKNOWLEDGEMENT_REQUIRED.
+         */
+        post: operations["delete_all_api_v1_admin_tenants__tenant_id__data_delete_all_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/tenants/{tenant_id}/numbering": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Numbering
+         * @description One row per shop, document type and financial year: the highest existing number (read
+         *     from the documents), the configured next number and the next document written out.
+         */
+        get: operations["get_numbering_api_v1_admin_tenants__tenant_id__numbering_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Set Numbering
+         * @description Set a series' next number. It must be at least the highest existing number plus one
+         *     (409 NUMBER_TOO_LOW); a reason is required. Audited with the old and new values.
+         */
+        patch: operations["set_numbering_api_v1_admin_tenants__tenant_id__numbering_patch"];
+        trace?: never;
+    };
     "/api/v1/admin/overview": {
         parameters: {
             query?: never;
@@ -4774,6 +4908,24 @@ export interface components {
             /** Expiring Soon */
             expiring_soon: components["schemas"]["ExpiringSoon"][];
         };
+        /** BlockedOut */
+        BlockedOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Blocked By */
+            blocked_by: components["schemas"]["BlockerOut"][];
+        };
+        /** BlockerOut */
+        BlockerOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Count */
+            count: number;
+        };
         /** Body_import_gstr2b_api_v1_gst_gstr2b_post */
         Body_import_gstr2b_api_v1_gst_gstr2b_post: {
             /** Period */
@@ -5617,6 +5769,60 @@ export interface components {
             /** Short By */
             short_by: string | null;
         };
+        /** DataInventory */
+        DataInventory: {
+            /** Company Name */
+            company_name: string;
+            /** Items */
+            items: components["schemas"]["DataKindOut"][];
+            /** Total */
+            total: number;
+        };
+        /** DataKindOut */
+        DataKindOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Count */
+            count: number;
+            /** Tables */
+            tables: components["schemas"]["TableCountOut"][];
+            /** Blocked By */
+            blocked_by: components["schemas"]["BlockerOut"][];
+            /** Can Delete */
+            can_delete: boolean;
+        };
+        /** DataPreviewOut */
+        DataPreviewOut: {
+            /** Everything */
+            everything: boolean;
+            /** Kinds */
+            kinds: components["schemas"]["DataKindOut"][];
+            /** Tables */
+            tables: components["schemas"]["TableCountOut"][];
+            /** Total */
+            total: number;
+            /** Files */
+            files: number;
+            /** Blocked */
+            blocked: components["schemas"]["BlockedOut"][];
+            /** Message */
+            message: string | null;
+        };
+        /** DataViewOut */
+        DataViewOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Columns */
+            columns: string[];
+            /** Rows */
+            rows: string[][];
+            /** Total */
+            total: number;
+        };
         /** DatabaseHealth */
         DatabaseHealth: {
             /** Up */
@@ -5746,12 +5952,48 @@ export interface components {
             /** Supplier Bill No */
             supplier_bill_no: string;
         };
+        /** DeleteAllIn */
+        DeleteAllIn: {
+            /** Confirm */
+            confirm: string;
+            /** Company Name */
+            company_name: string;
+            /** Acknowledged */
+            acknowledged: boolean;
+        };
         /** DeleteIn */
         DeleteIn: {
             /**
              * Confirm
              * @default
              */
+            confirm: string;
+        };
+        /** DeleteOut */
+        DeleteOut: {
+            /**
+             * Operation
+             * @enum {string}
+             */
+            operation: "selected" | "all";
+            /** Kinds */
+            kinds: string[];
+            /** Tables */
+            tables: components["schemas"]["TableCountOut"][];
+            /** Total */
+            total: number;
+            /** Backup Id */
+            backup_id: number;
+            /** Series Reset */
+            series_reset: components["schemas"]["SeriesMoveOut"][];
+            /** Files Removed */
+            files_removed: number;
+        };
+        /** DeleteSelectedIn */
+        DeleteSelectedIn: {
+            /** Keys */
+            keys: string[];
+            /** Confirm */
             confirm: string;
         };
         /**
@@ -5789,6 +6031,12 @@ export interface components {
             /** Gaps */
             gaps: number[];
         };
+        /**
+         * DocType
+         * @description Each document type has its own gapless series per location per financial year.
+         * @enum {string}
+         */
+        DocType: "sales_invoice" | "credit_note" | "debit_note" | "delivery_challan" | "purchase_entry" | "payment_receipt" | "cash_voucher" | "stock_adjustment" | "bad_debt_writeoff" | "stock_writedown" | "purchase_order" | "goods_receipt" | "quotation" | "proforma";
         /** DropShipReport */
         DropShipReport: {
             /** Rows */
@@ -7715,6 +7963,51 @@ export interface components {
             /** Holding Gain Loss */
             holding_gain_loss: string | null;
         };
+        /** NumberingOut */
+        NumberingOut: {
+            /** Items */
+            items: components["schemas"]["NumberingRow"][];
+        };
+        /** NumberingRow */
+        NumberingRow: {
+            /** Location Id */
+            location_id: number;
+            /** Location Code */
+            location_code: string;
+            doc_type: components["schemas"]["DocType"];
+            /** Doc Label */
+            doc_label: string;
+            /** Financial Year */
+            financial_year: string;
+            /** Prefix */
+            prefix: string;
+            /** Highest Existing */
+            highest_existing: number | null;
+            /** Highest Number */
+            highest_number: string | null;
+            /** Configured Next */
+            configured_next: number;
+            /** Minimum Next */
+            minimum_next: number;
+            /** Next Document */
+            next_document: string;
+            /** Ahead Of Documents */
+            ahead_of_documents: boolean;
+            /** Suggested Next */
+            suggested_next: number | null;
+        };
+        /** NumberingSetIn */
+        NumberingSetIn: {
+            /** Location Id */
+            location_id: number;
+            doc_type: components["schemas"]["DocType"];
+            /** Financial Year */
+            financial_year: string;
+            /** Next Number */
+            next_number: number;
+            /** Reason */
+            reason: string;
+        };
         /** OpenBillOut */
         OpenBillOut: {
             /** Bill No */
@@ -8734,7 +9027,7 @@ export interface components {
          * @description What a Duolink admin did (platform_audit_log, Milestones 16 and 17).
          * @enum {string}
          */
-        PlatformAction: "login" | "login_failed" | "logout" | "token_reuse" | "tenant_create" | "tenant_update" | "tenant_suspend" | "tenant_reactivate" | "user_activate" | "user_deactivate" | "user_unlock" | "user_reset_password" | "user_sign_out" | "staff_create" | "staff_update" | "staff_reset_password" | "staff_unlock" | "staff_sign_out" | "password_change" | "tenant_cancel" | "tenant_seller_update" | "tenant_logo_set" | "tenant_logo_remove" | "user_update" | "user_session_revoke" | "user_remove" | "plan_create" | "plan_update" | "plan_duplicate" | "plan_archive" | "plan_delete" | "subscription_renew" | "subscription_cancel" | "payment_reverse" | "support_reply" | "support_update" | "maintenance_on" | "maintenance_off" | "audit_export" | "backup_create" | "backup_download" | "backup_upload" | "backup_delete" | "backup_restore" | "backup_restore_failed" | "backup_schedule_update";
+        PlatformAction: "login" | "login_failed" | "logout" | "token_reuse" | "tenant_create" | "tenant_update" | "tenant_suspend" | "tenant_reactivate" | "user_activate" | "user_deactivate" | "user_unlock" | "user_reset_password" | "user_sign_out" | "staff_create" | "staff_update" | "staff_reset_password" | "staff_unlock" | "staff_sign_out" | "password_change" | "tenant_cancel" | "tenant_seller_update" | "tenant_logo_set" | "tenant_logo_remove" | "user_update" | "user_session_revoke" | "user_remove" | "plan_create" | "plan_update" | "plan_duplicate" | "plan_archive" | "plan_delete" | "subscription_renew" | "subscription_cancel" | "payment_reverse" | "support_reply" | "support_update" | "maintenance_on" | "maintenance_off" | "audit_export" | "backup_create" | "backup_download" | "backup_upload" | "backup_delete" | "backup_restore" | "backup_restore_failed" | "backup_schedule_update" | "numbering_set" | "company_data_deleted" | "company_data_deleted_all" | "company_data_delete_failed";
         /** PlatformAuditRow */
         PlatformAuditRow: {
             /** Id */
@@ -10121,6 +10414,15 @@ export interface components {
             /** Reason */
             reason: string;
         };
+        /** SeriesMoveOut */
+        SeriesMoveOut: {
+            /** Series */
+            series: string;
+            /** From Number */
+            from_number: number;
+            /** To Number */
+            to_number: number;
+        };
         /** ShopSettingsOut */
         ShopSettingsOut: {
             /** Legal Name */
@@ -10975,6 +11277,13 @@ export interface components {
             gsp: components["schemas"]["Check"];
             counters: components["schemas"]["HealthCounters"];
             maintenance: components["schemas"]["MaintenanceNotice"];
+        };
+        /** TableCountOut */
+        TableCountOut: {
+            /** Table */
+            table: string;
+            /** Count */
+            count: number;
         };
         /** TallyCheckOut */
         TallyCheckOut: {
@@ -14296,6 +14605,554 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    inventory_api_v1_admin_tenants__tenant_id__data_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataInventory"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_api_v1_admin_tenants__tenant_id__data_preview_get: {
+        parameters: {
+            query?: {
+                /** @description kinds, or 'all' */
+                keys?: string[] | null;
+            };
+            header?: never;
+            path: {
+                tenant_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataPreviewOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    view_api_v1_admin_tenants__tenant_id__data__key__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataViewOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_selected_api_v1_admin_tenants__tenant_id__data_delete_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteSelectedIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeleteOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_all_api_v1_admin_tenants__tenant_id__data_delete_all_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteAllIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeleteOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_numbering_api_v1_admin_tenants__tenant_id__numbering_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NumberingOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_numbering_api_v1_admin_tenants__tenant_id__numbering_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NumberingSetIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NumberingRow"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

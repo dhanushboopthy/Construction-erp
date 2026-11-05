@@ -85,6 +85,18 @@ class PlatformAction(StrEnum):
     BACKUP_RESTORE = "backup_restore"
     BACKUP_RESTORE_FAILED = "backup_restore_failed"
     BACKUP_SCHEDULE_UPDATE = "backup_schedule_update"
+    NUMBERING_SET = "numbering_set"
+    COMPANY_DATA_DELETED = "company_data_deleted"
+    COMPANY_DATA_DELETED_ALL = "company_data_deleted_all"
+    COMPANY_DATA_DELETE_FAILED = "company_data_delete_failed"
+
+
+class SequenceChange(StrEnum):
+    """Why a document counter moved (Milestone 26): set by a Super Admin, or reset because a
+    data deletion emptied the series."""
+
+    SET = "set"
+    RESET = "reset"
 
 
 class BackupKind(StrEnum):

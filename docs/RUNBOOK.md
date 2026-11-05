@@ -210,6 +210,16 @@ Super Admin, Backups page (sidebar):
   "Restore a backup" above. Take a manual backup first if the database still answers.
 - **Download** a backup to keep it off the machine (audited). Upload a company archive made on
   this server version to restore it later.
+- **Delete a company's data, or reset its numbering** (Super Admin; company page, **Data** and
+  **Numbering** tabs). Use it for a company that entered test data before go-live, or must start
+  again. Look at the **Data** tab first: the "Blocked by" column says what has to go first. A
+  protected safety backup is taken before anything is removed (kept for good; if it cannot be made,
+  nothing is deleted). To undo a deletion, restore that safety backup from the Backups page. The
+  company's users, shops, settings, subscription and tickets stay. After deleting everything the
+  numbers start from 1; to continue from a printed book instead, set the next number on the
+  **Numbering** tab (it must be above the highest number that exists, with a reason). The nightly
+  integrity check accepts the gap such a change leaves. A failed deletion changes nothing: look for
+  `company_data_delete_failed` in the Audit log.
 - **A restore job stuck as running:** a process that died leaves the job `running`; after six hours
   it no longer blocks anything. To free a company sooner, as the database owner:
   `UPDATE platform_backup_job SET status = 'failed', finished_at = now() WHERE status = 'running';`

@@ -11,7 +11,7 @@ from app.models.compliance import EInvoice, EwayBill
 from app.models.documents import Attachment, DailyClosing, Gstr2bImport
 from app.models.ledgers import PartyLedger, StockLedger
 from app.models.masters import Item, ItemUnit, Party, Site
-from app.models.numbering import CompanyCounter, DocumentSequence
+from app.models.numbering import CompanyCounter, DocumentSequence, DocumentSequenceEvent
 from app.models.opening import OpeningBalance
 from app.models.orders import (
     GoodsReceipt,
@@ -75,6 +75,7 @@ __all__ = [
     "DebitNote",
     "DebitNoteLine",
     "DocumentSequence",
+    "DocumentSequenceEvent",
     "DropShipLink",
     "EInvoice",
     "EwayBill",

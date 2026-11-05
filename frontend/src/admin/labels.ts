@@ -145,6 +145,10 @@ export const ACTION: Record<AdminActionKind, string> = {
   backup_restore: "Restored a company from a backup",
   backup_restore_failed: "A company restore failed and was rolled back",
   backup_schedule_update: "Changed the backup schedule",
+  numbering_set: "Set a document number series",
+  company_data_deleted: "Deleted selected company data",
+  company_data_deleted_all: "Deleted all of a company's data",
+  company_data_delete_failed: "A company data deletion failed and was rolled back",
 };
 
 /** How serious a bell item is, in words as well as colour (Milestone 24). */

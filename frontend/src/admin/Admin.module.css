@@ -400,6 +400,22 @@
   font-size: var(--text-sm);
 }
 
+/* The one place a company's whole books can be deleted (M26): kept apart from the table. */
+.dangerZone {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-critical);
+  background: var(--color-surface);
+}
+
+.dangerZone h2 {
+  margin: 0;
+  font-size: var(--text-md);
+  color: var(--color-critical);
+}
+
 .danger {
   background: var(--color-critical);
   background-image: none;

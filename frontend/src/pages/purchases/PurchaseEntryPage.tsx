@@ -16,6 +16,7 @@ import { CheckField, SelectField, TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
 import { formatMoney, trimDecimal } from "@/lib/format";
 import { unitNames } from "@/pages/items/itemLabels";
+import { useUnsavedChanges } from "@/pwa/unsaved";
 
 interface ChargeRow {
   componentId: string;
@@ -83,6 +84,8 @@ export function PurchaseEntryPage() {
   const [needsOwner, setNeedsOwner] = useState<string | null>(null);
   const [preview, setPreview] = useState<PurchasePreview | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  // A purchase being keyed is never lost to an app update (Milestone 29).
+  useUnsavedChanges(supplierId !== "" || lines.some((l) => l.itemId !== "" || l.quantity !== ""));
 
   const itemList = useMemo(
     () => (items.data?.items ?? []).filter((i) => i.is_active),

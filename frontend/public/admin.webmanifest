@@ -1,0 +1,20 @@
+{
+  "id": "/admin",
+  "name": "Duolink Admin",
+  "short_name": "Duolink",
+  "description": "Duolink admin console",
+  "start_url": "/admin",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f1e33",
+  "theme_color": "#0f1e33",
+  "icons": [
+    { "src": "/icons/duolink-mark.svg", "type": "image/svg+xml", "sizes": "any", "purpose": "any" },
+    {
+      "src": "/icons/duolink-maskable.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "maskable"
+    }
+  ]
+}

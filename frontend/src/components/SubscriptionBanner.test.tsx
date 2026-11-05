@@ -11,7 +11,14 @@ import { mockApi, OWNER, session } from "@/test/mockApi";
 import { Button } from "./Button";
 import { SubscriptionBanner } from "./SubscriptionBanner";
 
-const base = { slug: "acme", status: "active" as const, name: "Acme", tagline: "t" };
+const base = {
+  slug: "acme",
+  status: "active" as const,
+  name: "Acme",
+  tagline: "t",
+  access_state: "full" as const,
+  app_generation: 0,
+};
 
 describe("SubscriptionBanner", () => {
   it("says nothing when there is plenty of time", () => {

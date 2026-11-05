@@ -4,6 +4,7 @@ import { api } from "./client";
 import type { Tenant } from "./types";
 
 const KEY = ["tenant"];
+const fetchTenant = () => api<Tenant>("/tenant");
 
 /**
  * The company this address (subdomain) belongs to, with its business name, tagline and logo
@@ -13,9 +14,28 @@ const KEY = ["tenant"];
 export function useTenant() {
   return useQuery({
     queryKey: KEY,
-    queryFn: () => api<Tenant>("/tenant"),
+    queryFn: fetchTenant,
     retry: false,
     staleTime: 5 * 60_000,
+  });
+}
+
+/** How often an open app reads the release generation (Milestone 29). */
+export const GENERATION_POLL_MS = 5 * 60_000;
+
+/**
+ * The platform's release generation, read again every five minutes and when the tab comes back
+ * into view: the same GET /tenant, so it costs nothing more. Duolink's "force update" changes it.
+ */
+export function useAppGeneration() {
+  return useQuery({
+    queryKey: KEY,
+    queryFn: fetchTenant,
+    retry: false,
+    staleTime: 5 * 60_000,
+    refetchInterval: GENERATION_POLL_MS,
+    refetchOnWindowFocus: "always",
+    select: (tenant) => tenant.app_generation,
   });
 }
 

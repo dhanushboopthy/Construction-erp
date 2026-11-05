@@ -24,6 +24,7 @@ import { formatMoney, trimDecimal } from "@/lib/format";
 import { ItemEditor } from "@/pages/items/ItemEditor";
 import { unitNames } from "@/pages/items/itemLabels";
 import { PartyEditor } from "@/pages/parties/PartyEditor";
+import { useUnsavedChanges } from "@/pwa/unsaved";
 
 /** What the side column shows: the bill's totals, or a quick form to add a missing customer or
  * item without leaving the bill. */
@@ -139,6 +140,8 @@ export function BillEntryPage() {
   const [focusLine, setFocusLine] = useState<number | null>(null);
   const [key, setKey] = useState(() => crypto.randomUUID());
   const [side, setSide] = useState<Side>({ kind: "totals" });
+  // A bill being keyed is never lost to an app update (Milestone 29).
+  useUnsavedChanges(partyId !== "" || lines.some((l) => l.itemId !== "" || l.quantity !== ""));
 
   const itemList = useMemo(
     () => (items.data?.items ?? []).filter((i) => i.is_active),

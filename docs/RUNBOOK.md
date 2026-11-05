@@ -204,6 +204,19 @@ bill"). With a cloud server, use the e-way bill portal on a phone and type the n
 Settings, Users, switch the account off. Their sign-ins end at once; their past work stays
 attributed to them in the audit log.
 
+### Everyone must pick up a new release (force update)
+
+After an upgrade, companies get the new screens on their own: each open window checks for a new
+version every 30 minutes and when it is focused, then shows "A new version is ready. Update now".
+To hurry it, a Super Admin opens **App and updates** (Alt 0) and presses **Force update**, with a
+reason if useful. Every open company window then looks within about five minutes. It reloads
+nobody: a person mid-bill sees the note and updates when they choose, and the button does nothing
+while a form has unsaved changes. If a company says "I still see the old screen", ask them to
+press Update now, or close and reopen the app. Compare the frontend and backend builds on that
+page with what you deployed. Set `APP_BUILD` (for the backend container, and as a build argument
+for the frontend) to the commit so they read differently. The page also shows, for your own
+browser, whether the service worker is running and the offline screen is ready.
+
 ## Upgrades
 
 1. `make prod-backup`, then `make prod-verify`.

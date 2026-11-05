@@ -12,7 +12,7 @@ from app.models.setup import ShopSettings
 from app.models.tenancy import Tenant
 from app.schemas.settings import ShopSettingsUpdate
 from app.schemas.tenant import TenantOut
-from app.services import subscription_access
+from app.services import app_update, subscription_access
 
 # One line for every shop until the owner can set their own (docs/UI_REFACTOR_PLAN.md, section 7).
 DEFAULT_TAGLINE = "Bill fast. Close on time."
@@ -48,6 +48,7 @@ def get_tenant(db: Session, tenant: Tenant) -> TenantOut:
         logo_url=(
             f"/api/v1/tenant/logo?v={row.logo_sha256[:12]}" if row and row.logo_sha256 else None
         ),
+        app_generation=app_update.generation(db),
     )
 
 

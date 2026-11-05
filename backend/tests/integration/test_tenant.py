@@ -31,6 +31,7 @@ def test_everyone_gets_only_the_company_the_name_the_tagline_and_the_logo_addres
             "subscription_status",
             "expires_at",
             "days_left",
+            "app_generation",
         }
         assert body["tagline"] == DEFAULT_TAGLINE
         assert body["logo_url"] is None

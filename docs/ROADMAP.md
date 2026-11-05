@@ -63,7 +63,7 @@ section 8; migrations chain from 0030).
 | 26 | Document numbering and company data management (as WA) | Delete quotations for A and nothing else changes; delete everything for A keeps users, settings and audit; next number must exceed the highest existing | Planned |
 | 27 | GSP and GSTIN-lookup API admin | The saved key shows only its last 4 characters anywhere; database settings win over the environment; over the daily limit answers 429 | Planned |
 | 28 | Bill templates per company | A hostile template runs no script; a bill issued under v1 reprints identically after v2 is active; company A's template never prints for B | Planned |
-| 29 | PWA shell and "force update" | The app installs; offline shows "No connection" and saves nothing; forcing an update shows the toast without reloading an open bill | Planned |
+| 29 | PWA shell and "force update" | The app installs; offline shows "No connection" and saves nothing; forcing an update shows the toast without reloading an open bill | **Done** (`feat/m29-pwa-force-update`; migration 0042, a parallel branch off the M22 branch, which is not merged yet) |
 | 30 | Razorpay online renewal (optional, last) | A forged signature answers 400; verify and webhook in either order give one payment; an expired company can pay and is writable at once | Planned |
 
 ## Owner requests (October 2026)

@@ -151,8 +151,27 @@ class PlatformPlanPrice(Base):
     plan: Mapped[PlatformPlan] = relationship(back_populates="prices")
 
 
+class PlatformAppUpdate(Base):
+    """The release generation (Milestone 29, ADR 0013): one row for the whole platform. A Super
+    Admin's "force update" adds one to it; every open company browser reads it from GET /tenant
+    and, when it changes, asks its service worker to look for a new build at once. It reloads
+    nobody: the "Update now" toast still decides when the new build takes over."""
+
+    __tablename__ = "platform_app_update"
+    __table_args__ = (
+        CheckConstraint("id = 1", name="singleton"),
+        CheckConstraint("generation >= 0", name="generation_not_negative"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False, default=1)
+    generation: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    forced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    forced_by: Mapped[int | None] = mapped_column(ForeignKey("platform_admin.id"))
+
+
 __all__ = [
     "PlatformAdmin",
+    "PlatformAppUpdate",
     "PlatformAuditLog",
     "PlatformPlan",
     "PlatformPlanPrice",

@@ -75,6 +75,7 @@ class PlatformAction(StrEnum):
     PAYMENT_REVERSE = "payment_reverse"
     SUPPORT_REPLY = "support_reply"
     SUPPORT_UPDATE = "support_update"
+    APP_UPDATE_FORCE = "app_update_force"
 
 
 class SupportCategory(StrEnum):

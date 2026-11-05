@@ -34,6 +34,8 @@ export type TenantCreated = Schemas["TenantCreated"];
 export type SellerDetails = Schemas["SellerDetails"];
 export type SellerDetailsUpdate = Schemas["SellerDetailsUpdate"];
 export type TenantUsage = Schemas["TenantUsage"];
+export type AppUpdate = Schemas["AppUpdateOut"];
+export type ForceUpdateBody = Schemas["ForceUpdateIn"];
 
 // Milestone 22 (support tickets): written by hand in src/support/types.ts, shared with the company app.
 export type {

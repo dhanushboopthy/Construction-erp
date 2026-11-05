@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   LifeBuoy,
   LogOut,
+  MonitorDown,
   Receipt,
   ShieldCheck,
   Tags,
@@ -31,6 +32,7 @@ const NAV = [
   { to: "/admin/subscriptions", label: "Subscriptions", icon: CalendarClock, key: "7", end: false },
   { to: "/admin/payments", label: "Payments", icon: Receipt, key: "8", end: false },
   { to: "/admin/support", label: "Support", icon: LifeBuoy, key: "9", end: false },
+  { to: "/admin/app", label: "App and updates", icon: MonitorDown, key: "0", end: false },
 ];
 
 function initials(name: string) {

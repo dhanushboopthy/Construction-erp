@@ -1,5 +1,43 @@
 # Changelog
 
+## 1.18.0 (M25): backup and recovery from the admin, including one company
+
+For companies:
+
+- **Restore from a backup.** If Duolink restores your company's data, your screens show "Back soon:
+  restoring from a backup" and check again every 30 seconds. Other companies keep working.
+  Afterwards everyone signs in again; entries made after the backup was made must be entered
+  again. Duolink keeps a protected copy of the data as it was just before.
+
+For Duolink staff (admin):
+
+- **Backups page** (sidebar): tiles for the last backup, verified count, storage used and the next
+  scheduled run; one list for nightly, manual, safety and uploaded backups; "Back up all
+  companies" and "Back up one company"; upload a company archive; the nightly time and how many
+  daily, weekly and monthly copies to keep. Support can read it; only a Super Admin changes
+  anything. Long work runs as a job the page follows.
+- **Back up one company** as a `.tar.gz`: that company's rows as CSV (never a filtered dump), its
+  attachments, logo and closing PDFs, and a manifest with row counts and SHA-256 per file.
+- **Restore one company** (type `RESTORE`): refused if the archive is for another company
+  (`BACKUP_WRONG_COMPANY`) or another database version (`BACKUP_SCHEMA_MISMATCH`). A protected
+  safety backup is taken first; the restore is one transaction ending with the company's integrity
+  check, and any failure leaves the company exactly as it was. Audited either way.
+- **Platform restore stays a command.** Each platform backup shows `./scripts/restore.sh
+  backups/<file>`; the admin never runs it.
+- **Download** (streamed, audited), **upload** (`.tar.gz`, 200 MB, manifest checked) and **delete**
+  (type `DELETE`; protected safety copies cannot be deleted).
+- **The nightly loop** now takes its time and retention from the schedule and records every run in
+  the same list. The `backup` service uses the backend image (it has `pg_dump`); `./backups` is
+  mounted read-write for the API; `mkdir -p backups && sudo chown 10001 backups` once.
+- **Purge switch.** The ledger and issued-document triggers let a row go only in a platform
+  session that also sets `app.data_purge`; the company restore is the first user.
+- `pg_dump`, `pg_restore` and `tar` run through one helper: an argv list, an allow-listed absolute
+  path, the password only in the environment, a timeout.
+
+Technical: migration 0038 (`platform_backup`, `platform_backup_job`, `platform_backup_schedule`,
+the redefined trigger functions, seven new platform audit actions). Parallel branch: before
+merging, set `down_revision` to the head of the branch merged before it.
+
 ## 1.17.0 (M24): system health, notifications, maintenance mode, audit log
 
 For companies:

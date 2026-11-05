@@ -2,6 +2,7 @@ import {
   Activity,
   Building2,
   CalendarClock,
+  DatabaseBackup,
   HeartPulse,
   IdCard,
   LayoutDashboard,
@@ -37,6 +38,7 @@ const NAV = [
   { to: "/admin/support", label: "Support", icon: LifeBuoy, key: "9", end: false },
   // Milestone 24: below the Alt 1-9 sections, reached by link or by Alt 0 and the sidebar.
   { to: "/admin/system", label: "System", icon: HeartPulse, key: "0", end: false },
+  { to: "/admin/backups", label: "Backups", icon: DatabaseBackup, key: "", end: false },
   { to: "/admin/audit", label: "Audit log", icon: ScrollText, key: "", end: false },
   { to: "/admin/settings", label: "Platform settings", icon: Settings, key: "", end: false },
 ];

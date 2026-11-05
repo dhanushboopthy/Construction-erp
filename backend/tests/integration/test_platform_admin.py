@@ -322,7 +322,7 @@ def _keys(value):
             yield from _keys(inner)
 
 
-def test_no_admin_answer_carries_money(client, admin, acme):
+def test_no_admin_answer_carries_money(client, admin, acme, seeded):
     paths = [p for p in app.openapi()["paths"] if p.startswith("/api/v1/admin/")]
     billing_gets = {
         p
@@ -337,7 +337,14 @@ def test_no_admin_answer_carries_money(client, admin, acme):
         if "get" in app.openapi()["paths"][p]
         and p not in billing_gets
         and p != "/api/v1/admin/audit/export"
+        and not p.endswith("/download")  # a backup file (M25), not JSON
     ]
+    from app.models.enums import BackupJobKind, BackupJobStatus
+    from app.models.platform import PlatformBackupJob
+
+    job = PlatformBackupJob(kind=BackupJobKind.BACKUP_PLATFORM, status=BackupJobStatus.SUCCEEDED)
+    seeded.add(job)
+    seeded.flush()
     checked = 0
     ravi = _user_id(client, admin, "acme", "ravi")
     owner = login(client, "ravi", "ravi-pass-123", host="acme.localhost")
@@ -351,6 +358,7 @@ def test_no_admin_answer_carries_money(client, admin, acme):
             path.replace("{tenant_id}", str(acme["id"]))
             .replace("{user_id}", str(ravi))
             .replace("{ticket_id}", str(ticket))
+            .replace("{job_id}", str(job.id))
         )
         response = client.get(url, headers=admin)
         assert response.status_code == 200, f"{path}: {response.text}"

@@ -143,6 +143,12 @@ do anything: the page asks again every 30 seconds and shows your work as soon as
 re-enter a bill you were saving; if it was refused it was not saved, so check Sales when you are
 back.
 
+If Duolink has to **restore your company's data from a backup** (for example after a mistake that
+cannot be undone any other way), your screens show **Back soon: restoring from a backup** for the
+few minutes it takes. Other companies are not affected. Afterwards everyone signs in again, and
+anything entered after the backup was made has to be entered again. Duolink keeps a protected copy
+of the data as it was just before the restore.
+
 ---
 
 ## 3. What is what: the building blocks

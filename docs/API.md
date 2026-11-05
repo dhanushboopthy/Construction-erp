@@ -154,6 +154,30 @@ unless stated; "any admin" includes Support.
 `/admin/*` route, `/health`, `/health/live`, `/health/ready`, `GET /tenant`, `GET /tenant/logo` and
 `GET /maintenance`. New platform audit actions: `maintenance_on`, `maintenance_off`, `audit_export`.
 
+## Endpoints (Milestone 25: backup and recovery)
+
+Every path is under `/api/v1/admin`. Long work (a dump, a company archive, a restore) answers
+**202 with a job**; poll `GET /backups/jobs/{id}` until `status` is `succeeded` or `failed`.
+Support may list and read; every other call is a Super Admin's and answers 403 to Support.
+
+| Method | Path | Who | Notes |
+| --- | --- | --- | --- |
+| GET | `/backups` (`kind`, `company_id`, `limit`) | any admin | Newest first: `kind` (`platform`, `company`), `source` (`scheduled`, `manual`, `safety`, `uploaded`), `company`, `file_name`, `size_bytes`, `sha256`, `schema_revision`, `status` (`running`, `verified`, `failed`), `protected`, `note`, `error`, `file_present`, `restore_command` (platform backups only; shown, never run) |
+| GET | `/backups/summary` | any admin | `last_backup_at`, `verified_count`, `failed_count`, `storage_bytes`, `next_scheduled_at`, `running_jobs`, `folder_ready`, `folder_problem`, `tools[]` (`pg_dump`, `pg_restore`, `tar`: `found`) |
+| GET | `/backups/jobs/{job_id}` | any admin | `kind`, `status` (`queued`, `running`, `succeeded`, `failed`), `company`, `backup_id`, `safety_backup_id`, `step`, `error_code`, `error_message`. 404 `JOB_NOT_FOUND` |
+| GET | `/backups/schedule` | any admin | `daily_time` (shop time), `keep_daily`, `keep_weekly`, `keep_monthly`, `next_scheduled_at` |
+| PUT | `/backups/schedule` | Super Admin | 409 `BAD_TIME`, `BAD_RETENTION`. Audited |
+| POST | `/backups {kind, company_id?, note?}` | Super Admin | 202 job. 409 `BACKUP_TOOLS_MISSING`, `BACKUP_FOLDER_UNAVAILABLE`, `BACKUP_JOB_RUNNING`, `COMPANY_REQUIRED` |
+| POST | `/backups/upload` (multipart `file`) | Super Admin | A company `.tar.gz`, up to 200 MB. 409 `UPLOAD_NOT_TAR_GZ`, `UPLOAD_EMPTY`, `FILE_TOO_LARGE`, `BACKUP_INVALID`, `BACKUP_WRONG_COMPANY`, `BACKUP_SCHEMA_MISMATCH` |
+| GET | `/backups/{id}/download` (`part=dump\|files`) | Super Admin | Streamed through the API; audited. 409 `BACKUP_NOT_VERIFIED`, `BACKUP_FILE_MISSING` |
+| POST | `/backups/{id}/restore {company_id, confirm}` | Super Admin | `confirm` must be `RESTORE` (409 `CONFIRMATION_MISMATCH`). 202 job. 409 `BACKUP_WRONG_COMPANY`, `BACKUP_SCHEMA_MISMATCH`, `BACKUP_NOT_VERIFIED`, `BACKUP_FILE_MISSING`, `BACKUP_PLATFORM_RESTORE_CLI`, `BACKUP_JOB_RUNNING`. A failed job carries `BACKUP_CORRUPT`, `RESTORE_VERIFY_FAILED` or `BACKUP_FAILED` |
+| DELETE | `/backups/{id} {confirm}` | Super Admin | `confirm` must be `DELETE`. 204. 409 `BACKUP_PROTECTED`, `BACKUP_RUNNING` |
+
+**While a company is restored,** its routes answer **403 `TENANT_RESTORING`** (the other companies
+carry on; `GET /tenant` stays open). New platform audit actions: `backup_create`,
+`backup_download`, `backup_upload`, `backup_delete`, `backup_restore`, `backup_restore_failed`,
+`backup_schedule_update`.
+
 ## Endpoints (Milestone 22: support tickets)
 
 Two sets. Neither carries an amount. Ticket numbers read `T-000012`. Categories: `sign_in`,

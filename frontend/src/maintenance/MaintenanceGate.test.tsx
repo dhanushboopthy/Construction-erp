@@ -4,7 +4,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createQueryClient } from "@/api/queryClient";
 
-import { MAINTENANCE_EVENT, MAINTENANCE_RETRY_MS, MaintenanceGate } from "./MaintenanceGate";
+import {
+  MAINTENANCE_EVENT,
+  MAINTENANCE_RETRY_MS,
+  MaintenanceGate,
+  RESTORING_EVENT,
+} from "./MaintenanceGate";
 
 let notice: { enabled: boolean; message: string | null } | "fail";
 
@@ -78,6 +83,43 @@ describe("MaintenanceGate (M24)", () => {
     await waitFor(() =>
       expect(screen.getByRole("heading", { name: "Back soon: Now" })).toBeVisible(),
     );
+  });
+
+  it("says the company is being restored on 403 TENANT_RESTORING, and goes on when it is over", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    renderGate();
+    await screen.findByText("The app");
+    let restoring = true;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.endsWith("/auth/me"))
+          return restoring
+            ? new Response(JSON.stringify({ code: "TENANT_RESTORING", message: "x" }), {
+                status: 403,
+              })
+            : new Response(JSON.stringify({ code: "NOT_AUTHENTICATED", message: "x" }), {
+                status: 401,
+              });
+        return new Response(JSON.stringify(notice), { status: 200 });
+      }),
+    );
+    act(() => {
+      window.dispatchEvent(new Event(RESTORING_EVENT));
+    });
+    expect(
+      await screen.findByRole("heading", { name: "Back soon: restoring from a backup" }),
+    ).toBeInTheDocument();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(MAINTENANCE_RETRY_MS + 100);
+    });
+    expect(screen.getByRole("heading", { name: /restoring/ })).toBeInTheDocument();
+    restoring = false;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(MAINTENANCE_RETRY_MS + 100);
+    });
+    expect(await screen.findByText("The app")).toBeInTheDocument();
   });
 
   it("keeps the app if the question itself fails: the server refuses the work", async () => {

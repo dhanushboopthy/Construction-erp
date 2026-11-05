@@ -42,6 +42,12 @@ export type AdminNotification = Schemas["NotificationOut"];
 export type Notifications = Schemas["NotificationsOut"];
 export type Maintenance = Schemas["MaintenanceOut"];
 export type PlatformSettings = Schemas["PlatformSettingsOut"];
+// Milestone 25: backup and recovery.
+export type Backup = Schemas["BackupOut"];
+export type BackupSummary = Schemas["BackupSummary"];
+export type BackupJob = Schemas["JobOut"];
+export type BackupSchedule = Schemas["ScheduleOut"];
+export type BackupScheduleIn = Schemas["ScheduleIn"];
 export interface AuditFilters {
   admin_id?: number;
   tenant_id?: number;

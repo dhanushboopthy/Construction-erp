@@ -138,6 +138,13 @@ export const ACTION: Record<AdminActionKind, string> = {
   maintenance_on: "Turned maintenance mode on",
   maintenance_off: "Turned maintenance mode off",
   audit_export: "Exported the audit log",
+  backup_create: "Started a backup",
+  backup_download: "Downloaded a backup",
+  backup_upload: "Uploaded a company backup",
+  backup_delete: "Deleted a backup",
+  backup_restore: "Restored a company from a backup",
+  backup_restore_failed: "A company restore failed and was rolled back",
+  backup_schedule_update: "Changed the backup schedule",
 };
 
 /** How serious a bell item is, in words as well as colour (Milestone 24). */

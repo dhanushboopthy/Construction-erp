@@ -66,6 +66,13 @@ class MaintenanceError(AppError):
     code = "MAINTENANCE"
 
 
+class TenantRestoringError(AppError):
+    """One company is being restored from a backup (Milestone 25); the others carry on."""
+
+    status_code = status.HTTP_403_FORBIDDEN
+    code = "TENANT_RESTORING"
+
+
 class AuthenticationError(AppError):
     status_code = status.HTTP_401_UNAUTHORIZED
     code = "NOT_AUTHENTICATED"

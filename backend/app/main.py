@@ -13,6 +13,7 @@ from app.core.logging import configure_logging
 from app.core.middleware import register_middleware
 from app.schemas.common import ErrorResponse
 from app.services.maintenance import MaintenanceSwitch
+from app.services.platform.backups import thread_launcher
 
 
 def create_app() -> FastAPI:
@@ -50,6 +51,8 @@ def create_app() -> FastAPI:
     # restarted process reads the persisted row on its first company request.
     application.state.started_at = datetime.now(UTC)
     application.state.maintenance = MaintenanceSwitch()
+    # Milestone 25: backups and restores run as jobs on a thread of their own.
+    application.state.backup_launcher = thread_launcher(application.state.maintenance)
     return application
 
 

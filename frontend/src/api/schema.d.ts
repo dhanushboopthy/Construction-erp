@@ -92,6 +92,178 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/backups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Backups
+         * @description Every backup, newest first: nightly, manual, safety copies and uploads.
+         */
+        get: operations["list_backups_api_v1_admin_backups_get"];
+        put?: never;
+        /**
+         * Create Backup
+         * @description Back up the whole platform (`kind: platform`) or one company (`kind: company`,
+         *     `company_id`). Answers a job to poll. 409 BACKUP_TOOLS_MISSING, BACKUP_FOLDER_UNAVAILABLE,
+         *     BACKUP_JOB_RUNNING, COMPANY_REQUIRED.
+         */
+        post: operations["create_backup_api_v1_admin_backups_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/backups/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Summary
+         * @description Last backup, how many are verified, space used, the next scheduled run, and whether the
+         *     folder and the tools (`pg_dump`, `pg_restore`, `tar`) are there.
+         */
+        get: operations["summary_api_v1_admin_backups_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/backups/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Schedule */
+        get: operations["get_schedule_api_v1_admin_backups_schedule_get"];
+        /**
+         * Set Schedule
+         * @description The nightly time (shop time, HH:MM) and how many daily, weekly and monthly copies to keep
+         *     (Super Admin). 409 BAD_TIME, BAD_RETENTION. Audited.
+         */
+        put: operations["set_schedule_api_v1_admin_backups_schedule_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/backups/jobs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Job */
+        get: operations["get_job_api_v1_admin_backups_jobs__job_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/backups/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload
+         * @description Keep a company archive for a later restore. `.tar.gz` only, 200 MB at most, and its
+         *     manifest must name a company here and this schema revision. 409 BACKUP_INVALID,
+         *     BACKUP_WRONG_COMPANY, BACKUP_SCHEMA_MISMATCH.
+         */
+        post: operations["upload_api_v1_admin_backups_upload_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/backups/{backup_id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download
+         * @description Stream the backup file (`part=files` for a platform backup's files archive). Audited.
+         */
+        get: operations["download_api_v1_admin_backups__backup_id__download_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/backups/{backup_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restore
+         * @description Replace one company's data with a company archive. `confirm` must be `RESTORE`. A safety
+         *     backup is taken first and kept; the company answers 403 TENANT_RESTORING meanwhile; any
+         *     failure rolls everything back. 409 BACKUP_WRONG_COMPANY, BACKUP_SCHEMA_MISMATCH,
+         *     BACKUP_NOT_VERIFIED, BACKUP_FILE_MISSING, BACKUP_JOB_RUNNING.
+         */
+        post: operations["restore_api_v1_admin_backups__backup_id__restore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/backups/{backup_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete
+         * @description Delete an unprotected backup and its files. `confirm` must be `DELETE`.
+         *     409 BACKUP_PROTECTED, BACKUP_RUNNING.
+         */
+        delete: operations["delete_api_v1_admin_backups__backup_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/billing/plans": {
         parameters: {
             query?: never;
@@ -4346,6 +4518,23 @@ export interface components {
             /** Sgst */
             sgst: string;
         };
+        /** BackupCompany */
+        BackupCompany: {
+            /** Id */
+            id: number;
+            /** Slug */
+            slug: string;
+            /** Name */
+            name: string;
+        };
+        /** BackupCreate */
+        BackupCreate: {
+            kind: components["schemas"]["BackupKind"];
+            /** Company Id */
+            company_id?: number | null;
+            /** Note */
+            note?: string | null;
+        };
         /** BackupHealth */
         BackupHealth: {
             check: components["schemas"]["Check"];
@@ -4357,6 +4546,101 @@ export interface components {
             stale: boolean;
             /** Offsite Synced At */
             offsite_synced_at: string | null;
+        };
+        /**
+         * BackupJobKind
+         * @enum {string}
+         */
+        BackupJobKind: "backup_platform" | "backup_company" | "restore_company";
+        /**
+         * BackupJobStatus
+         * @enum {string}
+         */
+        BackupJobStatus: "queued" | "running" | "succeeded" | "failed";
+        /**
+         * BackupKind
+         * @enum {string}
+         */
+        BackupKind: "platform" | "company";
+        /** BackupList */
+        BackupList: {
+            /** Items */
+            items: components["schemas"]["BackupOut"][];
+        };
+        /** BackupOut */
+        BackupOut: {
+            /** Id */
+            id: number;
+            kind: components["schemas"]["BackupKind"];
+            source: components["schemas"]["BackupSource"];
+            company: components["schemas"]["BackupCompany"] | null;
+            /** File Name */
+            file_name: string;
+            /** Files Name */
+            files_name: string | null;
+            /** Size Bytes */
+            size_bytes: number | null;
+            /** Sha256 */
+            sha256: string | null;
+            /** Schema Revision */
+            schema_revision: string | null;
+            status: components["schemas"]["BackupStatus"];
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Completed At */
+            completed_at: string | null;
+            /** Protected */
+            protected: boolean;
+            /** Note */
+            note: string | null;
+            /** Error */
+            error: string | null;
+            /** Created By */
+            created_by: string | null;
+            /** File Present */
+            file_present: boolean;
+            /** Restore Command */
+            restore_command: string | null;
+        };
+        /**
+         * BackupSource
+         * @description Why a backup exists. Only `scheduled` ones are ever pruned (Milestone 25).
+         * @enum {string}
+         */
+        BackupSource: "scheduled" | "manual" | "safety" | "uploaded";
+        /**
+         * BackupStatus
+         * @enum {string}
+         */
+        BackupStatus: "running" | "verified" | "failed";
+        /** BackupSummary */
+        BackupSummary: {
+            /** Last Backup At */
+            last_backup_at: string | null;
+            /** Verified Count */
+            verified_count: number;
+            /** Failed Count */
+            failed_count: number;
+            /** Storage Bytes */
+            storage_bytes: number;
+            /**
+             * Next Scheduled At
+             * Format: date-time
+             */
+            next_scheduled_at: string;
+            /** Running Jobs */
+            running_jobs: number;
+            /** Folder Ready */
+            folder_ready: boolean;
+            /** Folder Problem */
+            folder_problem: string | null;
+            /** Tools */
+            tools: components["schemas"]["ToolOut"][];
+            /** Restore Command Example */
+            restore_command_example: string;
         };
         /** BankAccountCreate */
         BankAccountCreate: {
@@ -4516,6 +4800,11 @@ export interface components {
         };
         /** Body_put_logo_api_v1_tenant_logo_put */
         Body_put_logo_api_v1_tenant_logo_put: {
+            /** File */
+            file: string;
+        };
+        /** Body_upload_api_v1_admin_backups_upload_post */
+        Body_upload_api_v1_admin_backups_upload_post: {
             /** File */
             file: string;
         };
@@ -5456,6 +5745,14 @@ export interface components {
             purchase_number: string;
             /** Supplier Bill No */
             supplier_bill_no: string;
+        };
+        /** DeleteIn */
+        DeleteIn: {
+            /**
+             * Confirm
+             * @default
+             */
+            confirm: string;
         };
         /**
          * Direction
@@ -6854,6 +7151,33 @@ export interface components {
             units?: components["schemas"]["ItemUnitIn"][] | null;
             /** Is Active */
             is_active?: boolean | null;
+        };
+        /** JobOut */
+        JobOut: {
+            /** Id */
+            id: number;
+            kind: components["schemas"]["BackupJobKind"];
+            status: components["schemas"]["BackupJobStatus"];
+            company: components["schemas"]["BackupCompany"] | null;
+            /** Backup Id */
+            backup_id: number | null;
+            /** Safety Backup Id */
+            safety_backup_id: number | null;
+            /** Step */
+            step: string | null;
+            /** Error Code */
+            error_code: string | null;
+            /** Error Message */
+            error_message: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Started At */
+            started_at: string | null;
+            /** Finished At */
+            finished_at: string | null;
         };
         /** KpiDefinitionOut */
         KpiDefinitionOut: {
@@ -8410,7 +8734,7 @@ export interface components {
          * @description What a Duolink admin did (platform_audit_log, Milestones 16 and 17).
          * @enum {string}
          */
-        PlatformAction: "login" | "login_failed" | "logout" | "token_reuse" | "tenant_create" | "tenant_update" | "tenant_suspend" | "tenant_reactivate" | "user_activate" | "user_deactivate" | "user_unlock" | "user_reset_password" | "user_sign_out" | "staff_create" | "staff_update" | "staff_reset_password" | "staff_unlock" | "staff_sign_out" | "password_change" | "tenant_cancel" | "tenant_seller_update" | "tenant_logo_set" | "tenant_logo_remove" | "user_update" | "user_session_revoke" | "user_remove" | "plan_create" | "plan_update" | "plan_duplicate" | "plan_archive" | "plan_delete" | "subscription_renew" | "subscription_cancel" | "payment_reverse" | "support_reply" | "support_update" | "maintenance_on" | "maintenance_off" | "audit_export";
+        PlatformAction: "login" | "login_failed" | "logout" | "token_reuse" | "tenant_create" | "tenant_update" | "tenant_suspend" | "tenant_reactivate" | "user_activate" | "user_deactivate" | "user_unlock" | "user_reset_password" | "user_sign_out" | "staff_create" | "staff_update" | "staff_reset_password" | "staff_unlock" | "staff_sign_out" | "password_change" | "tenant_cancel" | "tenant_seller_update" | "tenant_logo_set" | "tenant_logo_remove" | "user_update" | "user_session_revoke" | "user_remove" | "plan_create" | "plan_update" | "plan_duplicate" | "plan_archive" | "plan_delete" | "subscription_renew" | "subscription_cancel" | "payment_reverse" | "support_reply" | "support_update" | "maintenance_on" | "maintenance_off" | "audit_export" | "backup_create" | "backup_download" | "backup_upload" | "backup_delete" | "backup_restore" | "backup_restore_failed" | "backup_schedule_update";
         /** PlatformAuditRow */
         PlatformAuditRow: {
             /** Id */
@@ -9548,6 +9872,20 @@ export interface components {
             base_unit: string;
             source: components["schemas"]["RateSource"];
         };
+        /**
+         * RestoreIn
+         * @description `confirm` must be `RESTORE`, typed exactly. `company_id` is the company to restore onto.
+         */
+        RestoreIn: {
+            /** Company Id */
+            company_id: number;
+            /**
+             * Confirm
+             * @description RESTORE
+             * @default
+             */
+            confirm: string;
+        };
         /** ReturnLineIn */
         ReturnLineIn: {
             /** Line Id */
@@ -9565,6 +9903,35 @@ export interface components {
          * @enum {string}
          */
         Role: "owner" | "counter" | "accountant";
+        /** ScheduleIn */
+        ScheduleIn: {
+            /** Daily Time */
+            daily_time: string;
+            /** Keep Daily */
+            keep_daily: number;
+            /** Keep Weekly */
+            keep_weekly: number;
+            /** Keep Monthly */
+            keep_monthly: number;
+        };
+        /** ScheduleOut */
+        ScheduleOut: {
+            /** Daily Time */
+            daily_time: string;
+            /** Keep Daily */
+            keep_daily: number;
+            /** Keep Weekly */
+            keep_weekly: number;
+            /** Keep Monthly */
+            keep_monthly: number;
+            /** Updated At */
+            updated_at: string | null;
+            /**
+             * Next Scheduled At
+             * Format: date-time
+             */
+            next_scheduled_at: string;
+        };
         /** SchemeCreate */
         SchemeCreate: {
             /** Party Id */
@@ -11179,6 +11546,13 @@ export interface components {
             expires_in: number;
             user: components["schemas"]["UserOut"];
         };
+        /** ToolOut */
+        ToolOut: {
+            /** Name */
+            name: string;
+            /** Found */
+            found: boolean;
+        };
         /** TopItem */
         TopItem: {
             /** Description */
@@ -12027,6 +12401,760 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AdminChangePassword"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_backups_api_v1_admin_backups_get: {
+        parameters: {
+            query?: {
+                kind?: components["schemas"]["BackupKind"] | null;
+                company_id?: number | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BackupList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_backup_api_v1_admin_backups_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BackupCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    summary_api_v1_admin_backups_summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BackupSummary"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_schedule_api_v1_admin_backups_schedule_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    set_schedule_api_v1_admin_backups_schedule_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScheduleIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_job_api_v1_admin_backups_jobs__job_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_api_v1_admin_backups_upload_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_api_v1_admin_backups_upload_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BackupOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_api_v1_admin_backups__backup_id__download_get: {
+        parameters: {
+            query?: {
+                part?: "dump" | "files";
+            };
+            header?: never;
+            path: {
+                backup_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restore_api_v1_admin_backups__backup_id__restore_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                backup_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RestoreIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_api_v1_admin_backups__backup_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                backup_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteIn"];
             };
         };
         responses: {

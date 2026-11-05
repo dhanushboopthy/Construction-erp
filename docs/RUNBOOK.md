@@ -186,6 +186,34 @@ upgrade is the cause, restore the last good backup (below) and re-enter the day'
 4. Everything entered after that backup (up to a day) must be entered again from paper or from
    staff's memory. Ask staff to sign in again.
 
+### Backups from the admin (Milestone 25)
+
+Super Admin, Backups page (sidebar):
+
+- **Make a backup:** "Back up all companies" (a `pg_dump` and the files archive) or choose a company
+  and "Back up one company". The page follows the job. Needs `BACKUP_DIR` set and writable by the
+  API (the compose file mounts `./backups` read-write; run `mkdir -p backups && sudo chown 10001
+  backups` once) and `pg_dump`, `pg_restore` and `tar` in the API image (the prod image installs
+  them; set `PG_BIN_DIR` if they live elsewhere). The page names what is missing.
+- **The nightly loop** reads its time and how many copies to keep from the schedule on the same
+  page, and records each run in the list. The `backup` service now uses the backend image. If the
+  application cannot be reached it still backs up at 02:30 and removes files older than
+  `BACKUP_KEEP_DAYS`.
+- **Restore one company** (the company's data was damaged, or a test needs undoing): Restore beside
+  one of its backups, type `RESTORE`. A protected safety copy of the company's current data is
+  taken first and is never pruned or deleted; the company is closed (403 `TENANT_RESTORING`) while
+  it runs, everyone there signs in again afterwards, and any failure leaves the company as it was.
+  Read the job's message; the Audit log has `backup_restore` or `backup_restore_failed`. An archive
+  made on another database version, or for another company, is refused.
+- **Restore the whole platform** is never done from the page. The list shows the command for each
+  platform backup, `./scripts/restore.sh backups/erp-YYYYMMDD-HHMM.dump`; run it on the server as in
+  "Restore a backup" above. Take a manual backup first if the database still answers.
+- **Download** a backup to keep it off the machine (audited). Upload a company archive made on
+  this server version to restore it later.
+- **A restore job stuck as running:** a process that died leaves the job `running`; after six hours
+  it no longer blocks anything. To free a company sooner, as the database owner:
+  `UPDATE platform_backup_job SET status = 'failed', finished_at = now() WHERE status = 'running';`
+
 ### A day was closed by mistake, or a bill was forgotten
 
 The owner opens Reports, Daily closing, **Reopen** next to the day, and writes why. The change is

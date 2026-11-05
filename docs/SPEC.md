@@ -371,6 +371,68 @@ and Duolink answers it from the admin.
 - **Not built.** The notifications bell for new and urgent tickets (M24), attachments on tickets,
   and email notifications.
 
+**Built (M25: backup and recovery from the admin, migration 0038):** Super Admins take, verify,
+download, upload, restore and delete backups of the whole platform or of one company; Support only
+reads the list. Rules in `domain/backups.py` (100% covered: names, manifest check, foreign-key
+order, retention, schedule, command lines); routes in `api/v1/admin/backups.py`; services in
+`services/platform/backups.py`, `company_archive.py`, `purge.py` and `services/process_runner.py`.
+
+- **Tables** (platform-only, no `tenant_id`; the company of a backup is `company_id`):
+  `platform_backup` (kind, source, file name, size, SHA-256, schema revision, status, protected,
+  note), `platform_backup_job` (kind, status, step, error code and message, the archive restored,
+  the safety copy taken) and `platform_backup_schedule` (one row: `daily_time`, `keep_daily`,
+  `keep_weekly`, `keep_monthly`; defaults 02:30, 30, 8, 12). All three are in the shared-table set of
+  `test_tenancy.py`.
+- **Jobs.** A request makes a job and answers 202; one daemon thread with its own session does the
+  work (the smallest thing that fits one `backend` container). The page polls the job. A job
+  `running` for more than six hours is treated as dead and blocks nothing.
+- **Platform backup:** `pg_dump --format=custom` and, when files are on a local folder, the files
+  tarball, named as `scripts/backup-loop.sh` names them (`erp-YYYYMMDD-HHMM.dump`,
+  `erp-files-YYYYMMDD-HHMM.tar.gz`), verified with `pg_restore --list` and a SHA-256. The nightly
+  loop now records every run in `platform_backup` (source `scheduled`) through
+  `python -m app.scripts.backup_schedule`, so one list shows everything. **Platform restore stays a
+  command** (`scripts/restore.sh`); the list shows it beside each platform backup and the admin
+  never runs it.
+- **Company backup:** for every table with `tenant_id`, `COPY (SELECT ... WHERE tenant_id = :id)`
+  as CSV with a header, in foreign-key order, plus the company's attachments, logo and closing
+  PDFs, and `manifest.json` (tenant id and slug, schema revision, rows and SHA-256 per table, size
+  and SHA-256 per file). Packed as `.tar.gz`, never a filtered `pg_dump`. Left out on purpose:
+  Duolink's own rows (`platform_audit_log`, `subscription`, `subscription_payment`) so a restore
+  cannot rewrite what a company paid; `auth_session` is deleted on restore but never exported
+  (everyone signs in again); `audit_log` is exported but never deleted or overwritten.
+- **Company restore** (typed `RESTORE`): the archive must name this company (409
+  `BACKUP_WRONG_COMPANY`) and this schema revision (409 `BACKUP_SCHEMA_MISMATCH`), checked when the
+  request is made. The job then takes a **protected** company backup, checks the file against its
+  stored SHA-256 and every member against the manifest (a mismatch is `BACKUP_CORRUPT`), and in
+  **one transaction** deletes the company's rows (children first, behind the purge switch), loads
+  the CSVs (parents first), resets id counters to at least the maximum id, puts the files back and
+  runs `services/verify.run_checks` for the company. Any failure rolls the transaction back, leaves
+  the company as it was, is audited (`backup_restore_failed`) and keeps the safety copy. The error
+  text of an unexpected failure is generic: a row is never echoed.
+  `COPY ... FROM` is refused on a table with row-level security, so each table is loaded through a
+  temporary table and one `INSERT ... SELECT`.
+- **Purge switch.** Migration 0038 redefines `forbid_ledger_change()`, `forbid_issued_delete()` and
+  `forbid_issued_edit()` to allow the operation only when `app.platform` and `app.data_purge` are
+  both `on` in the transaction. `services/platform/purge.data_purge(db)` sets the second, transaction-
+  local, for a platform session only. The company restore uses it; M26 reuses it.
+- **While a company restores,** `get_tenant` answers 403 `TENANT_RESTORING` for that company only.
+  The switch keeps a per-company set in memory and also reads running restore jobs (cached 5
+  seconds), so every API process sees it. M24's global in-memory `restoring` flag is untouched: it
+  would close every company for one company's restore.
+- **Download** is streamed by an authenticated endpoint and audited. **Upload** accepts a `.tar.gz`
+  up to 200 MB whose manifest names a company here and this schema revision; the stored name is
+  made by the server, never taken from the upload. **Delete** needs `DELETE` and refuses a
+  protected backup (safety copies are never pruned or deleted).
+- **Schedule and retention.** Pruning keeps the newest nightly copy of each of the last
+  `keep_daily` days, `keep_weekly` weeks and `keep_monthly` months, and never touches protected,
+  manual, safety, uploaded, company or running backups; a failed nightly run is pruned.
+- **Process safety.** `pg_dump`, `pg_restore` and `tar` start only through
+  `services/process_runner.py`: an argv list, `shell=False`, an absolute path found in `PG_BIN_DIR`
+  or a system folder, the password only in `PGPASSWORD`, a timeout that kills the process. The page
+  and `GET /admin/backups/summary` say plainly when a tool or the folder is missing.
+- **Audit actions:** `backup_create`, `backup_download`, `backup_upload`, `backup_delete`,
+  `backup_restore`, `backup_restore_failed`, `backup_schedule_update`.
+
 **Built (M24: system health, notifications, maintenance mode, audit log, migration 0037):** how
 Duolink watches and, when it must, closes the platform. Rules in `domain/platform_health.py`
 (100% covered); admin routes in `api/v1/admin/system.py` and `monitoring.py`; services in

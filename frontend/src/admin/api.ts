@@ -5,6 +5,11 @@ import { json } from "@/api/client";
 import { adminApi, adminClient } from "./client";
 import type {
   AdminAction,
+  Backup,
+  BackupJob,
+  BackupSchedule,
+  BackupScheduleIn,
+  BackupSummary,
   AuditFilters,
   Maintenance,
   Notifications,
@@ -507,6 +512,128 @@ export function useSetMaintenance() {
       void client.invalidateQueries({ queryKey: keys.audit });
     },
   });
+}
+
+// ------------------------------------------------------------------ Milestone 25
+
+const BACKUP_POLL_MS = 2_000;
+const backupKeys = {
+  list: ["admin", "backups"] as const,
+  summary: ["admin", "backups-summary"] as const,
+  schedule: ["admin", "backups-schedule"] as const,
+};
+
+export function useBackups() {
+  return useQuery({
+    queryKey: backupKeys.list,
+    queryFn: () => adminApi<{ items: Backup[] }>("/backups"),
+    staleTime: 0,
+  });
+}
+
+export function useBackupSummary() {
+  return useQuery({
+    queryKey: backupKeys.summary,
+    queryFn: () => adminApi<BackupSummary>("/backups/summary"),
+    staleTime: 0,
+  });
+}
+
+export function useBackupSchedule() {
+  return useQuery({
+    queryKey: backupKeys.schedule,
+    queryFn: () => adminApi<BackupSchedule>("/backups/schedule"),
+  });
+}
+
+function useRefreshBackups() {
+  const client = useQueryClient();
+  return () => {
+    void client.invalidateQueries({ queryKey: backupKeys.list });
+    void client.invalidateQueries({ queryKey: backupKeys.summary });
+    void client.invalidateQueries({ queryKey: keys.audit });
+  };
+}
+
+/** A job is asked about every two seconds until it has succeeded or failed. */
+export function useBackupJob(id: number | null) {
+  const refresh = useRefreshBackups();
+  return useQuery({
+    queryKey: ["admin", "backup-job", id],
+    enabled: id !== null,
+    queryFn: async () => {
+      const job = await adminApi<BackupJob>(`/backups/jobs/${id}`);
+      if (job.status === "succeeded" || job.status === "failed") refresh();
+      return job;
+    },
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      return status === "succeeded" || status === "failed" ? false : BACKUP_POLL_MS;
+    },
+  });
+}
+
+export function useCreateBackup() {
+  const refresh = useRefreshBackups();
+  return useMutation({
+    mutationFn: (body: { kind: "platform" | "company"; company_id?: number; note?: string }) =>
+      adminApi<BackupJob>("/backups", { method: "POST", body: json(body) }),
+    onSuccess: refresh,
+  });
+}
+
+export function useRestoreBackup(backupId: number) {
+  const refresh = useRefreshBackups();
+  return useMutation({
+    mutationFn: (body: { company_id: number; confirm: string }) =>
+      adminApi<BackupJob>(`/backups/${backupId}/restore`, { method: "POST", body: json(body) }),
+    onSuccess: refresh,
+  });
+}
+
+export function useDeleteBackup(backupId: number) {
+  const refresh = useRefreshBackups();
+  return useMutation({
+    mutationFn: (confirm: string) =>
+      adminApi<undefined>(`/backups/${backupId}`, { method: "DELETE", body: json({ confirm }) }),
+    onSuccess: refresh,
+  });
+}
+
+export function useUploadBackup() {
+  const refresh = useRefreshBackups();
+  return useMutation({
+    mutationFn: (file: File) => {
+      const form = new FormData();
+      form.append("file", file);
+      return adminApi<Backup>("/backups/upload", { method: "POST", body: form });
+    },
+    onSuccess: refresh,
+  });
+}
+
+export function useSetBackupSchedule() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: BackupScheduleIn) =>
+      adminApi<BackupSchedule>("/backups/schedule", { method: "PUT", body: json(body) }),
+    onSuccess: (data) => {
+      client.setQueryData(backupKeys.schedule, data);
+      void client.invalidateQueries({ queryKey: backupKeys.summary });
+      void client.invalidateQueries({ queryKey: keys.audit });
+    },
+  });
+}
+
+/** Streams the file through the signed-in API (never a static link) and saves it. */
+export async function downloadBackup(backup: Backup, part: "dump" | "files" = "dump") {
+  const blob = await adminClient.fetchFile(`/backups/${backup.id}/download?part=${part}`);
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = part === "files" && backup.files_name ? backup.files_name : backup.file_name;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 export function usePlatformSettings() {

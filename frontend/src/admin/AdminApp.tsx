@@ -10,6 +10,7 @@ import { AdminShell } from "./AdminShell";
 import { ActivityPage } from "./pages/ActivityPage";
 import { AdminLoginPage } from "./pages/AdminLoginPage";
 import { AuditPage } from "./pages/AuditPage";
+import { BackupsPage } from "./pages/BackupsPage";
 import { PlatformSettingsPage } from "./pages/PlatformSettingsPage";
 import { SystemPage } from "./pages/SystemPage";
 import { CompaniesPage } from "./pages/CompaniesPage";
@@ -82,6 +83,7 @@ export function AdminApp({ client = queryClient }: { client?: QueryClient }) {
               <Route path="activity" element={<ActivityPage />} />
               <Route path="system" element={<SystemPage />} />
               <Route path="audit" element={<AuditPage />} />
+              <Route path="backups" element={<BackupsPage />} />
               <Route path="settings" element={<PlatformSettingsPage />} />
             </Route>
             <Route path="*" element={<Navigate to="/admin" replace />} />

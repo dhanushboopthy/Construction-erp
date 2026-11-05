@@ -78,6 +78,46 @@ class PlatformAction(StrEnum):
     MAINTENANCE_ON = "maintenance_on"
     MAINTENANCE_OFF = "maintenance_off"
     AUDIT_EXPORT = "audit_export"
+    BACKUP_CREATE = "backup_create"
+    BACKUP_DOWNLOAD = "backup_download"
+    BACKUP_UPLOAD = "backup_upload"
+    BACKUP_DELETE = "backup_delete"
+    BACKUP_RESTORE = "backup_restore"
+    BACKUP_RESTORE_FAILED = "backup_restore_failed"
+    BACKUP_SCHEDULE_UPDATE = "backup_schedule_update"
+
+
+class BackupKind(StrEnum):
+    PLATFORM = "platform"
+    COMPANY = "company"
+
+
+class BackupSource(StrEnum):
+    """Why a backup exists. Only `scheduled` ones are ever pruned (Milestone 25)."""
+
+    SCHEDULED = "scheduled"
+    MANUAL = "manual"
+    SAFETY = "safety"
+    UPLOADED = "uploaded"
+
+
+class BackupStatus(StrEnum):
+    RUNNING = "running"
+    VERIFIED = "verified"
+    FAILED = "failed"
+
+
+class BackupJobKind(StrEnum):
+    BACKUP_PLATFORM = "backup_platform"
+    BACKUP_COMPANY = "backup_company"
+    RESTORE_COMPANY = "restore_company"
+
+
+class BackupJobStatus(StrEnum):
+    QUEUED = "queued"
+    RUNNING = "running"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
 
 
 class SupportCategory(StrEnum):

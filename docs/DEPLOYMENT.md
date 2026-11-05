@@ -101,6 +101,8 @@ versioning on. The owner has not chosen a provider yet (GAP_ANALYSIS open questi
   `POSTGRES_PASSWORD`, `SEED_*` passwords, `ENABLE_API_DOCS=false` (the compose file sets it).
 - `GSP_PROVIDER=sandbox` or `live` with the provider's keys before the first e-way bill; the pretend
   provider is refused in production.
+- `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` and `RAZORPAY_WEBHOOK_SECRET` only if companies renew
+  online (optional; see the Runbook). The pretend gateway is refused in production.
 - `STORAGE_PROVIDER=s3` and its `S3_*` variables if closing PDFs should go to a bucket.
 - `BACKUP_DIR` is set by the compose file so the System page can see the backups.
 - Run `make prod-verify FULL=1` and `make prod-drill` before Day 0 ([GO_LIVE](GO_LIVE.md)).

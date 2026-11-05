@@ -18,6 +18,9 @@ PUBLIC = {
     ("POST", "/api/v1/auth/login"),
     ("POST", "/api/v1/auth/refresh"),
     ("POST", "/api/v1/auth/logout"),
+    # Razorpay's webhook is signed instead of signed in (M30); test_online_renewal checks that
+    # a forged or unsigned call is refused with 400 and records nothing.
+    ("POST", "/api/v1/subscription/webhook"),
     ("POST", "/api/v1/admin/auth/login"),
     ("POST", "/api/v1/admin/auth/refresh"),
     ("POST", "/api/v1/admin/auth/logout"),

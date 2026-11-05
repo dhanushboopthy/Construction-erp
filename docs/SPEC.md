@@ -314,6 +314,62 @@ company pays, sees its own revenue, and a lapsed company can read its books but 
   year, new companies and renewals this month, subscriptions expiring in 30 days, a 12-month trend
   of revenue and sign-ups, companies per plan, and the next expiries.
 
+**Built (M30: Razorpay online renewal, migration 0043):** a company owner renews Duolink online
+and the payment lands as a subscription payment by itself. It is off unless Duolink configures it.
+
+- **Configuration.** `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` switch it on (both needed);
+  `RAZORPAY_WEBHOOK_SECRET` is optional and switches the webhook on. All three are `SecretStr`
+  settings from the environment, never stored in code or the database and never in an answer
+  (the key id, which Razorpay Checkout needs in the browser, is the only part sent out, and only
+  to the signed-in owner when an order is made). `RAZORPAY_PROVIDER=live` (default) calls
+  Razorpay's Orders API; `fake` is a pretend gateway for development and tests and is refused in
+  production. Without keys, `GET /subscription` says `online_renewal: false` and the page says
+  "Contact Duolink to renew", as in M21; the writes answer 409 `ONLINE_RENEWAL_OFF`.
+- **Table.** `subscription_order` (company-owned: `tenant_id`, row-level security, `tenant_isolation`
+  and `platform_admin` policies; audited): the plan, price option, duration and `amount` copied
+  from the plan price when the order is made, `razorpay_order_id` (unique), `status` (`created`,
+  `paid`), the Razorpay payment id, the `subscription_payment` it made, `paid_via` (`checkout` or
+  `webhook`) and who asked.
+- **`subscription_payment` changes.** `recorded_by_admin_id` may be empty, for an online payment
+  only (a CHECK says so); a unique index on `reference` where `method = 'razorpay'` means a
+  Razorpay payment id is recorded once, whoever records it. Migration 0043 stops, naming the rows,
+  if hand-recorded Razorpay payments already share a reference. Online payments show in
+  `/admin/billing/payments` like manual ones, with method Razorpay and `recorded_by`
+  "Online (Razorpay)".
+- **The amount is the server's.** `POST /subscription/orders {price_id}` reads the price from the
+  plan catalogue. Only an active price of at least one rupee on an active paid plan is offered
+  (never the trial plan). Razorpay's answer must echo the same amount and currency. A webhook
+  whose amount or currency differs from the stored order is ignored.
+- **Signatures** (`domain/online_renewal.py`, 100% unit tested). Checkout's answer is
+  HMAC-SHA256 over `<order id>|<payment id>` with the key secret (400 `SIGNATURE_INVALID` records
+  nothing); the webhook is HMAC-SHA256 over the raw body with the webhook secret, in header
+  `X-Razorpay-Signature`. Both are compared in constant time (`hmac.compare_digest`) and an empty
+  secret never verifies.
+- **One apply, idempotent** (`services/online_renewal.apply_payment`). The order row is locked; a
+  paid order is a no-op. Otherwise it moves the subscription with the same rule as a manual
+  renewal (`domain/subscriptions.renewal_period`: paying in a trial starts today, early renewal
+  adds to the current end, late renewal starts today), records one `subscription_payment`
+  (method `razorpay`, reference = Razorpay payment id) and one audit row. Checkout and the webhook
+  can arrive in either order and any number of times: one payment, one renewal. The webhook
+  answers `applied`, `duplicate` or `ignored` (200); only a bad signature or a body that is not
+  JSON is 400, and 404 while no webhook secret is set.
+- **Read-only companies can pay.** `POST /subscription/orders` and `/verify` joined the exception
+  list in `services/subscription_access.py` (the webhook takes no company from the address, so it
+  never meets that check). The owner is writable again on the next request.
+- **Owner only.** `GET /subscription`, orders and verify are owner-only (403 for others); other
+  roles see "Ask your owner to renew" on the page. The owner sees Duolink's plan prices there: it
+  is the company's own bill, not an admin answer, so the money-field rule for `/admin` is
+  unchanged.
+- **Audit.** New platform action `subscription_pay_online` (no admin; plan, amount, Razorpay
+  order and payment ids, `via`, period). No key, secret or signature is ever logged or stored.
+- **UI.** Plan & billing (`/settings/plan`, and `/plan` for every role, which the banner links to
+  once online renewal is on): plan, status, end date, the prices with the date each would run to,
+  and "Pay with Razorpay" (Razorpay's own Checkout script, loaded only when the owner pays). The
+  production nginx policy allows Razorpay's script, frame and beacon hosts.
+- **Not built.** Refunds (a refund in the Razorpay dashboard is not seen; reverse the payment by
+  hand in Payments), card-on-file or automatic renewals, and an invoice (Duolink raises its GST
+  tax invoice in its own books).
+
 **Built (M22: support tickets, migration 0035):** a company raises a question from inside the ERP
 and Duolink answers it from the admin.
 

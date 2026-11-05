@@ -11,6 +11,11 @@
   color: var(--color-warn);
 }
 
+.link {
+  color: inherit;
+  text-decoration: underline;
+}
+
 .banner[data-tone="critical"] {
   background: var(--color-critical-soft);
   color: var(--color-critical);

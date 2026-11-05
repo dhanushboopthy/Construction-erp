@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.core.errors import NotFoundError
 from app.core.tenancy import current_tenant_id
 from app.domain.subscriptions import AccessState
@@ -41,6 +42,7 @@ def get_tenant(db: Session, tenant: Tenant) -> TenantOut:
         subscription_status=access.subscription_status,
         expires_at=access.expires_at,
         days_left=access.days_left,
+        online_renewal=get_settings().online_renewal_enabled,
         slug=tenant.slug,
         status=tenant.status,
         name=(row.trade_name or row.legal_name) if row else tenant.name,

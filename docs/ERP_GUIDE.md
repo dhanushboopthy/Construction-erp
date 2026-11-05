@@ -117,6 +117,11 @@ PDFs. You cannot save anything new (bills, receipts, entries), and the save butt
 off. Nothing is lost. Contact Duolink to renew; once they record it, saving works again straight
 away. A trial that ends without a payment works the same way.
 
+If Duolink has switched on online renewal, the banner says "Renew online" and the owner can pay
+under **Settings, Plan & billing**: choose how long to renew for, then Pay with Razorpay. The plan
+is renewed as soon as the payment goes through, and the page works even after the plan has ended.
+Other roles see "Ask your owner to renew".
+
 ### Help: asking Duolink a question
 
 Open your name in the top corner and choose **Help**. You see the tickets your company has raised.

@@ -72,6 +72,7 @@ def test_each_address_names_its_company(client, beta):
         "subscription_status": "active",
         "expires_at": None,
         "days_left": None,
+        "online_renewal": False,  # no Razorpay keys here (Milestone 30)
     }
 
 

@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.17.0 (M30): renew your Duolink plan online
+
+For companies:
+
+- **Plan & billing** (Settings, and the link in the plan banner). The owner sees the plan, its
+  end date and the prices Duolink offers, each with the date the plan would then run to, and
+  pays with Razorpay. When the payment goes through, the plan is renewed and, if it had ended, you
+  can save again straight away, with no sign-out.
+- **It works when your plan has ended.** A read-only company can open the page and pay.
+- **Only the owner pays.** Other roles are told to ask the owner.
+- **Until Duolink switches it on,** the page and the banner say "Contact Duolink to renew",
+  as before.
+- **A payment is never counted twice**, even if Razorpay reports it more than once.
+
+For Duolink staff:
+
+- **Online payments appear in Payments** with method Razorpay, the Razorpay payment id as the
+  reference and "Online (Razorpay)" as who recorded it. They can be reversed like any other.
+- **Setup.** Set `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` to switch it on, and
+  `RAZORPAY_WEBHOOK_SECRET` with a Razorpay webhook for `payment.captured` at
+  `/api/v1/subscription/webhook` so a payment lands even if the buyer closes the browser. See the
+  Runbook.
+- Migration 0043 is a parallel branch: before merging, set its `down_revision` to the head of the
+  branch merged before it.
+
 ## 1.16.0 (M22): support tickets
 
 For companies:

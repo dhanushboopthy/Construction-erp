@@ -75,6 +75,8 @@ class PlatformAction(StrEnum):
     PAYMENT_REVERSE = "payment_reverse"
     SUPPORT_REPLY = "support_reply"
     SUPPORT_UPDATE = "support_update"
+    # Milestone 30: a company owner paid online. No admin acted, so admin_id is empty.
+    SUBSCRIPTION_PAY_ONLINE = "subscription_pay_online"
 
 
 class SupportCategory(StrEnum):
@@ -129,6 +131,13 @@ class PaymentMethod(StrEnum):
     UPI = "upi"
     CHEQUE = "cheque"
     RAZORPAY = "razorpay"
+
+
+class SubscriptionOrderStatus(StrEnum):
+    """A Razorpay order for an online renewal (Milestone 30): asked for, then paid once."""
+
+    CREATED = "created"
+    PAID = "paid"
 
 
 class LocationKind(StrEnum):

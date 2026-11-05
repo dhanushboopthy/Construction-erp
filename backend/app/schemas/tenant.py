@@ -22,3 +22,5 @@ class TenantOut(BaseModel):
     subscription_status: Literal["trial", "active", "expired", "cancelled"] | None = None
     expires_at: datetime | None = None
     days_left: int | None = None
+    # The owner can renew online with Razorpay (Milestone 30); otherwise "Contact Duolink".
+    online_renewal: bool = False

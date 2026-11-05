@@ -9,6 +9,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from sqlalchemy import (
+    CheckConstraint,
     DateTime,
     ForeignKey,
     Index,
@@ -21,8 +22,13 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.models.base import Base, IntPK, TenantMixin, TimestampMixin
-from app.models.enums import PaymentMethod, SubscriptionStatus, str_enum
+from app.models.base import ActorMixin, Audited, Base, IntPK, TenantMixin, TimestampMixin
+from app.models.enums import (
+    PaymentMethod,
+    SubscriptionOrderStatus,
+    SubscriptionStatus,
+    str_enum,
+)
 
 
 class Subscription(Base, TenantMixin, TimestampMixin):
@@ -64,6 +70,19 @@ class SubscriptionPayment(Base, TenantMixin, TimestampMixin):
             unique=True,
             postgresql_where=text("reverses_id IS NOT NULL"),
         ),
+        # A Razorpay payment id lands once, however often Checkout and the webhook report it
+        # (Milestone 30). Across all companies: a payment id is Razorpay's, and unique there.
+        Index(
+            "uq_subscription_payment_razorpay_reference",
+            "reference",
+            unique=True,
+            postgresql_where=text("method = 'razorpay'"),
+        ),
+        # Only an online payment is recorded without a Duolink admin.
+        CheckConstraint(
+            "recorded_by_admin_id IS NOT NULL OR (method = 'razorpay' AND reverses_id IS NULL)",
+            name="recorded_by_admin_or_online",
+        ),
     )
 
     id: Mapped[IntPK]
@@ -78,7 +97,40 @@ class SubscriptionPayment(Base, TenantMixin, TimestampMixin):
     period_starts_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     period_ends_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     reverses_id: Mapped[int | None] = mapped_column(ForeignKey("subscription_payment.id"))
-    recorded_by_admin_id: Mapped[int] = mapped_column(ForeignKey("platform_admin.id"))
+    # Blank for a payment the company made online (Milestone 30).
+    recorded_by_admin_id: Mapped[int | None] = mapped_column(ForeignKey("platform_admin.id"))
 
 
-__all__ = ["Subscription", "SubscriptionPayment"]
+class SubscriptionOrder(Base, Audited, TenantMixin, TimestampMixin, ActorMixin):
+    """An owner asked to pay online (Milestone 30): the Razorpay order made for one plan price.
+
+    The terms bought (plan, duration, amount) are copied from the price when the order is made,
+    so a later edit of the plan's prices cannot change what was paid for. The amount is the
+    server's, never the browser's. Once paid, the order points at the payment row it made.
+    """
+
+    __tablename__ = "subscription_order"
+
+    id: Mapped[IntPK]
+    subscription_id: Mapped[int] = mapped_column(ForeignKey("subscription.id"), index=True)
+    plan_id: Mapped[int] = mapped_column(ForeignKey("platform_plan.id"))
+    # The price option chosen, for reference only: a plan's prices can be replaced later.
+    price_id: Mapped[int | None] = mapped_column(Integer)
+    duration_value: Mapped[int] = mapped_column(Integer)
+    duration_unit: Mapped[str] = mapped_column(String(10))
+    amount: Mapped[Decimal] = mapped_column(Numeric(12, 2))
+    currency: Mapped[str] = mapped_column(String(3))
+    razorpay_order_id: Mapped[str] = mapped_column(String(40), unique=True)
+    receipt: Mapped[str] = mapped_column(String(40))
+    status: Mapped[SubscriptionOrderStatus] = mapped_column(
+        str_enum(SubscriptionOrderStatus, "subscription_order_status")
+    )
+    razorpay_payment_id: Mapped[str | None] = mapped_column(String(40))
+    payment_id: Mapped[int | None] = mapped_column(ForeignKey("subscription_payment.id"))
+    paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Which report landed it first: "checkout" (the browser) or "webhook" (Razorpay).
+    paid_via: Mapped[str | None] = mapped_column(String(10))
+    created_by_user_id: Mapped[int] = mapped_column(ForeignKey("app_user.id"))
+
+
+__all__ = ["Subscription", "SubscriptionOrder", "SubscriptionPayment"]

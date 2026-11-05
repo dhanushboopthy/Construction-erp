@@ -58,7 +58,7 @@ describe("Settings layout", () => {
     renderAt("/settings/users");
     expect(await screen.findByRole("heading", { level: 1, name: "Settings" })).toBeVisible();
     const nav = within(screen.getByRole("navigation", { name: "Settings sections" }));
-    expect(nav.getAllByRole("link")).toHaveLength(9);
+    expect(nav.getAllByRole("link")).toHaveLength(10); // M30 added Plan & billing
     expect(nav.getByRole("link", { name: "Users" })).toHaveAttribute("aria-current", "page");
     expect(nav.getByRole("link", { name: "Shop details" })).not.toHaveAttribute("aria-current");
   });

@@ -106,6 +106,21 @@ whoever looks after the server. Commands run in the project folder on the server
 - **Companies that were active before this version** got an expiry one year out, shown as "needs
   review". Open each, compare with what they have really paid, and record a renewal (it sets the real
   end date and clears the flag). Until then they run normally and nothing is read-only before that date.
+- **Online renewal (Razorpay, optional).** Off until you set `RAZORPAY_KEY_ID` and
+  `RAZORPAY_KEY_SECRET` in the server's `.env` (use Razorpay's test keys, `rzp_test_...`, first).
+  Then in the Razorpay dashboard add a webhook for the event `payment.captured` at
+  `https://<api-host>/api/v1/subscription/webhook`, choose a secret and set it as
+  `RAZORPAY_WEBHOOK_SECRET`; restart the backend. Without the webhook a payment still lands when
+  the owner's browser returns from Checkout, but not if they close it first. Never put the keys in
+  the repository, a ticket or a chat. `RAZORPAY_PROVIDER=fake` is for development only and the
+  server refuses it in production.
+  - **A payment is in Razorpay but not in Payments:** check the webhook's delivery log in the
+    Razorpay dashboard (a 400 means the secret differs) and redeliver it; delivering twice is safe.
+    A payment for an order that was already paid by another payment is logged and not applied:
+    refund it in Razorpay.
+  - **Refunds** made in Razorpay are not seen here: reverse the payment under Payments as well.
+  - Cancelling or archiving a plan removes its prices from the page; an order already made can
+    still be paid.
 - **Answer a ticket:** Support (Alt 9) lists every company's tickets; the tiles show open, urgent
   and unassigned counts. Open one, read the thread, type your reply and send. A reply alone makes
   the ticket "waiting on company"; the company's own reply puts it back to open. Any admin,

@@ -1140,6 +1140,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/subscription": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Overview
+         * @description The plan, when it ends, and the Duolink prices that can be paid online now, each with
+         *     the date the plan would then run to.
+         */
+        get: operations["overview_api_v1_subscription_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/subscription/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Order
+         * @description A Razorpay order for one price. The amount is the plan's price on the server. 404
+         *     PRICE_NOT_FOUND; 409 PRICE_NOT_OFFERED or ONLINE_RENEWAL_OFF; 502 RAZORPAY_ERROR.
+         */
+        post: operations["create_order_api_v1_subscription_orders_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/subscription/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Verify
+         * @description Checkout's answer. 400 SIGNATURE_INVALID records nothing; 404 ORDER_NOT_FOUND. The same
+         *     payment twice (or after the webhook) answers 200 with `applied: false`.
+         */
+        post: operations["verify_api_v1_subscription_verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/subscription/webhook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Webhook
+         * @description Razorpay's `payment.captured`, signed in `X-Razorpay-Signature` with the webhook secret.
+         *     No sign-in and any address. 400 SIGNATURE_INVALID or BAD_PAYLOAD; 404 while no webhook
+         *     secret is set; 200 for a duplicate or any other event.
+         */
+        post: operations["webhook_api_v1_subscription_webhook_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/login": {
         parameters: {
             query?: never;
@@ -8107,7 +8192,7 @@ export interface components {
          * @description What a Duolink admin did (platform_audit_log, Milestones 16 and 17).
          * @enum {string}
          */
-        PlatformAction: "login" | "login_failed" | "logout" | "token_reuse" | "tenant_create" | "tenant_update" | "tenant_suspend" | "tenant_reactivate" | "user_activate" | "user_deactivate" | "user_unlock" | "user_reset_password" | "user_sign_out" | "staff_create" | "staff_update" | "staff_reset_password" | "staff_unlock" | "staff_sign_out" | "password_change" | "tenant_cancel" | "tenant_seller_update" | "tenant_logo_set" | "tenant_logo_remove" | "user_update" | "user_session_revoke" | "user_remove" | "plan_create" | "plan_update" | "plan_duplicate" | "plan_archive" | "plan_delete" | "subscription_renew" | "subscription_cancel" | "payment_reverse" | "support_reply" | "support_update";
+        PlatformAction: "login" | "login_failed" | "logout" | "token_reuse" | "tenant_create" | "tenant_update" | "tenant_suspend" | "tenant_reactivate" | "user_activate" | "user_deactivate" | "user_unlock" | "user_reset_password" | "user_sign_out" | "staff_create" | "staff_update" | "staff_reset_password" | "staff_unlock" | "staff_sign_out" | "password_change" | "tenant_cancel" | "tenant_seller_update" | "tenant_logo_set" | "tenant_logo_remove" | "user_update" | "user_session_revoke" | "user_remove" | "plan_create" | "plan_update" | "plan_duplicate" | "plan_archive" | "plan_delete" | "subscription_renew" | "subscription_cancel" | "payment_reverse" | "support_reply" | "support_update" | "subscription_pay_online";
         /** PlatformAuditRow */
         PlatformAuditRow: {
             /** Id */
@@ -9217,6 +9302,112 @@ export interface components {
             notes?: string | null;
             /** Paid At */
             paid_at?: string | null;
+        };
+        /** RenewalOption */
+        RenewalOption: {
+            /** Price Id */
+            price_id: number;
+            /** Plan Id */
+            plan_id: number;
+            /** Plan Code */
+            plan_code: string;
+            /** Plan Name */
+            plan_name: string;
+            /** Plan Description */
+            plan_description: string;
+            /** Duration Value */
+            duration_value: number;
+            /** Duration Unit */
+            duration_unit: string;
+            /** Price */
+            price: string;
+            /** Currency */
+            currency: string;
+            /** Is Current Plan */
+            is_current_plan: boolean;
+            /**
+             * Would Run Until
+             * Format: date-time
+             */
+            would_run_until: string;
+        };
+        /**
+         * RenewalOrderCreate
+         * @description Which of the plan prices to pay for. Nothing else is read: the amount comes from it.
+         */
+        RenewalOrderCreate: {
+            /** Price Id */
+            price_id: number;
+        };
+        /**
+         * RenewalOrderOut
+         * @description What Razorpay Checkout is opened with.
+         */
+        RenewalOrderOut: {
+            /** Id */
+            id: number;
+            /** Razorpay Order Id */
+            razorpay_order_id: string;
+            /** Key Id */
+            key_id: string;
+            /** Amount */
+            amount: string;
+            /** Amount Paise */
+            amount_paise: number;
+            /** Currency */
+            currency: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description: string;
+            /** Company Name */
+            company_name: string;
+        };
+        /** RenewalOverview */
+        RenewalOverview: {
+            /** Online Renewal */
+            online_renewal: boolean;
+            /** Plan Code */
+            plan_code: string;
+            /** Plan Name */
+            plan_name: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "trial" | "active" | "expired" | "cancelled";
+            /**
+             * Access State
+             * @enum {string}
+             */
+            access_state: "full" | "read_only";
+            /** Expires At */
+            expires_at: string | null;
+            /** Days Left */
+            days_left: number | null;
+            /** Options */
+            options: components["schemas"]["RenewalOption"][];
+        };
+        /** RenewalResult */
+        RenewalResult: {
+            /** Applied */
+            applied: boolean;
+            /** Plan Name */
+            plan_name: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "trial" | "active" | "expired" | "cancelled";
+            /**
+             * Access State
+             * @enum {string}
+             */
+            access_state: "full" | "read_only";
+            /** Expires At */
+            expires_at: string | null;
+            /** Days Left */
+            days_left: number | null;
         };
         /** ReopenIn */
         ReopenIn: {
@@ -10564,6 +10755,11 @@ export interface components {
             expires_at?: string | null;
             /** Days Left */
             days_left?: number | null;
+            /**
+             * Online Renewal
+             * @default false
+             */
+            online_renewal: boolean;
         };
         /** TenantPlanOut */
         TenantPlanOut: {
@@ -11126,6 +11322,26 @@ export interface components {
             ok: boolean;
             /** Checks */
             checks: components["schemas"]["Check"][];
+        };
+        /**
+         * VerifyRequest
+         * @description What Razorpay Checkout hands back after a payment.
+         */
+        VerifyRequest: {
+            /** Razorpay Order Id */
+            razorpay_order_id: string;
+            /** Razorpay Payment Id */
+            razorpay_payment_id: string;
+            /** Razorpay Signature */
+            razorpay_signature: string;
+        };
+        /** WebhookAnswer */
+        WebhookAnswer: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "applied" | "duplicate" | "ignored";
         };
         /**
          * WorkingCapitalOut
@@ -16443,6 +16659,292 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    overview_api_v1_subscription_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RenewalOverview"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_order_api_v1_subscription_orders_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RenewalOrderCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RenewalOrderOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verify_api_v1_subscription_verify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RenewalResult"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    webhook_api_v1_subscription_webhook_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookAnswer"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };

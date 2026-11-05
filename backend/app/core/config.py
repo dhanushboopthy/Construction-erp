@@ -20,6 +20,11 @@ class GspProvider(StrEnum):
     LIVE = "live"
 
 
+class RazorpayProvider(StrEnum):
+    LIVE = "live"  # Razorpay's HTTP API; test keys (rzp_test_...) use its test mode
+    FAKE = "fake"  # a pretend gateway for development and tests; refused in production
+
+
 class StorageProvider(StrEnum):
     LOCAL = "local"  # a folder on the server (development, or a volume that is backed up)
     S3 = "s3"  # any S3-compatible bucket: AWS S3, Cloudflare R2, Backblaze B2, MinIO, Wasabi
@@ -74,6 +79,17 @@ class Settings(BaseSettings):
     gsp_password: SecretStr = SecretStr("")
     gsp_timeout_seconds: float = 20.0
 
+    # Online renewal through Razorpay (Milestone 30). Off unless both keys are set: owners are
+    # then told to contact Duolink, as in Milestone 21. The key id is the public half that
+    # Razorpay Checkout needs in the browser; the key secret and the webhook secret never leave
+    # the server. The webhook secret is optional: without it the webhook answers 404.
+    razorpay_provider: RazorpayProvider = RazorpayProvider.LIVE
+    razorpay_key_id: SecretStr = SecretStr("")
+    razorpay_key_secret: SecretStr = SecretStr("")
+    razorpay_webhook_secret: SecretStr = SecretStr("")
+    razorpay_base_url: str = "https://api.razorpay.com/v1"
+    razorpay_timeout_seconds: float = 15.0
+
     # Where uploaded files (weighbridge slips, delivery proof) are kept; back this folder up.
     storage_provider: StorageProvider = StorageProvider.LOCAL
     storage_dir: str = "./data/files"
@@ -95,6 +111,13 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         return self.app_env is Environment.PRODUCTION
+
+    @property
+    def online_renewal_enabled(self) -> bool:
+        """Owners may renew online: both Razorpay keys are set (Milestone 30)."""
+        return bool(
+            self.razorpay_key_id.get_secret_value() and self.razorpay_key_secret.get_secret_value()
+        )
 
     @model_validator(mode="after")
     def _check_production_safety(self) -> "Settings":

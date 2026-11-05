@@ -15,6 +15,7 @@ const TABS = [
   { to: "/settings/lock", label: "Books lock", end: false },
   { to: "/settings/audit", label: "Audit log", end: false },
   { to: "/settings/system", label: "System", end: false },
+  { to: "/settings/plan", label: "Plan & billing", end: false },
 ];
 
 /** Settings: the sections in a column on the left from 1100 px, a scrolling strip above that. */

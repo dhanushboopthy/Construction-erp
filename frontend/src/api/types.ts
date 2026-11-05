@@ -16,13 +16,18 @@ export type UserCreate = Schemas["UserCreate"];
 export type UserUpdate = Schemas["UserUpdate"];
 export type PasswordReset = Schemas["PasswordReset"];
 export type ShopSettings = Schemas["ShopSettingsOut"];
-/** M21 adds the subscription fields; written by hand until `make gen-api` runs. */
-export type Tenant = Schemas["TenantOut"] & {
-  access_state?: "full" | "read_only";
-  subscription_status?: "trial" | "active" | "expired" | "cancelled";
-  expires_at?: string | null;
-  days_left?: number | null;
-};
+/** The subscription fields (M21) and `online_renewal` (M30) are optional here: a screen or test
+ * that only knows the company's name need not supply them. */
+export type Tenant = Omit<
+  Schemas["TenantOut"],
+  "access_state" | "subscription_status" | "expires_at" | "days_left" | "online_renewal"
+> &
+  Partial<
+    Pick<
+      Schemas["TenantOut"],
+      "access_state" | "subscription_status" | "expires_at" | "days_left" | "online_renewal"
+    >
+  >;
 export type ShopSettingsUpdate = Schemas["ShopSettingsUpdate"];
 export type TokenResponse = Schemas["TokenResponse"];
 export type TenantPlanUsage = Schemas["TenantPlanOut"];
@@ -63,7 +68,7 @@ export type Purchase = Schemas["PurchaseOut"];
 export type PurchaseOwner = Schemas["PurchaseOwnerOut"];
 export type PurchasePreview = Schemas["PurchasePreview"];
 export type PaymentCreate = Schemas["PaymentCreate"];
-export type PaymentOut = Schemas["PaymentOut"];
+export type PaymentOut = Schemas["app__schemas__purchases__PaymentOut"];
 export type PaymentMode = Schemas["PaymentMode"];
 export type Transfer = Schemas["TransferOut"];
 export type TransferCreate = Schemas["TransferCreate"];

@@ -23,6 +23,7 @@ from app.schemas.sales import (
     QuoteSummary,
 )
 from app.services import approvals as approval_service
+from app.services import bill_templates as bill_template_service
 from app.services import sales as sales_service
 from app.services.numbering import allocate_number
 
@@ -119,6 +120,9 @@ def create(
         round_off=t.round_off,
         grand_total=t.grand_total,
         remark=data.remark,
+        bill_template_id=bill_template_service.pin_for(
+            db, bill_template_service.QUOTE_SLOTS[data.kind]
+        ),
         lines=[
             SalesQuoteLine(
                 tenant_id=current_tenant_id(db),

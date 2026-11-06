@@ -1,7 +1,13 @@
 """FastAPI application factory."""
 
+import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+from datetime import UTC, datetime
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.exc import SQLAlchemyError
 
 from app import services as _services  # noqa: F401 - registers audit listeners
 from app.api.v1.router import api_router
@@ -10,6 +16,25 @@ from app.core.errors import register_error_handlers
 from app.core.logging import configure_logging
 from app.core.middleware import register_middleware
 from app.schemas.common import ErrorResponse
+from app.services.maintenance import MaintenanceSwitch
+from app.services.platform.backups import thread_launcher
+from app.services.platform.integrations import refuse_to_start_without_key
+
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    """Refuse to start when provider keys are saved but INTEGRATION_SECRET_KEY is missing
+    (Milestone 27). A database that cannot be reached yet is not this check's business."""
+    from app.core.db import SessionLocal
+
+    try:
+        with SessionLocal() as db:
+            refuse_to_start_without_key(db)
+    except SQLAlchemyError:
+        logger.warning("Skipped the integration key check: the database is not ready")
+    yield
 
 
 def create_app() -> FastAPI:
@@ -18,6 +43,7 @@ def create_app() -> FastAPI:
 
     docs = settings.enable_api_docs
     application = FastAPI(
+        lifespan=lifespan,
         title=settings.app_name,
         version=settings.app_version,
         docs_url="/api/docs" if docs else None,
@@ -43,6 +69,12 @@ def create_app() -> FastAPI:
     register_middleware(application)
     register_error_handlers(application)
     application.include_router(api_router)
+    # Milestone 24: uptime is counted from here, and the maintenance switch starts unread, so a
+    # restarted process reads the persisted row on its first company request.
+    application.state.started_at = datetime.now(UTC)
+    application.state.maintenance = MaintenanceSwitch()
+    # Milestone 25: backups and restores run as jobs on a thread of their own.
+    application.state.backup_launcher = thread_launcher(application.state.maintenance)
     return application
 
 

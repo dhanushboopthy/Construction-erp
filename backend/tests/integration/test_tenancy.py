@@ -67,6 +67,13 @@ def test_each_address_names_its_company(client, beta):
         "name": "Demo Construction Materials",
         "tagline": DEFAULT_TAGLINE,
         "logo_url": None,
+        # Seeded active with no end date (Milestone 21): never read-only until a renewal.
+        "access_state": "full",
+        "subscription_status": "active",
+        "expires_at": None,
+        "days_left": None,
+        "app_generation": 0,  # the platform's release generation (M29), the same for all
+        "online_renewal": False,  # no Razorpay keys here (Milestone 30)
     }
 
 
@@ -220,7 +227,30 @@ def test_every_company_table_has_row_level_security(seeded):
 
 def test_every_table_belongs_to_a_company(seeded):
     """New tables must carry tenant_id (TenantMixin); only these are shared by all companies."""
-    shared = {"tenant", "alembic_version", "platform_admin", "platform_session"}
+    shared = {
+        "tenant",
+        "alembic_version",
+        "platform_admin",
+        "platform_session",
+        # What Duolink sells (M20): no company owns a plan, and every company reads its own
+        # plan's limits. Only the admin API (SuperAdminOnly) changes them.
+        "platform_plan",
+        "platform_plan_price",
+        # Duolink's own maintenance switch (M24): one row, read before any company is known.
+        "platform_maintenance",
+        # Duolink's backups, their jobs and the schedule (M25): the company a backup belongs to
+        # is `company_id`, and no company session ever reads these.
+        "platform_backup",
+        "platform_backup_job",
+        "platform_backup_schedule",
+        # Duolink's own GSP and GSTIN-lookup accounts (M27), and the public registry answers
+        # cached for every company. Neither holds a company's data.
+        "platform_integration",
+        "gstin_cache",
+        # The release generation (M29): one row for the whole platform. Every company reads it
+        # from GET /tenant; only the admin API (SuperAdminOnly) changes it.
+        "platform_app_update",
+    }
     missing = seeded.execute(
         text(
             "SELECT t.table_name FROM information_schema.tables t "

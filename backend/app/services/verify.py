@@ -19,6 +19,7 @@ from app.core.clock import today_ist
 from app.core.config import GspProvider, get_settings
 from app.core.tenancy import current_tenant_id
 from app.domain import gstr
+from app.domain import numbering as numbering_rules
 from app.domain import stock_valuation as stock_rules
 from app.domain.money import ZERO
 from app.models.cashbook import CashEntry
@@ -32,6 +33,7 @@ from app.models.enums import (
     StockRef,
 )
 from app.models.ledgers import PartyLedger, StockLedger
+from app.models.numbering import DocumentSequenceEvent
 from app.models.orders import GoodsReceipt, PurchaseOrder
 from app.models.purchasing import Payment, Purchase, PurchaseLine
 from app.models.receivables import BadDebtWriteoff
@@ -40,6 +42,7 @@ from app.models.sales import SalesInvoice, SalesLine
 from app.models.setup import Location
 from app.models.stock_ops import StockAdjustment, StockWritedown
 from app.schemas.system import Check, StatusOut, VerifyOut
+from app.services.numbering import SERIES_SUFFIX
 from app.services.storage import StorageError, get_storage
 
 # Triggers the migrations install; the check below counts them by name.
@@ -130,17 +133,29 @@ def numbering_check(db: Session) -> Check:
         "purchase orders": PurchaseOrder.number,
         "goods receipts": GoodsReceipt.number,
     }
+    # A gap a Super Admin's audited numbering change left (Milestone 26) is explained, not a fault.
+    explained: dict[str, list[range]] = {}
+    for event, code in db.execute(
+        select(DocumentSequenceEvent, Location.code).join(
+            Location, Location.id == DocumentSequenceEvent.location_id
+        )
+    ).all():
+        key = f"{code}{SERIES_SUFFIX[event.doc_type]}/{event.financial_year}"
+        explained.setdefault(key, []).append(
+            numbering_rules.skipped(event.from_value, event.to_value, event.floor_value)
+        )
     problems: list[str] = []
     total = 0
     for label, column in sources.items():
         numbers = [n for n in db.execute(select(column)).scalars() if n]
         total += len(numbers)
         for series in gstr.document_series(numbers):
-            if series.gaps:
-                problems.append(f"{label} {series.series}: missing {series.gaps[:5]}")
+            gaps = numbering_rules.unexplained_gaps(series.gaps, explained.get(series.series, []))
+            if gaps:
+                problems.append(f"{label} {series.series}: missing {gaps[:5]}")
     if problems:
         return _fail("Document numbers", "; ".join(problems))
-    return _ok("Document numbers", f"{total} numbers, no gaps in any series.")
+    return _ok("Document numbers", f"{total} numbers, no unexplained gaps in any series.")
 
 
 def totals_check(db: Session) -> Check:

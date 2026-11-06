@@ -218,6 +218,601 @@ company's own audit log. No password, token or key is ever put in either.
 - **Rules** (`domain/user_support.py`, 100% covered): the typed confirmation, the last-owner
   check for a removal, the removed-account guard, whether a session is live, the device label.
 
+**Built (M20: plans and pricing catalogue, migration 0033):** what Duolink sells is data it edits,
+not code. Plans and their prices are Duolink's own records (platform-only tables, no `tenant_id`,
+no row-level security; the exclusion is listed in `test_tenancy.py`).
+
+- **Tables.** `platform_plan` (`code` unique upper snake case, `name`, short and long description,
+  `max_users`, `max_locations`, `features` JSONB list of codes, `is_active`, `is_popular`,
+  `sort_order`) and `platform_plan_price` (`duration_value`, `duration_unit` day|month|year,
+  `price NUMERIC(12,2)`, `currency` always `INR`, `is_active`, `sort_order`; one row per duration).
+  A partial unique index allows one popular plan.
+- **Migration.** Seeds TRIAL (5 users, 2 locations), BASIC (10, 3) and PRO (50, 10), the limits the
+  old `domain/plans.PLANS` held, so no company's limits change. Each seeded plan has one price of
+  `0.00` as a placeholder for Duolink to edit; nothing charges anyone before M21. `tenant.plan`
+  (enum) becomes `tenant.plan_id` (FK), mapped by code. `tenant.max_users` and
+  `tenant.max_locations` stay as the company's own limit. The downgrade restores the old names;
+  a plan added since maps to `basic`.
+- **Domain** (`domain/plans.py`, `domain/plan_features.py`, 100% covered). `limits_for` takes the
+  plan's `PlanLimits` plus the company's overrides. New: `check_plan_code`, `check_limits`,
+  `check_features`, `check_prices` (1 to 6, a whole positive duration in days, months or years, an
+  amount of at most two decimals between 0 and 9999999999.99, no two with the same duration, no
+  float), `copy_code`, `check_deletable`, `check_assignable`. The feature catalogue is code:
+  `EWAY_BILL`, `GST_EXPORTS`, `TALLY_EXPORT`, `MULTI_SHOP`, `ATTACHMENTS`. Features are listed on
+  the plan card only; nothing is gated by them yet.
+- **API** (`/admin/billing/plans`, the only admin paths allowed to carry a price). List and read:
+  any admin. Create, update, duplicate, archive and delete: Super Admin. The plan code in company
+  answers is the plan's `code` (`TRIAL`, `PRO`), with `plan_id` and `plan_name`; requests accept
+  the code in any case.
+- **Rules.** A plan in use cannot be deleted (409 `PLAN_IN_USE`); deletion also needs `DELETE`
+  typed (409 `CONFIRMATION_MISMATCH`). Archiving hides a plan from the onboarding picker and from
+  "change plan", and clears its popular flag; companies on it keep it. A company cannot be
+  given an archived plan (409 `PLAN_INACTIVE`). Making a plan popular clears it on the one that had
+  it; an archived plan cannot be popular. Lowering a plan's limit deactivates nobody; the next add
+  answers 409 `PLAN_USER_LIMIT` or `PLAN_LOCATION_LIMIT`. A company's own limit still beats its
+  plan's. `TRIAL` is the one plan that starts a company on a trial.
+- **Money.** Prices are `Decimal` in and out, as text (`"999.90"`); a JSON number with a fraction is
+  refused (422). `test_no_admin_answer_carries_money` now holds an explicit list of billing paths
+  that may carry a price; every other admin path must still be free of money-like names.
+- **Audit.** New platform actions `plan_create`, `plan_update` (with the old and new values),
+  `plan_duplicate`, `plan_archive`, `plan_delete`.
+
+**Built (M21: subscriptions, manual renewals, revenue, read-only on expiry, migration 0034):**
+every company has one subscription with an end date. Duolink records a renewal by hand when a
+company pays, sees its own revenue, and a lapsed company can read its books but not write.
+
+- **Scope note.** A `subscription_payment` row is Duolink's receipt record of money received. The
+  GST tax invoice for the subscription itself is raised in Duolink's own books, outside this ERP.
+- **Tables** (both company-owned: `tenant_id`, row-level security, `tenant_isolation` policy).
+  - `subscription`: one per company (`tenant_id` unique), `plan_id`, `duration_value`,
+    `duration_unit`, `price NUMERIC(12,2)` (the plan price it was bought at; null for a trial or a
+    custom-days renewal), `status` (`trial`, `active`, `cancelled`), `starts_at`, `expires_at`,
+    `needs_review`, `cancelled_at`, `cancel_reason`.
+  - `subscription_payment`: `subscription_id`, `plan_id`, `amount NUMERIC(12,2)` (negative on a
+    reversal), `method` (cash, bank, upi, cheque, razorpay), `reference`, `notes`, `paid_at`,
+    `period_starts_at`, `period_ends_at`, `reverses_id` (set on a reversal), `recorded_by_admin_id`.
+    It is **append-only**: the `forbid_ledger_change` trigger refuses UPDATE and DELETE. A mistaken
+    payment is corrected with a negative reversal row that points at it.
+- **Migration.** One subscription is created for each existing company. A trial gets
+  `expires_at = trial_ends_at` (so a trial that had already ended is read-only from the day the
+  migration runs). Every other company, suspended or closed ones included, gets an `active`
+  subscription with an expiry one year out and `needs_review = true`, for Duolink to confirm by
+  recording its first renewal (a renewal clears the flag). A company added by Duolink as "Active,
+  no trial" has no end date and is flagged the same way; with no end date it is never read-only
+  until a renewal gives it one.
+- **Stored status and the expired state.** The stored status is only `trial`, `active` or
+  `cancelled`. "Expired" is worked out from `expires_at` on every request, so nothing has to run at
+  midnight and a renewal applies on the next request.
+- **Renewal rules** (`domain/subscriptions.py`, unit tested with worked dates).
+  - Paying during a trial starts the paid period today; the unused trial days are not carried over.
+  - Renewing early adds the time on top of the current expiry.
+  - Renewing after the expiry (or after a cancellation) starts today.
+  - Months clamp the day: 31 Jan + 1 month = 28 Feb (29 in a leap year). A year is 12 months.
+  - A renewal is a plan price option or a custom number of days (exactly one of the two). The
+    amount received is recorded as typed and may differ from the list price.
+- **Access states.** `full`; `read_only` (a paid subscription past its expiry, or a trial that has
+  ended with no payment, or a cancelled subscription); `blocked` (company suspended or closed:
+  unchanged, every call answers 403). Days left is negative once ended. The banner shows from 7
+  days before the end.
+- **Read-only.** In `get_tenant`, any non-GET request from a `read_only` company answers 403
+  `SUBSCRIPTION_EXPIRED`. Reads, reports, GST exports, Tally export and PDF downloads keep working.
+  The exceptions, listed in one place (`services/subscription_access.py`) and tested: sign-in,
+  refresh and logout; changing one's own password. Every PDF and export is a GET today, so none
+  needs an entry; a future POST export must be added to the list. Later milestones add the renewal
+  endpoints (M30) and raising a support ticket (M22).
+- **Decisions.** A cancelled subscription makes the company read-only, not blocked (cancelling is a
+  Duolink decision about billing; closing the company is the separate block). Reversing a payment
+  nets the revenue to zero but does not shorten the expiry: Duolink moves the date by recording a
+  correct renewal, or for a trial by moving the trial end on the company's page. A payment cannot be edited or
+  deleted.
+- **Revenue is Duolink's, and stays out of the company.** Revenue figures appear only under
+  `/api/v1/admin/billing/*`. Company screens and company answers carry the dates and the access
+  state only, never an amount. Revenue is the sum of payments by `paid_at`, reversals included
+  (net). The financial year runs April to March.
+- **Audit.** New platform actions `subscription_renew`, `subscription_cancel`, `payment_reverse`.
+- **Dashboard.** Companies by status, active subscriptions, revenue this month and this financial
+  year, new companies and renewals this month, subscriptions expiring in 30 days, a 12-month trend
+  of revenue and sign-ups, companies per plan, and the next expiries.
+
+**Built (M30: Razorpay online renewal, migration 0043):** a company owner renews Duolink online
+and the payment lands as a subscription payment by itself. It is off unless Duolink configures it.
+
+- **Configuration.** `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` switch it on (both needed);
+  `RAZORPAY_WEBHOOK_SECRET` is optional and switches the webhook on. All three are `SecretStr`
+  settings from the environment, never stored in code or the database and never in an answer
+  (the key id, which Razorpay Checkout needs in the browser, is the only part sent out, and only
+  to the signed-in owner when an order is made). `RAZORPAY_PROVIDER=live` (default) calls
+  Razorpay's Orders API; `fake` is a pretend gateway for development and tests and is refused in
+  production. Without keys, `GET /subscription` says `online_renewal: false` and the page says
+  "Contact Duolink to renew", as in M21; the writes answer 409 `ONLINE_RENEWAL_OFF`.
+- **Table.** `subscription_order` (company-owned: `tenant_id`, row-level security, `tenant_isolation`
+  and `platform_admin` policies; audited): the plan, price option, duration and `amount` copied
+  from the plan price when the order is made, `razorpay_order_id` (unique), `status` (`created`,
+  `paid`), the Razorpay payment id, the `subscription_payment` it made, `paid_via` (`checkout` or
+  `webhook`) and who asked.
+- **`subscription_payment` changes.** `recorded_by_admin_id` may be empty, for an online payment
+  only (a CHECK says so); a unique index on `reference` where `method = 'razorpay'` means a
+  Razorpay payment id is recorded once, whoever records it. Migration 0043 stops, naming the rows,
+  if hand-recorded Razorpay payments already share a reference. Online payments show in
+  `/admin/billing/payments` like manual ones, with method Razorpay and `recorded_by`
+  "Online (Razorpay)".
+- **The amount is the server's.** `POST /subscription/orders {price_id}` reads the price from the
+  plan catalogue. Only an active price of at least one rupee on an active paid plan is offered
+  (never the trial plan). Razorpay's answer must echo the same amount and currency. A webhook
+  whose amount or currency differs from the stored order is ignored.
+- **Signatures** (`domain/online_renewal.py`, 100% unit tested). Checkout's answer is
+  HMAC-SHA256 over `<order id>|<payment id>` with the key secret (400 `SIGNATURE_INVALID` records
+  nothing); the webhook is HMAC-SHA256 over the raw body with the webhook secret, in header
+  `X-Razorpay-Signature`. Both are compared in constant time (`hmac.compare_digest`) and an empty
+  secret never verifies.
+- **One apply, idempotent** (`services/online_renewal.apply_payment`). The order row is locked; a
+  paid order is a no-op. Otherwise it moves the subscription with the same rule as a manual
+  renewal (`domain/subscriptions.renewal_period`: paying in a trial starts today, early renewal
+  adds to the current end, late renewal starts today), records one `subscription_payment`
+  (method `razorpay`, reference = Razorpay payment id) and one audit row. Checkout and the webhook
+  can arrive in either order and any number of times: one payment, one renewal. The webhook
+  answers `applied`, `duplicate` or `ignored` (200); only a bad signature or a body that is not
+  JSON is 400, and 404 while no webhook secret is set.
+- **Read-only companies can pay.** `POST /subscription/orders` and `/verify` joined the exception
+  list in `services/subscription_access.py` (the webhook takes no company from the address, so it
+  never meets that check). The owner is writable again on the next request.
+- **Owner only.** `GET /subscription`, orders and verify are owner-only (403 for others); other
+  roles see "Ask your owner to renew" on the page. The owner sees Duolink's plan prices there: it
+  is the company's own bill, not an admin answer, so the money-field rule for `/admin` is
+  unchanged.
+- **Audit.** New platform action `subscription_pay_online` (no admin; plan, amount, Razorpay
+  order and payment ids, `via`, period). No key, secret or signature is ever logged or stored.
+- **UI.** Plan & billing (`/settings/plan`, and `/plan` for every role, which the banner links to
+  once online renewal is on): plan, status, end date, the prices with the date each would run to,
+  and "Pay with Razorpay" (Razorpay's own Checkout script, loaded only when the owner pays). The
+  production nginx policy allows Razorpay's script, frame and beacon hosts.
+- **Not built.** Refunds (a refund in the Razorpay dashboard is not seen; reverse the payment by
+  hand in Payments), card-on-file or automatic renewals, and an invoice (Duolink raises its GST
+  tax invoice in its own books).
+
+**Built (M22: support tickets, migration 0035):** a company raises a question from inside the ERP
+and Duolink answers it from the admin.
+
+- **Tables** (all company-owned: `tenant_id`, row-level security, `tenant_isolation` and
+  `platform_admin` policies).
+  - `support_ticket`: `number` (`T-000012`), `subject` (3 to 200 characters), `category`,
+    `priority`, `status`, `raised_by_user_id`, `assigned_admin_id`, `last_reply_at`,
+    `company_seen_at`, `admin_seen_at`, `closed_at`.
+  - `support_message`: `ticket_id`, `body` (1 to 5000 characters), `author_kind` (`company_user`
+    or `platform_admin`), `author_user_id` or `author_admin_id`, `created_at`. It is
+    **append-only**: the `forbid_ledger_change` trigger refuses UPDATE and DELETE.
+  - `company_counter`: `tenant_id`, `name`, `next_value`. A gapless counter per company,
+    allocated by `allocate_company_number` in `services/numbering.py` inside the saving
+    transaction.
+- **Decision: ticket numbers.** The `DocType` series is scoped to a shop (the number carries the
+  location code). A ticket belongs to the company, not to a shop, so it uses the new per-company
+  counter instead and reads `T-000012`.
+- **Vocabulary.** Categories: `sign_in`, `billing`, `gst_eway`, `stock`, `printing`, `other`.
+  Priorities: `low`, `normal` (default), `high`, `urgent`. Statuses: `open`, `in_progress`,
+  `waiting_on_company`, `resolved`, `closed`.
+- **Rules** (`domain/support.py`, unit tested).
+  - A company reply returns a `waiting_on_company` or `resolved` ticket to `open`. A closed
+    ticket takes no company reply (409 `TICKET_CLOSED`).
+  - A Duolink reply with a message and no status moves an `open` or `in_progress` ticket to
+    `waiting_on_company`; other statuses stay. A status sent with the reply wins.
+  - Neither a message nor a status is 422. A message on a closed ticket needs a status that
+    reopens it, otherwise 409 `TICKET_CLOSED`. Setting a status moves `closed_at` with it.
+  - Only the person who raised a ticket can close it (403 `TICKET_NOT_YOURS`).
+  - The owner and the accountant see every ticket of the company; a counter user sees only their
+    own. Another counter user's ticket answers 404 `TICKET_NOT_FOUND`, the same as a missing one.
+- **Unread.** Each ticket keeps `company_seen_at` and `admin_seen_at`. A ticket is unread for the
+  company when Duolink's newest message is later than `company_seen_at`; for Duolink when the
+  company's newest message is later than `admin_seen_at`. Opening a ticket sets the timestamp, so
+  it is read for the whole company side, not per user. `GET /support/tickets/unread-count` feeds
+  the dot on Help and is polled every 60 seconds.
+- **Names.** The company never sees which admin answered: every Duolink message and the assignee
+  show as "Duolink Support". Duolink sees the real names.
+- **Read-only companies.** Raising a ticket, replying and closing work while the company is
+  read-only. `POST /support/tickets` and `POST /support/tickets/{id}/reply|close` joined the
+  exception list in `services/subscription_access.py` (M21).
+- **Duolink side.** Any admin role, Support included, may reply to and update tickets. The
+  Support-403 test (`test_platform_staff.py`) lists these two writes as the explicit exceptions.
+  The list can be filtered by status, priority, company, assigned to me or unassigned, and
+  search; its `counts` (by status, plus `urgent_open` and `unassigned`, which count tickets not
+  resolved or closed) ignore the status filter itself. The counts are what the M24 bell will use.
+- **ADR 0013 note.** The admin may read ticket subjects and messages, because the company writes
+  them to Duolink. The money-field test is unchanged, and no support answer carries an
+  amount-like key.
+- **Audit.** New platform actions `support_reply` and `support_update`. They record the ticket
+  number, the status change and whether a message was sent, never the text.
+- **UI.** Company: Help in the user menu (with the unread dot), `/help` list, `/help/:id` thread
+  with Close, and the new-ticket form. Admin: Support page (Alt 9) with tiles, filters and the
+  thread, "Assign to me" and, for a Super Admin, an assignee select; and a Support tab on the
+  company page.
+- **Not built.** The notifications bell for new and urgent tickets (M24), attachments on tickets,
+  and email notifications.
+
+**Built (M23: owner-granted support access, migration 0036):** with the owner's consent a Duolink
+Super Admin enters a company read-only, for a set time, under a banner, with everything audited.
+
+- **Tables** (company-owned: `tenant_id`, row-level security, `tenant_isolation` and
+  `platform_admin` policies).
+  - `support_access_grant`: `granted_by_user_id` (an owner), `starts_at`, `ends_at`,
+    `include_costs` (default false), `reason`, optional `ticket_id`, `revoked_at`,
+    `revoked_by_user_id`. Audited. At most one grant is live: a new grant revokes the live one
+    (and ends its sessions) under a per-company advisory lock.
+  - `support_session`: `grant_id`, `admin_id`, `reason`, `started_at`, `expires_at` (the token's
+    expiry), `ended_at`, `end_reason` (`exited`, `revoked`, `grant_ended`, `replaced`,
+    `admin_not_allowed`), `request_count`.
+  - `support_session_event`: `session_id`, `at`, `method`, `path`, `refused`. **Append-only**
+    (`forbid_ledger_change`). Method and path only: never a body or a query string. Kept at least
+    a year (`domain.support_access.EVENT_RETENTION_DAYS`; nothing prunes yet).
+- **Rules** (`domain/support_access.py`, unit tested, 100% covered). Durations are 1, 4, 24 or 72
+  hours (422 otherwise). The token lasts the earlier of 2 hours and the grant's end. A support
+  session may only read, plus `POST /api/v1/support-session/exit`. `refusal()` decides, in order:
+  wrong company, session missing, session ended, grant revoked, grant ended or not started, admin
+  no longer an active Super Admin.
+- **Owner API** (`/support-access`, the owner in person: counter and accountant get 403, and a
+  support session reading as owner gets 403 `SUPPORT_READ_ONLY`, so it cannot see or touch the
+  grant that governs it). Grant and revoke are on the read-only exception list: an expired
+  company can still grant and always revoke.
+- **Entering** (`POST /admin/tenants/{id}/support-session {reason}`, Super Admin only). 409
+  `NO_SUPPORT_GRANT` without a live grant; 409 `TENANT_NOT_OPEN` for a suspended or cancelled
+  company. The admin's earlier open session at that company ends (`replaced`). The answer holds
+  `entry_url`: `https://<slug>.<domain>/support-entry#token=...`, a fragment, so no server log
+  holds it.
+- **The third token type.** `typ = support`, carrying admin id, tenant id, grant id and session id
+  (`core/security.py`). The platform API and company user checks each refuse the other types.
+- **The gate** (`api/deps._support_gate`, runs for every company request, signed in or not). A
+  support token must be for this company's address (else 401), and its session open, grant live
+  and admin still an active Super Admin, checked **on every request** (else 401
+  `SUPPORT_SESSION_ENDED`, and the session is closed in the database). Then the request is logged
+  and counted in its own transaction, a non-GET answers 403 `SUPPORT_READ_ONLY`, and the database
+  session is marked read-only for the request: any INSERT, UPDATE or DELETE through it raises
+  the same 403, so a GET that would write on the side (the Tally export records an export event)
+  is refused too.
+- **The support principal.** Role `owner` for reads, user id 0 (no company user), username
+  `duolink-support`. `sees_cost` equals the grant's `include_costs`, so without it the same
+  response models as a counter user are chosen. It writes no company audit row under a user id;
+  its acts show as "Duolink support: <admin>". Reading a ticket from inside does not mark it read
+  for the company.
+- **Audit.** Entering and exiting write `support_session_start` and `support_session_end` to
+  `platform_audit_log` (session, grant, reason, expiry, whether cost was allowed, never the token),
+  and `support_enter` and `support_exit` to the company's `audit_log` (new `AuditAction` values).
+  `GET /admin/audit/support-sessions` is the "Company access" tab: every session with its
+  request count, plus how many are open and how many are `stale` (never ended, token expired; the
+  M24 bell will use it).
+- **UI.** Company: Settings, Duolink support access (grant form, live grant with countdown, Turn
+  off now, history); `/support-entry` reads the token from the fragment, removes it from the
+  address bar and keeps it in memory only (no refresh cookie is ever tried in a support visit); the
+  amber banner on every screen; every save button off with "Read-only support session". Admin:
+  an Access tab on the company page, and a Company access view on Activity.
+- **Not built.** The bell entry for an open session after its token expired (M24 reads
+  `stale`), pruning of events older than a year, and a per-session event viewer in the admin.
+
+**Built (M26: document numbering and company data management, migration 0039):** a Super Admin sees
+and sets a company's number series and deletes selected kinds of its business data, or all of it.
+Rules in `domain/numbering.py` and `domain/data_management.py` (100% covered); routes in
+`api/v1/admin/company_data.py` (`/tenants/{id}/data...`, `/tenants/{id}/numbering`); services in
+`services/platform/data_catalogue.py`, `data_management.py` and `numbering.py`. Every route is Super
+Admin only, reads included.
+
+- **Catalogue** (`data_catalogue.py`), a hand-written list of 21 kinds: attachments, lost sales,
+  GSTR-2B imports, quotations and proformas, bill lots, credit and debit notes, transport, sales
+  bills (lines, e-way bills, IRNs, drop-ship links), purchases (costs, batches), orders and goods
+  receipts, payments and write-offs, cash book, daily closings, bank statements and lines, stock
+  transfers, counts, adjustments and write-downs, rates and schemes, opening balances, approvals,
+  the stock and party ledgers, items and units, parties and sites. Each has its tables (children
+  first), a headline table for the count, four identifying columns for View, and `blocked_by`: the
+  kinds whose rows point at it by foreign key. A kind that posted ledger rows (`stock_refs`,
+  `party_refs`) takes them with it; so do attachments of its documents. The `ledgers` kind (what is
+  left) is held back until every posting kind is gone.
+- **Never touched** (`PRESERVED`): users, sessions, locations, `shop_settings` (logo, bill
+  templates), `document_sequence`, `company_counter`, subscription and its payments, support
+  tickets and messages, `audit_log`, `platform_audit_log`, and the set-up lists a company starts
+  with (cost components, expense categories, bank accounts, Tally ledger names). The dependency test
+  (`test_data_catalogue.py`) checks against `pg_constraint`: every table with `tenant_id` is in the
+  catalogue or preserved, every declared blocker is a foreign key and every foreign key between
+  kinds is declared, the order is valid, nothing outside points into the catalogue, and every ledger
+  `ref_type` belongs to a kind.
+- **Inventory:** per kind the count, per-table counts and what blocks it ("Parties and sites is
+  blocked by 120 Sales bills"; ledger rows that a selected kind takes with it are not counted).
+  **View:** the latest 25 rows, four columns. **Preview:** counts per table, stored files and the
+  blockers for a selection or `all`. An unknown key is refused (422 `UNKNOWN_DATA_KIND`).
+- **Delete selected** (`DELETE`) and **delete everything** (`DELETE`, the company's exact name, a
+  tick): typed words compared exactly (no trimming), wrong ones answer 422 and delete nothing. A
+  selection blocked by a kind not selected answers 409 `DATA_BLOCKED` naming it. Then: a protected
+  company backup is taken (M25) and the deletion is refused if it fails (409
+  `SAFETY_BACKUP_FAILED`); one transaction inside `data_purge`, kinds in catalogue order, one
+  DELETE per table (no TRUNCATE, no disabled constraint, no `session_replication_role`); a row that
+  points at another row of its own table is cleared first; `document_sequence` of the emptied series
+  is reset to 1; audit `company_data_deleted` / `company_data_deleted_all` with per-table counts,
+  total, backup id and series moved; stored files are removed after the commit. Any failure rolls
+  back, is audited as `company_data_delete_failed` and answers 400 `DATA_DELETE_FAILED`.
+- **Numbering:** one row per shop, document type and financial year. The prefix is the location
+  code plus the document type's suffix, so there is no free-text prefix to edit. **Highest existing**
+  is read from the documents (shop and financial year, never the prefix); **configured next** is
+  `document_sequence.next_value`. The next number must be at least the highest plus one (409
+  `NUMBER_TOO_LOW`, 1 when nothing is left), a reason is required (422 `REASON_REQUIRED`), and a
+  series with no counter yet can be started. Each change writes `document_sequence_event` (from,
+  to, floor, reason, admin) and the audit `numbering_set`.
+- **`verify`:** `numbering_check` accepts a gap that an event explains (from the lower of the old
+  counter and the floor, up to the new next number) and a series a deletion reset.
+- **Audit actions:** `numbering_set`, `company_data_deleted`, `company_data_deleted_all`,
+  `company_data_delete_failed`.
+
+**Built (M25: backup and recovery from the admin, migration 0038):** Super Admins take, verify,
+download, upload, restore and delete backups of the whole platform or of one company; Support only
+reads the list. Rules in `domain/backups.py` (100% covered: names, manifest check, foreign-key
+order, retention, schedule, command lines); routes in `api/v1/admin/backups.py`; services in
+`services/platform/backups.py`, `company_archive.py`, `purge.py` and `services/process_runner.py`.
+
+- **Tables** (platform-only, no `tenant_id`; the company of a backup is `company_id`):
+  `platform_backup` (kind, source, file name, size, SHA-256, schema revision, status, protected,
+  note), `platform_backup_job` (kind, status, step, error code and message, the archive restored,
+  the safety copy taken) and `platform_backup_schedule` (one row: `daily_time`, `keep_daily`,
+  `keep_weekly`, `keep_monthly`; defaults 02:30, 30, 8, 12). All three are in the shared-table set of
+  `test_tenancy.py`.
+- **Jobs.** A request makes a job and answers 202; one daemon thread with its own session does the
+  work (the smallest thing that fits one `backend` container). The page polls the job. A job
+  `running` for more than six hours is treated as dead and blocks nothing.
+- **Platform backup:** `pg_dump --format=custom` and, when files are on a local folder, the files
+  tarball, named as `scripts/backup-loop.sh` names them (`erp-YYYYMMDD-HHMM.dump`,
+  `erp-files-YYYYMMDD-HHMM.tar.gz`), verified with `pg_restore --list` and a SHA-256. The nightly
+  loop now records every run in `platform_backup` (source `scheduled`) through
+  `python -m app.scripts.backup_schedule`, so one list shows everything. **Platform restore stays a
+  command** (`scripts/restore.sh`); the list shows it beside each platform backup and the admin
+  never runs it.
+- **Company backup:** for every table with `tenant_id`, `COPY (SELECT ... WHERE tenant_id = :id)`
+  as CSV with a header, in foreign-key order, plus the company's attachments, logo and closing
+  PDFs, and `manifest.json` (tenant id and slug, schema revision, rows and SHA-256 per table, size
+  and SHA-256 per file). Packed as `.tar.gz`, never a filtered `pg_dump`. Left out on purpose:
+  Duolink's own rows (`platform_audit_log`, `subscription`, `subscription_payment`) so a restore
+  cannot rewrite what a company paid; `auth_session` is deleted on restore but never exported
+  (everyone signs in again); `audit_log` is exported but never deleted or overwritten.
+- **Company restore** (typed `RESTORE`): the archive must name this company (409
+  `BACKUP_WRONG_COMPANY`) and this schema revision (409 `BACKUP_SCHEMA_MISMATCH`), checked when the
+  request is made. The job then takes a **protected** company backup, checks the file against its
+  stored SHA-256 and every member against the manifest (a mismatch is `BACKUP_CORRUPT`), and in
+  **one transaction** deletes the company's rows (children first, behind the purge switch), loads
+  the CSVs (parents first), resets id counters to at least the maximum id, puts the files back and
+  runs `services/verify.run_checks` for the company. Any failure rolls the transaction back, leaves
+  the company as it was, is audited (`backup_restore_failed`) and keeps the safety copy. The error
+  text of an unexpected failure is generic: a row is never echoed.
+  `COPY ... FROM` is refused on a table with row-level security, so each table is loaded through a
+  temporary table and one `INSERT ... SELECT`.
+- **Purge switch.** Migration 0038 redefines `forbid_ledger_change()`, `forbid_issued_delete()` and
+  `forbid_issued_edit()` to allow the operation only when `app.platform` and `app.data_purge` are
+  both `on` in the transaction. `services/platform/purge.data_purge(db)` sets the second, transaction-
+  local, for a platform session only. The company restore uses it; M26 reuses it.
+- **While a company restores,** `get_tenant` answers 403 `TENANT_RESTORING` for that company only.
+  The switch keeps a per-company set in memory and also reads running restore jobs (cached 5
+  seconds), so every API process sees it. M24's global in-memory `restoring` flag is untouched: it
+  would close every company for one company's restore.
+- **Download** is streamed by an authenticated endpoint and audited. **Upload** accepts a `.tar.gz`
+  up to 200 MB whose manifest names a company here and this schema revision; the stored name is
+  made by the server, never taken from the upload. **Delete** needs `DELETE` and refuses a
+  protected backup (safety copies are never pruned or deleted).
+- **Schedule and retention.** Pruning keeps the newest nightly copy of each of the last
+  `keep_daily` days, `keep_weekly` weeks and `keep_monthly` months, and never touches protected,
+  manual, safety, uploaded, company or running backups; a failed nightly run is pruned.
+- **Process safety.** `pg_dump`, `pg_restore` and `tar` start only through
+  `services/process_runner.py`: an argv list, `shell=False`, an absolute path found in `PG_BIN_DIR`
+  or a system folder, the password only in `PGPASSWORD`, a timeout that kills the process. The page
+  and `GET /admin/backups/summary` say plainly when a tool or the folder is missing.
+- **Audit actions:** `backup_create`, `backup_download`, `backup_upload`, `backup_delete`,
+  `backup_restore`, `backup_restore_failed`, `backup_schedule_update`.
+
+**Built (M24: system health, notifications, maintenance mode, audit log, migration 0037):** how
+Duolink watches and, when it must, closes the platform. Rules in `domain/platform_health.py`
+(100% covered); admin routes in `api/v1/admin/system.py` and `monitoring.py`; services in
+`services/platform/system.py` and `services/maintenance.py`.
+
+- **Table.** `platform_maintenance`: one row (`CHECK id = 1`, inserted by the migration, off):
+  `enabled`, `message`, `changed_by` (a name, not a key), `enabled_at`, `updated_at`. Platform-only,
+  so no `tenant_id`; it is in the shared-table set of `test_tenancy.py`.
+- **Health** (`GET /admin/system/health`, every admin role): API (`started_at`, uptime, `APP_VERSION`
+  as the build stamp, the newest release in `CHANGELOG.md` when the file is shipped, Python
+  version, environment); database (up, round trip in ms, size, connections in use, server
+  version, the migrations check of the company System page); disks (free space on `BACKUP_DIR` and
+  a local `STORAGE_DIR`; a folder that is not configured shows "not watched"); backup (the
+  `.last-success` marker the backup loop writes, else the newest dump, as the company System page
+  reads it; the `.offsite-success` marker `scripts/offsite-sync.sh` writes); the e-way bill provider
+  check; counters (companies, active users, open sessions, audit events today and admin actions
+  today counted from midnight in India, open tickets). It reuses `verify.py`'s checks. No key
+  carries a secret, a URL or a connection string (tested by key and by value).
+- **Bell** (`GET /admin/notifications`, computed on read, no table). Items, each with `id`, `level`
+  (`critical`, `warning`, `info`), `title`, `body`, `link`, most serious first:
+  expired companies (critical); backup older than 26 hours or none recorded, when `BACKUP_DIR` is
+  set (critical); a watched disk under 20% free (critical); subscriptions ending within 7 days,
+  trials ending within 7 days, urgent open tickets, support sessions left open (warning); more
+  than 10 failed admin sign-ins in 24 hours (warning); new tickets, that is status `open` (info).
+  Subscription counts are the Subscriptions list's own, and the ticket counts are the Support list's
+  own `counts`, so the bell and the lists agree.
+- **Maintenance.** `GET /admin/system/maintenance` (any admin) and `POST` (Super Admin; `enabled`,
+  optional `message` up to 300 characters, 409 `MESSAGE_TOO_LONG`), audited as `maintenance_on` and
+  `maintenance_off`. Each API process holds a `MaintenanceSwitch` on `app.state` that reads the row
+  at most every 5 seconds and takes its own changes at once, so it survives a restart (a rebuilt
+  app reads the row) and a change made by another process shows within 5 seconds. `get_tenant`,
+  which every company route passes, answers 503 `MAINTENANCE` (`message`, `maintenance_message`,
+  `retry_after_seconds`) while it is on. Never closed: `/admin/*` (a separate dependency), `/health`,
+  `/health/live`, `/health/ready`, `GET /tenant`, `GET /tenant/logo` and `GET /maintenance` (the
+  open notice the company screen polls). The switch has a second, in-memory `restoring` flag for
+  Milestone 25's restore; it is never stored, so a restart forgets it, and the two are shown apart
+  (`operator_enabled` and `restoring`). A restore wins when both are set.
+- **Audit log.** `GET /admin/audit` gained `admin_id`, `date_from` and `date_to` next to `tenant_id`
+  and `action`; `GET /admin/activity` (sign-ins) gained the dates. Dates are whole days in India,
+  both ends included; an end before the start is 409 `DATE_RANGE`. `GET /admin/audit/export` (Super
+  Admin) returns the same filtered rows as CSV, up to 50,000, with cells that start with `=`, `+`,
+  `-`, `@`, tab or carriage return prefixed so a spreadsheet does not run them; the export is
+  audited as `audit_export` with the filters and the row count.
+- **Platform settings** (`GET /admin/system/settings`, read-only): the environment's security
+  configuration (never a secret, key or URL) and the lifecycle numbers (trial days, banner days,
+  bell thresholds).
+- **UI.** Admin: a bell with a count in the top bar; System (Alt 0) with the health cards and the
+  maintenance switch (Super Admin, with a confirmation); Audit log with the tabs Admin actions,
+  Company access and Sign-ins; Platform settings. Company: a full-page "Back soon: message"
+  screen that asks again every 30 seconds and at once when a call is answered 503 `MAINTENANCE`.
+- **Not built.** The "Company access" tab and the open-support-session bell item need Milestone
+  23's tables (a parallel branch): the tab says so, and `services/platform/system.open_support_sessions`
+  returns 0 until the merge wires it. Disk space is the server's, not per company.
+
+**Built (M27: GSP and GSTIN-lookup API admin, migration 0040):** Duolink's shared GSP account and
+a GSTIN lookup are set up, tested, limited and watched from the admin (ADR 0013 point 7).
+
+- **Tables.** `platform_integration` (one row per kind, `gsp` and `gstin_lookup`, seeded by the
+  migration) and `gstin_cache` (public registry answers shared by all companies) are
+  platform-only: no `tenant_id`. `integration_call` has a nullable `tenant_id` (blank for a
+  Duolink admin's own call), row-level security and both policies. Its columns are `kind`,
+  `operation`, `outcome` (`ok`, `failed`, `cached`, `blocked`), `error_code`, `latency_ms`, `at`:
+  there is no column for a request or a response body.
+- **Credentials.** Stored as one Fernet token (`app/core/crypto.py`), key from
+  `INTEGRATION_SECRET_KEY`. The app refuses to start if keys are saved and the key is blank (a
+  malformed key refuses at settings load). Only `key_last4` is readable. No endpoint returns a
+  credential; a blank field on Connect keeps the saved value; the audit log holds the last 4,
+  the provider and which fields changed, never a value. A failure message is scrubbed of every
+  credential and cut to 200 characters.
+- **Precedence** (`services/gsp/__init__.py`). Saved settings, then (lookup only) the GSP
+  account's saved settings, then the `GSP_*` environment. The pretend provider is refused when
+  connecting in production (409 `FAKE_NOT_IN_PRODUCTION`) and at build time.
+- **Calls.** Every e-way bill, IRN and lookup call goes through `services/integration_calls.py`:
+  it is timed, counted, and updates the last success or failure of the saved connection. A failed
+  call is saved at once (the document is not).
+- **Limits** (`domain/integrations.py`, unit tested). Per company: daily and monthly calls, warn
+  at a percent, and the GSTIN cache hours. Defaults 50 a day, 500 a month, 80%, 168 hours. Only
+  `ok` and `failed` calls use the allowance.
+  - **GSTIN lookup** (`POST /parties/gstin-lookup`, owner or counter): a fresh cached answer is
+    returned and logged `cached` (no provider call); over a limit answers 429
+    `GSTIN_LOOKUP_LIMIT` and logs `blocked`; a provider failure is 502 and logs `failed`.
+  - **GSP** limits only warn and show in the per-company table. A bill is never held back.
+- **Admin** (`/admin/integrations`). Support reads the status only; every change, test, usage,
+  per-company usage, recent failures (operation, company, error code) and the admin's own
+  lookup for onboarding need a Super Admin. Audit actions: `integration_connect`,
+  `integration_test`, `integration_disconnect`, `integration_limits`, `gstin_lookup`.
+- **UI.** Admin: Integrations (sidebar), two cards with a write-only connection form, test,
+  limits, usage tiles, a per-company table and recent failures. "Fetch details" next to GSTIN on
+  the party form and the onboarding form.
+- **Not built.** The provider's real taxpayer-search and ping paths are placeholders in
+  `services/gsp/sandbox.py` until a provider is chosen; no email when a company nears its limit.
+
+**Built (M28: bill templates per company, migration 0041):** Duolink gives a company its own bill
+design for each kind of document, and a second logo, without changing anything already issued.
+
+- **Uploaded HTML is data, never a template engine.** The placeholder grammar lives in
+  `domain/bill_template.py` and `domain/bill_html.py` (pure, 100% covered). A placeholder is
+  `{{key}}` or `{{key|format}}` with a key from the field registry and a format of `symbol`
+  (prefix ₹) or `upper`. Anything else between `{{ }}`, `{% %}` or `{# #}` is unknown: it prints
+  blank and the diagnostics list it. Nothing is evaluated, no value is read twice (a customer
+  called `{{company.gstin}}` prints as written), and every value is escaped.
+- **Slots.** `tax_invoice`, `proforma`, `quotation`, `credit_note`, `debit_note`. A slot has one
+  active design per company (partial unique index) and versions that count up per company and
+  slot.
+- **Field registry.** About 110 fields in nine groups (`invoice`, `note`, `einvoice`, `company`,
+  `customer`, `consignee`, `item`, `hsn`, `totals`), each with a description, a sample value and
+  the slots that fill it. It is built from what `invoice_a4.html` and `note_a4.html` print:
+  `services/bill_data.py` turns the context the built-in layouts get into the registry's text
+  values, so a design and the built-in layout cannot disagree about a figure. A tax that does not
+  apply (IGST on an intra-state document, CGST and SGST on an inter-state one) prints blank, never
+  0.00.
+- **Repeating rows.** The `<tr>` holding `{{item.*}}` is cloned once per line with its classes,
+  styles and cells kept; the same for `{{hsn.*}}`. A design that is not a table marks the section
+  with `<!-- items:start -->` and `<!-- items:end -->` (`hsn:start` and `hsn:end` for HSN).
+- **Sanitizer** (tinyhtml5, the parser WeasyPrint uses, with tinycss2). Removed and listed back to
+  the uploader: `<script>`, every `on*` attribute, unsafe links, `<iframe>`, `<object>`,
+  `<embed>`, `<base>`, `<link>`, forms (their content stays), meta refresh, inline SVG and
+  MathML, CSS `@import`, `expression()`, `behavior`, `-moz-binding` and any `url()` that is not
+  one of the design's own images. An image may be the design's own uploaded file or a company
+  image placeholder (`{{company.logo}}`, `{{company.secondaryLogo}}`, `{{einvoice.qr}}`);
+  anything else loses only that image. Nesting is capped at 200 and elements at 20,000. A style
+  sheet with nothing to remove is kept byte for byte, and cleaning settles after one pass. The
+  renderer cleans again before it draws, and WeasyPrint is given a fetcher that serves only
+  `asset:<name>` from the design's own images and refuses every file and network address.
+- **Limits.** 500 KB of HTML (UTF-8), 2 MB and PNG or JPEG per image (by content, not name),
+  20 images, unique image names of letters, digits, dot, dash and underscore.
+- **The GST fields stay.** A design for a tax invoice, credit note or debit note is refused
+  (409 `TEMPLATE_MISSING_FIELDS`, listing what is missing) when it leaves out a field the rules
+  require: seller's name, address and GSTIN; document name, number and date; copy marking and
+  the e-Invoice IRN or QR (tax invoice); buyer's name, address and GSTIN; place of supply; each
+  item's description, HSN, quantity and unit, taxable value; the rate of tax; the amount of CGST,
+  SGST and IGST (shown per item, per HSN or in the totals); the total; and, for a note, the
+  original document's number and date. A proforma or quotation must carry its not-a-tax-invoice
+  declaration and may not call itself a tax invoice (409 `TEMPLATE_WORDING`). Anything else a
+  design omits is a warning at most.
+- **Tables.** `bill_template` (`slot`, `name`, `version`, `html_key`, `html_sha256`, `html_size`,
+  `is_active`, `uploaded_by_admin_id`, `removed`, the second-logo snapshot, `activated_at`) and
+  `bill_template_asset`; both company-owned with the two policies. The HTML is stored through
+  `services/storage.py`, content-addressed.
+- **Pinning.** `sales_invoice`, `sales_quote`, `credit_note` and `debit_note` gained a nullable
+  `bill_template_id` (RESTRICT), set once in the insert from the slot's active design. No row is
+  rewritten and `forbid_issued_edit` is never fired, because it is only set at insert. A reprint
+  uses the pinned design; a null pin is the built-in layout, so a design activated later never
+  restyles a bill issued before it. A design some document points at is immutable and cannot be
+  deleted (409 `TEMPLATE_IN_USE`); an active design must be deactivated before deleting (409
+  `TEMPLATE_ACTIVE`). Deactivating sends new documents back to the built-in layout. If a pinned
+  design's files are lost from storage, the bill still prints on the built-in layout and the
+  loss is logged.
+- **Second logo.** `shop_settings.secondary_logo_*`. Each design snapshots it when uploaded;
+  setting or removing the logo re-points only the designs no document uses, so a printed bill
+  keeps its logo.
+- **Preview.** `POST .../{id}/preview` draws the design with sample data through the renderer
+  real bills use, marked as a sample on every page. It reads nothing of the company's, so
+  Support may ask for it (the second explicit Support write exception, next to ticket replies).
+- **Diagnostics.** Unknown placeholders, placeholders of another slot, line or HSN placeholders
+  outside a row, placeholders in styles (never filled), item and HSN row counts, images used,
+  images missing from the upload or unused, the page size, what cleaning removed, and warnings.
+- **ADR 0012.** The admin answers names, counts and sample text only, never a figure from the
+  company's books; no answer key matches the money words.
+- **Audit.** New platform actions `bill_template_upload`, `bill_template_activate`,
+  `bill_template_deactivate`, `bill_template_delete`, `secondary_logo_set`,
+  `secondary_logo_remove`: slot, version, name, sizes and counts, never the HTML.
+- **UI.** A Bill design tab on the company page: a card per slot with its versions, preview in a
+  frame, the checks list, the upload form (HTML and images), the second logo and the
+  placeholder table.
+- **Not built.** An editor for the HTML in the browser, a primary-logo snapshot (the primary logo
+  is the company's current one), thermal-printer layouts and a per-shop design.
+
+**Built (M29: PWA shell and force update, migration 0042):** the ERP installs as an app and picks
+up a new release reliably. Duolink can tell every open browser to look for it now.
+
+- **Table.** `platform_app_update`: one row for the whole platform (a CHECK keeps `id = 1`):
+  `generation`, `forced_at`, `forced_by`. It is not a company's row, so it has no `tenant_id` and
+  no row-level security; it is on the shared list in `test_tenancy.py`. Migration 0042 creates the
+  row at generation 0 and widens the audit CHECK by hand for `app_update_force`.
+- **Installable.** `GET /tenant/manifest.webmanifest` (open, `no-cache`) serves the manifest:
+  the company's name (`short_name` the first word, at most 12 characters), `display: standalone`,
+  and icons: the company's logo first (an SVG, or a square PNG whose size is read from the file),
+  then the Duolink mark and its maskable form, served from `/icons/`. `domain/pwa.py` builds it
+  (unit tested, 100%). The admin console has a fixed `/admin.webmanifest`. `main.tsx` adds the
+  right `<link rel="manifest">` by host.
+- **Service worker** (`src/pwa/sw.ts`, bundled to `/sw.js` by `scripts/serviceWorker.ts` after
+  `vite build`; no PWA plugin is installed). It precaches the app shell only: `index.html`, the
+  entry script and what it imports, its CSS, fonts, the `public/` files. The admin console's
+  chunks are left out so a shop never downloads them. **No API answer is ever cached:** the
+  routing rule (`src/pwa/swRoutes.ts`, tested) sends every `/api` request, every non-GET request
+  and every other origin straight to the network. A page load is network first with the cached
+  shell as the fallback. Nothing takes over by itself: there is no `skipWaiting` on install.
+- **No offline billing.** With the network off the shell opens and a notice reads "No
+  connection. Bills and other changes cannot be saved until the network is back." Every save is a
+  network call, so a bill cannot be saved without the server numbering it.
+- **Update flow** (`src/pwa/updates.ts`). The worker is registered in the production build only.
+  The browser is asked to check for a new `sw.js` every 30 minutes and whenever the window gets
+  focus. A new build installs and waits; a toast says "A new version is ready" with **Update now**
+  and **Later**. Update now tells the waiting worker to take over and reloads once, after
+  `controllerchange`. It does nothing, and says why, while any form has unsaved changes
+  (`useUnsavedChanges`, used by the sales bill and purchase entry forms; it also asks the browser
+  before a tab is closed). Nothing reloads by itself.
+- **Force update.** `POST /admin/system/force-update {reason?}` (Super Admin) adds one to the
+  generation in one statement and audits `app_update_force` (generation and reason). It reloads
+  nobody and touches no company data. `GET /tenant` now carries `app_generation`; the open app
+  reads it again every 5 minutes and on focus, and when it changes calls
+  `registration.update()`, the same check the browser already makes. If a new build exists the
+  toast appears; the person still chooses when.
+- **Diagnostics.** Admin page "App and updates" (sidebar, `GET /admin/system/app-update`, any admin
+  role): the frontend and backend build stamps, whether this browser can install the app, the
+  service worker state, whether the offline shell is cached, whether an update is waiting, the
+  user agent, the generation and who last forced it, and the Force update form (Super Admin
+  only). The backend build is `APP_BUILD` (default `dev`); the frontend's is `APP_BUILD` at build
+  time or else the build time.
+- **Decisions.** No `vite-plugin-pwa` (not installed, and there is no network): the worker and
+  its build step are written by hand. Forcing is a counter, never a push: a browser with no new
+  build sees nothing.
+- **Not built.** Offline data, offline billing, push notifications, background sync.
+
 **Built (Milestone 1):** `shop_settings` (with `logo_key`, `logo_type`, `logo_sha256`, all set or
 all empty, for the shop's logo: UI refresh T10), `location`, `app_user`, `user_location`,
 `auth_session`, `audit_log`, `document_sequence`. A GSTIN is checked for format and check

@@ -5,8 +5,8 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from app.domain.plans import (
-    PLANS,
     TRIAL_DAYS,
+    PlanLimits,
     TrialState,
     can_add,
     limits_for,
@@ -15,26 +15,20 @@ from app.domain.plans import (
 )
 
 NOW = datetime(2026, 10, 24, 9, 0, tzinfo=UTC)
-
-
-def test_every_plan_has_limits_and_bigger_plans_allow_more():
-    assert set(PLANS) == {"trial", "basic", "pro"}
-    assert PLANS["trial"].max_users <= PLANS["basic"].max_users <= PLANS["pro"].max_users
-    assert (
-        PLANS["trial"].max_locations <= PLANS["basic"].max_locations <= PLANS["pro"].max_locations
-    )
+BASIC = PlanLimits(max_users=10, max_locations=3)
 
 
 def test_plan_limits_apply_unless_the_company_has_its_own():
-    assert limits_for("basic", None, None) == PLANS["basic"]
-    own = limits_for("basic", 25, None)
-    assert own.max_users == 25 and own.max_locations == PLANS["basic"].max_locations
-    assert limits_for("pro", None, 1).max_locations == 1
+    assert limits_for(BASIC, None, None) == BASIC
+    own = limits_for(BASIC, 25, None)
+    assert own.max_users == 25 and own.max_locations == BASIC.max_locations
+    assert limits_for(BASIC, None, 1).max_locations == 1
 
 
-def test_unknown_plan_is_refused():
-    with pytest.raises(ValueError, match="plan"):
-        limits_for("gold", None, None)
+def test_a_lowered_plan_limit_is_what_a_company_without_its_own_gets():
+    lowered = PlanLimits(max_users=2, max_locations=3)
+    assert limits_for(lowered, None, None).max_users == 2
+    assert limits_for(lowered, 8, None).max_users == 8  # a company's own limit still wins
 
 
 @pytest.mark.parametrize(

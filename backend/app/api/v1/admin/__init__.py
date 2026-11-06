@@ -3,11 +3,33 @@
 from fastapi import APIRouter, Depends
 
 from app.api.deps import require_admin_host
-from app.api.v1.admin import auth, monitoring, staff, tenants, users
+from app.api.v1.admin import (
+    app_update,
+    auth,
+    backups,
+    bill_templates,
+    billing,
+    company_data,
+    integrations,
+    monitoring,
+    staff,
+    support,
+    system,
+    tenants,
+    users,
+)
 
 router = APIRouter(prefix="/admin", dependencies=[Depends(require_admin_host)])
+router.include_router(app_update.router)
 router.include_router(auth.router)
+router.include_router(backups.router)
+router.include_router(bill_templates.router)
+router.include_router(billing.router)
+router.include_router(company_data.router)
+router.include_router(integrations.router)
 router.include_router(monitoring.router)
 router.include_router(staff.router)
+router.include_router(support.router)
+router.include_router(system.router)
 router.include_router(tenants.router)
 router.include_router(users.router)

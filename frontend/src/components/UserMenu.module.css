@@ -87,6 +87,34 @@
   background: var(--color-hover);
 }
 
+a.item {
+  text-decoration: none;
+}
+
+/* A reply from Duolink is waiting: a dot on the entry, and on the avatar while the menu is shut. */
+.dot {
+  width: 8px;
+  height: 8px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: var(--color-accent-bright);
+}
+
+.trigger {
+  position: relative;
+}
+
+.triggerDot {
+  position: absolute;
+  top: 4px;
+  left: 30px;
+  width: 8px;
+  height: 8px;
+  border: 2px solid var(--color-surface);
+  border-radius: 50%;
+  background: var(--color-accent-bright);
+}
+
 @media (max-width: 900px) {
   .text {
     display: none;

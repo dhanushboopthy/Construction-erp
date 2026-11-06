@@ -53,7 +53,10 @@ the behaviour reference; its code is not copied (`docs/reference/WA_SUPER_ADMIN.
    archive of that company's rows and files, restored in one transaction). **Restoring the whole
    platform stays a command-line runbook** (`scripts/restore.sh`): replacing the database from a
    web request that runs on that database is not safe. The admin shows the command and does not
-   run it.
+   run it. (Decided and built in M25. A company restore takes a protected safety backup first, runs
+   in one transaction behind the purge switch of point 5, closes only that company with 403
+   `TENANT_RESTORING`, and rolls back on any failure or failed integrity check. Duolink's own rows
+   for the company, such as subscription payments, are neither exported nor overwritten.)
 7. **Integrations (M27).** Duolink's GSP and GSTIN-lookup credentials are encrypted at rest, never
    returned (only their last four characters), and usage is counted per company without request
    or response bodies.
@@ -89,3 +92,121 @@ inside a company.
   the Staff page shows who they are.
 - Existing admins become Super Admins when migration 0030 runs, because before it every admin
   could change everything. Add Support accounts for read-only staff.
+
+## Update, 2026-11-05 (Milestone 23): owner-granted support access
+
+- **The only way Duolink sees a company's books.** There is no access without a live grant from
+  the company's owner: consent, a fixed duration (1, 4, 24 or 72 hours), revocable at any moment,
+  cost and margin hidden unless the owner ticks "show cost and margin".
+- **Read-only, enforced on the server.** A third token type, `support`, is accepted only on its
+  own company's address. Every non-GET answers 403 `SUPPORT_READ_ONLY` (the one exception is
+  leaving the session), and the database session is read-only for the request, so a GET with a
+  side effect is refused too. Passwords, users and the grant itself cannot be changed, and the
+  grant cannot even be read from inside.
+- **Checked on every request, not only at issue.** The session, the grant and the admin's role are
+  read each time, so a revoke, a demotion or the grant's end takes effect on the next request (401).
+  The token lasts at most two hours and never past the grant.
+- **Audited both ways.** `support_session_start` and `support_session_end` in the platform log,
+  `support_enter` and `support_exit` in the company's log, and every request's method and path (never
+  a body) in an append-only table kept for a year.
+- **The admin API stays closed to company books.** Duolink's own answers about access carry
+  statuses, times and counts; the money-field test is unchanged and walks the new admin reads.
+- **Guarded by** `test_every_write_under_a_support_token_answers_403` (every company write route),
+  `test_every_read_under_a_support_token_answers_without_writing`,
+  `test_the_owner_revokes_and_the_admins_next_request_answers_401`,
+  `test_a_support_token_for_one_company_answers_401_at_another` and
+  `test_a_support_token_answers_401_on_the_admin_api`.
+
+## Update, 2026-11-05 (Milestone 24): health, the bell, maintenance mode, audit log
+
+- **Counts and statuses only, still.** Health, the bell and the settings page answer counts,
+  sizes, times and configuration. No amount, secret, key or connection string; tests check the
+  keys and the values.
+- **Maintenance mode closes companies, never the admin.** One persisted row, so it survives a
+  restart; each process re-reads it every 5 seconds. It is enforced where every company request
+  already passes (`get_tenant`), so a new route cannot forget it; a test walks every company route.
+  The admin API, the health checks and the company's name stay open. A restore's switch is
+  separate and in memory (a dead process must not stay closed).
+- **Super Admin switches it, any admin reads it.** The switch and the audit CSV are Super Admin
+  only; the Support-403 test covers the switch and a Super-Admin-only list covers the export.
+- **Audit CSV is spreadsheet-safe and audited.** Cells that would run as formulas are prefixed; the
+  export records its filters and row count as `audit_export`.
+
+## Update, 2026-11-05 (Milestone 29): installable app and force update
+
+- **No company data in the service worker.** It precaches the app shell only, and a tested routing
+  rule sends every `/api` request and every non-GET to the network. A bill must reach the server
+  to get its number, so there is no offline billing.
+- **Force update is a super-admin write** (`POST /admin/system/force-update`, Support gets 403 in
+  the walk of every admin write). It adds one to a platform-wide counter and reloads nobody.
+- **The counter is the platform's, not a company's.** `platform_app_update` has no `tenant_id`
+  and is on the shared-tables list in `test_tenancy.py`. Every company reads it from `GET /tenant`
+  and nothing else of the platform's.
+- **Audit.** `app_update_force` records the new generation and the reason.
+
+## Update, 2026-11-04 (Milestone 22): support tickets
+
+- **The admin may read ticket subjects and messages.** The company writes them to Duolink on
+  purpose, so this is not the company's books being read. The rest of ADR 0012 is unchanged: no
+  amount, cost or document content from the books.
+- **The money-field test is unchanged.** `test_no_admin_answer_carries_money` now also walks the
+  ticket list and detail, and no support answer carries an amount-like key.
+- **Support may write here.** Replying to and updating a ticket is a Support admin's job, so those
+  two routes are open to every admin role. The Support-403 test lists them as the explicit
+  exceptions; any other new admin write still needs a Super Admin.
+- **The company does not see which admin answered.** Messages show "Duolink Support"; Duolink sees
+  the real names.
+- **Audit.** `support_reply` and `support_update` record the ticket number, the status change and
+  whether a message was sent, never the text.
+
+## Update, 2026-10-31 (Milestone 21): read-only on expiry is now enforced
+
+- **An ended trial with no payment is now read-only.** ADR 0012 only flagged a trial that had
+  ended; from M21 the server acts on it. The company can read and export but every write answers
+  403 `SUBSCRIPTION_EXPIRED`. Companies whose trial had already ended when migration 0034 ran
+  become read-only on that day.
+- **The rule.** The stored subscription status is `trial`, `active` or `cancelled`. "Expired" is
+  derived from `expires_at` on every request, so a renewal applies on the next request and nothing
+  runs at midnight. A company whose subscription is expired, an unpaid ended trial, or cancelled is
+  **read-only**: GET requests work (reports, GST exports, Tally export, PDFs) and any other method
+  answers 403, except sign-in, refresh, logout and changing one's own password. The list lives in
+  one place and is tested; every PDF and export is a GET, so none is listed. A suspended or closed company is
+  still blocked completely.
+- **Cancelled means read-only, not blocked.** Cancelling is a billing decision; closing the company
+  is the separate block.
+- **Payments.** `subscription_payment` is append-only by database trigger. A mistake is corrected
+  with a negative reversal row. Reversing nets the revenue but does not shorten the expiry.
+- **Revenue stays under `/api/v1/admin/billing/*`.** No other admin path and no company answer
+  carries a payment or revenue figure; `test_no_admin_answer_carries_money` keeps its list of
+  allowed billing paths. A payment row is Duolink's receipt record; Duolink's GST tax invoice for
+  the subscription is raised in Duolink's own books, outside this ERP.
+
+## Update, 2026-11-10 (Milestone 28): bill templates
+
+- **Uploaded HTML is data, never a template.** A small placeholder grammar replaces `{{key}}` from
+  a registry of known fields; anything else prints blank. Nothing is evaluated, no file or
+  network address is read while drawing (the renderer's fetcher serves only the design's own
+  images), and the hostile-input tests in `tests/unit/test_bill_html.py` and
+  `tests/integration/test_bill_templates.py` guard this.
+- **A document pins its design.** `bill_template_id` is set at insert on bills, quotations,
+  proformas, credit notes and debit notes; a reprint uses it, and a null pin is the built-in
+  layout. A design some document uses can never be deleted or changed: a change is a new version.
+- **GST fields cannot be dropped.** A tax invoice, credit note or debit note design is refused
+  when it omits a field the rules require, so a design can restyle a bill but never make it less
+  than a full GST tax invoice.
+- **Support may preview.** A preview reads nothing of the company's, so it is the second explicit
+  Support write exception, listed in the Support-403 test.
+
+## Update (Milestone 30): online renewal
+
+- **Optional and off by default.** Razorpay keys in the environment switch it on; without them a
+  read-only company is told to contact Duolink, as before. Keys are `SecretStr` settings, never
+  stored or returned.
+- **The server decides the amount** from the plan catalogue; the browser names a price only.
+  Checkout's answer and the webhook are verified with HMAC-SHA256 in constant time.
+- **One payment per Razorpay payment id**, enforced by a unique index and by locking the order
+  row, so the browser callback and the webhook can arrive in either order.
+- **Read-only does not stop renewal.** The order and verify routes are on the exception list.
+- **The company sees its own bill.** The owner sees Duolink's plan prices on Plan & billing. That
+  is the company's own account with Duolink, not an admin answer, so `/admin` still answers no
+  amount outside `/admin/billing`.

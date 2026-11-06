@@ -12,7 +12,7 @@ from pydantic import Field, ValidationInfo, field_validator
 
 from app.core.security import MIN_PASSWORD_LENGTH
 from app.domain.plans import TrialState
-from app.models.enums import PlatformAction, PlatformRole, Role, TenantPlan, TenantStatus
+from app.models.enums import PlatformAction, PlatformRole, Role, TenantStatus
 from app.schemas.common import Cin, Gstin, Pan, Schema, StateCode
 from app.schemas.user import Username
 
@@ -95,7 +95,9 @@ class TenantRow(Schema):
     slug: str
     name: str
     status: TenantStatus
-    plan: TenantPlan
+    plan: str  # the plan's code, e.g. PRO
+    plan_id: int
+    plan_name: str
     owner_name: str | None
     city: str | None
     state_code: str | None
@@ -134,7 +136,9 @@ class TenantCreate(Schema):
 
     name: str = Field(min_length=1, max_length=200)
     slug: str = Field(min_length=3, max_length=30, description="the subdomain: acme.duolink.app")
-    plan: TenantPlan = TenantPlan.TRIAL
+    plan: str = Field(
+        default="TRIAL", max_length=40, description="the code of an active plan (404/409 if not)"
+    )
     trial_days: int | None = Field(default=None, description="trial plan only; 14 if blank")
     start_active: bool = Field(default=False, description="skip the trial and start active")
     state_code: StateCode
@@ -165,7 +169,7 @@ class TenantUpdate(Schema):
     are cleared. The seller's legal details are changed through /seller-details."""
 
     name: str | None = Field(default=None, min_length=1, max_length=200)
-    plan: TenantPlan | None = None
+    plan: str | None = Field(default=None, max_length=40, description="the code of an active plan")
     max_users: int | None = Field(default=None, ge=1, le=1000)
     max_locations: int | None = Field(default=None, ge=1, le=100)
     trial_ends_at: datetime | None = None
@@ -329,7 +333,8 @@ class PlatformAuditRow(Schema):
 
 
 class TenantPlanOut(Schema):
-    plan: TenantPlan
+    plan: str  # the plan's code
+    plan_name: str
     status: TenantStatus
     trial_ends_at: datetime | None
     users: int

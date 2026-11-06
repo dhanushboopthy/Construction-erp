@@ -2,11 +2,12 @@
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, Integer, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, IntPK, TimestampMixin
-from app.models.enums import TenantPlan, TenantStatus, str_enum
+from app.models.enums import TenantStatus, str_enum
+from app.models.platform import PlatformPlan
 
 
 class Tenant(Base, TimestampMixin):
@@ -21,11 +22,11 @@ class Tenant(Base, TimestampMixin):
     status: Mapped[TenantStatus] = mapped_column(
         str_enum(TenantStatus, "tenant_status"), default=TenantStatus.TRIAL
     )
-    plan: Mapped[TenantPlan] = mapped_column(
-        str_enum(TenantPlan, "tenant_plan"), default=TenantPlan.TRIAL
-    )
+    # The plan Duolink sold (Milestone 20); a row of the catalogue, never deleted while used.
+    plan_id: Mapped[int] = mapped_column(ForeignKey("platform_plan.id"), index=True)
+    plan: Mapped[PlatformPlan] = relationship(lazy="joined")
     trial_ends_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    # Blank means the plan's default limit (Milestone 16).
+    # Blank means the plan's limit (Milestone 16).
     max_users: Mapped[int | None] = mapped_column(Integer)
     max_locations: Mapped[int | None] = mapped_column(Integer)
     suspended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

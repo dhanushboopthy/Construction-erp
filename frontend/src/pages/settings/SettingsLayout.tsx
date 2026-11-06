@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from "react-router";
 
+import { useAuth } from "@/auth/AuthContext";
 import { PageHeader } from "@/components/PageHeader";
 import { purposeOf } from "@/modules";
 
@@ -15,17 +16,23 @@ const TABS = [
   { to: "/settings/lock", label: "Books lock", end: false },
   { to: "/settings/audit", label: "Audit log", end: false },
   { to: "/settings/system", label: "System", end: false },
+  { to: "/settings/support-access", label: "Duolink support access", end: false },
+  { to: "/settings/plan", label: "Plan & billing", end: false },
 ];
 
 /** Settings: the sections in a column on the left from 1100 px, a scrolling strip above that. */
 export function SettingsLayout() {
+  const { support } = useAuth();
+  // A Duolink support session cannot see or change the grant that governs it (the server
+  // refuses it), so the tab is not offered.
+  const tabs = support ? TABS.filter((t) => t.to !== "/settings/support-access") : TABS;
   return (
     <section aria-labelledby="settings-title" className={styles.page}>
       <PageHeader title="Settings" titleId="settings-title" subtitle={purposeOf("/settings")} />
       <div className={styles.layout}>
         <nav aria-label="Settings sections" className={styles.nav}>
           <ul className={styles.list}>
-            {TABS.map((tab) => (
+            {tabs.map((tab) => (
               <li key={tab.to}>
                 <NavLink
                   to={tab.to}

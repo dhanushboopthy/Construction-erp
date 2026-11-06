@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
-from typing import Protocol
+from typing import Any, Protocol
 
 import segno
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -21,10 +21,13 @@ from app.domain.gst import STATE_NAMES, SupplyKind
 from app.domain.money import money
 from app.domain.words import amount_in_words
 from app.models.compliance import EInvoice
-from app.models.enums import QuoteKind
+from app.models.enums import BillSlot, QuoteKind
 from app.models.masters import Party
 from app.models.sales import SalesInvoice, SalesLine, SalesQuote, SalesQuoteLine
+from app.models.setup import ShopSettings
+from app.services import bill_data, bill_render
 from app.services import lots as lot_service
+from app.services.bill_templates import QUOTE_SLOTS
 from app.services.shop_settings import get_settings_row
 
 TEMPLATES = Path(__file__).resolve().parent.parent / "templates"
@@ -266,6 +269,18 @@ def _render(
                 "rate": inr(line.rate * factor),
                 "discount": inr(line.discount) if line.discount else "",
                 "amount": inr(line.taxable),
+                "gst_rate": f"{_plain(line.gst_rate)}%",
+                "cgst_rate": f"{_plain(line.gst_rate / 2)}%",
+                "sgst_rate": f"{_plain(line.gst_rate / 2)}%",
+                "igst_rate": f"{_plain(line.gst_rate)}%",
+                "cgst": inr(line.cgst),
+                "sgst": inr(line.sgst),
+                "igst": inr(line.igst),
+                "tax": inr(line.cgst + line.sgst + line.igst),
+                "total": inr(line.line_total),
+                "stock_left": (
+                    f"{_plain(stock_after)} {line.base_unit}" if stock_after is not None else ""
+                ),
             }
         )
     units = {line.unit for line in source_lines}
@@ -303,30 +318,11 @@ def _render(
         for row in summary
     ]
     tax_total = figures.cgst + figures.sgst + figures.igst
-    seller_name = settings.trade_name or settings.legal_name
 
-    env = Environment(loader=FileSystemLoader(TEMPLATES), autoescape=select_autoescape(["html"]))
-    html = env.get_template(template).render(
+    context: dict[str, Any] = dict(  # noqa: C408
         doc=doc,
         head=header,
-        seller={
-            "name": seller_name,
-            "legal_name": settings.legal_name if settings.trade_name else None,
-            "gstin": settings.gstin,
-            "pan": settings.pan or gst.pan_of(settings.gstin),
-            "cin": settings.cin,
-            "address": settings.address,
-            "phone": settings.phone,
-            "email": settings.email,
-            "state_code": settings.state_code,
-            "state_name": STATES.get(settings.state_code, ""),
-            "bank_name": settings.bank_name,
-            "bank_account_no": settings.bank_account_no,
-            "bank_ifsc": settings.bank_ifsc,
-            "bank_branch": settings.bank_branch,
-            "terms": settings.invoice_terms,
-            "jurisdiction": settings.jurisdiction,
-        },
+        seller=seller_view(settings),
         buyer=buyer,
         consignee=consignee,
         place_of_supply=(
@@ -353,7 +349,82 @@ def _render(
         copy_label=copy_label,
         irn=irn,
         previous_balance=previous_balance,
+        round_off_text=(
+            f"{'-' if figures.round_off < 0 else ''}{inr(abs(figures.round_off))}"
+            if figures.round_off
+            else "0.00"
+        ),
         # Test data never leaves dev or staging unmarked.
         test_mark=not get_settings().is_production,
     )
+    loaded = bill_render.load(db, figures.bill_template_id)
+    if loaded is not None:
+        slot = (
+            BillSlot.TAX_INVOICE if isinstance(figures, SalesInvoice) else QUOTE_SLOTS[figures.kind]
+        )
+        return _on_design(loaded, context, slot, header)
+    env = Environment(loader=FileSystemLoader(TEMPLATES), autoescape=select_autoescape(["html"]))
+    html = env.get_template(template).render(**context)
     return HTML(string=html).write_pdf()  # type: ignore[no-any-return]
+
+
+def seller_view(settings: ShopSettings) -> dict[str, str | None]:
+    """The seller as both layouts print it."""
+    return {
+        "name": settings.trade_name or settings.legal_name,
+        "legal_name": settings.legal_name if settings.trade_name else None,
+        "gstin": settings.gstin,
+        "pan": settings.pan or gst.pan_of(settings.gstin),
+        "cin": settings.cin,
+        "address": settings.address,
+        "phone": settings.phone,
+        "email": settings.email,
+        "state_code": settings.state_code,
+        "state_name": STATES.get(settings.state_code, ""),
+        "bank_name": settings.bank_name,
+        "bank_account_no": settings.bank_account_no,
+        "bank_ifsc": settings.bank_ifsc,
+        "bank_branch": settings.bank_branch,
+        "terms": settings.invoice_terms,
+        "jurisdiction": settings.jurisdiction,
+    }
+
+
+def _on_design(
+    loaded: bill_render.Loaded,
+    context: dict[str, Any],
+    slot: BillSlot,
+    header: dict[str, str | None],
+) -> bytes:
+    """The bill on the company's own design: the same figures, filled into its HTML."""
+    doc, irn = context["doc"], context["irn"]
+    extra = {
+        "invoice.title": doc["title"],
+        "invoice.number": header["number"],
+        "invoice.date": header["date"],
+        "invoice.copyLabel": context["copy_label"],
+        "invoice.placeOfSupply": context["place_of_supply"],
+        "invoice.paymentTerms": header.get("payment"),
+        "invoice.reference": header.get("reference"),
+        "invoice.vehicleNo": header.get("vehicle"),
+        "invoice.ewayBillNo": header.get("eway_no"),
+        "invoice.destination": header.get("destination"),
+        "invoice.termsLabel": header.get("terms_label"),
+        "invoice.terms": header.get("terms"),
+        "invoice.declaration": doc["declaration"],
+        "invoice.footer": doc["generated"],
+        "invoice.previousBalance": context["previous_balance"],
+        "einvoice.irn": irn.irn if irn else None,
+        "einvoice.ackNo": irn.ack_no if irn else None,
+        "einvoice.ackDate": irn.ack_date if irn else None,
+    }
+    data = bill_data.build(
+        context,
+        slot.value,
+        extra={k: bill_data.text(v) for k, v in extra.items()},
+        has_logo=bill_render.LOGO in loaded.assets,
+        has_secondary_logo=bill_render.SECONDARY_LOGO in loaded.assets,
+        has_qr=irn is not None,
+    )
+    qr = {bill_render.QR: bill_render.qr_asset(irn.qr_uri)} if irn else {}
+    return bill_render.render(loaded, data, extra=qr)

@@ -1,0 +1,87 @@
+/* The update toast and the "No connection" notice (Milestone 29). Both float above the screens
+ * so they never move the form someone is keying. */
+
+.toast {
+  position: fixed;
+  right: var(--space-6);
+  bottom: var(--space-6);
+  z-index: 50;
+  display: grid;
+  gap: var(--space-3);
+  max-width: 360px;
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-separator);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-raised);
+  font-size: var(--text-sm);
+}
+
+.toastText {
+  margin: 0;
+}
+
+.toastTitle {
+  display: block;
+  font-weight: 700;
+}
+
+.toastNote {
+  display: block;
+  color: var(--color-secondary);
+}
+
+.toastNote[data-tone="warn"] {
+  color: var(--color-warn);
+  font-weight: 600;
+}
+
+.toastActions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.offline {
+  position: fixed;
+  top: var(--space-3);
+  left: 50%;
+  z-index: 50;
+  margin: 0;
+  padding: var(--space-2) var(--space-5);
+  transform: translateX(-50%);
+  background: var(--color-critical-soft);
+  color: var(--color-critical);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-raised);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .toast {
+    right: var(--space-3);
+    bottom: var(--space-3);
+    left: var(--space-3);
+    max-width: none;
+  }
+
+  .offline {
+    white-space: normal;
+    width: calc(100% - 2 * var(--space-3));
+    text-align: center;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .toast {
+    animation: rise var(--duration-fast) var(--ease);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-2));
+  }
+}

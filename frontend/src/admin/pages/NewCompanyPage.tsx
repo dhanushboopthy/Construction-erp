@@ -7,9 +7,8 @@ import { CheckField, SelectField, TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
 import { GST_STATES } from "@/lib/gstStates";
 
-import { useCreateTenant } from "../api";
-import { PLAN, companyAddress } from "../labels";
-import type { TenantPlan } from "../types";
+import { useAdminGstinLookup, useCreateTenant, usePlans } from "../api";
+import { TRIAL_PLAN, companyAddress, limitsNote } from "../labels";
 
 const MIN_PASSWORD = 8; // backend app/core/security.py MIN_PASSWORD_LENGTH
 
@@ -29,7 +28,10 @@ export function NewCompanyPage() {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
-  const [plan, setPlan] = useState<TenantPlan>("trial");
+  const plans = usePlans(false).data ?? []; // archived plans are not offered
+  const [chosenPlan, setPlan] = useState(TRIAL_PLAN);
+  const picked = plans.find((p) => p.code === chosenPlan) ?? plans[0];
+  const plan = picked?.code ?? chosenPlan;
   const [stateCode, setStateCode] = useState("33");
   const [city, setCity] = useState("");
   const [legalName, setLegalName] = useState("");
@@ -45,9 +47,36 @@ export function NewCompanyPage() {
   const [password, setPassword] = useState("");
   const [mustChange, setMustChange] = useState(false);
   const [error, setError] = useState<FormError | null>(null);
+  const lookup = useAdminGstinLookup();
+  const looking = lookup.isPending;
+  const [fetchNote, setFetchNote] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const fieldError = (key: string) => (error?.field === key ? error.message : null);
   const shownSlug = slugTouched ? slug : suggestSlug(name);
+
+  /** Fill the seller details from the GST registry. Nothing the admin typed is overwritten. */
+  async function fetchDetails() {
+    const g = gstin.trim().toUpperCase();
+    setFetchNote(null);
+    setFetchError(null);
+    if (g.length !== 15) {
+      setFetchError("Enter the 15-character GSTIN first.");
+      return;
+    }
+    try {
+      const found = await lookup.mutateAsync(g);
+      setGstin(g);
+      if (!legalName.trim()) setLegalName(found.legal_name);
+      if (!name.trim()) setName(found.trade_name || found.legal_name);
+      if (GST_STATES.some((s) => s.code === found.state_code)) setStateCode(found.state_code);
+      setFetchNote(
+        `${found.legal_name} · ${found.status}.${found.status === "Active" ? "" : " Check this GSTIN before onboarding."}`,
+      );
+    } catch (err) {
+      setFetchError(toFormError(err).message);
+    }
+  }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -57,13 +86,13 @@ export function NewCompanyPage() {
       return;
     }
     try {
-      const onTrial = plan === "trial" && terms === "trial";
+      const onTrial = plan === TRIAL_PLAN && terms === "trial";
       const made = await create.mutateAsync({
         name: name.trim(),
         slug: shownSlug,
         plan,
         trial_days: onTrial ? Number(trialDays) : null,
-        start_active: plan === "trial" && terms === "active",
+        start_active: plan === TRIAL_PLAN && terms === "active",
         state_code: stateCode,
         city: city.trim() || null,
         legal_name: legalName.trim() || null,
@@ -164,6 +193,21 @@ export function NewCompanyPage() {
               error={fieldError("registration_no")}
               hint="Blank if not registered yet. The first two digits are the state."
             />
+            <div className={styles.inline}>
+              <Button onClick={() => void fetchDetails()} disabled={looking || !gstin.trim()}>
+                {looking ? "Fetching…" : "Fetch details"}
+              </Button>
+              {fetchNote ? (
+                <p role="status" className={styles.note}>
+                  {fetchNote}
+                </p>
+              ) : null}
+              {fetchError ? (
+                <p role="alert" className={styles.formError}>
+                  {fetchError}
+                </p>
+              ) : null}
+            </div>
           </div>
         </fieldset>
 
@@ -199,16 +243,17 @@ export function NewCompanyPage() {
             <SelectField
               label="Plan"
               value={plan}
-              onChange={(e) => setPlan(e.target.value as TenantPlan)}
-              hint={PLAN[plan].note}
+              onChange={(e) => setPlan(e.target.value)}
+              hint={picked ? limitsNote(picked) : undefined}
+              error={fieldError("plan")}
             >
-              {(Object.keys(PLAN) as TenantPlan[]).map((p) => (
-                <option key={p} value={p}>
-                  {PLAN[p].label}
+              {plans.map((p) => (
+                <option key={p.code} value={p.code}>
+                  {p.name}
                 </option>
               ))}
             </SelectField>
-            {plan === "trial" ? (
+            {plan === TRIAL_PLAN ? (
               <SelectField
                 label="Start"
                 value={terms}
@@ -218,7 +263,7 @@ export function NewCompanyPage() {
                 <option value="active">Active, no trial</option>
               </SelectField>
             ) : null}
-            {plan === "trial" && terms === "trial" ? (
+            {plan === TRIAL_PLAN && terms === "trial" ? (
               <TextField
                 label="Trial length (days)"
                 inputMode="numeric"

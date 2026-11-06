@@ -23,6 +23,10 @@ CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --
 
 # ---------- prod: runtime dependencies only, non-root ----------
 FROM base AS prod
+# pg_dump and pg_restore for the Backups page and the nightly loop (Milestone 25).
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 COPY app ./app

@@ -1,0 +1,22 @@
+.banner {
+  margin: 0;
+  padding: var(--space-3) var(--space-6);
+  border-bottom: 1px solid var(--color-separator);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.banner[data-tone="warn"] {
+  background: var(--color-warn-soft);
+  color: var(--color-warn);
+}
+
+.link {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.banner[data-tone="critical"] {
+  background: var(--color-critical-soft);
+  color: var(--color-critical);
+}

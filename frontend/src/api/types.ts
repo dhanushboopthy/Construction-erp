@@ -15,8 +15,28 @@ export type User = Schemas["UserOut"];
 export type UserCreate = Schemas["UserCreate"];
 export type UserUpdate = Schemas["UserUpdate"];
 export type PasswordReset = Schemas["PasswordReset"];
+/** Registry details for a GSTIN (Milestone 27). */
+export type GstinDetails = Schemas["GstinLookupOut"];
 export type ShopSettings = Schemas["ShopSettingsOut"];
-export type Tenant = Schemas["TenantOut"];
+/** The subscription fields (M21) and `online_renewal` (M30) are optional here: a screen or test
+ * that only knows the company's name need not supply them. */
+export type Tenant = Omit<
+  Schemas["TenantOut"],
+  "access_state" | "subscription_status" | "expires_at" | "days_left" | "online_renewal"
+> &
+  Partial<
+    Pick<
+      Schemas["TenantOut"],
+      "access_state" | "subscription_status" | "expires_at" | "days_left" | "online_renewal"
+    >
+  >;
+// Milestone 23: Duolink support access, the owner's side and the session banner.
+export type SupportSessionStatus = Schemas["SupportSessionStatus"];
+export type AccessOverview = Schemas["AccessOverview"];
+export type AccessGrant = Schemas["GrantOut"];
+export type GrantCreate = Schemas["GrantCreate"];
+export type SupportVisit = Schemas["SessionRow"];
+export type SupportVisitEvent = Schemas["SessionEventOut"];
 export type ShopSettingsUpdate = Schemas["ShopSettingsUpdate"];
 export type TokenResponse = Schemas["TokenResponse"];
 export type TenantPlanUsage = Schemas["TenantPlanOut"];
@@ -57,7 +77,7 @@ export type Purchase = Schemas["PurchaseOut"];
 export type PurchaseOwner = Schemas["PurchaseOwnerOut"];
 export type PurchasePreview = Schemas["PurchasePreview"];
 export type PaymentCreate = Schemas["PaymentCreate"];
-export type PaymentOut = Schemas["PaymentOut"];
+export type PaymentOut = Schemas["app__schemas__purchases__PaymentOut"];
 export type PaymentMode = Schemas["PaymentMode"];
 export type Transfer = Schemas["TransferOut"];
 export type TransferCreate = Schemas["TransferCreate"];

@@ -1,10 +1,20 @@
 import {
   Activity,
   Building2,
+  CalendarClock,
+  DatabaseBackup,
+  HeartPulse,
   IdCard,
   LayoutDashboard,
+  LifeBuoy,
   LogOut,
+  MonitorDown,
+  Plug,
+  Receipt,
+  ScrollText,
+  Settings,
   ShieldCheck,
+  Tags,
   Users,
 } from "lucide-react";
 import { useEffect } from "react";
@@ -16,6 +26,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import adminStyles from "./Admin.module.css";
 import { useAdminAuth } from "./AdminAuthContext";
 import { ADMIN_ROLE } from "./labels";
+import { NotificationBell } from "./NotificationBell";
 
 const NAV = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard, key: "1", end: true },
@@ -23,6 +34,17 @@ const NAV = [
   { to: "/admin/users", label: "Users", icon: Users, key: "3", end: false },
   { to: "/admin/activity", label: "Activity", icon: Activity, key: "4", end: false },
   { to: "/admin/staff", label: "Staff", icon: IdCard, key: "5", end: false },
+  { to: "/admin/plans", label: "Plans", icon: Tags, key: "6", end: false },
+  { to: "/admin/subscriptions", label: "Subscriptions", icon: CalendarClock, key: "7", end: false },
+  { to: "/admin/payments", label: "Payments", icon: Receipt, key: "8", end: false },
+  { to: "/admin/support", label: "Support", icon: LifeBuoy, key: "9", end: false },
+  // Milestone 24: below the Alt 1-9 sections, reached by link or by Alt 0 and the sidebar.
+  { to: "/admin/system", label: "System", icon: HeartPulse, key: "0", end: false },
+  { to: "/admin/backups", label: "Backups", icon: DatabaseBackup, key: "", end: false },
+  { to: "/admin/audit", label: "Audit log", icon: ScrollText, key: "", end: false },
+  { to: "/admin/integrations", label: "Integrations", icon: Plug, key: "", end: false },
+  { to: "/admin/settings", label: "Platform settings", icon: Settings, key: "", end: false },
+  { to: "/admin/app", label: "App and updates", icon: MonitorDown, key: "", end: false },
 ];
 
 function initials(name: string) {
@@ -37,11 +59,11 @@ export function AdminShell() {
   const { admin, signOut } = useAdminAuth();
   const navigate = useNavigate();
 
-  // Alt+1-5 move between sections, as Alt+number does in the company app.
+  // Alt+1-9 and Alt+0 move between sections, as Alt+number does in the company app.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (!event.altKey || event.ctrlKey || event.metaKey) return;
-      const item = NAV.find((n) => event.code === `Digit${n.key}`);
+      const item = NAV.find((n) => n.key !== "" && event.code === `Digit${n.key}`);
       if (item) {
         event.preventDefault();
         void navigate(item.to);
@@ -75,9 +97,11 @@ export function AdminShell() {
                 >
                   <Icon className={styles.icon} size={20} strokeWidth={1.9} aria-hidden="true" />
                   <span className={styles.label}>{label}</span>
-                  <kbd className={styles.kbd} aria-label={`Alt ${key}`}>
-                    Alt {key}
-                  </kbd>
+                  {key && (
+                    <kbd className={styles.kbd} aria-label={`Alt ${key}`}>
+                      Alt {key}
+                    </kbd>
+                  )}
                 </NavLink>
               </li>
             ))}
@@ -106,6 +130,7 @@ export function AdminShell() {
       </aside>
       <div className={styles.main}>
         <div className={adminStyles.topRow}>
+          <NotificationBell />
           <ThemeToggle />
         </div>
         <main className={styles.content}>

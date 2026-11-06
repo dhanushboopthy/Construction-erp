@@ -1,14 +1,16 @@
 from typing import Annotated
 
 from fastapi import APIRouter, File, Response, UploadFile
+from fastapi.responses import JSONResponse
 
 from app.api.deps import CurrentTenant, DbSession, OwnerOnly
 from app.schemas.platform import TenantPlanOut
 from app.schemas.tenant import TenantOut
-from app.services import shop_settings, tenant_logo
+from app.services import app_manifest, shop_settings, tenant_logo
 from app.services import tenants as tenant_service
 
 router = APIRouter(prefix="/tenant", tags=["tenant"])
+MANIFEST_TYPE = "application/manifest+json"
 
 
 @router.get("", response_model=TenantOut)
@@ -21,12 +23,29 @@ def get_tenant(tenant: CurrentTenant, db: DbSession) -> TenantOut:
     return shop_settings.get_tenant(db, tenant)
 
 
+@router.get(
+    "/manifest.webmanifest",
+    response_class=JSONResponse,
+    responses={200: {"content": {MANIFEST_TYPE: {}}}},
+)
+def get_manifest(tenant: CurrentTenant, db: DbSession) -> JSONResponse:
+    """The web app manifest (Milestone 29): the company's name and logo, so the ERP installs on
+    the shop's PC or phone as that shop's app. Open, like the name: the browser fetches it
+    without signing in. Never cached by the service worker (nothing under /api is)."""
+    return JSONResponse(
+        app_manifest.manifest(db, tenant),
+        media_type=MANIFEST_TYPE,
+        headers={"Cache-Control": "no-cache"},
+    )
+
+
 @router.get("/plan", response_model=TenantPlanOut)
 def plan(_: OwnerOnly, db: DbSession) -> TenantPlanOut:
     """The company's plan and how much of it is in use (Settings, Users)."""
     used = tenant_service.usage(db)
     return TenantPlanOut(
-        plan=used.tenant.plan,
+        plan=used.tenant.plan.code,
+        plan_name=used.tenant.plan.name,
         status=used.tenant.status,
         trial_ends_at=used.tenant.trial_ends_at,
         users=used.users,

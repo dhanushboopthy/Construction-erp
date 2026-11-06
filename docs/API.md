@@ -86,6 +86,268 @@ activate, unlock, reset password, sign out). The sign-in routes need no role.
 Until a member has changed a temporary password, every other admin call answers 403
 `PASSWORD_CHANGE_REQUIRED` (only `/auth/me`, `/auth/change-password` and `/auth/logout` work).
 
+## Endpoints (Milestone 20: plans and pricing catalogue)
+
+Same address and token as Milestone 16. Reads are open to any admin; writes need a **Super Admin**
+(403 `PERMISSION_DENIED` otherwise). These are the only admin paths that carry a price.
+Prices are Decimal strings (`"999.90"`); a JSON number with a fraction answers 422. Every write is
+in the platform audit log.
+
+| Method | Path | Role | What |
+| --- | --- | --- | --- |
+| GET | `/admin/billing/plans?include_archived` | any admin | Plans in order, with `prices[]`, `features[]` and `companies` (how many are on it). `include_archived=false` is what the onboarding picker uses |
+| GET | `/admin/billing/plans/features` | any admin | The feature catalogue `[{code, name, description}]` |
+| GET | `/admin/billing/plans/{id}` | any admin | One plan. 404 `PLAN_NOT_FOUND` |
+| POST | `/admin/billing/plans {code, name, short_description?, long_description?, max_users, max_locations, features?, is_popular?, sort_order?, prices[], reason?}` | Super Admin | 201. `prices[]` is `{duration_value, duration_unit: day\|month\|year, price, is_active?}`. 409 `PLAN_CODE_TAKEN`, `PLAN_CODE_INVALID`, `PLAN_PRICE_COUNT` (1 to 6), `PLAN_PRICE_DUPLICATE`, `PLAN_PRICE_DURATION`, `PLAN_PRICE_AMOUNT`, `PLAN_FEATURE_UNKNOWN`, `PLAN_LIMIT_INVALID` |
+| PATCH | `/admin/billing/plans/{id}` `{name?, short_description?, long_description?, max_users?, max_locations?, features?, prices?, is_active?, is_popular?, sort_order?, reason?}` | Super Admin | Send only what changes; `prices` replaces the whole list; `is_active: true` restores an archived plan. Setting `is_popular` clears it elsewhere. 409 as above, and `PLAN_INACTIVE` for popular on an archived plan. The code never changes |
+| POST | `/admin/billing/plans/{id}/duplicate` | Super Admin | 201. Next free code (`PRO_COPY`, `PRO_COPY_2`), same limits, features and prices, never popular |
+| POST | `/admin/billing/plans/{id}/archive {reason}` | Super Admin | Hidden from pickers; clears `is_popular`. Companies on it keep it |
+| POST | `/admin/billing/plans/{id}/delete {confirmation: "DELETE", reason}` | Super Admin | 204. 409 `CONFIRMATION_MISMATCH` (case-sensitive), `PLAN_IN_USE` while any company is on it |
+
+### Endpoints (Milestone 21: subscriptions, payments, revenue)
+
+Under `/admin/billing`. Reads: any admin. Writes: Super Admin (403 `PERMISSION_DENIED` otherwise).
+Money is a Decimal string (`"999.90"`), dates are ISO strings. These are the only admin paths that
+carry revenue. Every write is in the platform audit log.
+
+| Method | Path | Role | What |
+| --- | --- | --- | --- |
+| GET | `/admin/billing/subscriptions?status&plan&expiring_within&tenant_id&search&limit&offset` | any admin | `{items, total}`. A row: `id`, `tenant_id`, `tenant_slug`, `tenant_name`, `plan_id`, `plan_code`, `plan_name`, `status` (`trial\|active\|expired\|cancelled`, worked out from the dates), `starts_at`, `expires_at`, `days_left` (negative once ended), `needs_review`, `duration_value`, `duration_unit`, `price`, `cancelled_at`, `cancel_reason` |
+| POST | `/admin/billing/subscriptions/{id}/renew {plan_id, price_id?, custom_days?, amount, method: cash\|bank\|upi\|cheque\|razorpay, reference?, notes?, paid_at?}` | Super Admin | Send exactly one of `price_id` and `custom_days`. Answers the updated row. 409 `RENEWAL_CHOICE`, `RENEWAL_DURATION`, `PAYMENT_AMOUNT`, `PAYMENT_METHOD`, `PLAN_INACTIVE`, `PRICE_NOT_FOUND` |
+| POST | `/admin/billing/subscriptions/{id}/cancel {reason}` | Super Admin | The company becomes read-only. 409 `ALREADY_CANCELLED` |
+| GET | `/admin/billing/payments?from&to&method&tenant_id&limit&offset` | any admin | `{items, total, totals: {received, reversed, net}}`. A payment: `id`, `subscription_id`, `tenant_id`, `tenant_name`, `plan_code`, `plan_name`, `amount` (negative on a reversal), `method`, `reference`, `notes`, `paid_at`, `period_starts_at`, `period_ends_at`, `reverses_id`, `reversed`, `recorded_by` |
+| POST | `/admin/billing/payments/{id}/reverse {reason}` | Super Admin | Adds a negative row that points at the payment; answers that row. The expiry does not change. 409 `PAYMENT_REVERSED`, `PAYMENT_IS_REVERSAL` |
+| GET | `/admin/billing/dashboard` | any admin | `companies_by_status` (`trial`, `active`, `suspended`, `cancelled`), `active_subscriptions`, `revenue_month`, `revenue_fy`, `new_companies_month`, `renewals_month`, `expiring_30`, `trend[12]` (`month`, `revenue`, `signups`, oldest first), `plan_breakdown[]`, `expiring_soon[]` |
+
+Company side. `GET /tenant` (no sign-in) also answers `access_state` (`full` or `read_only`),
+`subscription_status`, `expires_at` and `days_left`; no amount. A `read_only` company answers
+**403 `SUBSCRIPTION_EXPIRED`** to every non-GET request. Still allowed: sign-in, refresh, logout,
+and change-password (every PDF and export is a GET). A suspended or closed company is still
+blocked outright, as before.
+
+Changed elsewhere: `plan` on `/admin/tenants` rows, the create and update bodies and the `plan`
+filter is now a plan code (`TRIAL`, `BASIC`, `PRO`, or any code Duolink added; sent in any case,
+answered in capitals), with `plan_id` and `plan_name` on rows. Giving a company an unknown plan
+answers 404 `PLAN_NOT_FOUND`; an archived one, 409 `PLAN_INACTIVE` (a company may stay on its own
+archived plan). `GET /tenant/plan` (owner) answers `plan` as the code and `plan_name`.
+
+## Endpoints (Milestone 24: system health, notifications, maintenance, audit)
+
+No answer carries an amount, a secret, a key or a connection string. All under `/api/v1/admin`
+unless stated; "any admin" includes Support.
+
+| Method | Path | Role | What |
+| --- | --- | --- | --- |
+| GET | `/admin/system/health` | any admin | `as_of`; `api` (`started_at`, `uptime_seconds`, `version`, `changelog_version`, `python_version`, `environment`); `database` (`up`, `round_trip_ms`, `size_bytes`, `connections_in_use`, `server_version`, `migrations` check); `disks[]` (`name` backups or files, `watched`, `total_bytes`, `free_bytes`, `free_percent`, `low`); `backup` (`check`, `last_success_at`, `age_hours`, `stale`, `offsite_synced_at`); `gsp` check; `counters` (`companies`, `active_users`, `open_sessions`, `audit_events_today`, `admin_actions_today`, `open_tickets`); `maintenance` |
+| GET | `/admin/notifications` | any admin | `{count, items[]}`; an item is `id`, `level` (`critical`, `warning`, `info`), `title`, `body`, `link`; most serious first. Worked out on each call |
+| GET | `/admin/system/maintenance` | any admin | `enabled`, `message`, `cause` (`operator`, `restore`, or null), `operator_enabled`, `operator_message`, `changed_by`, `enabled_at`, `updated_at`, `restoring` |
+| POST | `/admin/system/maintenance {enabled, message?}` | Super Admin | Turns the operator switch on or off; 409 `MESSAGE_TOO_LONG` over 300 characters. Audited |
+| GET | `/admin/system/settings` | any admin | `security` (environment, domains, cookie and token settings, login limits, providers; no secret) and `lifecycle` (trial days, banner days, bell thresholds) |
+| GET | `/admin/audit?tenant_id&admin_id&action&date_from&date_to&limit&offset` | any admin | Admin actions, newest first. Dates are whole days in India, both ends included. 409 `DATE_RANGE` when the end is before the start |
+| GET | `/admin/audit/export?` the same filters | Super Admin | The same rows as CSV (`id`, `at`, `admin`, `action`, `company`, `target_user_id`, `target_admin`, `details`, `ip`), up to 50,000. Audited as `audit_export` |
+| GET | `/admin/activity?tenant_id&action&date_from&date_to&limit&offset` | any admin | Sign-ins, with the same date filter |
+| GET | `/maintenance` | open (company host) | `{enabled, message}`: the notice the company's "Back soon" screen polls. Never closed by maintenance |
+| GET | `/health/live` | open | `{status: ok}`; same as `/health`. `/health/ready` also checks the database |
+
+**Maintenance on.** Every company route answers 503 `MAINTENANCE` with `message`,
+`maintenance_message` (Duolink's text or null) and `retry_after_seconds`. Still answering: every
+`/admin/*` route, `/health`, `/health/live`, `/health/ready`, `GET /tenant`, `GET /tenant/logo` and
+`GET /maintenance`. New platform audit actions: `maintenance_on`, `maintenance_off`, `audit_export`.
+
+## Endpoints (Milestone 25: backup and recovery)
+
+Every path is under `/api/v1/admin`. Long work (a dump, a company archive, a restore) answers
+**202 with a job**; poll `GET /backups/jobs/{id}` until `status` is `succeeded` or `failed`.
+Support may list and read; every other call is a Super Admin's and answers 403 to Support.
+
+| Method | Path | Who | Notes |
+| --- | --- | --- | --- |
+| GET | `/backups` (`kind`, `company_id`, `limit`) | any admin | Newest first: `kind` (`platform`, `company`), `source` (`scheduled`, `manual`, `safety`, `uploaded`), `company`, `file_name`, `size_bytes`, `sha256`, `schema_revision`, `status` (`running`, `verified`, `failed`), `protected`, `note`, `error`, `file_present`, `restore_command` (platform backups only; shown, never run) |
+| GET | `/backups/summary` | any admin | `last_backup_at`, `verified_count`, `failed_count`, `storage_bytes`, `next_scheduled_at`, `running_jobs`, `folder_ready`, `folder_problem`, `tools[]` (`pg_dump`, `pg_restore`, `tar`: `found`) |
+| GET | `/backups/jobs/{job_id}` | any admin | `kind`, `status` (`queued`, `running`, `succeeded`, `failed`), `company`, `backup_id`, `safety_backup_id`, `step`, `error_code`, `error_message`. 404 `JOB_NOT_FOUND` |
+| GET | `/backups/schedule` | any admin | `daily_time` (shop time), `keep_daily`, `keep_weekly`, `keep_monthly`, `next_scheduled_at` |
+| PUT | `/backups/schedule` | Super Admin | 409 `BAD_TIME`, `BAD_RETENTION`. Audited |
+| POST | `/backups {kind, company_id?, note?}` | Super Admin | 202 job. 409 `BACKUP_TOOLS_MISSING`, `BACKUP_FOLDER_UNAVAILABLE`, `BACKUP_JOB_RUNNING`, `COMPANY_REQUIRED` |
+| POST | `/backups/upload` (multipart `file`) | Super Admin | A company `.tar.gz`, up to 200 MB. 409 `UPLOAD_NOT_TAR_GZ`, `UPLOAD_EMPTY`, `FILE_TOO_LARGE`, `BACKUP_INVALID`, `BACKUP_WRONG_COMPANY`, `BACKUP_SCHEMA_MISMATCH` |
+| GET | `/backups/{id}/download` (`part=dump\|files`) | Super Admin | Streamed through the API; audited. 409 `BACKUP_NOT_VERIFIED`, `BACKUP_FILE_MISSING` |
+| POST | `/backups/{id}/restore {company_id, confirm}` | Super Admin | `confirm` must be `RESTORE` (409 `CONFIRMATION_MISMATCH`). 202 job. 409 `BACKUP_WRONG_COMPANY`, `BACKUP_SCHEMA_MISMATCH`, `BACKUP_NOT_VERIFIED`, `BACKUP_FILE_MISSING`, `BACKUP_PLATFORM_RESTORE_CLI`, `BACKUP_JOB_RUNNING`. A failed job carries `BACKUP_CORRUPT`, `RESTORE_VERIFY_FAILED` or `BACKUP_FAILED` |
+| DELETE | `/backups/{id} {confirm}` | Super Admin | `confirm` must be `DELETE`. 204. 409 `BACKUP_PROTECTED`, `BACKUP_RUNNING` |
+
+**While a company is restored,** its routes answer **403 `TENANT_RESTORING`** (the other companies
+carry on; `GET /tenant` stays open). New platform audit actions: `backup_create`,
+`backup_download`, `backup_upload`, `backup_delete`, `backup_restore`, `backup_restore_failed`,
+`backup_schedule_update`.
+
+## Endpoints (Milestone 26: company data and numbering)
+
+Super Admin only, **reads included**: Support gets 403 `PERMISSION_DENIED` on every route. No
+amount is ever returned. `{id}` is a company; an unknown one is 404 `TENANT_NOT_FOUND`.
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/tenants/{id}/data` | `company_name`, `total`, `items[]`: `key`, `label`, `count`, `tables[]` (`table`, `count`), `blocked_by[]` (`key`, `label`, `count`), `can_delete` |
+| GET | `/tenants/{id}/data/preview?keys=a&keys=b` | `keys` omitted or `all`: everything. `tables[]`, `total`, `files`, `blocked[]`, `message`. 422 `UNKNOWN_DATA_KIND`, `NOTHING_SELECTED` |
+| GET | `/tenants/{id}/data/{key}` | `columns` (four), `rows` (latest 25), `total`. 422 `UNKNOWN_DATA_KIND` |
+| POST | `/tenants/{id}/data/delete {keys, confirm}` | `confirm` must be `DELETE` exactly. 200 `operation`, `kinds`, `tables[]`, `total`, `backup_id`, `series_reset[]` (`series`, `from_number`, `to_number`), `files_removed`. 409 `DATA_BLOCKED` (names the blocker), `SAFETY_BACKUP_FAILED`; 422 `CONFIRMATION_MISMATCH`, `UNKNOWN_DATA_KIND`; 400 `DATA_DELETE_FAILED` (nothing removed) |
+| POST | `/tenants/{id}/data/delete-all {confirm, company_name, acknowledged}` | `DELETE`, the company's exact name and `true`. 422 `CONFIRMATION_MISMATCH`, `COMPANY_NAME_MISMATCH`, `ACKNOWLEDGEMENT_REQUIRED`; the 409 and 400 codes above |
+| GET | `/tenants/{id}/numbering` | `items[]`: `location_id`, `location_code`, `doc_type`, `doc_label`, `financial_year`, `prefix`, `highest_existing`, `highest_number`, `configured_next`, `minimum_next`, `next_document`, `ahead_of_documents`, `suggested_next` |
+| PATCH | `/tenants/{id}/numbering {location_id, doc_type, financial_year, next_number, reason}` | Returns the row. 409 `NUMBER_TOO_LOW`; 422 `REASON_REQUIRED`; 404 `LOCATION_NOT_FOUND`. Audited with old and new values |
+
+New platform audit actions: `numbering_set`, `company_data_deleted`, `company_data_deleted_all`,
+`company_data_delete_failed`.
+
+## Endpoints (Milestone 29: the installable app and force update)
+
+| Method | Path | What |
+| --- | --- | --- |
+| GET | `/tenant/manifest.webmanifest` | Open, like `/tenant`. The web app manifest (`application/manifest+json`, `Cache-Control: no-cache`) for the company at this address: `name`, `short_name`, `start_url`, `display: standalone`, `icons[]` (the logo first when there is one, then the Duolink mark). 404 `TENANT_NOT_FOUND` for an unknown address |
+| GET | `/tenant` | Now also returns `app_generation` (integer), the platform's release generation |
+| GET | `/admin/system/app-update` | Any admin role. `{generation, forced_at, forced_by, backend_version, backend_build}`; `forced_by` is a name |
+| POST | `/admin/system/force-update {reason?}` | **Super Admin** (Support 403). `reason` up to 200 characters (422 above). Adds one to the generation, audited as `app_update_force` (generation, reason), and returns the same body as the GET |
+
+The service worker never caches anything under `/api`.
+
+## Endpoints (Milestone 30: Razorpay online renewal)
+
+Company side, `/subscription`. **Owner only** (403 otherwise). Orders and verify work while the
+company is read-only (the exception list, M21). Nothing here carries a secret: `key_id` is
+Razorpay's public key id. Money is a decimal string; the amount is always the server's.
+
+| Method | Path | Role | What |
+| --- | --- | --- | --- |
+| GET | `/subscription` | Owner | `{online_renewal, plan_code, plan_name, status, access_state, expires_at, days_left, options[]}`. `options` (empty while `online_renewal` is false): `price_id`, `plan_*`, `duration_value`, `duration_unit`, `price`, `currency`, `is_current_plan`, `would_run_until` |
+| POST | `/subscription/orders {price_id}` | Owner | 201 `{id, razorpay_order_id, key_id, amount, amount_paise, currency, name, description, company_name}`. 404 `PRICE_NOT_FOUND`; 409 `PRICE_NOT_OFFERED` (archived plan, inactive price, trial plan, under one rupee), `ONLINE_RENEWAL_OFF`, `NO_SUBSCRIPTION`; 502 `RAZORPAY_ERROR` |
+| POST | `/subscription/verify {razorpay_order_id, razorpay_payment_id, razorpay_signature}` | Owner | `{applied, plan_name, status, access_state, expires_at, days_left}`. `applied: false` when the payment was already recorded (by the webhook, or a repeat). 400 `SIGNATURE_INVALID` (nothing recorded); 404 `ORDER_NOT_FOUND` (also another company's order); 409 `ONLINE_RENEWAL_OFF` |
+| POST | `/subscription/webhook` | none (signed) | Razorpay's `payment.captured`, signed with `RAZORPAY_WEBHOOK_SECRET` in `X-Razorpay-Signature`. 200 `{status: applied \| duplicate \| ignored}`; 400 `SIGNATURE_INVALID` or `BAD_PAYLOAD`; 404 while no webhook secret is set |
+
+`GET /tenant` gains `online_renewal` (the banner links to Plan & billing when true). Online
+payments appear in `GET /admin/billing/payments` with `method: "razorpay"`, the Razorpay payment
+id as `reference` and `recorded_by: "Online (Razorpay)"`; a Super Admin can reverse one like any
+other. Recording a Razorpay payment by hand with a reference that is already recorded answers 409
+`PAYMENT_REFERENCE_TAKEN`. Point the Razorpay webhook (`payment.captured`) at
+`https://<api-host>/api/v1/subscription/webhook`.
+
+## Endpoints (Milestone 22: support tickets)
+
+Two sets. Neither carries an amount. Ticket numbers read `T-000012`. Categories: `sign_in`,
+`billing`, `gst_eway`, `stock`, `printing`, `other`. Priorities: `low`, `normal`, `high`,
+`urgent`. Statuses: `open`, `in_progress`, `waiting_on_company`, `resolved`, `closed`.
+
+**Company side, `/support`.** Any signed-in role. The owner and accountant see every ticket of the
+company; a counter user only their own (another's is 404 `TICKET_NOT_FOUND`). These work while the
+company is read-only. Messages from Duolink always show `author_name` "Duolink Support".
+
+| Method | Path | What |
+| --- | --- | --- |
+| GET | `/support/tickets?status` | `{items, total, limit, offset}`, newest activity first. A row: `id`, `number`, `subject`, `category`, `priority`, `status`, `raised_by_name`, `created_at`, `last_reply_at`, `unread` |
+| GET | `/support/tickets/unread-count` | `{unread}`: tickets with a Duolink message not yet opened. The Help menu polls it every 60 s |
+| POST | `/support/tickets {subject (3-200), category, priority = normal, body (1-5000)}` | 201 with the detail |
+| GET | `/support/tickets/{id}` | The row plus `assigned_admin_name`, `closed_at`, `can_close` (you raised it and it is not closed) and `messages[]` (`id`, `author_kind`, `author_name`, `body`, `created_at`). Opening it marks it read |
+| POST | `/support/tickets/{id}/reply {body}` | Returns a waiting or resolved ticket to `open`. 409 `TICKET_CLOSED` |
+| POST | `/support/tickets/{id}/close` | Only the person who raised it: 403 `TICKET_NOT_YOURS`. 409 `TICKET_CLOSED` |
+
+**Duolink side, `/admin/support`.** Any admin role, Support included, may reply and update (the
+only admin writes Support may do).
+
+| Method | Path | What |
+| --- | --- | --- |
+| GET | `/admin/support/tickets?status&priority&tenant_id&assigned=me\|unassigned&q&limit&offset` | `{items, total, limit, offset, counts}`. `limit` 1 to 200, default 50. `q` matches subject, number, company name or code. A row adds `tenant_id`, `tenant_name`, `tenant_slug`, `assigned_admin_id`, `assigned_admin_name`. `counts`: `open`, `in_progress`, `waiting_on_company`, `resolved`, `closed`, `urgent_open`, `unassigned` (the last two exclude resolved and closed); they ignore the `status` filter |
+| GET | `/admin/support/tickets/{id}` | Row plus `closed_at` and `messages[]` with real author names. Opening it marks the company's messages read. 404 `TICKET_NOT_FOUND` |
+| POST | `/admin/support/tickets/{id}/reply {body?, status?}` | At least one of the two (422 otherwise). A message alone moves `open` or `in_progress` to `waiting_on_company`. A message on a closed ticket needs a `status` (409 `TICKET_CLOSED`) |
+| PATCH | `/admin/support/tickets/{id} {status?, priority?, assigned_admin_id?}` | Send only what changes; `assigned_admin_id: null` unassigns. 404 `ADMIN_NOT_FOUND` for an unknown or inactive admin |
+
+`POST /support/tickets` and `/support/tickets/{id}/reply|close` are on the read-only exception
+list (M21). Reply and update are audited as `support_reply` and `support_update` (ticket number,
+status change, whether a message was sent; never the text).
+
+## Endpoints (Milestone 23: owner-granted support access)
+
+No amount in any answer. Three token types exist: a company user's `access`, a Duolink admin's
+`platform`, and the new `support` token. Each API refuses the other two (401).
+
+**Company side.** `/support-access` is the **owner in person**: a counter or accountant gets 403
+`PERMISSION_DENIED`, and a support session gets 403 `SUPPORT_READ_ONLY`.
+
+| Method | Path | What |
+| --- | --- | --- |
+| GET | `/support-access` | `{live, recent[], durations}`. A grant: `id`, `status` (`live`, `revoked`, `ended`), `starts_at`, `ends_at`, `seconds_left`, `include_costs`, `reason`, `ticket_id`, `ticket_number`, `granted_by_name`, `revoked_at`, `revoked_by_name` |
+| POST | `/support-access/grants {duration_hours (1, 4, 24 or 72), include_costs = false, reason (3-300), ticket_id?}` | 201. Replaces a live grant (recorded revoked, its sessions end). 422 for another duration; 404 `TICKET_NOT_FOUND`. Open while the company is read-only |
+| POST | `/support-access/revoke` | Ends the live grant now. 409 `NO_LIVE_GRANT`. Open while the company is read-only |
+| GET | `/support-access/sessions` | The visits, newest first: `id`, `admin_name`, `reason`, `status` (`open`, `ended`, `stale`), `started_at`, `ended_at`, `end_reason`, `request_count`, `include_costs` |
+| GET | `/support-access/sessions/{id}/events` | Method, path and `refused` of each request of one visit, oldest first |
+| GET | `/support-session` | Under a support token only: `{session_id, company_name, admin_name, started_at, expires_at, grant_ends_at, include_costs, read_only}` (the banner) |
+| POST | `/support-session/exit` | Under a support token only; the one write a support session may make. 204; the token answers 401 afterwards |
+
+**Under a support token** every company route answers as for an owner, except: any POST, PUT,
+PATCH or DELETE (and any GET that would write) answers 403 `SUPPORT_READ_ONLY`; a token for another
+company's address, an ended or revoked session, an ended grant or a demoted admin answers 401
+(`SUPPORT_SESSION_ENDED`). Cost and margin are absent unless the grant has `include_costs`.
+`GET /auth/me` answers a support viewer (id 0, role `owner`, name "Duolink support: ...").
+
+**Duolink side.**
+
+| Method | Path | Role | What |
+| --- | --- | --- | --- |
+| GET | `/admin/tenants/{id}/support-access` | any admin | `{live, grant_id, starts_at, ends_at, seconds_left, owner_only_figures, reason, ticket_number, granted_by_name, open_sessions}` |
+| POST | `/admin/tenants/{id}/support-session {reason (3-300)}` | Super Admin | 201 `{session_id, token, expires_at, entry_url}`. 409 `NO_SUPPORT_GRANT`; 409 `TENANT_NOT_OPEN`. The token lasts the earlier of 2 hours and the grant |
+| GET | `/admin/audit/support-sessions?tenant_id&admin_id&limit&offset` | any admin | `{items[], total, open, stale, limit, offset}`: the Company access tab. A row: `tenant_slug`, `admin_name`, `reason`, `status`, `started_at`, `expires_at`, `ended_at`, `end_reason`, `request_count`, `owner_only_figures` |
+
+Audit: `support_session_start` and `support_session_end` (platform), `support_enter` and
+`support_exit` (company), never carrying the token.
+
+## Endpoints (Milestone 27: GSP and GSTIN lookup)
+
+Duolink side, `/admin/integrations`. `{kind}` is `gsp` or `gstin_lookup`. No answer carries a
+credential: a saved key shows as `key_last4`.
+
+| Method | Path | Who and notes |
+| --- | --- | --- |
+| GET | `/admin/integrations` | Any admin. Both integrations: status, which settings are in force (`source`), limits, last success and failure |
+| PUT | `/admin/integrations/{kind}` | Super Admin. Connect or update `{provider, base_url, client_id?, client_secret?, username?, password?, api_key?}`; a blank credential keeps the saved one. 409 `INTEGRATION_KEY_MISSING`, `INTEGRATION_KEY_INVALID`, `INTEGRATION_KEY_MISMATCH`, `CREDENTIALS_MISSING`, `KEY_TOO_SHORT`, `BASE_URL_REQUIRED`, `BASE_URL_INVALID`, `BASE_URL_NOT_HTTPS`, `FAKE_NOT_IN_PRODUCTION` |
+| POST | `/admin/integrations/{kind}/test` | Super Admin. One live call; a failure is 200 with `ok: false` and an `error_code` |
+| POST | `/admin/integrations/{kind}/disconnect` | Super Admin. 409 `NOT_CONNECTED` |
+| PATCH | `/admin/integrations/{kind}/limits` | Super Admin. `{daily_limit, monthly_limit, warn_at_percent, cache_hours}`; 409 `LIMIT_DAILY_OVER_MONTHLY` |
+| GET | `/admin/integrations/usage` | Super Admin. Today, week and month by outcome |
+| GET | `/admin/integrations/{kind}/companies` | Super Admin. Per-company calls this month, `near_limit`, `over_limit` |
+| GET | `/admin/integrations/{kind}/failures` | Super Admin. Last 50 failed calls: operation, company, `error_code`; no bodies |
+| POST | `/admin/integrations/gstin-lookup {gstin}` | Super Admin. Registry details for onboarding; no company limit |
+
+Company side:
+
+| Method | Path | Who and notes |
+| --- | --- | --- |
+| POST | `/parties/gstin-lookup {gstin}` | Owner, counter. `{legal_name, trade_name, address, state_code, status, cached, lookups_left_today, near_limit}`. 429 `GSTIN_LOOKUP_LIMIT`; 502 with the provider's code |
+
+Actions audited: `integration_connect`, `integration_test`, `integration_disconnect`,
+`integration_limits`, `gstin_lookup`.
+
+## Endpoints (Milestone 28: bill templates)
+
+All under `/api/v1/admin/tenants/{tenant_id}/bill-templates` (404 `TENANT_NOT_FOUND` for an
+unknown company). Support reads and previews; every other write needs a Super Admin (403
+`PERMISSION_DENIED`). Uploaded HTML is data with a placeholder grammar, never a Jinja template.
+No answer carries a figure from the company's books.
+
+| Method | Path | What |
+| --- | --- | --- |
+| GET | `/field-registry` | `{fields[], formats, slots, required, limits}`. A field: `key`, `group`, `description`, `sample`, `slots`, `image`. `required` is what each slot may not leave out |
+| GET | `` (list) | `{templates[], secondary_logo}`, slot then newest version first. A template: `id`, `slot`, `name`, `version`, `is_active`, `used` (an issued document points at it), `html_bytes`, `images`, `removed`, `uploaded_by_name`, `created_at`, `activated_at` |
+| POST | `` (upload, multipart: `slot`, `name`, `html`, `images[]`) | 201 with the template and its `diagnostics`. Not active until activated. 409 `TEMPLATE_MISSING_FIELDS` (with `missing_fields`), `TEMPLATE_WORDING`, `TEMPLATE_EMPTY`, `TEMPLATE_NOT_UTF8`, `TEMPLATE_TOO_LARGE`, `TEMPLATE_TOO_DEEP`, `TEMPLATE_TOO_BIG`, `TEMPLATE_NAME`, `SLOT_UNKNOWN`, `ASSET_NAME`, `ASSET_EMPTY`, `ASSET_TOO_LARGE`, `ASSET_TYPE`, `ASSET_DUPLICATE`, `ASSET_TOO_MANY` |
+| GET | `/{id}` | One template. 404 `TEMPLATE_NOT_FOUND` |
+| GET | `/{id}/diagnostics` | `unknown`, `other_slot`, `outside_rows`, `in_styles`, `item_rows`, `hsn_rows`, `images`, `missing_images`, `unused_images`, `page_size`, `removed`, `missing_fields`, `warnings` |
+| POST | `/{id}/preview` | `application/pdf` drawn from sample data. A read: Support may call it |
+| POST | `/{id}/activate` | New documents of the slot use it; the slot's previous design is stood down |
+| POST | `/{id}/deactivate` | New documents of the slot use the built-in layout again |
+| DELETE | `/{id}` | 204. 409 `TEMPLATE_IN_USE` (a document was issued with it), 409 `TEMPLATE_ACTIVE` |
+| PUT | `/secondary-logo` (multipart `file`) | PNG or JPEG up to 2 MB. Returns the list. Designs no document uses follow it |
+| DELETE | `/secondary-logo` | Removes it, the same way |
+
+Documents pin the design at issue time (`bill_template_id`), so the existing PDF routes
+(`/invoices/{id}/pdf`, `/quotes/{id}/pdf`, `/credit-notes/{id}/pdf`, `/debit-notes/{id}/pdf`) are
+unchanged and reprint on the pinned design. Audited as `bill_template_upload`,
+`bill_template_activate`, `bill_template_deactivate`, `bill_template_delete`,
+`secondary_logo_set` and `secondary_logo_remove`.
+
 ## Endpoints (Milestone 19: user support tools)
 
 Same address and token as Milestone 16. Writes need a **Super Admin**; Support reads (403

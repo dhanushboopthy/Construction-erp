@@ -21,10 +21,12 @@ class TenantStatus(StrEnum):
     CANCELLED = "cancelled"
 
 
-class TenantPlan(StrEnum):
-    TRIAL = "trial"
-    BASIC = "basic"
-    PRO = "pro"
+class DurationUnit(StrEnum):
+    """How long one price of a plan lasts (Milestone 20)."""
+
+    DAY = "day"
+    MONTH = "month"
+    YEAR = "year"
 
 
 class PlatformRole(StrEnum):
@@ -63,6 +65,196 @@ class PlatformAction(StrEnum):
     USER_UPDATE = "user_update"
     USER_SESSION_REVOKE = "user_session_revoke"
     USER_REMOVE = "user_remove"
+    PLAN_CREATE = "plan_create"
+    PLAN_UPDATE = "plan_update"
+    PLAN_DUPLICATE = "plan_duplicate"
+    PLAN_ARCHIVE = "plan_archive"
+    PLAN_DELETE = "plan_delete"
+    SUBSCRIPTION_RENEW = "subscription_renew"
+    SUBSCRIPTION_CANCEL = "subscription_cancel"
+    PAYMENT_REVERSE = "payment_reverse"
+    SUPPORT_REPLY = "support_reply"
+    SUPPORT_UPDATE = "support_update"
+    SUPPORT_SESSION_START = "support_session_start"  # entered a company, with its owner's grant
+    SUPPORT_SESSION_END = "support_session_end"
+    MAINTENANCE_ON = "maintenance_on"
+    MAINTENANCE_OFF = "maintenance_off"
+    AUDIT_EXPORT = "audit_export"
+    BACKUP_CREATE = "backup_create"
+    BACKUP_DOWNLOAD = "backup_download"
+    BACKUP_UPLOAD = "backup_upload"
+    BACKUP_DELETE = "backup_delete"
+    BACKUP_RESTORE = "backup_restore"
+    BACKUP_RESTORE_FAILED = "backup_restore_failed"
+    BACKUP_SCHEDULE_UPDATE = "backup_schedule_update"
+    NUMBERING_SET = "numbering_set"
+    COMPANY_DATA_DELETED = "company_data_deleted"
+    COMPANY_DATA_DELETED_ALL = "company_data_deleted_all"
+    COMPANY_DATA_DELETE_FAILED = "company_data_delete_failed"
+    INTEGRATION_CONNECT = "integration_connect"
+    INTEGRATION_TEST = "integration_test"
+    INTEGRATION_DISCONNECT = "integration_disconnect"
+    INTEGRATION_LIMITS = "integration_limits"
+    GSTIN_LOOKUP = "gstin_lookup"
+    BILL_TEMPLATE_UPLOAD = "bill_template_upload"
+    BILL_TEMPLATE_ACTIVATE = "bill_template_activate"
+    BILL_TEMPLATE_DEACTIVATE = "bill_template_deactivate"
+    BILL_TEMPLATE_DELETE = "bill_template_delete"
+    SECONDARY_LOGO_SET = "secondary_logo_set"
+    SECONDARY_LOGO_REMOVE = "secondary_logo_remove"
+    APP_UPDATE_FORCE = "app_update_force"
+    # Milestone 30: a company owner paid online. No admin acted, so admin_id is empty.
+    SUBSCRIPTION_PAY_ONLINE = "subscription_pay_online"
+
+
+class SequenceChange(StrEnum):
+    """Why a document counter moved (Milestone 26): set by a Super Admin, or reset because a
+    data deletion emptied the series."""
+
+    SET = "set"
+    RESET = "reset"
+
+
+class BackupKind(StrEnum):
+    PLATFORM = "platform"
+    COMPANY = "company"
+
+
+class BackupSource(StrEnum):
+    """Why a backup exists. Only `scheduled` ones are ever pruned (Milestone 25)."""
+
+    SCHEDULED = "scheduled"
+    MANUAL = "manual"
+    SAFETY = "safety"
+    UPLOADED = "uploaded"
+
+
+class BackupStatus(StrEnum):
+    RUNNING = "running"
+    VERIFIED = "verified"
+    FAILED = "failed"
+
+
+class BackupJobKind(StrEnum):
+    BACKUP_PLATFORM = "backup_platform"
+    BACKUP_COMPANY = "backup_company"
+    RESTORE_COMPANY = "restore_company"
+
+
+class BackupJobStatus(StrEnum):
+    QUEUED = "queued"
+    RUNNING = "running"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+
+
+class SupportSessionEnd(StrEnum):
+    """Why a support session ended (Milestone 23)."""
+
+    EXITED = "exited"  # the admin pressed Exit
+    REVOKED = "revoked"  # the owner revoked the grant, or replaced it with a new one
+    GRANT_ENDED = "grant_ended"  # the grant's time ran out
+    REPLACED = "replaced"  # the same admin entered the company again
+    ADMIN_NOT_ALLOWED = "admin_not_allowed"  # the admin was deactivated or is no Super Admin
+
+
+class IntegrationKind(StrEnum):
+    """A shared integration Duolink runs for every company (Milestone 27)."""
+
+    GSP = "gsp"  # e-way bills and IRN
+    GSTIN_LOOKUP = "gstin_lookup"
+
+
+class IntegrationProvider(StrEnum):
+    FAKE = "fake"  # pretend; never in production
+    SANDBOX = "sandbox"
+    LIVE = "live"
+
+
+class IntegrationStatus(StrEnum):
+    NOT_CONNECTED = "not_connected"
+    CONNECTED = "connected"
+    FAILING = "failing"
+
+
+class IntegrationOutcome(StrEnum):
+    """How one call ended. Only ok and failed reached the provider."""
+
+    OK = "ok"
+    FAILED = "failed"
+    CACHED = "cached"
+    BLOCKED = "blocked"
+
+
+class BillSlot(StrEnum):
+    """Which kind of document a bill template designs (Milestone 28)."""
+
+    TAX_INVOICE = "tax_invoice"
+    PROFORMA = "proforma"
+    QUOTATION = "quotation"
+    CREDIT_NOTE = "credit_note"
+    DEBIT_NOTE = "debit_note"
+
+
+class SupportCategory(StrEnum):
+    """What a support ticket is about (Milestone 22)."""
+
+    SIGN_IN = "sign_in"
+    BILLING = "billing"
+    GST_EWAY = "gst_eway"
+    STOCK = "stock"
+    PRINTING = "printing"
+    OTHER = "other"
+
+
+class SupportPriority(StrEnum):
+    LOW = "low"
+    NORMAL = "normal"
+    HIGH = "high"
+    URGENT = "urgent"
+
+
+class SupportStatus(StrEnum):
+    OPEN = "open"
+    IN_PROGRESS = "in_progress"
+    WAITING_ON_COMPANY = "waiting_on_company"
+    RESOLVED = "resolved"
+    CLOSED = "closed"
+
+
+class AuthorKind(StrEnum):
+    """Who wrote a support message: a user of the company, or a Duolink admin."""
+
+    COMPANY_USER = "company_user"
+    PLATFORM_ADMIN = "platform_admin"
+
+
+class SubscriptionStatus(StrEnum):
+    """Stored status of a company's subscription (Milestone 21). Whether it has run out is
+    worked out from `expires_at`; `expired` is never written, it is what `trial` and `active`
+    become when the date passes."""
+
+    TRIAL = "trial"
+    ACTIVE = "active"
+    EXPIRED = "expired"
+    CANCELLED = "cancelled"
+
+
+class PaymentMethod(StrEnum):
+    """How Duolink received a subscription payment (Milestone 21)."""
+
+    CASH = "cash"
+    BANK = "bank"
+    UPI = "upi"
+    CHEQUE = "cheque"
+    RAZORPAY = "razorpay"
+
+
+class SubscriptionOrderStatus(StrEnum):
+    """A Razorpay order for an online renewal (Milestone 30): asked for, then paid once."""
+
+    CREATED = "created"
+    PAID = "paid"
 
 
 class LocationKind(StrEnum):
@@ -232,6 +424,8 @@ class AuditAction(StrEnum):
     TOKEN_REUSE = "token_reuse"  # noqa: S105 - an audit action name, not a secret
     OVERRIDE = "override"
     EXPORT = "export"  # the books were exported, for example to Tally (FM4)
+    SUPPORT_ENTER = "support_enter"  # Duolink opened a support session here (M23)
+    SUPPORT_EXIT = "support_exit"  # ...and it ended: left, revoked or the grant ran out
 
 
 class DocType(StrEnum):

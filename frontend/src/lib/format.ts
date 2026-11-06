@@ -28,6 +28,26 @@ export function formatDateTime(iso: string | null | undefined): string {
   }).format(new Date(iso));
 }
 
+/** The clock time in shop time on a 24-hour clock, e.g. "16:40". */
+export function formatClock(iso: string): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: IST,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(new Date(iso));
+}
+
+/** Time left as words: "3 h 20 min", "45 min", "under a minute". */
+export function formatTimeLeft(seconds: number): string {
+  const minutes = Math.floor(Math.max(0, seconds) / 60);
+  if (minutes < 1) return "under a minute";
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (hours === 0) return `${rest} min`;
+  return rest === 0 ? `${hours} h` : `${hours} h ${rest} min`;
+}
+
 /** A date in shop time, e.g. "9 Oct 2026". Dates ("2026-10-09") are not shifted by the time zone. */
 export function formatDay(iso: string | null | undefined): string {
   if (!iso) return "—";

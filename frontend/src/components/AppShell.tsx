@@ -4,13 +4,22 @@ import { NavLink, Outlet } from "react-router";
 
 import { useTenant } from "@/api/tenant";
 import { useAuth } from "@/auth/AuthContext";
+import {
+  READ_ONLY_REASON,
+  ReadOnlyContext,
+  ReadOnlyReasonContext,
+  SUPPORT_READ_ONLY_REASON,
+} from "@/auth/ReadOnlyContext";
 import { useAlerts } from "@/hooks/useAlerts";
 import { useModuleShortcuts } from "@/hooks/useModuleShortcuts";
 import { modulesFor, type ModuleLink } from "@/modules";
+import { ForcedUpdateWatch } from "@/pwa/AppUpdates";
+import { SupportBanner } from "@/supportAccess/SupportBanner";
 
 import styles from "./AppShell.module.css";
 import { BrandMark } from "./BrandMark";
 import { iconFor } from "./moduleIcons";
+import { SubscriptionBanner } from "./SubscriptionBanner";
 import { TopBar } from "./TopBar";
 import { usePopover } from "./usePopover";
 
@@ -35,7 +44,7 @@ function NavItem({ module: m }: { module: ModuleLink }) {
 }
 
 export function AppShell() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, support, exitSupport } = useAuth();
   const modules = user ? modulesFor(user.role) : [];
   useModuleShortcuts(modules);
   const tenant = useTenant();
@@ -52,6 +61,7 @@ export function AppShell() {
 
   return (
     <div className={styles.shell}>
+      <ForcedUpdateWatch />
       <aside className={styles.sidebar} aria-label="Modules">
         <div className={styles.brand}>
           <BrandMark
@@ -103,15 +113,21 @@ export function AppShell() {
         <p className={styles.tagline}>{tenant.data?.tagline}</p>
       </aside>
       <div className={styles.main}>
+        <SupportBanner />
         <TopBar
           user={user}
           where={where}
-          onSignOut={() => void signOut()}
+          onSignOut={() => void (support ? exitSupport() : signOut())}
           alerts={alerts}
           alertsMenu={alertsMenu}
         />
+        <SubscriptionBanner tenant={tenant.data} />
         <main className={styles.content}>
-          <Outlet />
+          <ReadOnlyContext value={support !== null || tenant.data?.access_state === "read_only"}>
+            <ReadOnlyReasonContext value={support ? SUPPORT_READ_ONLY_REASON : READ_ONLY_REASON}>
+              <Outlet />
+            </ReadOnlyReasonContext>
+          </ReadOnlyContext>
         </main>
       </div>
     </div>

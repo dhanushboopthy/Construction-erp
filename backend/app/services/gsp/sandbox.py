@@ -2,7 +2,8 @@
 
 Every GSP words its API a little differently. This adapter speaks a plain JSON shape (below) and
 keeps all field naming in `_eway_body`, `_irn_body` and the `_read_*` helpers, so changing to the
-chosen provider's exact format touches only this file. Credentials come from the environment."""
+chosen provider's exact format touches only this file. Credentials come from a `GspConfig`: the
+Duolink admin's saved settings or, as the fallback, the environment (Milestone 27)."""
 
 from datetime import UTC, date, datetime
 from decimal import Decimal
@@ -10,16 +11,17 @@ from typing import Any
 
 import httpx
 
-from app.core.config import Settings
 from app.services.gsp.base import (
     DocItem,
     DocTotals,
     EwayRequest,
     EwayResult,
+    GspConfig,
     GspError,
     IrnRequest,
     IrnResult,
     Party,
+    TaxpayerInfo,
 )
 
 
@@ -71,13 +73,13 @@ def _parse_when(value: str) -> datetime:
 
 
 class SandboxGsp:
-    def __init__(self, settings: Settings, transport: httpx.BaseTransport | None = None) -> None:
-        if not settings.gsp_base_url:
-            raise GspError("GSP_BASE_URL is not set", code="GSP_NOT_CONFIGURED")
-        self._settings = settings
+    def __init__(self, config: GspConfig, transport: httpx.BaseTransport | None = None) -> None:
+        if not config.base_url:
+            raise GspError("The GSP's address (base URL) is not set", code="GSP_NOT_CONFIGURED")
+        self._config = config
         self._http = httpx.Client(
-            base_url=settings.gsp_base_url.rstrip("/"),
-            timeout=settings.gsp_timeout_seconds,
+            base_url=config.base_url.rstrip("/"),
+            timeout=config.timeout_seconds,
             transport=transport,
         )
         self._token: str | None = None
@@ -85,12 +87,12 @@ class SandboxGsp:
     # -------------------------------------------------------------- plumbing
 
     def _login(self) -> str:
-        s = self._settings
+        c = self._config
         body = {
-            "client_id": s.gsp_client_id,
-            "client_secret": s.gsp_client_secret.get_secret_value(),
-            "username": s.gsp_username,
-            "password": s.gsp_password.get_secret_value(),
+            "client_id": c.client_id,
+            "client_secret": c.client_secret,
+            "username": c.username,
+            "password": c.password,
         }
         data = self._send("POST", "/auth", body, authed=False)
         token = data.get("access_token")
@@ -102,13 +104,16 @@ class SandboxGsp:
         self,
         method: str,
         path: str,
-        body: dict[str, Any],
+        body: dict[str, Any] | None,
         *,
         authed: bool = True,
         retried: bool = False,
     ) -> dict[str, Any]:
         headers: dict[str, str] = {}
-        if authed:
+        if authed and self._config.api_key:
+            # A lookup service signed in by key (Milestone 27) needs no login call.
+            headers["X-Api-Key"] = self._config.api_key
+        elif authed:
             self._token = self._token or self._login()
             headers["Authorization"] = f"Bearer {self._token}"
         try:
@@ -119,20 +124,48 @@ class SandboxGsp:
             ) from exc
         except httpx.HTTPError as exc:
             raise GspError("Cannot reach the GSP", code="GSP_UNREACHABLE", retryable=True) from exc
-        if response.status_code == 401 and authed and not retried:
+        if response.status_code == 401 and authed and not retried and not self._config.api_key:
             self._token = None  # expired: log in once more
             return self._send(method, path, body, authed=True, retried=True)
         try:
             data = response.json()
         except ValueError:
             data = {}
+        if not isinstance(data, dict):
+            data = {}
         if response.status_code >= 500:
             raise GspError("The GSP had a problem", code="GSP_DOWN", retryable=True)
+        if response.status_code == 401:
+            raise GspError("The provider refused the credentials", code="GSP_AUTH_FAILED")
         if response.status_code >= 400 or data.get("status") == "error":
             raise GspError(
                 str(data.get("message") or "The GSP refused this request"), code="GSP_REFUSED"
             )
-        return data if isinstance(data, dict) else {}
+        return data
+
+    # -------------------------------------------------------------- connection and lookup
+
+    def check_connection(self) -> None:
+        """A login proves a GSP account; a lookup service signed in by key answers a ping."""
+        if self._config.api_key:
+            self._send("GET", "/ping", None)
+        else:
+            self._login()
+
+    def lookup_gstin(self, gstin: str) -> TaxpayerInfo:
+        """The provider's taxpayer search."""
+        data = self._send("GET", f"/taxpayer/{gstin}", None)
+        legal = str(data.get("legal_name") or "")
+        if not legal:
+            raise GspError("The provider did not return the taxpayer", code="GSP_BAD_RESPONSE")
+        return TaxpayerInfo(
+            gstin=str(data.get("gstin") or gstin).upper(),
+            legal_name=legal,
+            trade_name=str(data.get("trade_name") or ""),
+            address=str(data.get("address") or ""),
+            state_code=str(data.get("state_code") or gstin[:2]),
+            status=str(data.get("status") or "Unknown"),
+        )
 
     # -------------------------------------------------------------- e-way bill
 

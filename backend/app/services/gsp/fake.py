@@ -8,15 +8,34 @@ from typing import Any
 
 from app.core.clock import today_ist
 from app.domain.eway import valid_until
-from app.services.gsp.base import EwayRequest, EwayResult, GspError, IrnRequest, IrnResult
+from app.domain.gst import STATE_NAMES
+from app.services.gsp.base import (
+    EwayRequest,
+    EwayResult,
+    GspError,
+    IrnRequest,
+    IrnResult,
+    TaxpayerInfo,
+)
 
 
 def _digits(seed: str, length: int) -> str:
     return str(int(hashlib.sha256(seed.encode()).hexdigest(), 16))[:length].rjust(length, "0")
 
 
+_SAMPLE_NAMES = (
+    "Sri Murugan Steels",
+    "Kaveri Cement Agencies",
+    "Annai Hardware and Pipes",
+    "Velan Building Materials",
+)
+
+
 class FakeGsp:
-    def __init__(self) -> None:
+    def __init__(self, source: str = "environment") -> None:
+        # Where the settings came from (database or environment): stamped on each answer so a
+        # test can tell which configuration made a document (Milestone 27).
+        self.source = source
         self.failures: list[GspError] = []  # tests queue errors here; each call pops one
         self.calls: list[tuple[str, dict[str, Any]]] = []
 
@@ -24,6 +43,23 @@ class FakeGsp:
         self.calls.append((name, detail))
         if self.failures:
             raise self.failures.pop(0)
+
+    def check_connection(self) -> None:
+        self._maybe_fail("check_connection", {})
+
+    def lookup_gstin(self, gstin: str) -> TaxpayerInfo:
+        """Sample registry data, the same for the same GSTIN."""
+        self._maybe_fail("lookup_gstin", {"gstin": gstin})
+        name = _SAMPLE_NAMES[int(_digits(gstin, 4)) % len(_SAMPLE_NAMES)]
+        state = STATE_NAMES.get(gstin[:2], "India")
+        return TaxpayerInfo(
+            gstin=gstin,
+            legal_name=f"{name} Private Limited",
+            trade_name=name,
+            address=f"No. {int(_digits(gstin, 2)) + 1}, Main Road, {state}",
+            state_code=gstin[:2],
+            status="Active",
+        )
 
     def generate_eway(self, request: EwayRequest) -> EwayResult:
         self._maybe_fail("generate_eway", {"doc_no": request.doc_no})
@@ -33,7 +69,12 @@ class FakeGsp:
             + _digits(f"{request.doc_no}|{request.supplier.gstin}|{len(self.calls)}", 10),
             generated_at=now,
             valid_until=valid_until(today_ist(), request.distance_km),
-            raw={"fake": True, "doc_no": request.doc_no, "vehicle": request.vehicle_no},
+            raw={
+                "fake": True,
+                "source": self.source,
+                "doc_no": request.doc_no,
+                "vehicle": request.vehicle_no,
+            },
         )
 
     def update_vehicle(

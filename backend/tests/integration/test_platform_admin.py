@@ -12,6 +12,7 @@ from sqlalchemy.exc import DBAPIError
 
 from app.main import app
 from app.services.platform import auth as platform_auth
+from tests.bill_samples import design as bill_design
 from tests.conftest import login
 
 pytestmark = pytest.mark.integration
@@ -98,7 +99,7 @@ def test_admin_sign_in(client, admin):
 
 
 def test_a_new_company_starts_on_a_trial_and_its_owner_signs_in_at_its_address(client, acme):
-    assert acme["slug"] == "acme" and acme["status"] == "trial" and acme["plan"] == "trial"
+    assert acme["slug"] == "acme" and acme["status"] == "trial" and acme["plan"] == "TRIAL"
     assert acme["trial_state"] == "running" and acme["trial_ends_at"]
     assert (acme["users"], acme["max_users"]) == (1, 5)
     assert (acme["locations"], acme["max_locations"]) == (2, 2)
@@ -121,7 +122,7 @@ def test_the_company_list_shows_usage_and_searches(client, admin, acme):
     rows = client.get("/api/v1/admin/tenants", headers=admin).json()["items"]
     by_slug = {r["slug"]: r for r in rows}
     assert {"main", "acme"} <= set(by_slug)
-    assert by_slug["main"]["users"] == 4 and by_slug["main"]["plan"] == "pro"
+    assert by_slug["main"]["users"] == 4 and by_slug["main"]["plan"] == "PRO"
     found = client.get("/api/v1/admin/tenants", headers=admin, params={"q": "acme"}).json()
     assert [r["slug"] for r in found["items"]] == ["acme"]
     trial = client.get("/api/v1/admin/tenants", headers=admin, params={"status": "trial"}).json()
@@ -297,9 +298,18 @@ def test_every_admin_action_is_written_down_and_kept(client, admin, acme, seeded
         seeded.execute(text("UPDATE platform_audit_log SET action = 'login'"))
 
 
-# Duolink's own revenue (plan prices, subscription payments) may appear only under this prefix
-# (ADR 0013). No such path exists before Milestone 20; every other admin path is checked below.
+# Duolink's own revenue (plan prices, later subscription payments) may appear only on these
+# paths (ADR 0013). A new billing path must be added here on purpose; every other admin path is
+# checked below and must carry no money-like field.
 MONEY_ALLOWED_PREFIX = "/api/v1/admin/billing/"
+MONEY_ALLOWED_PATHS = {
+    "/api/v1/admin/billing/plans",
+    "/api/v1/admin/billing/plans/features",
+    "/api/v1/admin/billing/plans/{plan_id}",
+    "/api/v1/admin/billing/subscriptions",
+    "/api/v1/admin/billing/payments",
+    "/api/v1/admin/billing/dashboard",
+}
 MONEY_WORDS = re.compile(r"amount|cost|price|rate|profit|margin|balance|taxable|gst|value|paid")
 
 
@@ -313,17 +323,53 @@ def _keys(value):
             yield from _keys(inner)
 
 
-def test_no_admin_answer_carries_money(client, admin, acme):
+def test_no_admin_answer_carries_money(client, admin, acme, seeded):
     paths = [p for p in app.openapi()["paths"] if p.startswith("/api/v1/admin/")]
+    billing_gets = {
+        p
+        for p in paths
+        if "get" in app.openapi()["paths"][p] and p.startswith(MONEY_ALLOWED_PREFIX)
+    }
+    assert billing_gets == MONEY_ALLOWED_PATHS  # nothing is allowed by accident
+    # The audit CSV (Milestone 24) is not JSON; its rows are the audit rows checked at /audit.
     gets = [
         p
         for p in paths
-        if "get" in app.openapi()["paths"][p] and not p.startswith(MONEY_ALLOWED_PREFIX)
+        if "get" in app.openapi()["paths"][p]
+        and p not in billing_gets
+        and p != "/api/v1/admin/audit/export"
+        and not p.endswith("/download")  # a backup file (M25), not JSON
     ]
+    from app.models.enums import BackupJobKind, BackupJobStatus
+    from app.models.platform import PlatformBackupJob
+
+    job = PlatformBackupJob(kind=BackupJobKind.BACKUP_PLATFORM, status=BackupJobStatus.SUCCEEDED)
+    seeded.add(job)
+    seeded.flush()
     checked = 0
     ravi = _user_id(client, admin, "acme", "ravi")
+    owner = login(client, "ravi", "ravi-pass-123", host="acme.localhost")
+    ticket = client.post(
+        "/api/v1/support/tickets",
+        headers=owner,
+        json={"subject": "A question", "category": "other", "body": "Hello"},
+    ).json()["id"]
+    design = client.post(
+        f"/api/v1/admin/tenants/{acme['id']}/bill-templates",
+        headers=admin,
+        data={"slot": "tax_invoice", "name": "Plain"},
+        files=[("html", ("b.html", bill_design("tax_invoice").encode(), "text/html"))],
+    ).json()["id"]
     for path in gets:
-        url = path.replace("{tenant_id}", str(acme["id"])).replace("{user_id}", str(ravi))
+        url = (
+            path.replace("{tenant_id}", str(acme["id"]))
+            .replace("{user_id}", str(ravi))
+            .replace("{ticket_id}", str(ticket))
+            .replace("{job_id}", str(job.id))
+            .replace("{key}", "sales")
+            .replace("{kind}", "gsp")
+            .replace("{template_id}", str(design))
+        )
         response = client.get(url, headers=admin)
         assert response.status_code == 200, f"{path}: {response.text}"
         money = [k for k in _keys(response.json()) if MONEY_WORDS.search(k)]

@@ -32,7 +32,9 @@ services:
       BACKUP_DIR: /backups
     volumes:
       - files:/data/files
-      - ./backups:/backups:ro
+      # Read-write since Milestone 25: the Backups page writes platform and company backups here.
+      # The folder must be writable by uid 10001: `mkdir -p backups && sudo chown 10001 backups`.
+      - ./backups:/backups
     depends_on:
       db: { condition: service_healthy }
 
@@ -43,9 +45,16 @@ services:
     depends_on: [backend]
 
   backup:
-    image: postgres:17-alpine
+    # The backend image (Milestone 25): it has pg_dump and the app, so the loop can read the
+    # schedule an admin sets and record every run in the same list as the manual ones.
+    build: { context: ./backend, target: prod }
     restart: unless-stopped
+    env_file: .env
     environment:
+      APP_ENV: production
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-erp}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-erp}
+      STORAGE_DIR: /files
+      BACKUP_DIR: /backups
       PGHOST: db
       PGUSER: ${POSTGRES_USER:-erp}
       PGPASSWORD: ${POSTGRES_PASSWORD}

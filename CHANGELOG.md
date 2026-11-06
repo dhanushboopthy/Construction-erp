@@ -1,5 +1,335 @@
 # Changelog
 
+## 1.17.0 (M23): owner-granted support access
+
+For companies (owner only):
+
+- **Settings, Duolink support access.** Duolink cannot look inside your company unless you let it.
+  Give access for 1, 4, 24 or 72 hours, say why, optionally link one of your tickets, and choose
+  whether Duolink may also see cost and margin (off by default: Duolink then sees what a counter
+  user sees). The screen shows the live grant with the time left and a **Turn off now** button.
+  Turning it off, or giving a new grant, ends any Duolink visit at once: the next thing Duolink
+  does is refused.
+- **Who came in.** A history lists each Duolink visit: who, when they entered and left, why, and
+  how many pages they opened. Every visit is also in your audit log.
+- **Read-only, always.** Inside, Duolink sees the screens you see but cannot save anything,
+  change a user or a password, or change this setting.
+
+For Duolink staff:
+
+- **Company page, Access tab.** Shows whether the owner has granted access and until when. A Super
+  Admin gives a reason and presses **Enter company (read-only)**; the company opens in a new tab
+  under an amber "Super Admin Mode" bar: "Duolink support, read-only, viewing the company, ends
+  16:40, Exit". Every save button is off ("Read-only support session"). Support accounts see the
+  status but cannot enter.
+- **Entering needs a live grant.** Without one the admin is told to ask the owner (409). The link
+  lasts two hours at most and never longer than the grant. It works only at that company's address
+  and opens for that visit only: closing the tab or reloading ends it, and the admin enters again.
+- **Activity, Company access.** Every visit at every company with its request count. A visit that
+  was never ended and whose window has closed is marked.
+- Entering and leaving are in the admin audit log and in the company's own audit log.
+
+Not in this version: the notifications bell for a visit left open (M24).
+
+## 1.18.0 (M24): system health, notifications, maintenance mode, audit log
+
+For companies:
+
+- **"Back soon" screen.** When Duolink closes the platform for maintenance, every screen is
+  replaced by "Back soon" with Duolink's message (for example "Back at 9 pm"). The page checks
+  again every 30 seconds and returns to your work by itself. Nothing you saved is lost; saves
+  made during maintenance are refused, not half done.
+
+For Duolink staff (admin):
+
+- **System health** (new System item, Alt 0): API uptime, version and Python, the database's
+  answer time, size and connections, free space on the backups and files disks, the last good
+  backup and the last off-site copy, and counters across every company (companies, active users,
+  open sessions, audit events today, open tickets). Every admin role can read it. It never shows a
+  secret or a connection string.
+- **Notifications bell** in the top bar with a count. It rings for subscriptions ending within 7
+  days, expired companies, trials ending, new and urgent tickets, a backup older than 26 hours, a
+  disk under 20% free, and more than 10 failed admin sign-ins in 24 hours. Each item says how
+  serious it is in words, and links to the screen that fixes it. It is worked out on every read.
+- **Maintenance mode.** A Super Admin turns it on from System, with an optional message and a
+  confirmation. While on, every company request answers 503 `MAINTENANCE`; the admin, the health
+  checks and the company's name keep working. It stays on across a restart until turned off, and
+  a change reaches every API process within 5 seconds. Turning it on or off is audited. A restore
+  (a later milestone) has its own separate in-memory switch.
+- **Audit log** (new page): three tabs, Admin actions, Company access (empty until owner-granted
+  access is switched on) and Sign-ins; filters by dates, admin, company and action. A Super Admin
+  exports the filtered admin actions as CSV with the same rows as the screen; each export is
+  itself audited.
+- **Platform settings** (read-only): the security configuration from the environment (never
+  secrets), the plan lifecycle explained in plain words, and links to each control.
+- **Off-site sync marker.** `scripts/offsite-sync.sh` now writes `backups/.offsite-success` after a
+  verified copy, so System health can show when the last off-site copy happened.
+
+Technical: migration 0037 (`platform_maintenance`, a one-row table with no company; three new
+platform audit actions).
+
+## 1.19.0 (M25): backup and recovery from the admin, including one company
+
+For companies:
+
+- **Restore from a backup.** If Duolink restores your company's data, your screens show "Back soon:
+  restoring from a backup" and check again every 30 seconds. Other companies keep working.
+  Afterwards everyone signs in again; entries made after the backup was made must be entered
+  again. Duolink keeps a protected copy of the data as it was just before.
+
+For Duolink staff (admin):
+
+- **Backups page** (sidebar): tiles for the last backup, verified count, storage used and the next
+  scheduled run; one list for nightly, manual, safety and uploaded backups; "Back up all
+  companies" and "Back up one company"; upload a company archive; the nightly time and how many
+  daily, weekly and monthly copies to keep. Support can read it; only a Super Admin changes
+  anything. Long work runs as a job the page follows.
+- **Back up one company** as a `.tar.gz`: that company's rows as CSV (never a filtered dump), its
+  attachments, logo and closing PDFs, and a manifest with row counts and SHA-256 per file.
+- **Restore one company** (type `RESTORE`): refused if the archive is for another company
+  (`BACKUP_WRONG_COMPANY`) or another database version (`BACKUP_SCHEMA_MISMATCH`). A protected
+  safety backup is taken first; the restore is one transaction ending with the company's integrity
+  check, and any failure leaves the company exactly as it was. Audited either way.
+- **Platform restore stays a command.** Each platform backup shows `./scripts/restore.sh
+  backups/<file>`; the admin never runs it.
+- **Download** (streamed, audited), **upload** (`.tar.gz`, 200 MB, manifest checked) and **delete**
+  (type `DELETE`; protected safety copies cannot be deleted).
+- **The nightly loop** now takes its time and retention from the schedule and records every run in
+  the same list. The `backup` service uses the backend image (it has `pg_dump`); `./backups` is
+  mounted read-write for the API; `mkdir -p backups && sudo chown 10001 backups` once.
+- **Purge switch.** The ledger and issued-document triggers let a row go only in a platform
+  session that also sets `app.data_purge`; the company restore is the first user.
+- `pg_dump`, `pg_restore` and `tar` run through one helper: an argv list, an allow-listed absolute
+  path, the password only in the environment, a timeout.
+
+Technical: migration 0038 (`platform_backup`, `platform_backup_job`, `platform_backup_schedule`,
+the redefined trigger functions, seven new platform audit actions).
+
+## 1.20.0 (M26): document numbering and company data management
+
+For companies:
+
+- **No change on screen.** After Duolink deletes a company's data at its request, the number
+  series of what was emptied start again from 1.
+
+For Duolink staff (admin, Super Admin only; Support never sees either tab and gets 403 on every
+route, reads included):
+
+- **Numbering tab** on the company page: one row per shop, document type and financial year, with
+  the highest number that exists (read from the documents: a cancelled bill counts, a deleted one
+  does not), the configured next number and the next document written out (`S1/26-27/00025`). A
+  value below the highest existing plus one is refused (409 `NUMBER_TOO_LOW`: "Bill S1/26-27/00007
+  already exists. The next number must be 8 or higher."); with no documents left, 1 is accepted. A
+  reason is required and the change is audited with the old and new values. A counter that is ahead
+  of its documents says so and offers the value that closes the gap.
+- **Data tab** on the company page: every kind of business data with its row count and what blocks
+  its deletion (the real foreign keys), View (latest 25 rows, four identifying columns, never an
+  amount), Delete (type `DELETE`) and a separate Danger zone to delete everything (`DELETE`, the
+  company's exact name and a tick-box). Both dialogs read a fresh preview when they open. A protected
+  safety backup is taken first (and the deletion is refused if it fails); the deletion is one
+  transaction in catalogue order with one DELETE per table; files leave storage after the commit;
+  any failure rolls back, is audited (`company_data_delete_failed`) and says nothing was removed.
+- **Integrity check** accepts the gap an audited numbering change explains and a series a deletion
+  reset (`document_sequence_event`, append-only).
+- New audit actions: `numbering_set`, `company_data_deleted`, `company_data_deleted_all`,
+  `company_data_delete_failed`.
+- Migration 0039. This is the one named exception to "issued documents are never deleted" and
+  "ledgers are append-only" (ADR 0013), through the purge switch of migration 0038.
+
+## 1.21.0 (M27): GSP and GSTIN-lookup admin
+
+For companies:
+
+- **Fetch details.** Next to GSTIN on a customer or supplier, "Fetch details" fills the name,
+  address and state from the GST registry. What you typed is kept. Each company has a daily and a
+  monthly allowance of lookups; over it, the button says so in words and you type the details in.
+  A recent answer for the same GSTIN is reused and costs nothing.
+
+For Duolink staff:
+
+- **Integrations page** (sidebar): the GSP account (e-way bill and IRN) and the GSTIN lookup, each
+  with its status, which settings are in force, a connection form, Test connection, Limits,
+  usage tiles (today, this week, this month, cached, failed, blocked), a per-company table and
+  recent failures. Keys are write-only: only the last 4 characters of a saved key are shown, and a
+  field left empty keeps the saved value. Support sees the status only.
+- **Saved settings win over the server's `.env`**, which stays the fallback for a single-shop
+  install. Keys are encrypted with the new `INTEGRATION_SECRET_KEY`; the app will not start if keys
+  are saved and it is missing.
+- **Fetch details on the onboarding form** fills the seller details without a company limit.
+- New dependency: `cryptography`.
+
+## 1.22.0 (M28): bill templates per company
+
+For companies:
+
+- **Your bills can carry your own design.** Duolink can set up a design for your tax invoice,
+  proforma invoice, quotation, credit note and debit note, and a second logo. Nothing else
+  changes: the figures, numbers and tax are the same, and a design cannot leave out what a GST
+  document must show.
+- **A bill keeps the design it was issued with.** Printing an old bill again gives the same bill
+  even after Duolink brings in a new design. Bills issued before a design was set up keep the
+  standard layout.
+
+For Duolink staff:
+
+- **Bill design tab** on the company page: a card for each kind of document with every version,
+  a preview drawn from sample figures, a checks list, upload, activate, deactivate and delete.
+  Support can read and preview; a Super Admin changes.
+- **Upload an HTML file and its images.** The file is used as written with placeholders such as
+  `{{invoice.number}}` filled in; the row holding `{{item.*}}` repeats for each item. Scripts,
+  event handlers, outside links, forms and frames are removed and listed back to you. The file is
+  refused if it leaves out a required GST field, or if a proforma or quotation calls itself a tax
+  invoice. Limits: 500 KB of HTML, 2 MB and PNG or JPEG per image, 20 images.
+- **Versions.** Each upload is the next version of its kind of document, inactive until you
+  activate it. A design that a bill was issued with cannot be deleted; deactivate it and new
+  documents return to the standard layout.
+- **Second logo** per company, printed where a design uses `{{company.secondaryLogo}}`.
+- **Placeholder list** on the same tab, with a description and a sample for every field.
+- Every upload, activation, deactivation, deletion and logo change is in the audit log.
+
+Not in this version: editing a design in the browser, thermal-printer layouts and a design per
+shop.
+
+## 1.23.0 (M29): installable app and force update
+
+For companies:
+
+- **Install the ERP as an app** on the shop's PC or phone from the browser's install button. It
+  carries your company's name and logo (the Duolink mark if there is no logo).
+- **"A new version is ready. Update now."** When Duolink releases a new version, a note appears at
+  the bottom of the screen. Press **Update now** to switch; press **Later** to carry on. The page
+  never reloads by itself, and **never while a bill or purchase is half keyed**: save or cancel it
+  first.
+- **"No connection."** If the network drops, the app still opens and says so on every screen. Bills
+  and other changes cannot be saved until the network is back: nothing is stored on the PC to be
+  sent later, because the server numbers every bill.
+- Company data is never kept on the PC by the app: only the screens' own files are.
+
+For Duolink staff:
+
+- **App and updates** page (sidebar): the frontend and backend builds, and for your own browser
+  whether the app can be installed, whether the service worker is running, whether the offline
+  screen is ready and whether an update is waiting.
+- **Force update** (Super Admin): every open company window looks for a new version within a few
+  minutes instead of at its next half-hourly check. Nobody is reloaded. It is audited with an
+  optional reason. Support can see the page but gets 403 on the button.
+
+Operator note: set `APP_BUILD` for the backend and for the frontend build (the git commit, say) so
+the page can tell builds apart. Migration 0042 adds one table, `platform_app_update`.
+
+## 1.24.0 (M30): renew your Duolink plan online
+
+For companies:
+
+- **Plan & billing** (Settings, and the link in the plan banner). The owner sees the plan, its
+  end date and the prices Duolink offers, each with the date the plan would then run to, and
+  pays with Razorpay. When the payment goes through, the plan is renewed and, if it had ended, you
+  can save again straight away, with no sign-out.
+- **It works when your plan has ended.** A read-only company can open the page and pay.
+- **Only the owner pays.** Other roles are told to ask the owner.
+- **Until Duolink switches it on,** the page and the banner say "Contact Duolink to renew",
+  as before.
+- **A payment is never counted twice**, even if Razorpay reports it more than once.
+
+For Duolink staff:
+
+- **Online payments appear in Payments** with method Razorpay, the Razorpay payment id as the
+  reference and "Online (Razorpay)" as who recorded it. They can be reversed like any other.
+- **Setup.** Set `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` to switch it on, and
+  `RAZORPAY_WEBHOOK_SECRET` with a Razorpay webhook for `payment.captured` at
+  `/api/v1/subscription/webhook` so a payment lands even if the buyer closes the browser. See the
+  Runbook.
+- Migration 0043 (`subscription_order`, one new platform audit action).
+
+## 1.16.0 (M22): support tickets
+
+For companies:
+
+- **Help.** A new Help item in the user menu opens your company's tickets. Raise a ticket with a
+  subject, a category (sign-in, billing, GST and e-way bill, stock, printing, other), a priority
+  (low, normal, high, urgent) and your message. Each ticket gets a number like T-000012.
+- **Duolink's answers appear in the thread.** Messages from Duolink are signed "Duolink Support";
+  you do not see which person answered. When an answer arrives that you have not opened, a dot
+  shows on Help (it refreshes about once a minute). Opening the ticket clears it for everyone in
+  your company.
+- **Reply** on the ticket at any time. A reply to a ticket that was waiting on you, or marked
+  resolved, puts it back with Duolink as open.
+- **Close** a ticket you raised yourself when you no longer need it. A closed ticket takes no more
+  replies; raise a new one.
+- **Who sees what.** The owner and the accountant see every ticket of the company. Counter staff
+  see only their own.
+- **You can ask for help even when your plan has ended.** A read-only company can still raise a
+  ticket, reply and close.
+
+For Duolink staff:
+
+- **Support page** (Alt 9) with tiles for open, in progress, waiting on the company, urgent and
+  unassigned tickets, filters (status, priority, company, assigned to me or unassigned, search by
+  subject, number or company), and the full thread. Reply, change the status or priority, or
+  assign the ticket to yourself. A Super Admin can assign it to any active admin.
+- **A message alone hands the ticket to the company** (it becomes "waiting on company"). Choose a
+  status with the reply to override that. To write on a closed ticket, choose a status that
+  reopens it.
+- **Support accounts may reply and update tickets.** This is the one place a Support account
+  writes; every other admin write still needs a Super Admin.
+- **Company page, Support tab** lists that company's tickets.
+- Every reply and change is in the audit log (ticket number, status change, whether a message was
+  sent). The message text is not copied there.
+
+Not in this version: the notifications bell for new and urgent tickets (M24), attachments on
+tickets, and email notifications.
+
+## 1.15.0 (M21): subscriptions, manual renewals, revenue, read-only on expiry
+
+For Duolink staff:
+
+- **Every company now has a subscription with an end date.** A new Subscriptions page lists them
+  with plan, status, end date and days left, and filters by status, plan and "ending within N
+  days". Companies that were already active got an end date one year out, marked "needs review":
+  check each one and correct it.
+- **Record a renewal by hand** (Super Admin): pick the plan and a price option, or a number of
+  days, then the amount received, how it was paid (cash, bank, UPI, cheque), a reference and notes.
+  Paying during a trial starts the paid period today. Renewing early adds the time on top of the
+  current end date. Renewing after the end starts today. Month ends are handled (31 Jan plus one
+  month is 28 or 29 Feb).
+- **Cancel** a subscription with a reason. The company becomes read-only.
+- **Payments page** lists every payment with totals received, reversed and net, filtered by date,
+  method and company. A mistaken payment is corrected with **Reverse**, which adds a negative row
+  and keeps the original. Reversing does not shorten the end date. Payments cannot be edited or
+  deleted.
+- **Dashboard** shows companies by status, revenue this month and this financial year, renewals,
+  new companies, a 12-month trend, companies per plan and the next expiries.
+- A payment row is your receipt record. Duolink's GST tax invoice for the subscription is raised
+  in your own books, outside this ERP.
+
+For companies:
+
+- From 7 days before the end date a banner says "Your Duolink plan ends on ...  Contact Duolink
+  to renew."
+- **After the end date the company is read-only.** Everyone can still sign in, read, run reports
+  and download GST exports, the Tally export and PDFs. Saving anything is refused until Duolink
+  records a renewal, which works at once. An ended trial with no payment is read-only too.
+
+## 1.14.0 (M20): plans and pricing catalogue
+
+For Duolink staff:
+
+- **Plans are now edited, not coded.** A new Plans page shows a card per plan: users and shops
+  allowed, prices and the features it lists. A Super Admin adds a plan (with a live card preview
+  beside the form), edits it, copies it, archives or restores it, and deletes one nobody is on.
+  Support can look.
+- **Prices** are rupees with two decimals, kept exactly as typed. A plan has one to six prices,
+  each for a number of days, months or years. The three plans that existed (Trial, Basic, Pro)
+  keep their limits; their prices start at 0.00 for you to fill in. Nothing is charged yet.
+- Only one plan is "Popular". Archiving a plan hides it when adding a company or changing a plan;
+  companies already on it keep it. A plan with companies on it cannot be deleted.
+- Lowering a plan's limit switches nobody off. The owner simply cannot add past it.
+- Every plan change is in Duolink's audit log.
+
+For companies:
+
+- Nothing changes on screen. Limits are what they were.
+
 ## 1.13.0 (M19): user support tools
 
 For Duolink staff:

@@ -5,7 +5,7 @@ from fastapi import APIRouter, File, Query, Request, UploadFile, status
 from app.api.deps import DbSession, PlatformAdminUser, SuperAdminOnly, request_host
 from app.core.config import get_settings
 from app.domain.plans import TrialState
-from app.models.enums import TenantPlan, TenantStatus
+from app.models.enums import TenantStatus
 from app.schemas.common import Page
 from app.schemas.platform import (
     CancelRequest,
@@ -20,8 +20,10 @@ from app.schemas.platform import (
     TenantUpdate,
     TenantUsage,
 )
+from app.schemas.support_access import AdminAccessStatus, EnterRequest, SupportSessionStarted
 from app.services import tenant_logo
 from app.services.platform import seller as seller_service
+from app.services.platform import support_access as access_service
 from app.services.platform import tenants as service
 
 router = APIRouter(prefix="/tenants", tags=["admin"])
@@ -44,7 +46,7 @@ def list_tenants(
     db: DbSession,
     q: str | None = None,
     status: TenantStatus | None = None,
-    plan: TenantPlan | None = None,
+    plan: Annotated[str | None, Query(description="a plan's code, e.g. PRO")] = None,
     trial: TrialState | None = None,
     expiring: Annotated[bool, Query(description="trial ends within 30 days")] = False,
     sort: Literal["name", "created", "last_activity", "users"] = "name",
@@ -160,3 +162,34 @@ def reactivate(
     """Undo a suspension. Reopening a cancelled company needs a reason (409 REASON_REQUIRED)."""
     service.reactivate(db, tenant_id, admin.admin_id, body.reason if body else None)
     return service.detail(db, tenant_id)
+
+
+# ------------------------------------------------------------------ support access (M23)
+
+
+@router.get("/{tenant_id}/support-access", response_model=AdminAccessStatus)
+def support_access_status(tenant_id: int, _: PlatformAdminUser, db: DbSession) -> AdminAccessStatus:
+    """Whether the company's owner has granted Duolink support access now, until when, and how
+    many support sessions are open. Statuses and times only."""
+    return access_service.access_status(db, tenant_id)
+
+
+@router.post(
+    "/{tenant_id}/support-session",
+    response_model=SupportSessionStarted,
+    status_code=status.HTTP_201_CREATED,
+)
+def enter_company(
+    tenant_id: int, body: EnterRequest, request: Request, admin: SuperAdminOnly, db: DbSession
+) -> SupportSessionStarted:
+    """Enter the company read-only, with its owner's live grant (Super Admin only). 409
+    NO_SUPPORT_GRANT without one; 409 TENANT_NOT_OPEN for a suspended or cancelled company. The
+    token lasts two hours at most and never past the grant; open `entry_url` in a new tab: the
+    token travels in the fragment, so no server log ever holds it."""
+    session, token, tenant = access_service.enter(db, tenant_id, admin.admin_id, body.reason)
+    return SupportSessionStarted(
+        session_id=session.id,
+        token=token,
+        expires_at=session.expires_at,
+        entry_url=f"{_sign_in_url(request, tenant.slug)}/support-entry#token={token}",
+    )

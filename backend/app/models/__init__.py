@@ -5,12 +5,15 @@ from app.models.audit import AuditLog
 from app.models.auth import AuthSession
 from app.models.banking import BankAccount, BankStatement, BankStatementLine
 from app.models.base import Base
+from app.models.bill_templates import BillTemplate, BillTemplateAsset
+from app.models.billing import Subscription, SubscriptionOrder, SubscriptionPayment
 from app.models.cashbook import CashEntry, ExpenseCategory
 from app.models.compliance import EInvoice, EwayBill
 from app.models.documents import Attachment, DailyClosing, Gstr2bImport
+from app.models.integrations import GstinCache, IntegrationCall, PlatformIntegration
 from app.models.ledgers import PartyLedger, StockLedger
 from app.models.masters import Item, ItemUnit, Party, Site
-from app.models.numbering import DocumentSequence
+from app.models.numbering import CompanyCounter, DocumentSequence, DocumentSequenceEvent
 from app.models.opening import OpeningBalance
 from app.models.orders import (
     GoodsReceipt,
@@ -20,7 +23,18 @@ from app.models.orders import (
     PurchaseOrderLine,
     SalesLineLot,
 )
-from app.models.platform import PlatformAdmin, PlatformAuditLog, PlatformSession
+from app.models.platform import (
+    PlatformAdmin,
+    PlatformAppUpdate,
+    PlatformAuditLog,
+    PlatformBackup,
+    PlatformBackupJob,
+    PlatformBackupSchedule,
+    PlatformMaintenance,
+    PlatformPlan,
+    PlatformPlanPrice,
+    PlatformSession,
+)
 from app.models.purchasing import CostComponent, Payment, Purchase, PurchaseCost, PurchaseLine
 from app.models.rates import CustomerRate, ItemMargin, MarketRate
 from app.models.receivables import BadDebtWriteoff
@@ -38,6 +52,8 @@ from app.models.stock_ops import (
     StockWritedown,
     StockWritedownLine,
 )
+from app.models.support import SupportMessage, SupportTicket
+from app.models.support_access import SupportAccessGrant, SupportSession, SupportSessionEvent
 from app.models.tally import TallyLedger
 from app.models.tenancy import Tenant
 from app.models.transport import DropShipLink, Trip, Vehicle
@@ -53,7 +69,10 @@ __all__ = [
     "BankStatement",
     "BankStatementLine",
     "Base",
+    "BillTemplate",
+    "BillTemplateAsset",
     "CashEntry",
+    "CompanyCounter",
     "CostComponent",
     "CreditNote",
     "CreditNoteLine",
@@ -62,13 +81,16 @@ __all__ = [
     "DebitNote",
     "DebitNoteLine",
     "DocumentSequence",
+    "DocumentSequenceEvent",
     "DropShipLink",
     "EInvoice",
     "EwayBill",
     "ExpenseCategory",
     "GoodsReceipt",
     "GoodsReceiptLine",
+    "GstinCache",
     "Gstr2bImport",
+    "IntegrationCall",
     "Item",
     "ItemMargin",
     "ItemUnit",
@@ -80,7 +102,15 @@ __all__ = [
     "PartyLedger",
     "Payment",
     "PlatformAdmin",
+    "PlatformAppUpdate",
     "PlatformAuditLog",
+    "PlatformBackup",
+    "PlatformBackupJob",
+    "PlatformBackupSchedule",
+    "PlatformIntegration",
+    "PlatformMaintenance",
+    "PlatformPlan",
+    "PlatformPlanPrice",
     "PlatformSession",
     "Purchase",
     "PurchaseCost",
@@ -103,7 +133,15 @@ __all__ = [
     "StockTransferLine",
     "StockWritedown",
     "StockWritedownLine",
+    "Subscription",
+    "SubscriptionOrder",
+    "SubscriptionPayment",
     "SupplierScheme",
+    "SupportAccessGrant",
+    "SupportMessage",
+    "SupportSession",
+    "SupportSessionEvent",
+    "SupportTicket",
     "TallyLedger",
     "Tenant",
     "Trip",

@@ -95,6 +95,51 @@ def decode_platform_token(token: str) -> PlatformClaims:
     )
 
 
+@dataclass(frozen=True)
+class SupportClaims:
+    """A Duolink Super Admin inside one company, under its owner's grant (Milestone 23)."""
+
+    admin_id: int
+    tenant_id: int
+    grant_id: int
+    session_id: int
+
+
+def create_support_token(claims: SupportClaims, expires_at: datetime, now: datetime) -> str:
+    """The third token type, "support". Company routes refuse it unless it is for their own
+    company and its session and grant are still live; admin routes refuse it outright."""
+    settings = get_settings()
+    payload: dict[str, Any] = {
+        "sub": str(claims.admin_id),
+        "tid": claims.tenant_id,
+        "gid": claims.grant_id,
+        "ssid": claims.session_id,
+        "typ": "support",
+        "iat": int(now.timestamp()),
+        "exp": int(expires_at.timestamp()),
+    }
+    return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+
+
+def decode_support_token(token: str) -> SupportClaims:
+    """Raise jwt.InvalidTokenError unless this is a valid, unexpired support token."""
+    settings = get_settings()
+    payload = jwt.decode(
+        token,
+        settings.jwt_secret,
+        algorithms=[settings.jwt_algorithm],
+        options={"require": ["exp", "iat", "sub", "typ", "tid", "gid", "ssid"]},
+    )
+    if payload.get("typ") != "support":
+        raise jwt.InvalidTokenError("not a support token")
+    return SupportClaims(
+        admin_id=int(payload["sub"]),
+        tenant_id=int(payload["tid"]),
+        grant_id=int(payload["gid"]),
+        session_id=int(payload["ssid"]),
+    )
+
+
 def decode_access_token(token: str) -> AccessClaims:
     """Raise jwt.InvalidTokenError if the token is invalid, expired or not an access token."""
     settings = get_settings()

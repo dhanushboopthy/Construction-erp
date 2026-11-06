@@ -91,7 +91,46 @@ class IrnResult:
     raw: dict[str, Any] = field(default_factory=dict)
 
 
+@dataclass(frozen=True)
+class TaxpayerInfo:
+    """A GSTIN as the public registry knows it (Milestone 27)."""
+
+    gstin: str
+    legal_name: str
+    trade_name: str
+    address: str
+    state_code: str
+    status: str  # as the registry words it: Active, Cancelled, Suspended
+
+
+@dataclass(frozen=True)
+class GspConfig:
+    """Which provider to call and how to sign in. Built from the admin's saved settings or, as
+    the fallback, from the environment (Milestone 27). `source` says which."""
+
+    provider: str  # fake, sandbox or live
+    source: str  # database or environment
+    base_url: str = ""
+    timeout_seconds: float = 20.0
+    client_id: str = ""
+    client_secret: str = field(default="", repr=False)
+    username: str = ""
+    password: str = field(default="", repr=False)
+    api_key: str = field(default="", repr=False)  # a lookup service signed in by key
+
+    def secrets(self) -> tuple[str, ...]:
+        """Every credential value, to keep out of stored failure messages."""
+        values = (self.client_id, self.client_secret, self.username, self.password, self.api_key)
+        return tuple(v for v in values if v)
+
+
 class GspClient(Protocol):
+    def check_connection(self) -> None:
+        """One live call that proves the address and the credentials work."""
+        ...
+
+    def lookup_gstin(self, gstin: str) -> TaxpayerInfo: ...
+
     def generate_eway(self, request: EwayRequest) -> EwayResult: ...
 
     def update_vehicle(

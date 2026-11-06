@@ -16,6 +16,8 @@ from app.main import app
 from app.models.enums import PlatformRole
 from app.scripts import create_platform_admin as script
 from app.services.platform import auth as platform_auth
+from tests.bill_samples import design
+from tests.conftest import login
 
 pytestmark = pytest.mark.integration
 
@@ -43,6 +45,14 @@ NOT_ADMIN_WRITES = {
     ("POST", "/api/v1/admin/auth/refresh"),
     ("POST", "/api/v1/admin/auth/logout"),
     ("POST", "/api/v1/admin/auth/change-password"),
+}
+# Answering a company's support ticket is a Support admin's job (Milestone 22), so these two
+# writes are open to every admin role. They are listed here so no other write can slip in.
+SUPPORT_MAY_WRITE = {
+    ("POST", "/api/v1/admin/support/tickets/{ticket_id}/reply"),
+    ("PATCH", "/api/v1/admin/support/tickets/{ticket_id}"),
+    # A preview only draws a PDF from sample figures: it changes nothing (Milestone 28).
+    ("POST", "/api/v1/admin/tenants/{tenant_id}/bill-templates/{template_id}/preview"),
 }
 
 
@@ -105,8 +115,31 @@ def _admin_routes():
     ]
 
 
-WRITES = [r for r in _admin_routes() if r[0] != "GET" and r not in NOT_ADMIN_WRITES]
-READS = [r for r in _admin_routes() if r[0] == "GET"]
+WRITES = [
+    r
+    for r in _admin_routes()
+    if r[0] != "GET" and r not in NOT_ADMIN_WRITES and r not in SUPPORT_MAY_WRITE
+]
+# The one read only a Super Admin has (the audit CSV, Milestone 24); Support gets 403, tested in
+# test_system_health.py.
+SUPER_ADMIN_READS = {
+    ("GET", "/api/v1/admin/audit/export"),
+    # A backup file is Duolink's whole data: only a Super Admin downloads it (M25).
+    ("GET", "/api/v1/admin/backups/{backup_id}/download"),
+    # A company's data inventory and number series: Super Admin only, reads included (M26).
+    ("GET", "/api/v1/admin/tenants/{tenant_id}/data"),
+    ("GET", "/api/v1/admin/tenants/{tenant_id}/data/preview"),
+    ("GET", "/api/v1/admin/tenants/{tenant_id}/data/{key}"),
+    ("GET", "/api/v1/admin/tenants/{tenant_id}/numbering"),
+}
+READS = [r for r in _admin_routes() if r[0] == "GET" and r not in SUPER_ADMIN_READS]
+# Support reads the integrations' status only (M27); usage, companies and failures are the
+# Super Admin's view.
+SUPER_ONLY_READS = {
+    ("GET", "/api/v1/admin/integrations/usage"),
+    ("GET", "/api/v1/admin/integrations/{kind}/companies"),
+    ("GET", "/api/v1/admin/integrations/{kind}/failures"),
+}
 
 
 def _fill(path, ids):
@@ -121,6 +154,33 @@ def _fill(path, ids):
 # ------------------------------------------------------------------ roles
 
 
+def test_the_only_writes_support_may_do_are_the_ticket_replies_and_previews(
+    client, boss, helper, acme
+):
+    assert set(_admin_routes()) >= SUPPORT_MAY_WRITE  # the names above are real routes
+    made = client.post(
+        f"/api/v1/admin/tenants/{acme['id']}/bill-templates",
+        headers=boss,
+        data={"slot": "tax_invoice", "name": "Plain"},
+        files=[("html", ("b.html", design("tax_invoice").encode(), "text/html"))],
+    )
+    assert made.status_code == 201, made.text
+    preview = client.post(
+        f"/api/v1/admin/tenants/{acme['id']}/bill-templates/{made.json()['id']}/preview",
+        headers=helper,
+    )
+    assert preview.status_code == 200 and preview.content.startswith(b"%PDF")
+    owner = login(client, "ravi", "ravi-pass-123", host="acme.localhost")
+    ticket = client.post(
+        "/api/v1/support/tickets",
+        headers=owner,
+        json={"subject": "A question", "category": "other", "body": "Hello"},
+    ).json()["id"]
+    base = f"/api/v1/admin/support/tickets/{ticket}"
+    assert client.post(f"{base}/reply", headers=helper, json={"body": "Hi"}).status_code == 200
+    assert client.patch(base, headers=helper, json={"priority": "high"}).status_code == 200
+
+
 def test_every_route_is_listed_so_none_can_be_forgotten():
     assert len(WRITES) >= 14 and len(READS) >= 8
     assert ("POST", "/api/v1/admin/staff") in WRITES and ("GET", "/api/v1/admin/staff") in READS
@@ -128,17 +188,66 @@ def test_every_route_is_listed_so_none_can_be_forgotten():
 
 @pytest.mark.parametrize(("method", "path"), WRITES, ids=[f"{m} {p}" for m, p in WRITES])
 def test_support_gets_403_on_every_write_route(client, helper, acme, method, path):
-    ids = {"tenant_id": acme["id"], "user_id": 1, "staff_id": 1, "session_id": SESSION_ID}
+    ids = {
+        "tenant_id": acme["id"],
+        "user_id": 1,
+        "staff_id": 1,
+        "session_id": SESSION_ID,
+        "plan_id": 1,
+        "subscription_id": 1,
+        "payment_id": 1,
+        "ticket_id": 1,
+        "backup_id": 1,
+        "job_id": 1,
+        "key": "quotes",
+        "kind": "gsp",
+        "template_id": 1,
+    }
     response = client.request(method, _fill(path, ids), headers=helper, json={})
     assert response.status_code == 403, f"{method} {path}: {response.status_code}"
     assert response.json()["code"] == "PERMISSION_DENIED"
 
 
 @pytest.mark.parametrize(("method", "path"), READS, ids=[f"{m} {p}" for m, p in READS])
-def test_support_gets_200_on_every_read_route(client, helper, acme, method, path):
+def test_support_gets_200_on_every_read_route(client, boss, helper, acme, seeded, method, path):
+    from app.models.enums import BackupJobKind, BackupJobStatus
+    from app.models.platform import PlatformBackupJob
+
+    some_job = PlatformBackupJob(
+        kind=BackupJobKind.BACKUP_PLATFORM, status=BackupJobStatus.SUCCEEDED
+    )
+    seeded.add(some_job)
+    seeded.flush()
+    some_design = client.post(
+        f"/api/v1/admin/tenants/{acme['id']}/bill-templates",
+        headers=boss,
+        data={"slot": "tax_invoice", "name": "Plain"},
+        files=[("html", ("b.html", design("tax_invoice").encode(), "text/html"))],
+    ).json()["id"]
     some_user = client.get("/api/v1/admin/users", headers=helper).json()["items"][0]["id"]
-    ids = {"tenant_id": acme["id"], "user_id": some_user, "staff_id": 1, "session_id": SESSION_ID}
+    some_plan = client.get("/api/v1/admin/billing/plans", headers=helper).json()[0]["id"]
+    owner = login(client, "ravi", "ravi-pass-123", host="acme.localhost")
+    some_ticket = client.post(
+        "/api/v1/support/tickets",
+        headers=owner,
+        json={"subject": "A question", "category": "other", "body": "Hello"},
+    ).json()["id"]
+    ids = {
+        "tenant_id": acme["id"],
+        "user_id": some_user,
+        "staff_id": 1,
+        "session_id": SESSION_ID,
+        "plan_id": some_plan,
+        "ticket_id": some_ticket,
+        "job_id": some_job.id,
+        "key": "quotes",
+        "kind": "gsp",
+        "template_id": some_design,
+    }
     response = client.get(_fill(path, ids), headers=helper)
+    if (method, path) in SUPER_ONLY_READS:
+        assert response.status_code == 403, f"{path}: {response.status_code}"
+        return
     assert response.status_code == 200, f"{path}: {response.text}"
 
 

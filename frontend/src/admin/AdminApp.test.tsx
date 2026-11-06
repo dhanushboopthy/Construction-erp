@@ -55,7 +55,9 @@ const ACME = {
   slug: "acme",
   name: "Acme Steels",
   status: "trial",
-  plan: "trial",
+  plan: "TRIAL",
+  plan_id: 1,
+  plan_name: "Trial",
   trial_ends_at: "2026-11-07T09:00:00Z",
   trial_state: "running",
   users: 1,
@@ -213,7 +215,7 @@ describe("AdminApp roles (ADR 0013)", () => {
     renderAt("/admin/companies");
     expect(await screen.findByRole("link", { name: "Acme Steels" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Add company" })).not.toBeInTheDocument();
-    expect(screen.getByText("Support")).toBeInTheDocument();
+    expect(screen.getAllByText("Support").length).toBeGreaterThan(0);
   });
 
   it("keeps Support out of the company form and the change buttons", async () => {
@@ -464,7 +466,40 @@ function formSection(heading: string): HTMLElement {
   return section;
 }
 
+const planOf = (id: number, code: string, name: string, active = true) => ({
+  id,
+  code,
+  name,
+  short_description: "",
+  long_description: "",
+  max_users: 5 * id,
+  max_locations: 2 * id,
+  features: [],
+  is_active: active,
+  is_popular: false,
+  sort_order: id,
+  prices: [
+    {
+      id,
+      duration_value: 1,
+      duration_unit: "month",
+      price: "0.00",
+      currency: "INR",
+      is_active: true,
+    },
+  ],
+  companies: 1,
+  created_at: "2026-10-24T09:00:00Z",
+  updated_at: "2026-10-24T09:00:00Z",
+});
+const PLANS = [
+  planOf(1, "TRIAL", "Trial"),
+  planOf(2, "BASIC", "Basic"),
+  planOf(3, "PRO", "Pro", false),
+];
+
 const COMPANY_ROUTES: [RegExp, Route][] = [
+  [/\/admin\/billing\/plans/, (url) => PLANS.filter((p) => p.is_active || !url.includes("false"))],
   [/\/admin\/tenants\/7\/seller-details$/, () => SELLER],
   [/\/admin\/tenants\/7\/usage$/, () => USAGE],
   [/\/admin\/tenants\/7$/, () => FULL_DETAIL],
@@ -483,6 +518,11 @@ describe("AdminApp company page (M18)", () => {
       "subscription",
       "usage",
       "activity",
+      "support",
+      "access",
+      "numbering",
+      "data",
+      "bill-design",
     ]);
     stubApi(COMPANY_ROUTES);
     const user = userEvent.setup();
@@ -492,7 +532,18 @@ describe("AdminApp company page (M18)", () => {
       within(tabs)
         .getAllByRole("link")
         .map((l) => l.textContent),
-    ).toEqual(["Overview", "Users", "Subscription", "Usage", "Activity"]);
+    ).toEqual([
+      "Overview",
+      "Users",
+      "Subscription",
+      "Usage",
+      "Activity",
+      "Support",
+      "Access",
+      "Numbering",
+      "Data",
+      "Bill design",
+    ]);
     await user.click(within(tabs).getByRole("link", { name: "Usage" }));
     expect(window.location.search).toBe("?tab=usage");
     expect(await screen.findByText("Bills, last 90 days")).toBeInTheDocument();
@@ -517,7 +568,7 @@ describe("AdminApp company page (M18)", () => {
       expect(screen.queryByRole("button", { name })).not.toBeInTheDocument();
     }
     const tabs = screen.getByRole("navigation", { name: "Company sections" });
-    expect(within(tabs).getAllByRole("link")).toHaveLength(5);
+    expect(within(tabs).getAllByRole("link")).toHaveLength(8); // Numbering and Data are Super Admin only
   });
 
   it("filters the Activity tab to this company", async () => {
@@ -687,7 +738,7 @@ describe("AdminApp add company (M18)", () => {
     expect(sent).toEqual({
       name: "Acme Steels",
       slug: "acme-steels",
-      plan: "trial",
+      plan: "TRIAL",
       trial_days: 30,
       start_active: false,
       state_code: "33",
@@ -708,6 +759,38 @@ describe("AdminApp add company (M18)", () => {
     );
   });
 
+  it("fills the seller details from the GST registry without overwriting what was typed", async () => {
+    const calls = stubApi([
+      [
+        /\/admin\/integrations\/gstin-lookup$/,
+        () => ({
+          gstin: "33AAPFU0939F1ZV",
+          legal_name: "Acme Steels Private Limited",
+          trade_name: "Acme Steels",
+          address: "Coimbatore",
+          state_code: "29",
+          status: "Active",
+          fetched_at: "2026-11-03T10:00:00Z",
+          cached: false,
+          lookups_left_today: null,
+          near_limit: false,
+        }),
+      ],
+      ...COMPANY_ROUTES,
+    ]);
+    const user = userEvent.setup();
+    renderAt("/admin/companies/new");
+    await user.type(await screen.findByLabelText("Name on bills"), "Typed by hand");
+    await user.type(screen.getByLabelText("GSTIN"), "33aapfu0939f1zv");
+    await user.click(screen.getByRole("button", { name: "Fetch details" }));
+    expect(await screen.findByText(/Acme Steels Private Limited · Active/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Name on bills")).toHaveValue("Typed by hand");
+    expect(screen.getByLabelText("Legal name")).toHaveValue("Acme Steels");
+    expect(screen.getByLabelText("State (GST)")).toHaveValue("29");
+    const sent = calls.find((c) => c.url.endsWith("/integrations/gstin-lookup"));
+    expect(JSON.parse(sent?.body ?? "{}")).toEqual({ gstin: "33AAPFU0939F1ZV" });
+  });
+
   it("starts active with no trial length, and a paid plan sends neither", async () => {
     const calls = stubApi([
       [/\/admin\/tenants$/, () => ({ ...FULL_DETAIL, sign_in_url: "https://acme.duolink.app" })],
@@ -718,8 +801,10 @@ describe("AdminApp add company (M18)", () => {
     await user.type(await screen.findByLabelText("Legal name"), "Beta");
     await user.selectOptions(screen.getByLabelText("Start"), "active");
     expect(screen.queryByLabelText("Trial length (days)")).not.toBeInTheDocument();
-    await user.selectOptions(screen.getByLabelText("Plan"), "basic");
+    await user.selectOptions(screen.getByLabelText("Plan"), "BASIC");
     expect(screen.queryByLabelText("Start")).not.toBeInTheDocument();
+    // The archived plan is not offered when adding a company.
+    expect(within(screen.getByLabelText("Plan")).queryByText("Pro")).not.toBeInTheDocument();
     const owner = formSection("First owner");
     await user.type(within(owner).getByLabelText("Full name"), "Bala");
     await user.type(within(owner).getByLabelText("Password"), "bala-pass-123");
@@ -727,7 +812,7 @@ describe("AdminApp add company (M18)", () => {
     const sent = JSON.parse(
       calls.find((c) => c.method === "POST" && c.url.endsWith("/admin/tenants"))?.body ?? "{}",
     );
-    expect(sent).toMatchObject({ plan: "basic", trial_days: null, start_active: false });
+    expect(sent).toMatchObject({ plan: "BASIC", trial_days: null, start_active: false });
   });
 });
 

@@ -66,7 +66,19 @@ def test_tenant_is_open_to_everyone_without_signing_in(client):
     for headers in ({}, login(client, *COUNTER)):
         response = client.get("/api/v1/tenant", headers=headers)
         assert response.status_code == 200
-        assert set(response.json()) == {"slug", "status", "name", "tagline", "logo_url"}
+        assert set(response.json()) == {
+            "slug",
+            "status",
+            "name",
+            "tagline",
+            "logo_url",
+            "access_state",
+            "subscription_status",
+            "expires_at",
+            "days_left",
+            "app_generation",
+            "online_renewal",
+        }
 
 
 def test_bad_token_is_rejected(client):

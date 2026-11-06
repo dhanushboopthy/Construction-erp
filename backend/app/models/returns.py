@@ -67,6 +67,9 @@ class CreditNote(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
     # True when the owner cancelled the whole bill: the bill then shows as cancelled. The bill
     # itself is never changed or deleted (B16); this note reverses all of it.
     cancels_invoice: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    bill_template_id: Mapped[int | None] = mapped_column(
+        ForeignKey("bill_template.id", ondelete="RESTRICT")
+    )
 
     lines: Mapped[list["CreditNoteLine"]] = relationship(
         lazy="selectin", cascade="all, delete-orphan", order_by="CreditNoteLine.line_no"
@@ -123,6 +126,9 @@ class DebitNote(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
     igst: Mapped[Money] = mapped_column()
     round_off: Mapped[Money] = mapped_column()
     grand_total: Mapped[Money] = mapped_column()
+    bill_template_id: Mapped[int | None] = mapped_column(
+        ForeignKey("bill_template.id", ondelete="RESTRICT")
+    )
 
     lines: Mapped[list["DebitNoteLine"]] = relationship(
         lazy="selectin", cascade="all, delete-orphan", order_by="DebitNoteLine.line_no"

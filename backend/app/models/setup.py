@@ -65,6 +65,11 @@ class ShopSettings(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
     logo_key: Mapped[str | None] = mapped_column(String(200))
     logo_type: Mapped[str | None] = mapped_column(String(20))
     logo_sha256: Mapped[str | None] = mapped_column(String(64))
+    # The second logo Duolink uploads for the company's bill designs (Milestone 28): a PNG or
+    # JPEG of any shape. All three are set together or not at all.
+    secondary_logo_key: Mapped[str | None] = mapped_column(String(200))
+    secondary_logo_type: Mapped[str | None] = mapped_column(String(20))
+    secondary_logo_sha256: Mapped[str | None] = mapped_column(String(64))
 
     financial_year_start_month: Mapped[int] = mapped_column(Integer, default=4)
     return_window_days: Mapped[int] = mapped_column(Integer, default=2)

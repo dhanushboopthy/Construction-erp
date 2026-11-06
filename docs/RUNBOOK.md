@@ -77,12 +77,120 @@ whoever looks after the server. Commands run in the project folder on the server
   is never deleted, so their name stays on the bills they made. The last active owner cannot be
   removed: make another person an owner first. A removed account cannot be brought back from the
   admin; add the person again with a new username if they return.
+- **Change what you sell:** Plans (Super Admin edits, Support looks). Each card is a plan: users and
+  shops allowed, one to six prices, and the features it lists. Edit shows the card as you type.
+  Prices are rupees, two decimals, no commas. The seeded Trial, Basic and Pro start at 0.00; fill
+  them in before you rely on them. Nothing charges a company yet.
+- **Raise or lower a plan's limit:** edit the plan. Companies with their own limit (company page,
+  Subscription) keep it. Lowering a limit switches nobody off; the owner just cannot add past it.
+- **Stop selling a plan:** Archive it, with a reason. Companies on it keep it and its limits; it is
+  no longer offered when adding a company or changing a plan. Restore brings it back. Delete is
+  only offered for a plan no company is on, and needs DELETE typed.
+- **Record a renewal** (Super Admin): money has reached you. Open Billing, Subscriptions, Renew on
+  the company's row. Choose the plan and a price, or a number of days; type the amount you
+  received, how it was paid and the reference (UTR, cheque number). The new end date shows before
+  you confirm. It works at once: the company can save again on its next request. Raise Duolink's
+  own GST invoice in your books; the payment row here is only your receipt record.
+- **Cancel a subscription:** Subscriptions, Cancel, write the reason. The company becomes
+  read-only (it can still read and export), not locked out. A later renewal makes it writable.
+- **A payment was recorded wrongly:** Payments, Reverse, write the reason. A negative row is added
+  and the original stays; revenue nets to zero. The end date does not move back. Then record the
+  correct renewal; if the date is wrong, that renewal sets it. Payments are never edited or deleted.
+- **What a company sees when its plan has ended:** a banner says it is read-only. They can sign in,
+  look at everything, run reports and download GST exports, the Tally export and PDFs. Every save
+  is refused with 403 `SUBSCRIPTION_EXPIRED` ("Your plan has ended, contact Duolink to renew").
+  Suspended companies are different: they cannot sign in at all.
+- **Ended trials are now read-only.** A trial that ended with no payment used to be only flagged;
+  from this version it is read-only like any lapsed plan. Check the Subscriptions list for ended
+  trials before you roll this out.
+- **Companies that were active before this version** got an expiry one year out, shown as "needs
+  review". Open each, compare with what they have really paid, and record a renewal (it sets the real
+  end date and clears the flag). Until then they run normally and nothing is read-only before that date.
+- **Give a company its own bill design:** open the company, the Bill design tab. Upload the HTML
+  (and the images it uses, named as the HTML names them) for the kind of document. Read the
+  checks beside it: removed scripts and links, and the placeholders that print blank. Preview it,
+  then Activate. New documents of that kind use it from then on; documents already issued keep
+  what they were issued with. The upload is refused (409 `TEMPLATE_MISSING_FIELDS`) if it leaves
+  out a required GST field, and the answer lists which.
+- **Change a design:** upload the changed file as the next version and activate it. A version a
+  bill was issued with is never edited or deleted. To stop using a design, Deactivate: new
+  documents return to the standard layout. Delete only a design nothing was issued with.
+- **Fill the placeholders:** the Bill design tab lists every placeholder with a sample (for
+  example `{{invoice.number}}`, `{{customer.gstin}}`, `{{totals.grandTotal|symbol}}`). Put the
+  `{{item.*}}` fields in one table row and it repeats per item. Use `<img src="{{company.logo}}">`
+  for logos.
+- **Second logo:** Choose second logo on the same tab. It reaches designs no bill was issued with
+  yet; to change what a printed bill shows, issue a new design version.
+- **A design prints wrongly:** Preview it, then Check. If the stored file is lost from storage
+  the bill prints on the standard layout and the server logs `bill design ... could not be read`;
+  restore the storage object (keys under `bill-template/<company id>/`).
+- **Online renewal (Razorpay, optional).** Off until you set `RAZORPAY_KEY_ID` and
+  `RAZORPAY_KEY_SECRET` in the server's `.env` (use Razorpay's test keys, `rzp_test_...`, first).
+  Then in the Razorpay dashboard add a webhook for the event `payment.captured` at
+  `https://<api-host>/api/v1/subscription/webhook`, choose a secret and set it as
+  `RAZORPAY_WEBHOOK_SECRET`; restart the backend. Without the webhook a payment still lands when
+  the owner's browser returns from Checkout, but not if they close it first. Never put the keys in
+  the repository, a ticket or a chat. `RAZORPAY_PROVIDER=fake` is for development only and the
+  server refuses it in production.
+  - **A payment is in Razorpay but not in Payments:** check the webhook's delivery log in the
+    Razorpay dashboard (a 400 means the secret differs) and redeliver it; delivering twice is safe.
+    A payment for an order that was already paid by another payment is logged and not applied:
+    refund it in Razorpay.
+  - **Refunds** made in Razorpay are not seen here: reverse the payment under Payments as well.
+  - Cancelling or archiving a plan removes its prices from the page; an order already made can
+    still be paid.
+- **Answer a ticket:** Support (Alt 9) lists every company's tickets; the tiles show open, urgent
+  and unassigned counts. Open one, read the thread, type your reply and send. A reply alone makes
+  the ticket "waiting on company"; the company's own reply puts it back to open. Any admin,
+  Support accounts included, can reply.
+- **Take a ticket:** press "Assign to me" (a Super Admin can pick any active admin from the
+  select). Filter "Assigned to me" or "Unassigned" to find yours. Change the priority the same way.
+- **Resolve a ticket:** send the reply with the status Resolved. The company sees it as resolved
+  and a reply from them reopens it. The company closes tickets they raised themselves; you can set
+  Closed too.
+- **A closed ticket needs a reopen:** you cannot just write on it (409 `TICKET_CLOSED`). Choose a
+  status such as Open or In progress with the message. The company cannot reply to a closed ticket
+  and must raise a new one.
+- **What the company sees:** the thread, with your answers signed "Duolink Support" (never your
+  name), a dot on Help until they open it, and the status. The owner and accountant see all the
+  company's tickets, counter staff only their own. A company whose plan has ended can still raise
+  and reply to tickets. The audit log records each reply and change but not the message text.
+- **Look inside a company (with the owner's consent):** you cannot enter a company unless its
+  owner has turned on Settings, Duolink support access. Ask them to give access for the time you
+  need and to say why. Then open the company, Access tab, write why you are entering, and press
+  Enter company (read-only) (Super Admin only). It opens in a new tab under an amber bar; you see
+  what the owner sees, nothing can be saved, and the owner can switch you out at any moment (your
+  next click then shows "This support link has ended"). The link lasts two hours at most and
+  never past the owner's grant; Exit in the bar ends it at once. Reloading the tab also ends it:
+  enter again. Without "show cost and margin" you see what a counter user sees.
+- **Who entered a company:** Activity, Company access lists every visit with its request count,
+  and the company's Access tab lists its own. A visit marked "Never left: window closed" was left
+  open past its time. Both audit logs record entering and leaving.
 - **A company does not pay:** open the company, write the reason, then Suspend company and
   confirm. Everyone there is signed out. Reactivate company undoes it. Nothing is deleted.
 - **Trials:** the overview lists trials ending this week. Change the plan, or move the trial end, on
   the company's page.
 - **Who did what:** Activity shows sign-ins at every company, and every admin action is listed
-  under "What Duolink admins did".
+  under "What Duolink admins did". The Audit log page (sidebar) has the same plus filters by dates,
+  admin, company and action; a Super Admin presses Export CSV for the filtered rows. The export is
+  recorded in the log too.
+- **Look at the bell:** the bell in the top bar counts what needs you: expired companies, a backup
+  older than 26 hours, a disk under 20% free, subscriptions and trials ending within 7 days,
+  urgent and new tickets, more than 10 failed admin sign-ins in a day. Each item links to where to
+  act. It is recalculated each minute and when you open it.
+- **Check the platform:** System (Alt 0) shows uptime, the database's answer time and size, disk
+  space, the last backup and the last off-site copy, and counters. "Copied off-site: not known"
+  means `scripts/offsite-sync.sh` has not run since this version; run it once.
+- **Close the ERP for maintenance:** System, "Turn maintenance on", optionally type what companies
+  should read (for example "Back at 9 pm"), confirm. Every company sees Back soon and their saves
+  are refused with 503; the admin, `/api/v1/health/live` and `/ready` keep answering, so load
+  balancers keep the server in rotation. It stays on through a restart. Turn it off from the same
+  page; companies return within 30 seconds, no restart needed. With several API processes, a
+  switch reaches all of them within 5 seconds. A restore (Milestone 25) uses a separate switch in
+  memory that a restart forgets.
+- **If the platform will not come back from maintenance:** the switch is the one row of
+  `platform_maintenance`. As the database owner, `UPDATE platform_maintenance SET enabled = false;`
+  opens it within 5 seconds, with no restart.
 
 ## Several companies on one server
 
@@ -122,6 +230,44 @@ upgrade is the cause, restore the last good backup (below) and re-enter the day'
 4. Everything entered after that backup (up to a day) must be entered again from paper or from
    staff's memory. Ask staff to sign in again.
 
+### Backups from the admin (Milestone 25)
+
+Super Admin, Backups page (sidebar):
+
+- **Make a backup:** "Back up all companies" (a `pg_dump` and the files archive) or choose a company
+  and "Back up one company". The page follows the job. Needs `BACKUP_DIR` set and writable by the
+  API (the compose file mounts `./backups` read-write; run `mkdir -p backups && sudo chown 10001
+  backups` once) and `pg_dump`, `pg_restore` and `tar` in the API image (the prod image installs
+  them; set `PG_BIN_DIR` if they live elsewhere). The page names what is missing.
+- **The nightly loop** reads its time and how many copies to keep from the schedule on the same
+  page, and records each run in the list. The `backup` service now uses the backend image. If the
+  application cannot be reached it still backs up at 02:30 and removes files older than
+  `BACKUP_KEEP_DAYS`.
+- **Restore one company** (the company's data was damaged, or a test needs undoing): Restore beside
+  one of its backups, type `RESTORE`. A protected safety copy of the company's current data is
+  taken first and is never pruned or deleted; the company is closed (403 `TENANT_RESTORING`) while
+  it runs, everyone there signs in again afterwards, and any failure leaves the company as it was.
+  Read the job's message; the Audit log has `backup_restore` or `backup_restore_failed`. An archive
+  made on another database version, or for another company, is refused.
+- **Restore the whole platform** is never done from the page. The list shows the command for each
+  platform backup, `./scripts/restore.sh backups/erp-YYYYMMDD-HHMM.dump`; run it on the server as in
+  "Restore a backup" above. Take a manual backup first if the database still answers.
+- **Download** a backup to keep it off the machine (audited). Upload a company archive made on
+  this server version to restore it later.
+- **Delete a company's data, or reset its numbering** (Super Admin; company page, **Data** and
+  **Numbering** tabs). Use it for a company that entered test data before go-live, or must start
+  again. Look at the **Data** tab first: the "Blocked by" column says what has to go first. A
+  protected safety backup is taken before anything is removed (kept for good; if it cannot be made,
+  nothing is deleted). To undo a deletion, restore that safety backup from the Backups page. The
+  company's users, shops, settings, subscription and tickets stay. After deleting everything the
+  numbers start from 1; to continue from a printed book instead, set the next number on the
+  **Numbering** tab (it must be above the highest number that exists, with a reason). The nightly
+  integrity check accepts the gap such a change leaves. A failed deletion changes nothing: look for
+  `company_data_delete_failed` in the Audit log.
+- **A restore job stuck as running:** a process that died leaves the job `running`; after six hours
+  it no longer blocks anything. To free a company sooner, as the database owner:
+  `UPDATE platform_backup_job SET status = 'failed', finished_at = now() WHERE status = 'running';`
+
 ### A day was closed by mistake, or a bill was forgotten
 
 The owner opens Reports, Daily closing, **Reopen** next to the day, and writes why. The change is
@@ -137,8 +283,27 @@ corrected with a **debit note** (Purchases, Return to supplier).
 
 The bill still saves. On the bill, try again in a few minutes. If the provider stays down, make the
 e-way bill on the government portal by hand and type its number on the bill ("The portal made it by
-hand? Enter the number"). If it says no provider is set, `GSP_PROVIDER` and the provider keys are
-missing from `.env` (see DEPLOYMENT).
+hand? Enter the number"). If it says no provider is set, connect one in the Duolink admin
+(Integrations) or set `GSP_PROVIDER` and the provider keys in `.env` (see DEPLOYMENT).
+
+### Connecting or changing the GSP account or the GSTIN lookup (Duolink staff)
+
+Super Admin, admin `Integrations` (sidebar). The saved settings win over `.env`; disconnecting
+returns to `.env`.
+
+1. Set `INTEGRATION_SECRET_KEY` in the server's `.env` first (a Fernet key; the command is in
+   `.env.example`) and restart. Without it the Connect form answers 409
+   `INTEGRATION_KEY_MISSING`, and the app will not start if keys are already saved.
+2. Choose the provider, enter the address and the keys, Save connection, then **Test connection**
+   (one real call). A saved key shows only its last 4 characters; leave a field empty to keep the
+   saved value.
+3. Limits sets the per-company calls a day and a month and the GSTIN cache hours. Only the GSTIN
+   lookup refuses a company over its limit (429 `GSTIN_LOOKUP_LIMIT`); the GSP limit only warns.
+4. If a company says e-way bills fail: Integrations, Recent failures shows the operation, the
+   company and the error code (no request or response text is kept).
+5. **If the secret key is lost**, the saved keys cannot be read: the test answers
+   `INTEGRATION_KEY_MISMATCH`. Set the right key, or Disconnect and enter the keys again.
+   Changing the key never needs a database change; saved keys are simply re-entered.
 
 ### Someone forgot their password or PIN
 
@@ -158,6 +323,19 @@ bill"). With a cloud server, use the e-way bill portal on a phone and type the n
 
 Settings, Users, switch the account off. Their sign-ins end at once; their past work stays
 attributed to them in the audit log.
+
+### Everyone must pick up a new release (force update)
+
+After an upgrade, companies get the new screens on their own: each open window checks for a new
+version every 30 minutes and when it is focused, then shows "A new version is ready. Update now".
+To hurry it, a Super Admin opens **App and updates** (sidebar) and presses **Force update**, with a
+reason if useful. Every open company window then looks within about five minutes. It reloads
+nobody: a person mid-bill sees the note and updates when they choose, and the button does nothing
+while a form has unsaved changes. If a company says "I still see the old screen", ask them to
+press Update now, or close and reopen the app. Compare the frontend and backend builds on that
+page with what you deployed. Set `APP_BUILD` (for the backend container, and as a build argument
+for the frontend) to the commit so they read differently. The page also shows, for your own
+browser, whether the service worker is running and the offline screen is ready.
 
 ## Upgrades
 

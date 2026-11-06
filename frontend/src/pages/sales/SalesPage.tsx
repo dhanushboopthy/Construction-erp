@@ -181,7 +181,11 @@ export function SalesPage() {
               </p>
             ) : null}
             <div className={styles.actions}>
-              <Button variant="primary" onClick={() => void print(inv.id, "original")}>
+              <Button
+                variant="primary"
+                allowWhenReadOnly
+                onClick={() => void print(inv.id, "original")}
+              >
                 Print A4 bill
               </Button>
               <Button onClick={() => void print(inv.id, "duplicate")}>Duplicate copy</Button>

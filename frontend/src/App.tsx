@@ -1,4 +1,4 @@
-import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router";
 
 import { createQueryClient } from "@/api/queryClient";
@@ -6,7 +6,13 @@ import { AuthProvider } from "@/auth/AuthProvider";
 import { AppShell } from "@/components/AppShell";
 import { RequireAuth } from "@/components/RequireAuth";
 import { RequireRole } from "@/components/RequireRole";
+import { QueryProviders } from "@/maintenance/QueryProviders";
 import { MODULES } from "@/modules";
+import { PlanBillingPage } from "@/billing/PlanBillingPage";
+import { SupportAccessPage } from "@/supportAccess/SupportAccessPage";
+import { SupportEntryPage } from "@/supportAccess/SupportEntryPage";
+import { HelpPage } from "@/support/HelpPage";
+import { TicketThreadPage } from "@/support/TicketThreadPage";
 import { ComingSoonPage } from "@/pages/ComingSoonPage";
 import { ItemsPage } from "@/pages/items/ItemsPage";
 import { ChangePasswordPage } from "@/pages/ChangePasswordPage";
@@ -85,12 +91,13 @@ const BUILT = new Set([
 
 export function App({ client = queryClient }: { client?: QueryClient }) {
   return (
-    <QueryClientProvider client={client}>
+    <QueryProviders client={client}>
       <AuthProvider>
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/change-password" element={<ChangePasswordPage />} />
+            <Route path="/support-entry" element={<SupportEntryPage />} />
             <Route
               element={
                 <RequireAuth>
@@ -99,6 +106,9 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
               }
             >
               <Route index element={<TodayPage />} />
+              <Route path="/help" element={<HelpPage />} />
+              <Route path="/help/:id" element={<TicketThreadPage />} />
+              <Route path="/plan" element={<PlanBillingPage />} />
               <Route
                 path="/metrics"
                 element={
@@ -124,6 +134,8 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
                 <Route path="lock" element={<PeriodLockPage />} />
                 <Route path="audit" element={<AuditLogPage />} />
                 <Route path="system" element={<SystemPage />} />
+                <Route path="support-access" element={<SupportAccessPage />} />
+                <Route path="plan" element={<PlanBillingPage />} />
               </Route>
               <Route
                 path="/items"
@@ -427,6 +439,6 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
           </Routes>
         </BrowserRouter>
       </AuthProvider>
-    </QueryClientProvider>
+    </QueryProviders>
   );
 }

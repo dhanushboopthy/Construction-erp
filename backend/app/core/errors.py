@@ -47,6 +47,14 @@ class ConflictError(AppError):
     code = "CONFLICT"
 
 
+class UnprocessableError(AppError):
+    """The request is well formed but wrong: a confirmation that does not match, an unknown
+    kind (Milestone 26)."""
+
+    status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
+    code = "UNPROCESSABLE"
+
+
 class PayloadTooLargeError(AppError):
     status_code = status.HTTP_413_CONTENT_TOO_LARGE
     code = "FILE_TOO_LARGE"
@@ -57,6 +65,27 @@ class UpstreamError(AppError):
 
     status_code = status.HTTP_502_BAD_GATEWAY
     code = "UPSTREAM_ERROR"
+
+
+class MaintenanceError(AppError):
+    """Duolink has closed the platform to companies for a while (Milestone 24)."""
+
+    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    code = "MAINTENANCE"
+
+
+class TenantRestoringError(AppError):
+    """One company is being restored from a backup (Milestone 25); the others carry on."""
+
+    status_code = status.HTTP_403_FORBIDDEN
+    code = "TENANT_RESTORING"
+
+
+class TooManyRequestsError(AppError):
+    """Over a usage limit (Milestone 27: a company's GSTIN lookups). Try again later."""
+
+    status_code = status.HTTP_429_TOO_MANY_REQUESTS
+    code = "TOO_MANY_REQUESTS"
 
 
 class AuthenticationError(AppError):

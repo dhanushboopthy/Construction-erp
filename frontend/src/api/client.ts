@@ -10,12 +10,19 @@ import type { ApiErrorBody, TokenResponse } from "./types";
  * admin's (src/admin/client.ts), which has its own token and refresh path.
  */
 
+/** Codes whose server wording is replaced by one plain sentence everywhere. */
+const FRIENDLY: Record<string, string> = {
+  SUBSCRIPTION_EXPIRED:
+    "Your Duolink plan has ended, so this company is read-only. Contact Duolink to renew.",
+  SUPPORT_READ_ONLY: "This is a read-only Duolink support session. Nothing can be saved.",
+};
+
 export class ApiError extends Error {
   readonly status: number;
   readonly body: ApiErrorBody;
 
   constructor(status: number, body: ApiErrorBody) {
-    super(body.message);
+    super(FRIENDLY[body.code] ?? body.message);
     this.status = status;
     this.body = body;
   }
@@ -38,10 +45,13 @@ async function parseError(response: Response): Promise<ApiError> {
 export interface ApiClient<Session extends { access_token: string }> {
   setAccessToken: (token: string | null) => void;
   setSessionEndedHandler: (handler: (() => void) | null) => void;
+  /** Off inside a Duolink support session (M23): the token cannot be refreshed, and a 401 must
+   * never quietly turn into a sign-in with some other cookie of this browser. */
+  setRefreshEnabled: (enabled: boolean) => void;
   refreshSession: () => Promise<Session | null>;
   api: <T>(path: string, init?: RequestInit, retry?: boolean) => Promise<T>;
   /** The fetch for files: with the access token, failures as ApiError. */
-  fetchFile: (path: string) => Promise<Blob>;
+  fetchFile: (path: string, init?: RequestInit) => Promise<Blob>;
 }
 
 /** `base` is prefixed to every path; `authPrefix` marks the sign-in routes, which are never
@@ -56,8 +66,10 @@ export function createClient<Session extends { access_token: string }>({
   let accessToken: string | null = null;
   let refreshInFlight: Promise<Session | null> | null = null;
   let onSessionEnded: (() => void) | null = null;
+  let refreshEnabled = true;
 
   function refreshSession(): Promise<Session | null> {
+    if (!refreshEnabled) return Promise.resolve(null);
     refreshInFlight ??= fetch(`${base}${authPrefix}refresh`, {
       method: "POST",
       credentials: "include",
@@ -95,15 +107,26 @@ export function createClient<Session extends { access_token: string }>({
       accessToken = null;
       onSessionEnded?.();
     }
-    if (!response.ok) throw await parseError(response);
+    if (!response.ok) {
+      const error = await parseError(response);
+      // Duolink has closed the platform for maintenance: tell the "Back soon" gate at once.
+      if (error.status === 503 && error.body.code === "MAINTENANCE") {
+        window.dispatchEvent(new Event("erp:maintenance"));
+      }
+      // Duolink is restoring this company from a backup (Milestone 25): show the same screen.
+      if (error.status === 403 && error.body.code === "TENANT_RESTORING") {
+        window.dispatchEvent(new Event("erp:restoring"));
+      }
+      throw error;
+    }
     if (response.status === 204) return undefined as T;
     return (await response.json()) as T;
   }
 
-  async function fetchFile(path: string): Promise<Blob> {
+  async function fetchFile(path: string, init: RequestInit = {}): Promise<Blob> {
     const headers = new Headers();
     if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
-    const response = await fetch(`${base}${path}`, { headers, credentials: "include" });
+    const response = await fetch(`${base}${path}`, { ...init, headers, credentials: "include" });
     if (!response.ok) throw await parseError(response);
     return response.blob();
   }
@@ -115,6 +138,9 @@ export function createClient<Session extends { access_token: string }>({
     setSessionEndedHandler: (handler) => {
       onSessionEnded = handler;
     },
+    setRefreshEnabled: (enabled) => {
+      refreshEnabled = enabled;
+    },
     refreshSession,
     api,
     fetchFile,
@@ -124,7 +150,8 @@ export function createClient<Session extends { access_token: string }>({
 /** The company app's client: /api/v1, signed in at /api/v1/auth. */
 const company = createClient<TokenResponse>({ base: "/api/v1", authPrefix: "/auth/" });
 
-export const { setAccessToken, setSessionEndedHandler, refreshSession, api } = company;
+export const { setAccessToken, setSessionEndedHandler, setRefreshEnabled, refreshSession, api } =
+  company;
 
 export const json = (value: unknown): string => JSON.stringify(value);
 

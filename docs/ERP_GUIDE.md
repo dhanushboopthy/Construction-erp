@@ -106,6 +106,91 @@ Five promises the system keeps:
 | Transport | Alt+T | ✓ | | ✓ (read) |
 | Metrics explained | Alt+M | ✓ | | |
 
+### When your Duolink plan ends
+
+Your company has a plan with an end date. From 7 days before it, a banner at the top says "Your
+Duolink plan ends on 12 Nov 2026. Contact Duolink to renew."
+
+If the date passes, the company becomes **read-only**, and the banner says so. You can still sign
+in, look at bills, stock, reports and the books, and download GST exports, the Tally export and
+PDFs. You cannot save anything new (bills, receipts, entries), and the save buttons are switched
+off. Nothing is lost. Contact Duolink to renew; once they record it, saving works again straight
+away. A trial that ends without a payment works the same way.
+
+### Letting Duolink look at your company (owner only)
+
+Duolink cannot see your company unless you allow it. Open **Settings, Duolink support access**.
+
+- **Give access:** pick how long (1, 4, 24 or 72 hours), say what you want help with, optionally
+  link a ticket, and decide whether Duolink may also see **cost and margin** (off unless you tick
+  it). Press Give access.
+- **While it is on,** one Duolink Super Admin can open your company and see the same screens you
+  do, **read-only**. They cannot save a bill, change a user or password, or change this setting.
+  Their screen shows an amber bar saying so.
+- **Turn it off any time:** press Turn off now. Their very next click is refused. Giving a new
+  access also replaces the old one.
+- **See who came in:** the list on the same page shows each visit: who, when, why and how many pages
+  they opened. It is also in the Audit log.
+- Only the owner can do this, and it works even when your plan has ended.
+
+### Your own bill design
+
+Duolink can set up your own design for the tax invoice, proforma invoice, quotation, credit note
+and debit note, and a second logo. Ask Duolink through Help. The figures, numbers and GST on a
+bill are the same as on the standard layout, and a design cannot leave out what a GST document must
+show. A bill keeps the design it was issued with: printing it again later, even after Duolink
+changes your design, gives the same bill. Bills issued before a design was set up print on the
+standard layout.
+
+### Installing the app, updates and no connection
+
+- **Install:** in Chrome or Edge, use the install icon in the address bar (or the browser menu,
+  "Install"). The ERP then opens in its own window with your company's name and logo.
+- **A new version:** when Duolink releases one, a note appears at the bottom right: "A new version
+  is ready." Press **Update now** to switch (the page reloads once) or **Later**. It never
+  switches by itself. If a bill, purchase or other form is half filled in, Update now waits and
+  tells you to save or cancel the form first, so nothing you typed is lost.
+- **No connection:** the app still opens, and a red note at the top says "No connection". You
+  cannot save a bill, payment or any other change until the network is back. Nothing is saved on
+  the computer to send later, because the server gives every bill its number.
+
+If Duolink has switched on online renewal, the banner says "Renew online" and the owner can pay
+under **Settings, Plan & billing**: choose how long to renew for, then Pay with Razorpay. The plan
+is renewed as soon as the payment goes through, and the page works even after the plan has ended.
+Other roles see "Ask your owner to renew".
+
+### Help: asking Duolink a question
+
+Open your name in the top corner and choose **Help**. You see the tickets your company has raised.
+
+- **Raise a ticket:** press New ticket, write a short subject, pick what it is about (sign-in,
+  billing, GST and e-way bill, stock, printing, other), pick how urgent it is, and describe the
+  problem. Say what you were doing and what you saw. Do not write passwords.
+- **Who sees it:** the owner and the accountant see every ticket of the company. Counter staff see
+  only the tickets they raised themselves. Duolink sees all of them. Answers are signed "Duolink
+  Support".
+- **The dot:** a dot on Help means Duolink has answered a ticket you have not opened yet. Open the
+  ticket and the dot goes away for everyone in your company.
+- **Reply** on the ticket to add more. If it was marked resolved, your reply reopens it.
+- **Close** a ticket you raised once you are sorted. A closed ticket takes no more replies; raise a
+  new one if the problem comes back.
+- **Even when your plan has ended**, you can raise tickets, reply and close them, so you can ask
+  Duolink about renewing.
+
+### "Back soon": when Duolink is doing maintenance
+
+Now and then Duolink may close the ERP for a short while to update or move it. Every screen is
+then replaced by **Back soon** with Duolink's note, for example "Back at 9 pm". You do not need to
+do anything: the page asks again every 30 seconds and shows your work as soon as it is over. Do not
+re-enter a bill you were saving; if it was refused it was not saved, so check Sales when you are
+back.
+
+If Duolink has to **restore your company's data from a backup** (for example after a mistake that
+cannot be undone any other way), your screens show **Back soon: restoring from a backup** for the
+few minutes it takes. Other companies are not affected. Afterwards everyone signs in again, and
+anything entered after the backup was made has to be entered again. Duolink keeps a protected copy
+of the data as it was just before the restore.
+
 ---
 
 ## 3. What is what: the building blocks
@@ -275,7 +360,7 @@ The order matters: each step needs the one before it.
 | ④ Approval PIN | Settings → Approval PIN | `POST /auth/pin` | 4–12 digits; needs the owner's password |
 | ⑤ Charge types | Settings → Charge types | `POST /cost-components` | Seeded with Unloading, Loading, Weighbridge, Transport rent, Commission, Others |
 | ⑥ Items | Items (Alt+0) → New or Import | `POST /items`, `POST /items/import` | Check HSN, GST rate, units with the accountant |
-| ⑦ Parties | Customers and suppliers (Alt+5) | `POST /parties` | Customers with credit terms and sites; suppliers with GSTIN |
+| ⑦ Parties | Customers and suppliers (Alt+5) | `POST /parties` | Customers with credit terms and sites; suppliers with GSTIN. "Fetch details" next to GSTIN fills the name, address and state from the GST registry (`POST /parties/gstin-lookup`); a company has a daily and monthly allowance, and over it the button says so and you type the details in |
 | ⑧ Opening balances | Settings → Opening balances | `POST /opening`, then `POST /opening/post` | Stock per place at cost, customer and supplier dues. **Locked once posted.** |
 | ⑨ Market rates | Daily rates (Alt+7) | `PUT /rates/market` | A bill line with no rate is blocked |
 

@@ -12,12 +12,20 @@ pytestmark = pytest.mark.integration
 PUBLIC = {
     ("GET", "/api/v1/health"),
     ("GET", "/api/v1/health/ready"),
+    ("GET", "/api/v1/health/live"),
+    ("GET", "/api/v1/maintenance"),  # the "Back soon" notice: a message, nothing else (M24)
     # The company, its business name, tagline and logo, for the sign-in page (ADR 0011; T8, T10).
     ("GET", "/api/v1/tenant"),
     ("GET", "/api/v1/tenant/logo"),
+    # The web app manifest (M29): the browser fetches it with no token; the company's name and
+    # logo address only, as GET /tenant already says.
+    ("GET", "/api/v1/tenant/manifest.webmanifest"),
     ("POST", "/api/v1/auth/login"),
     ("POST", "/api/v1/auth/refresh"),
     ("POST", "/api/v1/auth/logout"),
+    # Razorpay's webhook is signed instead of signed in (M30); test_online_renewal checks that
+    # a forged or unsigned call is refused with 400 and records nothing.
+    ("POST", "/api/v1/subscription/webhook"),
     ("POST", "/api/v1/admin/auth/login"),
     ("POST", "/api/v1/admin/auth/refresh"),
     ("POST", "/api/v1/admin/auth/logout"),

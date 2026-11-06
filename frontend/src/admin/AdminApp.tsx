@@ -9,12 +9,23 @@ import { AdminAuthProvider } from "./AdminAuthProvider";
 import { AdminShell } from "./AdminShell";
 import { ActivityPage } from "./pages/ActivityPage";
 import { AdminLoginPage } from "./pages/AdminLoginPage";
+import { AppPage } from "./pages/AppPage";
+import { AuditPage } from "./pages/AuditPage";
+import { BackupsPage } from "./pages/BackupsPage";
+import { PlatformSettingsPage } from "./pages/PlatformSettingsPage";
+import { SystemPage } from "./pages/SystemPage";
 import { CompaniesPage } from "./pages/CompaniesPage";
 import { ChangePasswordPage } from "./pages/ChangePasswordPage";
 import { CompanyPage } from "./pages/CompanyPage";
+import { IntegrationsPage } from "./pages/IntegrationsPage";
 import { NewCompanyPage } from "./pages/NewCompanyPage";
 import { OverviewPage } from "./pages/OverviewPage";
+import { PaymentsPage } from "./pages/PaymentsPage";
+import { PlansPage } from "./pages/PlansPage";
 import { StaffPage } from "./pages/StaffPage";
+import { SubscriptionsPage } from "./pages/SubscriptionsPage";
+import { SupportPage } from "./pages/SupportPage";
+import { SupportThreadPage } from "./pages/SupportThreadPage";
 import { UsersPage } from "./pages/UsersPage";
 
 const queryClient = createQueryClient();
@@ -64,9 +75,20 @@ export function AdminApp({ client = queryClient }: { client?: QueryClient }) {
                 }
               />
               <Route path="companies/:id" element={<CompanyPage />} />
+              <Route path="plans" element={<PlansPage />} />
+              <Route path="subscriptions" element={<SubscriptionsPage />} />
+              <Route path="payments" element={<PaymentsPage />} />
+              <Route path="integrations" element={<IntegrationsPage />} />
+              <Route path="support" element={<SupportPage />} />
+              <Route path="support/:id" element={<SupportThreadPage />} />
               <Route path="users" element={<UsersPage />} />
               <Route path="staff" element={<StaffPage />} />
               <Route path="activity" element={<ActivityPage />} />
+              <Route path="system" element={<SystemPage />} />
+              <Route path="audit" element={<AuditPage />} />
+              <Route path="backups" element={<BackupsPage />} />
+              <Route path="settings" element={<PlatformSettingsPage />} />
+              <Route path="app" element={<AppPage />} />
             </Route>
             <Route path="*" element={<Navigate to="/admin" replace />} />
           </Routes>

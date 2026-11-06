@@ -1,0 +1,25 @@
+.screen {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: var(--space-3);
+  min-height: 100vh;
+  padding: var(--space-6);
+  background: var(--color-bg);
+  color: var(--color-label);
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  letter-spacing: var(--tracking-tight);
+}
+
+.note {
+  max-width: 40ch;
+  margin: 0;
+  color: var(--color-secondary);
+}

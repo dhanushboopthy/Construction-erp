@@ -13,6 +13,7 @@ import {
 import { useAlerts } from "@/hooks/useAlerts";
 import { useModuleShortcuts } from "@/hooks/useModuleShortcuts";
 import { modulesFor, type ModuleLink } from "@/modules";
+import { ForcedUpdateWatch } from "@/pwa/AppUpdates";
 import { SupportBanner } from "@/supportAccess/SupportBanner";
 
 import styles from "./AppShell.module.css";
@@ -60,6 +61,7 @@ export function AppShell() {
 
   return (
     <div className={styles.shell}>
+      <ForcedUpdateWatch />
       <aside className={styles.sidebar} aria-label="Modules">
         <div className={styles.brand}>
           <BrandMark

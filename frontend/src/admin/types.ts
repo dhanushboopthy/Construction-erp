@@ -90,6 +90,8 @@ export type OutcomeCounts = Schemas["OutcomeCounts"];
 export type CompanyUsageRow = Schemas["CompanyUsageRow"];
 export type IntegrationFailure = Schemas["IntegrationFailureRow"];
 export type GstinDetails = Schemas["GstinLookupOut"];
+export type AppUpdate = Schemas["AppUpdateOut"];
+export type ForceUpdateBody = Schemas["ForceUpdateIn"];
 
 // Milestone 22 (support tickets): written by hand in src/support/types.ts, shared with the company app.
 export type {

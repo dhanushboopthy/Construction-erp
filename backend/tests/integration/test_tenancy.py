@@ -72,6 +72,7 @@ def test_each_address_names_its_company(client, beta):
         "subscription_status": "active",
         "expires_at": None,
         "days_left": None,
+        "app_generation": 0,  # the platform's release generation (M29), the same for all
     }
 
 
@@ -245,6 +246,9 @@ def test_every_table_belongs_to_a_company(seeded):
         # cached for every company. Neither holds a company's data.
         "platform_integration",
         "gstin_cache",
+        # The release generation (M29): one row for the whole platform. Every company reads it
+        # from GET /tenant; only the admin API (SuperAdminOnly) changes it.
+        "platform_app_update",
     }
     missing = seeded.execute(
         text(

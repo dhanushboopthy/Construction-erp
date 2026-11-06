@@ -102,6 +102,7 @@ class PlatformAction(StrEnum):
     BILL_TEMPLATE_DELETE = "bill_template_delete"
     SECONDARY_LOGO_SET = "secondary_logo_set"
     SECONDARY_LOGO_REMOVE = "secondary_logo_remove"
+    APP_UPDATE_FORCE = "app_update_force"
 
 
 class SequenceChange(StrEnum):

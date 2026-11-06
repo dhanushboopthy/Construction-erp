@@ -17,6 +17,7 @@ const base = {
   name: "Acme",
   tagline: "t",
   access_state: "full" as const,
+  app_generation: 0,
 };
 
 describe("SubscriptionBanner", () => {

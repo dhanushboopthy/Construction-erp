@@ -196,6 +196,17 @@ amount is ever returned. `{id}` is a company; an unknown one is 404 `TENANT_NOT_
 New platform audit actions: `numbering_set`, `company_data_deleted`, `company_data_deleted_all`,
 `company_data_delete_failed`.
 
+## Endpoints (Milestone 29: the installable app and force update)
+
+| Method | Path | What |
+| --- | --- | --- |
+| GET | `/tenant/manifest.webmanifest` | Open, like `/tenant`. The web app manifest (`application/manifest+json`, `Cache-Control: no-cache`) for the company at this address: `name`, `short_name`, `start_url`, `display: standalone`, `icons[]` (the logo first when there is one, then the Duolink mark). 404 `TENANT_NOT_FOUND` for an unknown address |
+| GET | `/tenant` | Now also returns `app_generation` (integer), the platform's release generation |
+| GET | `/admin/system/app-update` | Any admin role. `{generation, forced_at, forced_by, backend_version, backend_build}`; `forced_by` is a name |
+| POST | `/admin/system/force-update {reason?}` | **Super Admin** (Support 403). `reason` up to 200 characters (422 above). Adds one to the generation, audited as `app_update_force` (generation, reason), and returns the same body as the GET |
+
+The service worker never caches anything under `/api`.
+
 ## Endpoints (Milestone 22: support tickets)
 
 Two sets. Neither carries an amount. Ticket numbers read `T-000012`. Categories: `sign_in`,

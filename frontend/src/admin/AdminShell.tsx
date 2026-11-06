@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   LifeBuoy,
   LogOut,
+  MonitorDown,
   Plug,
   Receipt,
   ScrollText,
@@ -43,6 +44,7 @@ const NAV = [
   { to: "/admin/audit", label: "Audit log", icon: ScrollText, key: "", end: false },
   { to: "/admin/integrations", label: "Integrations", icon: Plug, key: "", end: false },
   { to: "/admin/settings", label: "Platform settings", icon: Settings, key: "", end: false },
+  { to: "/admin/app", label: "App and updates", icon: MonitorDown, key: "", end: false },
 ];
 
 function initials(name: string) {

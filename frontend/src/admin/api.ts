@@ -21,6 +21,8 @@ import type {
   BillTemplate,
   BillTemplateList,
   BillUpload,
+  AppUpdate,
+  ForceUpdateBody,
   AdminTicketDetail,
   AdminTicketFilters,
   AdminTicketPage,
@@ -94,6 +96,7 @@ const keys = {
   payments: ["admin", "payments"] as const,
   billingDashboard: ["admin", "billing-dashboard"] as const,
   support: ["admin", "support"] as const,
+  appUpdate: ["admin", "app-update"] as const,
 };
 
 export function useOverview() {
@@ -933,6 +936,26 @@ export function useAdminGstinLookup() {
         method: "POST",
         body: json({ gstin }),
       }),
+  });
+}
+
+export function useAppUpdate() {
+  return useQuery({
+    queryKey: keys.appUpdate,
+    queryFn: () => adminApi<AppUpdate>("/system/app-update"),
+  });
+}
+
+/** Super Admin: add one to the release generation so every open browser looks for a new build. */
+export function useForceUpdate() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: ForceUpdateBody) =>
+      adminApi<AppUpdate>("/system/force-update", { method: "POST", body: json(body) }),
+    onSuccess: (data) => {
+      client.setQueryData(keys.appUpdate, data);
+      void client.invalidateQueries({ queryKey: keys.audit });
+    },
   });
 }
 

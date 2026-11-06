@@ -142,6 +142,18 @@ show. A bill keeps the design it was issued with: printing it again later, even 
 changes your design, gives the same bill. Bills issued before a design was set up print on the
 standard layout.
 
+### Installing the app, updates and no connection
+
+- **Install:** in Chrome or Edge, use the install icon in the address bar (or the browser menu,
+  "Install"). The ERP then opens in its own window with your company's name and logo.
+- **A new version:** when Duolink releases one, a note appears at the bottom right: "A new version
+  is ready." Press **Update now** to switch (the page reloads once) or **Later**. It never
+  switches by itself. If a bill, purchase or other form is half filled in, Update now waits and
+  tells you to save or cancel the form first, so nothing you typed is lost.
+- **No connection:** the app still opens, and a red note at the top says "No connection". You
+  cannot save a bill, payment or any other change until the network is back. Nothing is saved on
+  the computer to send later, because the server gives every bill its number.
+
 ### Help: asking Duolink a question
 
 Open your name in the top corner and choose **Help**. You see the tickets your company has raised.

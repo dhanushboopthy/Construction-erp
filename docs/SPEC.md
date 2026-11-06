@@ -710,6 +710,53 @@ design for each kind of document, and a second logo, without changing anything a
 - **Not built.** An editor for the HTML in the browser, a primary-logo snapshot (the primary logo
   is the company's current one), thermal-printer layouts and a per-shop design.
 
+**Built (M29: PWA shell and force update, migration 0042):** the ERP installs as an app and picks
+up a new release reliably. Duolink can tell every open browser to look for it now.
+
+- **Table.** `platform_app_update`: one row for the whole platform (a CHECK keeps `id = 1`):
+  `generation`, `forced_at`, `forced_by`. It is not a company's row, so it has no `tenant_id` and
+  no row-level security; it is on the shared list in `test_tenancy.py`. Migration 0042 creates the
+  row at generation 0 and widens the audit CHECK by hand for `app_update_force`.
+- **Installable.** `GET /tenant/manifest.webmanifest` (open, `no-cache`) serves the manifest:
+  the company's name (`short_name` the first word, at most 12 characters), `display: standalone`,
+  and icons: the company's logo first (an SVG, or a square PNG whose size is read from the file),
+  then the Duolink mark and its maskable form, served from `/icons/`. `domain/pwa.py` builds it
+  (unit tested, 100%). The admin console has a fixed `/admin.webmanifest`. `main.tsx` adds the
+  right `<link rel="manifest">` by host.
+- **Service worker** (`src/pwa/sw.ts`, bundled to `/sw.js` by `scripts/serviceWorker.ts` after
+  `vite build`; no PWA plugin is installed). It precaches the app shell only: `index.html`, the
+  entry script and what it imports, its CSS, fonts, the `public/` files. The admin console's
+  chunks are left out so a shop never downloads them. **No API answer is ever cached:** the
+  routing rule (`src/pwa/swRoutes.ts`, tested) sends every `/api` request, every non-GET request
+  and every other origin straight to the network. A page load is network first with the cached
+  shell as the fallback. Nothing takes over by itself: there is no `skipWaiting` on install.
+- **No offline billing.** With the network off the shell opens and a notice reads "No
+  connection. Bills and other changes cannot be saved until the network is back." Every save is a
+  network call, so a bill cannot be saved without the server numbering it.
+- **Update flow** (`src/pwa/updates.ts`). The worker is registered in the production build only.
+  The browser is asked to check for a new `sw.js` every 30 minutes and whenever the window gets
+  focus. A new build installs and waits; a toast says "A new version is ready" with **Update now**
+  and **Later**. Update now tells the waiting worker to take over and reloads once, after
+  `controllerchange`. It does nothing, and says why, while any form has unsaved changes
+  (`useUnsavedChanges`, used by the sales bill and purchase entry forms; it also asks the browser
+  before a tab is closed). Nothing reloads by itself.
+- **Force update.** `POST /admin/system/force-update {reason?}` (Super Admin) adds one to the
+  generation in one statement and audits `app_update_force` (generation and reason). It reloads
+  nobody and touches no company data. `GET /tenant` now carries `app_generation`; the open app
+  reads it again every 5 minutes and on focus, and when it changes calls
+  `registration.update()`, the same check the browser already makes. If a new build exists the
+  toast appears; the person still chooses when.
+- **Diagnostics.** Admin page "App and updates" (sidebar, `GET /admin/system/app-update`, any admin
+  role): the frontend and backend build stamps, whether this browser can install the app, the
+  service worker state, whether the offline shell is cached, whether an update is waiting, the
+  user agent, the generation and who last forced it, and the Force update form (Super Admin
+  only). The backend build is `APP_BUILD` (default `dev`); the frontend's is `APP_BUILD` at build
+  time or else the build time.
+- **Decisions.** No `vite-plugin-pwa` (not installed, and there is no network): the worker and
+  its build step are written by hand. Forcing is a counter, never a push: a browser with no new
+  build sees nothing.
+- **Not built.** Offline data, offline billing, push notifications, background sync.
+
 **Built (Milestone 1):** `shop_settings` (with `logo_key`, `logo_type`, `logo_sha256`, all set or
 all empty, for the shop's logo: UI refresh T10), `location`, `app_user`, `user_location`,
 `auth_session`, `audit_log`, `document_sequence`. A GSTIN is checked for format and check

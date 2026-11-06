@@ -97,6 +97,9 @@ class Settings(BaseSettings):
     pg_bin_dir: str = ""
     backup_tool_timeout_seconds: int = 1800
     app_version: str = "1.0.0"
+    # Which build of the backend is running (Milestone 29), e.g. the git commit it was built
+    # from. The admin's "App and updates" page shows it next to the frontend's. Blank: "dev".
+    app_build: str = ""
 
     log_level: str = "INFO"
     log_json: bool = False

@@ -13,6 +13,9 @@ CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 # ---------- build: static files ----------
 FROM deps AS build
 COPY . .
+# The build stamp shown on the admin's "App and updates" page (the git commit, say).
+ARG APP_BUILD=""
+ENV APP_BUILD=$APP_BUILD
 RUN npm run build
 
 # ---------- prod: nginx serves the app and proxies /api to the backend ----------

@@ -22,3 +22,6 @@ class TenantOut(BaseModel):
     subscription_status: Literal["trial", "active", "expired", "cancelled"] | None = None
     expires_at: datetime | None = None
     days_left: int | None = None
+    # The platform's release generation (Milestone 29). When it changes, the open app asks its
+    # service worker to look for a new build now; it never reloads by itself.
+    app_generation: int = 0

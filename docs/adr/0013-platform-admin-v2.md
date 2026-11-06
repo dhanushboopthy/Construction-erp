@@ -132,6 +132,18 @@ inside a company.
 - **Audit CSV is spreadsheet-safe and audited.** Cells that would run as formulas are prefixed; the
   export records its filters and row count as `audit_export`.
 
+## Update, 2026-11-05 (Milestone 29): installable app and force update
+
+- **No company data in the service worker.** It precaches the app shell only, and a tested routing
+  rule sends every `/api` request and every non-GET to the network. A bill must reach the server
+  to get its number, so there is no offline billing.
+- **Force update is a super-admin write** (`POST /admin/system/force-update`, Support gets 403 in
+  the walk of every admin write). It adds one to a platform-wide counter and reloads nobody.
+- **The counter is the platform's, not a company's.** `platform_app_update` has no `tenant_id`
+  and is on the shared-tables list in `test_tenancy.py`. Every company reads it from `GET /tenant`
+  and nothing else of the platform's.
+- **Audit.** `app_update_force` records the new generation and the reason.
+
 ## Update, 2026-11-04 (Milestone 22): support tickets
 
 - **The admin may read ticket subjects and messages.** The company writes them to Duolink on

@@ -190,6 +190,33 @@ For Duolink staff:
 Not in this version: editing a design in the browser, thermal-printer layouts and a design per
 shop.
 
+## 1.23.0 (M29): installable app and force update
+
+For companies:
+
+- **Install the ERP as an app** on the shop's PC or phone from the browser's install button. It
+  carries your company's name and logo (the Duolink mark if there is no logo).
+- **"A new version is ready. Update now."** When Duolink releases a new version, a note appears at
+  the bottom of the screen. Press **Update now** to switch; press **Later** to carry on. The page
+  never reloads by itself, and **never while a bill or purchase is half keyed**: save or cancel it
+  first.
+- **"No connection."** If the network drops, the app still opens and says so on every screen. Bills
+  and other changes cannot be saved until the network is back: nothing is stored on the PC to be
+  sent later, because the server numbers every bill.
+- Company data is never kept on the PC by the app: only the screens' own files are.
+
+For Duolink staff:
+
+- **App and updates** page (sidebar): the frontend and backend builds, and for your own browser
+  whether the app can be installed, whether the service worker is running, whether the offline
+  screen is ready and whether an update is waiting.
+- **Force update** (Super Admin): every open company window looks for a new version within a few
+  minutes instead of at its next half-hourly check. Nobody is reloaded. It is audited with an
+  optional reason. Support can see the page but gets 403 on the button.
+
+Operator note: set `APP_BUILD` for the backend and for the frontend build (the git commit, say) so
+the page can tell builds apart. Migration 0042 adds one table, `platform_app_update`.
+
 ## 1.16.0 (M22): support tickets
 
 For companies:

@@ -17,6 +17,9 @@ PUBLIC = {
     # The company, its business name, tagline and logo, for the sign-in page (ADR 0011; T8, T10).
     ("GET", "/api/v1/tenant"),
     ("GET", "/api/v1/tenant/logo"),
+    # The web app manifest (M29): the browser fetches it with no token; the company's name and
+    # logo address only, as GET /tenant already says.
+    ("GET", "/api/v1/tenant/manifest.webmanifest"),
     ("POST", "/api/v1/auth/login"),
     ("POST", "/api/v1/auth/refresh"),
     ("POST", "/api/v1/auth/logout"),

@@ -8,6 +8,7 @@ import styles from "@/components/Ledger.module.css";
 import { useAdminAuth } from "../AdminAuthContext";
 import { downloadAuditCsv, useStaff, useTenants } from "../api";
 import { ACTION, SIGN_IN } from "../labels";
+import { SupportSessions } from "../SupportSessions";
 import type { AdminActionKind, AuditFilters } from "../types";
 import { AdminActions, SignIns } from "./ActivityPage";
 
@@ -104,20 +105,18 @@ export function AuditPage() {
             ))}
           </SelectField>
         )}
-        {tab !== "access" && (
-          <SelectField
-            label="Company"
-            value={get("tenant_id")}
-            onChange={(e) => setFilter("tenant_id", e.target.value)}
-          >
-            <option value="">Every company</option>
-            {companies.data?.items.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </SelectField>
-        )}
+        <SelectField
+          label="Company"
+          value={get("tenant_id")}
+          onChange={(e) => setFilter("tenant_id", e.target.value)}
+        >
+          <option value="">Every company</option>
+          {companies.data?.items.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </SelectField>
         {tab === "admin" && (
           <SelectField
             label="Action"
@@ -165,12 +164,7 @@ export function AuditPage() {
           <AdminActions filters={filters} />
         </>
       )}
-      {tab === "access" && (
-        <p className={styles.empty}>
-          Entries appear here when a company owner grants Duolink support access and an admin enters
-          the company. That feature is not switched on yet.
-        </p>
-      )}
+      {tab === "access" && <SupportSessions tenantId={filters.tenant_id} />}
       {tab === "sign-ins" && (
         <SignIns
           action={get("action")}

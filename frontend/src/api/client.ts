@@ -14,6 +14,7 @@ import type { ApiErrorBody, TokenResponse } from "./types";
 const FRIENDLY: Record<string, string> = {
   SUBSCRIPTION_EXPIRED:
     "Your Duolink plan has ended, so this company is read-only. Contact Duolink to renew.",
+  SUPPORT_READ_ONLY: "This is a read-only Duolink support session. Nothing can be saved.",
 };
 
 export class ApiError extends Error {
@@ -44,6 +45,9 @@ async function parseError(response: Response): Promise<ApiError> {
 export interface ApiClient<Session extends { access_token: string }> {
   setAccessToken: (token: string | null) => void;
   setSessionEndedHandler: (handler: (() => void) | null) => void;
+  /** Off inside a Duolink support session (M23): the token cannot be refreshed, and a 401 must
+   * never quietly turn into a sign-in with some other cookie of this browser. */
+  setRefreshEnabled: (enabled: boolean) => void;
   refreshSession: () => Promise<Session | null>;
   api: <T>(path: string, init?: RequestInit, retry?: boolean) => Promise<T>;
   /** The fetch for files: with the access token, failures as ApiError. */
@@ -62,8 +66,10 @@ export function createClient<Session extends { access_token: string }>({
   let accessToken: string | null = null;
   let refreshInFlight: Promise<Session | null> | null = null;
   let onSessionEnded: (() => void) | null = null;
+  let refreshEnabled = true;
 
   function refreshSession(): Promise<Session | null> {
+    if (!refreshEnabled) return Promise.resolve(null);
     refreshInFlight ??= fetch(`${base}${authPrefix}refresh`, {
       method: "POST",
       credentials: "include",
@@ -132,6 +138,9 @@ export function createClient<Session extends { access_token: string }>({
     setSessionEndedHandler: (handler) => {
       onSessionEnded = handler;
     },
+    setRefreshEnabled: (enabled) => {
+      refreshEnabled = enabled;
+    },
     refreshSession,
     api,
     fetchFile,
@@ -141,7 +150,8 @@ export function createClient<Session extends { access_token: string }>({
 /** The company app's client: /api/v1, signed in at /api/v1/auth. */
 const company = createClient<TokenResponse>({ base: "/api/v1", authPrefix: "/auth/" });
 
-export const { setAccessToken, setSessionEndedHandler, refreshSession, api } = company;
+export const { setAccessToken, setSessionEndedHandler, setRefreshEnabled, refreshSession, api } =
+  company;
 
 export const json = (value: unknown): string => JSON.stringify(value);
 

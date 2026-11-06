@@ -83,6 +83,21 @@ def logout(request: Request, response: Response, _: CurrentTenant, db: DbSession
 
 @router.get("/me", response_model=UserOut)
 def me(principal: PrincipalAnyState, db: DbSession) -> UserOut:
+    """The signed-in user. Inside a Duolink support session (M23) this is the support viewer,
+    not any company user: id 0, the owner's role (for reads), every location."""
+    if principal.support is not None:
+        return UserOut(
+            id=principal.user_id,
+            username=principal.username,
+            full_name=f"Duolink support: {principal.support.admin_name}",
+            role=principal.role,
+            is_active=True,
+            must_change_password=False,
+            mobile=None,
+            removed_at=None,
+            last_login_at=None,
+            locations=[],
+        )
     return UserOut.model_validate(get_user(db, principal.user_id))
 
 

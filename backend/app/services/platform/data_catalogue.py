@@ -475,5 +475,9 @@ PRESERVED: frozenset[str] = frozenset(
         "support_message",
         "audit_log",
         "platform_audit_log",
+        # The owner's support grants and Duolink's visits to the company (M23), append-only.
+        "support_access_grant",
+        "support_session",
+        "support_session_event",
     }
 )

@@ -14,9 +14,6 @@ M26: a Super Admin sets a company's number series and deletes its business data.
 - The purge switch itself was built in 0038 and is reused as it is.
 - The CHECK on `platform_audit_log.action` is widened by hand; the downgrade narrows it with
   NOT VALID because the log is append-only (see 0030).
-
-Parallel branch: before merging, set `down_revision` to the head of the branch merged before it,
-and make `ACTIONS_OLD` in this migration equal that head's `ACTIONS_NEW`.
 """
 
 from collections.abc import Sequence
@@ -62,6 +59,8 @@ ACTIONS_OLD = (
     "payment_reverse",
     "support_reply",
     "support_update",
+    "support_session_start",
+    "support_session_end",
     "maintenance_on",
     "maintenance_off",
     "audit_export",

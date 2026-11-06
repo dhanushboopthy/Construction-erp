@@ -1,75 +1,37 @@
 # Changelog
 
-## 1.19.0 (M26): document numbering and company data management
+## 1.17.0 (M23): owner-granted support access
 
-For companies:
+For companies (owner only):
 
-- **No change on screen.** After Duolink deletes a company's data at its request, the number
-  series of what was emptied start again from 1.
+- **Settings, Duolink support access.** Duolink cannot look inside your company unless you let it.
+  Give access for 1, 4, 24 or 72 hours, say why, optionally link one of your tickets, and choose
+  whether Duolink may also see cost and margin (off by default: Duolink then sees what a counter
+  user sees). The screen shows the live grant with the time left and a **Turn off now** button.
+  Turning it off, or giving a new grant, ends any Duolink visit at once: the next thing Duolink
+  does is refused.
+- **Who came in.** A history lists each Duolink visit: who, when they entered and left, why, and
+  how many pages they opened. Every visit is also in your audit log.
+- **Read-only, always.** Inside, Duolink sees the screens you see but cannot save anything,
+  change a user or a password, or change this setting.
 
-For Duolink staff (admin, Super Admin only; Support never sees either tab and gets 403 on every
-route, reads included):
+For Duolink staff:
 
-- **Numbering tab** on the company page: one row per shop, document type and financial year, with
-  the highest number that exists (read from the documents: a cancelled bill counts, a deleted one
-  does not), the configured next number and the next document written out (`S1/26-27/00025`). A
-  value below the highest existing plus one is refused (409 `NUMBER_TOO_LOW`: "Bill S1/26-27/00007
-  already exists. The next number must be 8 or higher."); with no documents left, 1 is accepted. A
-  reason is required and the change is audited with the old and new values. A counter that is ahead
-  of its documents says so and offers the value that closes the gap.
-- **Data tab** on the company page: every kind of business data with its row count and what blocks
-  its deletion (the real foreign keys), View (latest 25 rows, four identifying columns, never an
-  amount), Delete (type `DELETE`) and a separate Danger zone to delete everything (`DELETE`, the
-  company's exact name and a tick-box). Both dialogs read a fresh preview when they open. A protected
-  safety backup is taken first (and the deletion is refused if it fails); the deletion is one
-  transaction in catalogue order with one DELETE per table; files leave storage after the commit;
-  any failure rolls back, is audited (`company_data_delete_failed`) and says nothing was removed.
-- **Integrity check** accepts the gap an audited numbering change explains and a series a deletion
-  reset (`document_sequence_event`, append-only).
-- New audit actions: `numbering_set`, `company_data_deleted`, `company_data_deleted_all`,
-  `company_data_delete_failed`.
-- Migration 0039. This is the one named exception to "issued documents are never deleted" and
-  "ledgers are append-only" (ADR 0013), through the purge switch of migration 0038.
+- **Company page, Access tab.** Shows whether the owner has granted access and until when. A Super
+  Admin gives a reason and presses **Enter company (read-only)**; the company opens in a new tab
+  under an amber "Super Admin Mode" bar: "Duolink support, read-only, viewing the company, ends
+  16:40, Exit". Every save button is off ("Read-only support session"). Support accounts see the
+  status but cannot enter.
+- **Entering needs a live grant.** Without one the admin is told to ask the owner (409). The link
+  lasts two hours at most and never longer than the grant. It works only at that company's address
+  and opens for that visit only: closing the tab or reloading ends it, and the admin enters again.
+- **Activity, Company access.** Every visit at every company with its request count. A visit that
+  was never ended and whose window has closed is marked.
+- Entering and leaving are in the admin audit log and in the company's own audit log.
 
-## 1.18.0 (M25): backup and recovery from the admin, including one company
+Not in this version: the notifications bell for a visit left open (M24).
 
-For companies:
-
-- **Restore from a backup.** If Duolink restores your company's data, your screens show "Back soon:
-  restoring from a backup" and check again every 30 seconds. Other companies keep working.
-  Afterwards everyone signs in again; entries made after the backup was made must be entered
-  again. Duolink keeps a protected copy of the data as it was just before.
-
-For Duolink staff (admin):
-
-- **Backups page** (sidebar): tiles for the last backup, verified count, storage used and the next
-  scheduled run; one list for nightly, manual, safety and uploaded backups; "Back up all
-  companies" and "Back up one company"; upload a company archive; the nightly time and how many
-  daily, weekly and monthly copies to keep. Support can read it; only a Super Admin changes
-  anything. Long work runs as a job the page follows.
-- **Back up one company** as a `.tar.gz`: that company's rows as CSV (never a filtered dump), its
-  attachments, logo and closing PDFs, and a manifest with row counts and SHA-256 per file.
-- **Restore one company** (type `RESTORE`): refused if the archive is for another company
-  (`BACKUP_WRONG_COMPANY`) or another database version (`BACKUP_SCHEMA_MISMATCH`). A protected
-  safety backup is taken first; the restore is one transaction ending with the company's integrity
-  check, and any failure leaves the company exactly as it was. Audited either way.
-- **Platform restore stays a command.** Each platform backup shows `./scripts/restore.sh
-  backups/<file>`; the admin never runs it.
-- **Download** (streamed, audited), **upload** (`.tar.gz`, 200 MB, manifest checked) and **delete**
-  (type `DELETE`; protected safety copies cannot be deleted).
-- **The nightly loop** now takes its time and retention from the schedule and records every run in
-  the same list. The `backup` service uses the backend image (it has `pg_dump`); `./backups` is
-  mounted read-write for the API; `mkdir -p backups && sudo chown 10001 backups` once.
-- **Purge switch.** The ledger and issued-document triggers let a row go only in a platform
-  session that also sets `app.data_purge`; the company restore is the first user.
-- `pg_dump`, `pg_restore` and `tar` run through one helper: an argv list, an allow-listed absolute
-  path, the password only in the environment, a timeout.
-
-Technical: migration 0038 (`platform_backup`, `platform_backup_job`, `platform_backup_schedule`,
-the redefined trigger functions, seven new platform audit actions). Parallel branch: before
-merging, set `down_revision` to the head of the branch merged before it.
-
-## 1.17.0 (M24): system health, notifications, maintenance mode, audit log
+## 1.18.0 (M24): system health, notifications, maintenance mode, audit log
 
 For companies:
 
@@ -104,8 +66,75 @@ For Duolink staff (admin):
   verified copy, so System health can show when the last off-site copy happened.
 
 Technical: migration 0037 (`platform_maintenance`, a one-row table with no company; three new
-platform audit actions). Parallel branch: before merging, set `down_revision` to the head of the
-branch merged before it.
+platform audit actions).
+
+## 1.19.0 (M25): backup and recovery from the admin, including one company
+
+For companies:
+
+- **Restore from a backup.** If Duolink restores your company's data, your screens show "Back soon:
+  restoring from a backup" and check again every 30 seconds. Other companies keep working.
+  Afterwards everyone signs in again; entries made after the backup was made must be entered
+  again. Duolink keeps a protected copy of the data as it was just before.
+
+For Duolink staff (admin):
+
+- **Backups page** (sidebar): tiles for the last backup, verified count, storage used and the next
+  scheduled run; one list for nightly, manual, safety and uploaded backups; "Back up all
+  companies" and "Back up one company"; upload a company archive; the nightly time and how many
+  daily, weekly and monthly copies to keep. Support can read it; only a Super Admin changes
+  anything. Long work runs as a job the page follows.
+- **Back up one company** as a `.tar.gz`: that company's rows as CSV (never a filtered dump), its
+  attachments, logo and closing PDFs, and a manifest with row counts and SHA-256 per file.
+- **Restore one company** (type `RESTORE`): refused if the archive is for another company
+  (`BACKUP_WRONG_COMPANY`) or another database version (`BACKUP_SCHEMA_MISMATCH`). A protected
+  safety backup is taken first; the restore is one transaction ending with the company's integrity
+  check, and any failure leaves the company exactly as it was. Audited either way.
+- **Platform restore stays a command.** Each platform backup shows `./scripts/restore.sh
+  backups/<file>`; the admin never runs it.
+- **Download** (streamed, audited), **upload** (`.tar.gz`, 200 MB, manifest checked) and **delete**
+  (type `DELETE`; protected safety copies cannot be deleted).
+- **The nightly loop** now takes its time and retention from the schedule and records every run in
+  the same list. The `backup` service uses the backend image (it has `pg_dump`); `./backups` is
+  mounted read-write for the API; `mkdir -p backups && sudo chown 10001 backups` once.
+- **Purge switch.** The ledger and issued-document triggers let a row go only in a platform
+  session that also sets `app.data_purge`; the company restore is the first user.
+- `pg_dump`, `pg_restore` and `tar` run through one helper: an argv list, an allow-listed absolute
+  path, the password only in the environment, a timeout.
+
+Technical: migration 0038 (`platform_backup`, `platform_backup_job`, `platform_backup_schedule`,
+the redefined trigger functions, seven new platform audit actions).
+
+## 1.20.0 (M26): document numbering and company data management
+
+For companies:
+
+- **No change on screen.** After Duolink deletes a company's data at its request, the number
+  series of what was emptied start again from 1.
+
+For Duolink staff (admin, Super Admin only; Support never sees either tab and gets 403 on every
+route, reads included):
+
+- **Numbering tab** on the company page: one row per shop, document type and financial year, with
+  the highest number that exists (read from the documents: a cancelled bill counts, a deleted one
+  does not), the configured next number and the next document written out (`S1/26-27/00025`). A
+  value below the highest existing plus one is refused (409 `NUMBER_TOO_LOW`: "Bill S1/26-27/00007
+  already exists. The next number must be 8 or higher."); with no documents left, 1 is accepted. A
+  reason is required and the change is audited with the old and new values. A counter that is ahead
+  of its documents says so and offers the value that closes the gap.
+- **Data tab** on the company page: every kind of business data with its row count and what blocks
+  its deletion (the real foreign keys), View (latest 25 rows, four identifying columns, never an
+  amount), Delete (type `DELETE`) and a separate Danger zone to delete everything (`DELETE`, the
+  company's exact name and a tick-box). Both dialogs read a fresh preview when they open. A protected
+  safety backup is taken first (and the deletion is refused if it fails); the deletion is one
+  transaction in catalogue order with one DELETE per table; files leave storage after the commit;
+  any failure rolls back, is audited (`company_data_delete_failed`) and says nothing was removed.
+- **Integrity check** accepts the gap an audited numbering change explains and a series a deletion
+  reset (`document_sequence_event`, append-only).
+- New audit actions: `numbering_set`, `company_data_deleted`, `company_data_deleted_all`,
+  `company_data_delete_failed`.
+- Migration 0039. This is the one named exception to "issued documents are never deleted" and
+  "ledgers are append-only" (ADR 0013), through the purge switch of migration 0038.
 
 ## 1.16.0 (M22): support tickets
 

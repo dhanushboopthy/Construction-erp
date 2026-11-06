@@ -519,6 +519,7 @@ describe("AdminApp company page (M18)", () => {
       "usage",
       "activity",
       "support",
+      "access",
       "numbering",
       "data",
     ]);
@@ -537,6 +538,7 @@ describe("AdminApp company page (M18)", () => {
       "Usage",
       "Activity",
       "Support",
+      "Access",
       "Numbering",
       "Data",
     ]);
@@ -564,7 +566,7 @@ describe("AdminApp company page (M18)", () => {
       expect(screen.queryByRole("button", { name })).not.toBeInTheDocument();
     }
     const tabs = screen.getByRole("navigation", { name: "Company sections" });
-    expect(within(tabs).getAllByRole("link")).toHaveLength(6);
+    expect(within(tabs).getAllByRole("link")).toHaveLength(7);
   });
 
   it("filters the Activity tab to this company", async () => {

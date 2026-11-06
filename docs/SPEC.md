@@ -596,6 +596,44 @@ Duolink watches and, when it must, closes the platform. Rules in `domain/platfor
   23's tables (a parallel branch): the tab says so, and `services/platform/system.open_support_sessions`
   returns 0 until the merge wires it. Disk space is the server's, not per company.
 
+**Built (M27: GSP and GSTIN-lookup API admin, migration 0040):** Duolink's shared GSP account and
+a GSTIN lookup are set up, tested, limited and watched from the admin (ADR 0013 point 7).
+
+- **Tables.** `platform_integration` (one row per kind, `gsp` and `gstin_lookup`, seeded by the
+  migration) and `gstin_cache` (public registry answers shared by all companies) are
+  platform-only: no `tenant_id`. `integration_call` has a nullable `tenant_id` (blank for a
+  Duolink admin's own call), row-level security and both policies. Its columns are `kind`,
+  `operation`, `outcome` (`ok`, `failed`, `cached`, `blocked`), `error_code`, `latency_ms`, `at`:
+  there is no column for a request or a response body.
+- **Credentials.** Stored as one Fernet token (`app/core/crypto.py`), key from
+  `INTEGRATION_SECRET_KEY`. The app refuses to start if keys are saved and the key is blank (a
+  malformed key refuses at settings load). Only `key_last4` is readable. No endpoint returns a
+  credential; a blank field on Connect keeps the saved value; the audit log holds the last 4,
+  the provider and which fields changed, never a value. A failure message is scrubbed of every
+  credential and cut to 200 characters.
+- **Precedence** (`services/gsp/__init__.py`). Saved settings, then (lookup only) the GSP
+  account's saved settings, then the `GSP_*` environment. The pretend provider is refused when
+  connecting in production (409 `FAKE_NOT_IN_PRODUCTION`) and at build time.
+- **Calls.** Every e-way bill, IRN and lookup call goes through `services/integration_calls.py`:
+  it is timed, counted, and updates the last success or failure of the saved connection. A failed
+  call is saved at once (the document is not).
+- **Limits** (`domain/integrations.py`, unit tested). Per company: daily and monthly calls, warn
+  at a percent, and the GSTIN cache hours. Defaults 50 a day, 500 a month, 80%, 168 hours. Only
+  `ok` and `failed` calls use the allowance.
+  - **GSTIN lookup** (`POST /parties/gstin-lookup`, owner or counter): a fresh cached answer is
+    returned and logged `cached` (no provider call); over a limit answers 429
+    `GSTIN_LOOKUP_LIMIT` and logs `blocked`; a provider failure is 502 and logs `failed`.
+  - **GSP** limits only warn and show in the per-company table. A bill is never held back.
+- **Admin** (`/admin/integrations`). Support reads the status only; every change, test, usage,
+  per-company usage, recent failures (operation, company, error code) and the admin's own
+  lookup for onboarding need a Super Admin. Audit actions: `integration_connect`,
+  `integration_test`, `integration_disconnect`, `integration_limits`, `gstin_lookup`.
+- **UI.** Admin: Integrations (sidebar), two cards with a write-only connection form, test,
+  limits, usage tiles, a per-company table and recent failures. "Fetch details" next to GSTIN on
+  the party form and the onboarding form.
+- **Not built.** The provider's real taxpayer-search and ping paths are placeholders in
+  `services/gsp/sandbox.py` until a provider is chosen; no email when a company nears its limit.
+
 **Built (Milestone 1):** `shop_settings` (with `logo_key`, `logo_type`, `logo_sha256`, all set or
 all empty, for the shop's logo: UI refresh T10), `location`, `app_user`, `user_location`,
 `auth_session`, `audit_log`, `document_sequence`. A GSTIN is checked for format and check

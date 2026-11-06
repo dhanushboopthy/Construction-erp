@@ -136,6 +136,28 @@ route, reads included):
 - Migration 0039. This is the one named exception to "issued documents are never deleted" and
   "ledgers are append-only" (ADR 0013), through the purge switch of migration 0038.
 
+## 1.21.0 (M27): GSP and GSTIN-lookup admin
+
+For companies:
+
+- **Fetch details.** Next to GSTIN on a customer or supplier, "Fetch details" fills the name,
+  address and state from the GST registry. What you typed is kept. Each company has a daily and a
+  monthly allowance of lookups; over it, the button says so in words and you type the details in.
+  A recent answer for the same GSTIN is reused and costs nothing.
+
+For Duolink staff:
+
+- **Integrations page** (sidebar): the GSP account (e-way bill and IRN) and the GSTIN lookup, each
+  with its status, which settings are in force, a connection form, Test connection, Limits,
+  usage tiles (today, this week, this month, cached, failed, blocked), a per-company table and
+  recent failures. Keys are write-only: only the last 4 characters of a saved key are shown, and a
+  field left empty keeps the saved value. Support sees the status only.
+- **Saved settings win over the server's `.env`**, which stays the fallback for a single-shop
+  install. Keys are encrypted with the new `INTEGRATION_SECRET_KEY`; the app will not start if keys
+  are saved and it is missing.
+- **Fetch details on the onboarding form** fills the seller details without a company limit.
+- New dependency: `cryptography`.
+
 ## 1.16.0 (M22): support tickets
 
 For companies:

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { toFormError, type FormError } from "@/api/errors";
-import { useCreateParty, useUpdateParty } from "@/api/masters";
+import { useCreateParty, useGstinLookup, useUpdateParty } from "@/api/masters";
 import type { CustomerSegment, Party, PartyType } from "@/api/types";
 import { useAuth } from "@/auth/AuthContext";
 import { Button } from "@/components/Button";
@@ -14,6 +14,8 @@ import { TYPE_LABEL } from "./partyLabels";
 import { SitesSection } from "./SitesSection";
 import { SupplierPayment } from "./SupplierPayment";
 import { StatementSection } from "./StatementSection";
+
+const GSTIN_SHAPE = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
 
 const SEGMENTS: { value: CustomerSegment; label: string }[] = [
   { value: "retail", label: "Retail" },
@@ -49,6 +51,10 @@ export function PartyEditor({
   const [active, setActive] = useState(party?.is_active ?? true);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState<FormError | null>(null);
+  const lookup = useGstinLookup();
+  const looking = lookup.isPending;
+  const [fetchNote, setFetchNote] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const first = useRef<HTMLInputElement>(null);
   useEffect(() => first.current?.focus(), []);
 
@@ -56,6 +62,33 @@ export function PartyEditor({
   const pending = create.isPending || update.isPending;
   const isCustomer = type !== "supplier";
   const supplies = type !== "customer";
+
+  /** Fill the form from the GST registry. What the user already typed is kept. */
+  async function fetchDetails() {
+    const g = gstin.trim().toUpperCase();
+    setFetchNote(null);
+    setFetchError(null);
+    if (!GSTIN_SHAPE.test(g)) {
+      setFetchError("Enter the 15-character GSTIN first, like 33ABCDE1234F1Z5.");
+      return;
+    }
+    try {
+      const found = await lookup.mutateAsync(g);
+      setGstin(g);
+      if (!name.trim()) setName(found.trade_name || found.legal_name);
+      if (!address.trim()) setAddress(found.address);
+      if (GST_STATES.some((s) => s.code === found.state_code)) setState(found.state_code);
+      const left =
+        found.lookups_left_today === null || found.lookups_left_today === undefined
+          ? ""
+          : ` ${found.lookups_left_today} lookups left today.`;
+      setFetchNote(
+        `${found.legal_name} · ${found.status}.${found.status === "Active" ? "" : " Check this GSTIN before billing."}${left}`,
+      );
+    } catch (err) {
+      setFetchError(toFormError(err).message);
+    }
+  }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -175,6 +208,21 @@ export function PartyEditor({
             error={fieldError("gstin")}
             hint="Leave blank for a customer without GST; bills are then B2C."
           />
+          <div className={styles.inline}>
+            <Button onClick={() => void fetchDetails()} disabled={looking || !gstin.trim()}>
+              {looking ? "Fetching…" : "Fetch details"}
+            </Button>
+            {fetchNote ? (
+              <p role="status" className={styles.note}>
+                {fetchNote}
+              </p>
+            ) : null}
+            {fetchError ? (
+              <p role="alert" className={styles.formError}>
+                {fetchError}
+              </p>
+            ) : null}
+          </div>
           <SelectField label="State" value={state} onChange={(e) => setState(e.target.value)}>
             {GST_STATES.map((s) => (
               <option key={s.code} value={s.code}>

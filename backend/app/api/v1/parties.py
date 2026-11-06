@@ -3,7 +3,9 @@ from typing import Annotated
 from fastapi import APIRouter, Query, status
 
 from app.api.deps import CurrentPrincipal, DbSession, OwnerOrCounter
+from app.core.tenancy import current_tenant_id
 from app.schemas.common import Page
+from app.schemas.integrations import GstinLookupIn, GstinLookupOut
 from app.schemas.parties import (
     PartyCreate,
     PartyOut,
@@ -12,6 +14,7 @@ from app.schemas.parties import (
     SiteOut,
     SiteUpdate,
 )
+from app.services import gstin_lookup
 from app.services import parties as party_service
 
 router = APIRouter(tags=["parties"])
@@ -40,6 +43,14 @@ def create_party(body: PartyCreate, principal: OwnerOrCounter, db: DbSession) ->
     return PartyOut.model_validate(
         party_service.create_party(db, body, is_owner=principal.is_owner)
     )
+
+
+@router.post("/parties/gstin-lookup", response_model=GstinLookupOut)
+def lookup_gstin(body: GstinLookupIn, _: OwnerOrCounter, db: DbSession) -> GstinLookupOut:
+    """The "Fetch details" button next to a GSTIN: the registry's name, address and state, to
+    fill the form. A fresh earlier answer is reused. 429 GSTIN_LOOKUP_LIMIT over the company's
+    limit, 502 when the provider fails."""
+    return gstin_lookup.lookup(db, body.gstin, tenant_id=current_tenant_id(db))
 
 
 @router.get("/parties/{party_id}", response_model=PartyOut)

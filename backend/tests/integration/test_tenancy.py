@@ -241,6 +241,10 @@ def test_every_table_belongs_to_a_company(seeded):
         "platform_backup",
         "platform_backup_job",
         "platform_backup_schedule",
+        # Duolink's own GSP and GSTIN-lookup accounts (M27), and the public registry answers
+        # cached for every company. Neither holds a company's data.
+        "platform_integration",
+        "gstin_cache",
     }
     missing = seeded.execute(
         text(

@@ -334,7 +334,7 @@ The order matters: each step needs the one before it.
 | ④ Approval PIN | Settings → Approval PIN | `POST /auth/pin` | 4–12 digits; needs the owner's password |
 | ⑤ Charge types | Settings → Charge types | `POST /cost-components` | Seeded with Unloading, Loading, Weighbridge, Transport rent, Commission, Others |
 | ⑥ Items | Items (Alt+0) → New or Import | `POST /items`, `POST /items/import` | Check HSN, GST rate, units with the accountant |
-| ⑦ Parties | Customers and suppliers (Alt+5) | `POST /parties` | Customers with credit terms and sites; suppliers with GSTIN |
+| ⑦ Parties | Customers and suppliers (Alt+5) | `POST /parties` | Customers with credit terms and sites; suppliers with GSTIN. "Fetch details" next to GSTIN fills the name, address and state from the GST registry (`POST /parties/gstin-lookup`); a company has a daily and monthly allowance, and over it the button says so and you type the details in |
 | ⑧ Opening balances | Settings → Opening balances | `POST /opening`, then `POST /opening/post` | Stock per place at cost, customer and supplier dues. **Locked once posted.** |
 | ⑨ Market rates | Daily rates (Alt+7) | `PUT /rates/market` | A bill line with no rate is blocked |
 

@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   LifeBuoy,
   LogOut,
+  Plug,
   Receipt,
   ScrollText,
   Settings,
@@ -40,6 +41,7 @@ const NAV = [
   { to: "/admin/system", label: "System", icon: HeartPulse, key: "0", end: false },
   { to: "/admin/backups", label: "Backups", icon: DatabaseBackup, key: "", end: false },
   { to: "/admin/audit", label: "Audit log", icon: ScrollText, key: "", end: false },
+  { to: "/admin/integrations", label: "Integrations", icon: Plug, key: "", end: false },
   { to: "/admin/settings", label: "Platform settings", icon: Settings, key: "", end: false },
 ];
 
@@ -55,7 +57,7 @@ export function AdminShell() {
   const { admin, signOut } = useAdminAuth();
   const navigate = useNavigate();
 
-  // Alt+1-9 move between sections, as Alt+number does in the company app.
+  // Alt+1-9 and Alt+0 move between sections, as Alt+number does in the company app.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (!event.altKey || event.ctrlKey || event.metaKey) return;

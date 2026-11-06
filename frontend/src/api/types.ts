@@ -15,6 +15,8 @@ export type User = Schemas["UserOut"];
 export type UserCreate = Schemas["UserCreate"];
 export type UserUpdate = Schemas["UserUpdate"];
 export type PasswordReset = Schemas["PasswordReset"];
+/** Registry details for a GSTIN (Milestone 27). */
+export type GstinDetails = Schemas["GstinLookupOut"];
 export type ShopSettings = Schemas["ShopSettingsOut"];
 export type Tenant = Schemas["TenantOut"];
 // Milestone 23: Duolink support access, the owner's side and the session banner.

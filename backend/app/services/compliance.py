@@ -24,7 +24,7 @@ from app.domain import eway as eway_rules
 from app.domain.compliance import eway_bill_required
 from app.domain.gst import SupplyKind
 from app.models.compliance import EInvoice, EwayBill
-from app.models.enums import ComplianceStatus, EwaySource
+from app.models.enums import ComplianceStatus, EwaySource, IntegrationKind
 from app.models.sales import SalesInvoice
 from app.models.setup import ShopSettings
 from app.schemas.compliance import (
@@ -42,7 +42,6 @@ from app.schemas.compliance import (
     EwayVehicleUpdate,
     PendingEwayOut,
 )
-from app.services import gsp
 from app.services.gsp.base import (
     DocItem,
     DocTotals,
@@ -52,6 +51,7 @@ from app.services.gsp.base import (
     IrnRequest,
     Party,
 )
+from app.services.integration_calls import run_call
 from app.services.shop_settings import get_settings_row
 
 # Look-back for invoices still waiting for an e-way bill.
@@ -62,17 +62,11 @@ def _now() -> datetime:
     return datetime.now(UTC)
 
 
-def _client() -> GspClient:
+def _call[T](db: Session, operation: str, action: Callable[[GspClient], T]) -> T:
+    """Run a provider call on the settings in force (the Duolink admin's, else the
+    environment), count it, and turn its failure into a 502 that saves nothing."""
     try:
-        return gsp.get_client()
-    except GspError as exc:
-        raise UpstreamError(exc.message, code=exc.code) from exc
-
-
-def _call[T](action: Callable[[], T]) -> T:
-    """Run a provider call; turn its failure into a 502 that saves nothing."""
-    try:
-        return action()
+        return run_call(db, IntegrationKind.GSP, operation, action, tenant_id=current_tenant_id(db))
     except GspError as exc:
         raise UpstreamError(
             exc.message + (" Try again in a minute." if exc.retryable else ""), code=exc.code
@@ -313,8 +307,7 @@ def generate_eway(
         vehicle_no=vehicle,
         inter_state=inv.supply_kind is SupplyKind.INTER_STATE,
     )
-    client = _client()
-    result = _call(lambda: client.generate_eway(request))
+    result = _call(db, "generate_eway", lambda c: c.generate_eway(request))
     row = EwayBill(
         tenant_id=current_tenant_id(db),
         invoice_id=inv.id,
@@ -386,8 +379,11 @@ def update_eway_vehicle(
     if row is None:
         raise NotFoundError("This bill has no live e-way bill")
     vehicle = _require_vehicle(data.vehicle_no)
-    client = _client()
-    answer = _call(lambda: client.update_vehicle(row.number, vehicle, data.reason, data.from_place))
+    answer = _call(
+        db,
+        "update_vehicle",
+        lambda c: c.update_vehicle(row.number, vehicle, data.reason, data.from_place),
+    )
     row.vehicle_no = vehicle
     row.updated_by = actor_id
     _log(row, "vehicle", answer)
@@ -414,8 +410,7 @@ def cancel_eway(
             code="EWAY_CANCEL_WINDOW_CLOSED",
         )
     if row.source is EwaySource.GSP:
-        client = _client()
-        answer = _call(lambda: client.cancel_eway(row.number, data.reason))
+        answer = _call(db, "cancel_eway", lambda c: c.cancel_eway(row.number, data.reason))
     else:
         answer = {"note": "made on the portal by hand; cancel it there too"}
     row.status = ComplianceStatus.CANCELLED
@@ -525,8 +520,7 @@ def generate_einvoice(
         totals=_totals(inv),
         items=_items(inv),
     )
-    client = _client()
-    result = _call(lambda: client.generate_irn(request))
+    result = _call(db, "generate_irn", lambda c: c.generate_irn(request))
     row = EInvoice(
         tenant_id=current_tenant_id(db),
         invoice_id=inv.id,
@@ -562,8 +556,7 @@ def cancel_einvoice(
             "An IRN can only be cancelled within 24 hours of making it",
             code="EINVOICE_CANCEL_WINDOW_CLOSED",
         )
-    client = _client()
-    answer = _call(lambda: client.cancel_irn(row.irn, data.reason))
+    answer = _call(db, "cancel_irn", lambda c: c.cancel_irn(row.irn, data.reason))
     row.status = ComplianceStatus.CANCELLED
     row.cancelled_at = _now()
     row.cancel_reason = data.reason

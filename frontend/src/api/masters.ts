@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, json } from "./client";
 import type {
   Conversion,
+  GstinDetails,
   ImportResult,
   Item,
   ItemCreate,
@@ -20,6 +21,15 @@ import type {
 /** Milestone 2: item master, parties and sites. */
 
 export type ItemRow = Item | ItemOwner;
+
+/** "Fetch details" next to a GSTIN (Milestone 27). 429 GSTIN_LOOKUP_LIMIT over the company's
+ * limit; the error message says so in words. */
+export function useGstinLookup() {
+  return useMutation({
+    mutationFn: (gstin: string) =>
+      api<GstinDetails>("/parties/gstin-lookup", { method: "POST", body: json({ gstin }) }),
+  });
+}
 
 export function useItems(q: string, category: string) {
   const params = new URLSearchParams({ limit: "200", include_inactive: "true" });

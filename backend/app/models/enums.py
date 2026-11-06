@@ -91,6 +91,11 @@ class PlatformAction(StrEnum):
     COMPANY_DATA_DELETED = "company_data_deleted"
     COMPANY_DATA_DELETED_ALL = "company_data_deleted_all"
     COMPANY_DATA_DELETE_FAILED = "company_data_delete_failed"
+    INTEGRATION_CONNECT = "integration_connect"
+    INTEGRATION_TEST = "integration_test"
+    INTEGRATION_DISCONNECT = "integration_disconnect"
+    INTEGRATION_LIMITS = "integration_limits"
+    GSTIN_LOOKUP = "gstin_lookup"
 
 
 class SequenceChange(StrEnum):
@@ -142,6 +147,34 @@ class SupportSessionEnd(StrEnum):
     GRANT_ENDED = "grant_ended"  # the grant's time ran out
     REPLACED = "replaced"  # the same admin entered the company again
     ADMIN_NOT_ALLOWED = "admin_not_allowed"  # the admin was deactivated or is no Super Admin
+
+
+class IntegrationKind(StrEnum):
+    """A shared integration Duolink runs for every company (Milestone 27)."""
+
+    GSP = "gsp"  # e-way bills and IRN
+    GSTIN_LOOKUP = "gstin_lookup"
+
+
+class IntegrationProvider(StrEnum):
+    FAKE = "fake"  # pretend; never in production
+    SANDBOX = "sandbox"
+    LIVE = "live"
+
+
+class IntegrationStatus(StrEnum):
+    NOT_CONNECTED = "not_connected"
+    CONNECTED = "connected"
+    FAILING = "failing"
+
+
+class IntegrationOutcome(StrEnum):
+    """How one call ended. Only ok and failed reached the provider."""
+
+    OK = "ok"
+    FAILED = "failed"
+    CACHED = "cached"
+    BLOCKED = "blocked"
 
 
 class SupportCategory(StrEnum):

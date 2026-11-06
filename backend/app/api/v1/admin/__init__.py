@@ -8,6 +8,7 @@ from app.api.v1.admin import (
     backups,
     billing,
     company_data,
+    integrations,
     monitoring,
     staff,
     support,
@@ -21,6 +22,7 @@ router.include_router(auth.router)
 router.include_router(backups.router)
 router.include_router(billing.router)
 router.include_router(company_data.router)
+router.include_router(integrations.router)
 router.include_router(monitoring.router)
 router.include_router(staff.router)
 router.include_router(support.router)

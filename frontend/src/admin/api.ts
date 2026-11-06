@@ -22,10 +22,19 @@ import type {
   AdminTicketPatch,
   AdminTicketReply,
   BillingDashboard,
+  CompanyUsageRow,
   DataDeleteResult,
   DataInventory,
   DataPreview,
   DataView,
+  GstinDetails,
+  Integration,
+  IntegrationConnect,
+  IntegrationFailure,
+  IntegrationKind,
+  IntegrationLimits,
+  IntegrationTest,
+  IntegrationUsage,
   NumberingList,
   NumberingRow,
   NumberingSet,
@@ -746,6 +755,90 @@ export function useAdminTicketPatch(id: number) {
         body: json(body),
       }),
     onSuccess: after,
+  });
+}
+
+const integrationKeys = { all: ["admin", "integrations"] as const };
+
+/** Both integrations. Support may read this; usage and the rest are a Super Admin's. */
+export function useIntegrations() {
+  return useQuery({
+    queryKey: [...integrationKeys.all, "status"],
+    queryFn: () => adminApi<Integration[]>("/integrations"),
+  });
+}
+
+export function useIntegrationUsage(enabled: boolean) {
+  return useQuery({
+    queryKey: [...integrationKeys.all, "usage"],
+    queryFn: () => adminApi<IntegrationUsage[]>("/integrations/usage"),
+    enabled,
+  });
+}
+
+export function useCompanyUsage(kind: IntegrationKind, enabled: boolean) {
+  return useQuery({
+    queryKey: [...integrationKeys.all, kind, "companies"],
+    queryFn: () => adminApi<CompanyUsageRow[]>(`/integrations/${kind}/companies`),
+    enabled,
+  });
+}
+
+export function useIntegrationFailures(kind: IntegrationKind, enabled: boolean) {
+  return useQuery({
+    queryKey: [...integrationKeys.all, kind, "failures"],
+    queryFn: () => adminApi<IntegrationFailure[]>(`/integrations/${kind}/failures`),
+    enabled,
+  });
+}
+
+function useAfterIntegrationChange() {
+  const client = useQueryClient();
+  return () => client.invalidateQueries({ queryKey: integrationKeys.all });
+}
+
+export function useConnectIntegration(kind: IntegrationKind) {
+  const after = useAfterIntegrationChange();
+  return useMutation({
+    mutationFn: (body: IntegrationConnect) =>
+      adminApi<Integration>(`/integrations/${kind}`, { method: "PUT", body: json(body) }),
+    onSuccess: after,
+  });
+}
+
+export function useTestIntegration(kind: IntegrationKind) {
+  const after = useAfterIntegrationChange();
+  return useMutation({
+    mutationFn: () => adminApi<IntegrationTest>(`/integrations/${kind}/test`, { method: "POST" }),
+    onSuccess: after,
+  });
+}
+
+export function useDisconnectIntegration(kind: IntegrationKind) {
+  const after = useAfterIntegrationChange();
+  return useMutation({
+    mutationFn: () => adminApi<Integration>(`/integrations/${kind}/disconnect`, { method: "POST" }),
+    onSuccess: after,
+  });
+}
+
+export function useIntegrationLimits(kind: IntegrationKind) {
+  const after = useAfterIntegrationChange();
+  return useMutation({
+    mutationFn: (body: IntegrationLimits) =>
+      adminApi<Integration>(`/integrations/${kind}/limits`, { method: "PATCH", body: json(body) }),
+    onSuccess: after,
+  });
+}
+
+/** "Fetch details" on the onboarding form: the registry's answer for a GSTIN. */
+export function useAdminGstinLookup() {
+  return useMutation({
+    mutationFn: (gstin: string) =>
+      adminApi<GstinDetails>("/integrations/gstin-lookup", {
+        method: "POST",
+        body: json({ gstin }),
+      }),
   });
 }
 

@@ -48,6 +48,73 @@ describe("Parties", () => {
     });
   });
 
+  it("fetches a party's details from the GST registry and keeps what was typed", async () => {
+    const user = userEvent.setup();
+    const { calls } = mockApi({
+      ...session(OWNER),
+      "GET /parties": () => ({ body: page([PARTY]) }),
+      "POST /parties/gstin-lookup": () => ({
+        body: {
+          gstin: "29AAPFU0939F1ZV",
+          legal_name: "Kaveri Cement Agencies Private Limited",
+          trade_name: "Kaveri Cement",
+          address: "12 Main Road, Bengaluru",
+          state_code: "29",
+          status: "Active",
+          fetched_at: "2026-11-03T10:00:00Z",
+          cached: false,
+          lookups_left_today: 49,
+          near_limit: false,
+        },
+      }),
+    });
+    renderAt("/parties");
+    await user.click(await screen.findByRole("button", { name: "Add party" }));
+    const panel = await screen.findByRole("complementary", { name: "New party" });
+    const fetch = within(panel).getByRole("button", { name: "Fetch details" });
+    expect(fetch).toBeDisabled(); // nothing to look up yet
+    await user.type(within(panel).getByLabelText("GSTIN"), "bad");
+    await user.click(fetch);
+    expect(await within(panel).findByRole("alert")).toHaveTextContent("15-character GSTIN");
+    await user.clear(within(panel).getByLabelText("GSTIN"));
+    await user.type(within(panel).getByLabelText("GSTIN"), "29aapfu0939f1zv");
+    await user.type(within(panel).getByLabelText("Name"), "My own name");
+    await user.click(fetch);
+    expect(await within(panel).findByRole("status")).toHaveTextContent(
+      "Kaveri Cement Agencies Private Limited · Active. 49 lookups left today.",
+    );
+    expect(within(panel).getByLabelText("Name")).toHaveValue("My own name");
+    expect(within(panel).getByLabelText("Address")).toHaveValue("12 Main Road, Bengaluru");
+    expect(within(panel).getByLabelText("State")).toHaveValue("29");
+    expect(calls.find((c) => c.path === "/parties/gstin-lookup")?.body).toEqual({
+      gstin: "29AAPFU0939F1ZV",
+    });
+  });
+
+  it("tells the user in words when the company is over its lookup limit", async () => {
+    const user = userEvent.setup();
+    mockApi({
+      ...session(OWNER),
+      "GET /parties": () => ({ body: page([PARTY]) }),
+      "POST /parties/gstin-lookup": () => ({
+        status: 429,
+        body: {
+          code: "GSTIN_LOOKUP_LIMIT",
+          message: "Your company has used its GSTIN lookups for now.",
+          field: null,
+        },
+      }),
+    });
+    renderAt("/parties");
+    await user.click(await screen.findByRole("button", { name: "Add party" }));
+    const panel = await screen.findByRole("complementary", { name: "New party" });
+    await user.type(within(panel).getByLabelText("GSTIN"), "29AAPFU0939F1ZV");
+    await user.click(within(panel).getByRole("button", { name: "Fetch details" }));
+    expect(await within(panel).findByRole("alert")).toHaveTextContent(
+      "Your company has used its GSTIN lookups for now.",
+    );
+  });
+
   it("lets the owner set a supplier's delivery time for the reorder points", async () => {
     const user = userEvent.setup();
     const supplier = { ...PARTY, id: 21, name: "Mills", type: "supplier" as const };

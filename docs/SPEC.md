@@ -429,6 +429,57 @@ Super Admin enters a company read-only, for a set time, under a banner, with eve
 - **Not built.** The bell entry for an open session after its token expired (M24 reads
   `stale`), pruning of events older than a year, and a per-session event viewer in the admin.
 
+**Built (M26: document numbering and company data management, migration 0039):** a Super Admin sees
+and sets a company's number series and deletes selected kinds of its business data, or all of it.
+Rules in `domain/numbering.py` and `domain/data_management.py` (100% covered); routes in
+`api/v1/admin/company_data.py` (`/tenants/{id}/data...`, `/tenants/{id}/numbering`); services in
+`services/platform/data_catalogue.py`, `data_management.py` and `numbering.py`. Every route is Super
+Admin only, reads included.
+
+- **Catalogue** (`data_catalogue.py`), a hand-written list of 21 kinds: attachments, lost sales,
+  GSTR-2B imports, quotations and proformas, bill lots, credit and debit notes, transport, sales
+  bills (lines, e-way bills, IRNs, drop-ship links), purchases (costs, batches), orders and goods
+  receipts, payments and write-offs, cash book, daily closings, bank statements and lines, stock
+  transfers, counts, adjustments and write-downs, rates and schemes, opening balances, approvals,
+  the stock and party ledgers, items and units, parties and sites. Each has its tables (children
+  first), a headline table for the count, four identifying columns for View, and `blocked_by`: the
+  kinds whose rows point at it by foreign key. A kind that posted ledger rows (`stock_refs`,
+  `party_refs`) takes them with it; so do attachments of its documents. The `ledgers` kind (what is
+  left) is held back until every posting kind is gone.
+- **Never touched** (`PRESERVED`): users, sessions, locations, `shop_settings` (logo, bill
+  templates), `document_sequence`, `company_counter`, subscription and its payments, support
+  tickets and messages, `audit_log`, `platform_audit_log`, and the set-up lists a company starts
+  with (cost components, expense categories, bank accounts, Tally ledger names). The dependency test
+  (`test_data_catalogue.py`) checks against `pg_constraint`: every table with `tenant_id` is in the
+  catalogue or preserved, every declared blocker is a foreign key and every foreign key between
+  kinds is declared, the order is valid, nothing outside points into the catalogue, and every ledger
+  `ref_type` belongs to a kind.
+- **Inventory:** per kind the count, per-table counts and what blocks it ("Parties and sites is
+  blocked by 120 Sales bills"; ledger rows that a selected kind takes with it are not counted).
+  **View:** the latest 25 rows, four columns. **Preview:** counts per table, stored files and the
+  blockers for a selection or `all`. An unknown key is refused (422 `UNKNOWN_DATA_KIND`).
+- **Delete selected** (`DELETE`) and **delete everything** (`DELETE`, the company's exact name, a
+  tick): typed words compared exactly (no trimming), wrong ones answer 422 and delete nothing. A
+  selection blocked by a kind not selected answers 409 `DATA_BLOCKED` naming it. Then: a protected
+  company backup is taken (M25) and the deletion is refused if it fails (409
+  `SAFETY_BACKUP_FAILED`); one transaction inside `data_purge`, kinds in catalogue order, one
+  DELETE per table (no TRUNCATE, no disabled constraint, no `session_replication_role`); a row that
+  points at another row of its own table is cleared first; `document_sequence` of the emptied series
+  is reset to 1; audit `company_data_deleted` / `company_data_deleted_all` with per-table counts,
+  total, backup id and series moved; stored files are removed after the commit. Any failure rolls
+  back, is audited as `company_data_delete_failed` and answers 400 `DATA_DELETE_FAILED`.
+- **Numbering:** one row per shop, document type and financial year. The prefix is the location
+  code plus the document type's suffix, so there is no free-text prefix to edit. **Highest existing**
+  is read from the documents (shop and financial year, never the prefix); **configured next** is
+  `document_sequence.next_value`. The next number must be at least the highest plus one (409
+  `NUMBER_TOO_LOW`, 1 when nothing is left), a reason is required (422 `REASON_REQUIRED`), and a
+  series with no counter yet can be started. Each change writes `document_sequence_event` (from,
+  to, floor, reason, admin) and the audit `numbering_set`.
+- **`verify`:** `numbering_check` accepts a gap that an event explains (from the lower of the old
+  counter and the floor, up to the new next number) and a series a deletion reset.
+- **Audit actions:** `numbering_set`, `company_data_deleted`, `company_data_deleted_all`,
+  `company_data_delete_failed`.
+
 **Built (M25: backup and recovery from the admin, migration 0038):** Super Admins take, verify,
 download, upload, restore and delete backups of the whole platform or of one company; Support only
 reads the list. Rules in `domain/backups.py` (100% covered: names, manifest check, foreign-key

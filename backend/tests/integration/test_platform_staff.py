@@ -123,6 +123,11 @@ SUPER_ADMIN_READS = {
     ("GET", "/api/v1/admin/audit/export"),
     # A backup file is Duolink's whole data: only a Super Admin downloads it (M25).
     ("GET", "/api/v1/admin/backups/{backup_id}/download"),
+    # A company's data inventory and number series: Super Admin only, reads included (M26).
+    ("GET", "/api/v1/admin/tenants/{tenant_id}/data"),
+    ("GET", "/api/v1/admin/tenants/{tenant_id}/data/preview"),
+    ("GET", "/api/v1/admin/tenants/{tenant_id}/data/{key}"),
+    ("GET", "/api/v1/admin/tenants/{tenant_id}/numbering"),
 }
 READS = [r for r in _admin_routes() if r[0] == "GET" and r not in SUPER_ADMIN_READS]
 
@@ -170,6 +175,7 @@ def test_support_gets_403_on_every_write_route(client, helper, acme, method, pat
         "ticket_id": 1,
         "backup_id": 1,
         "job_id": 1,
+        "key": "quotes",
     }
     response = client.request(method, _fill(path, ids), headers=helper, json={})
     assert response.status_code == 403, f"{method} {path}: {response.status_code}"
@@ -202,6 +208,7 @@ def test_support_gets_200_on_every_read_route(client, helper, acme, seeded, meth
         "plan_id": some_plan,
         "ticket_id": some_ticket,
         "job_id": some_job.id,
+        "key": "quotes",
     }
     response = client.get(_fill(path, ids), headers=helper)
     assert response.status_code == 200, f"{path}: {response.text}"

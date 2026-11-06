@@ -359,6 +359,7 @@ def test_no_admin_answer_carries_money(client, admin, acme, seeded):
             .replace("{user_id}", str(ravi))
             .replace("{ticket_id}", str(ticket))
             .replace("{job_id}", str(job.id))
+            .replace("{key}", "sales")
         )
         response = client.get(url, headers=admin)
         assert response.status_code == 200, f"{path}: {response.text}"

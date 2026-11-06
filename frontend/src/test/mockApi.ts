@@ -57,6 +57,8 @@ export const OWNER: User = {
   role: "owner",
   is_active: true,
   must_change_password: false,
+  mobile: null,
+  removed_at: null,
   last_login_at: "2026-10-09T10:00:00Z",
   locations: [],
 };
@@ -67,6 +69,8 @@ export const COUNTER: User = {
   role: "counter",
   is_active: true,
   must_change_password: false,
+  mobile: null,
+  removed_at: null,
   last_login_at: null,
   locations: [S1],
 };

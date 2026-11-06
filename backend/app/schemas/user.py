@@ -36,5 +36,7 @@ class UserOut(Schema):
     role: Role
     is_active: bool
     must_change_password: bool
+    mobile: str | None
+    removed_at: datetime | None
     last_login_at: datetime | None
     locations: list[LocationOut]

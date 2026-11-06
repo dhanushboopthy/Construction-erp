@@ -240,7 +240,7 @@ def test_support_actions_on_a_user(client, admin):
 
     for _ in range(5):  # lock the account
         client.post("/api/v1/auth/login", json={"username": COUNTER[0], "password": "wrong"})
-    assert _users(client, admin, state="locked")[0]["username"] == "counter1"
+    assert _users(client, admin, locked="true")[0]["username"] == "counter1"
     assert (
         client.post(f"/api/v1/admin/users/{counter}/unlock", headers=admin).json()["locked"]
         is False
@@ -321,8 +321,9 @@ def test_no_admin_answer_carries_money(client, admin, acme):
         if "get" in app.openapi()["paths"][p] and not p.startswith(MONEY_ALLOWED_PREFIX)
     ]
     checked = 0
+    ravi = _user_id(client, admin, "acme", "ravi")
     for path in gets:
-        url = path.replace("{tenant_id}", str(acme["id"]))
+        url = path.replace("{tenant_id}", str(acme["id"])).replace("{user_id}", str(ravi))
         response = client.get(url, headers=admin)
         assert response.status_code == 200, f"{path}: {response.text}"
         money = [k for k in _keys(response.json()) if MONEY_WORDS.search(k)]

@@ -4,6 +4,7 @@ Counts, statuses and dates only: nothing here carries an amount, a cost or a doc
 (test_platform_admin checks every field name).
 """
 
+import uuid
 from datetime import datetime
 from typing import Any
 
@@ -242,6 +243,36 @@ class PlatformUserRow(Schema):
     locked: bool
     failed_login_count: int
     last_login_at: datetime | None
+    mobile: str | None
+    must_change_password: bool
+    removed_at: datetime | None
+
+
+class PlatformUserUpdate(Schema):
+    """Send only what changes. `mobile` sent as null clears it. A reason is always needed."""
+
+    full_name: str | None = Field(default=None, min_length=1, max_length=100)
+    mobile: str | None = MobileNumber
+    username: str | None = Field(default=None, pattern=r"^[a-z0-9_.-]{3,50}$")
+    role: Role | None = None
+    reason: str = Field(min_length=3, max_length=500)
+
+
+class RemoveUserRequest(Schema):
+    """`confirm_username` must be the user's username, typed exactly."""
+
+    confirm_username: str = Field(max_length=50)
+    reason: str = Field(min_length=3, max_length=500)
+
+
+class UserSessionRow(Schema):
+    id: uuid.UUID
+    device: str
+    user_agent: str | None
+    ip: str | None
+    signed_in_at: datetime
+    last_used_at: datetime
+    expires_at: datetime
 
 
 class TemporaryPassword(Schema):

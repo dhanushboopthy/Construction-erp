@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.errors import BusinessRuleError, ConflictError, NotFoundError
 from app.core.security import hash_password
 from app.core.tenancy import current_tenant_id
+from app.domain import user_support
 from app.models.enums import AuditAction, Role
 from app.models.setup import AppUser, Location
 from app.schemas.user import UserCreate, UserUpdate
@@ -14,14 +15,20 @@ from app.services.audit import record_event
 from app.services.auth import revoke_all
 
 
-def list_users(db: Session) -> list[AppUser]:
-    return list(
-        db.execute(
-            select(AppUser)
-            .where(AppUser.tenant_id == current_tenant_id(db))
-            .order_by(AppUser.username)
-        ).scalars()
-    )
+def list_users(db: Session, include_removed: bool = False) -> list[AppUser]:
+    """The company's users. Accounts Duolink support removed (Milestone 19) are hidden unless
+    asked for: they remain only as names on old documents."""
+    query = select(AppUser).where(AppUser.tenant_id == current_tenant_id(db))
+    if not include_removed:
+        query = query.where(AppUser.removed_at.is_(None))
+    return list(db.execute(query.order_by(AppUser.username)).scalars())
+
+
+def refuse_if_removed(user: AppUser) -> None:
+    try:
+        user_support.check_not_removed(user.removed_at)
+    except user_support.UserRuleError as err:
+        raise BusinessRuleError(str(err), code=err.code) from err
 
 
 def get_user(db: Session, user_id: int) -> AppUser:
@@ -79,7 +86,7 @@ def create_user(db: Session, data: UserCreate) -> AppUser:
     return user
 
 
-def _active_owner_count(db: Session) -> int:
+def active_owner_count(db: Session) -> int:
     return db.execute(
         select(func.count()).where(
             AppUser.tenant_id == current_tenant_id(db),
@@ -91,10 +98,11 @@ def _active_owner_count(db: Session) -> int:
 
 def update_user(db: Session, user_id: int, data: UserUpdate, acting_user_id: int) -> AppUser:
     user = get_user(db, user_id)
+    refuse_if_removed(user)
     removing_owner = user.role is Role.OWNER and (
         (data.role is not None and data.role is not Role.OWNER) or data.is_active is False
     )
-    if removing_owner and _active_owner_count(db) <= 1:
+    if removing_owner and active_owner_count(db) <= 1:
         raise BusinessRuleError("There must always be at least one active owner", code="LAST_OWNER")
     if user_id == acting_user_id and data.is_active is False:
         raise BusinessRuleError("You cannot deactivate yourself", code="SELF_DEACTIVATION")
@@ -126,9 +134,16 @@ def update_user(db: Session, user_id: int, data: UserUpdate, acting_user_id: int
     return user
 
 
-def reset_password(db: Session, user_id: int, new_password: str) -> None:
+def reset_password(
+    db: Session, user_id: int, new_password: str, *, must_change: bool = False
+) -> None:
+    """`must_change` is for a password someone else chose (Duolink support): the user may only
+    change it until they have."""
     user = get_user(db, user_id)
+    refuse_if_removed(user)
     user.password_hash = hash_password(new_password)
+    if must_change:
+        user.must_change_password = True
     user.failed_login_count = 0
     user.locked_until = None
     revoke_all(db, user.id)

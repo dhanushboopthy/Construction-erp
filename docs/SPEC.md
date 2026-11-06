@@ -179,6 +179,45 @@ staff member an action was done to (`target_user_id` stays for company users).
 - **Audit.** New platform actions: `tenant_cancel`, `tenant_seller_update`, `tenant_logo_set`,
   `tenant_logo_remove`. Every M18 write is Super Admin only; Support can read every tab.
 
+**Built (M19: user support tools, migration 0032):** Support can fix a locked-out or wrongly set up
+user without the owner. Every action works in the user's own company and is written twice: to the
+platform log (admin, company, target, reason, request id) and, as "Duolink: <admin>", to the
+company's own audit log. No password, token or key is ever put in either.
+
+- **Directory.** `GET /admin/users` searches username, full name and company (name or code), and
+  filters by `tenant_id`, `role`, `active`, `locked` and `never_signed_in` (each `true` or
+  `false`), and pages with `limit` and `offset` (order: company, then username). It replaces M16's
+  single `state` filter. Removed accounts are hidden unless `include_removed=true`.
+- **Edit** (`PATCH /admin/users/{id}`, Super Admin, `reason` required): full name, mobile and
+  username (lowercase, unique within the company, 409 `USERNAME_TAKEN`). A role change goes
+  through `services/users.update_user`, so "at least one active owner" (409 `LAST_OWNER`) and "a
+  counter user needs a shop" (409 `COUNTER_NEEDS_LOCATION`) still hold; a refused change leaves
+  nothing behind. `app_user.mobile` is new, and optional.
+- **Reset password** sets `must_change_password` (added in M18), so the user may only change the
+  temporary password before anything else (403 `PASSWORD_CHANGE_REQUIRED`, 409
+  `PASSWORD_UNCHANGED`). The reset ends every session and clears a lockout. The temporary
+  password is returned once and is never stored in clear or logged.
+- **Sessions.** `GET /admin/users/{id}/sessions` (any admin) lists the live sessions: `device`
+  (from the User-Agent, `domain/user_support.device_label`), `ip`, `signed_in_at`, `last_used_at`.
+  A refresh makes a new `auth_session` row, so `created_at` is the last use and the new
+  `signed_in_at` carries the first sign-in forward. `DELETE .../sessions/{session_id}` (Super
+  Admin) ends one; its access token runs out within minutes, like any sign-out. A refresh with a
+  token that was ended by a sign-out or by support now answers 401 and leaves the user's other
+  sessions alone; only a token that was already rotated still ends all of them (theft guard).
+- **Remove access** (`POST /admin/users/{id}/remove {confirm_username, reason}`, Super Admin).
+  A user row is never deleted, because `ActorMixin` columns on every document point to it. The
+  account is made inactive, every session ends and `app_user.removed_at` is set. It needs the
+  username typed exactly (case-sensitive; 409 `CONFIRMATION_MISMATCH`) and the last active owner
+  cannot be removed (409 `LAST_OWNER`). A removed account is hidden from the company's own user
+  list (`GET /users?include_removed=true` shows it) and from the admin directory by default, and
+  nothing changes it any more: activate, reactivate by the owner, edit and reset answer 409
+  `USER_REMOVED`. Its username stays taken. Reviving a removed account is not built.
+- **Audit.** New platform actions `user_update`, `user_session_revoke`, `user_remove`; the existing
+  user actions now also write the company's own log (`support_action` in `changes`, for the
+  actions that change no audited column: unlock, sign out, session revoke, reset, remove).
+- **Rules** (`domain/user_support.py`, 100% covered): the typed confirmation, the last-owner
+  check for a removal, the removed-account guard, whether a session is live, the device label.
+
 **Built (Milestone 1):** `shop_settings` (with `logo_key`, `logo_type`, `logo_sha256`, all set or
 all empty, for the shop's logo: UI refresh T10), `location`, `app_user`, `user_location`,
 `auth_session`, `audit_log`, `document_sequence`. A GSTIN is checked for format and check

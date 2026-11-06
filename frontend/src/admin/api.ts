@@ -8,6 +8,7 @@ import type {
   Overview,
   Page,
   PlatformUser,
+  PlatformUserUpdate,
   SignInEvent,
   StaffCreate,
   StaffMember,
@@ -20,6 +21,7 @@ import type {
   TenantRow,
   TenantUpdate,
   TenantUsage,
+  UserSession,
 } from "./types";
 
 /** Query string from the filters that are set. */
@@ -184,14 +186,60 @@ export function useRemoveCompanyLogo(id: number) {
 export interface UserFilters {
   tenant_id?: number;
   q?: string;
-  state?: string;
+  role?: string;
+  /** "true" or "false", as the API takes them. */
+  active?: string;
+  locked?: string;
+  never_signed_in?: string;
+  include_removed?: string;
+  offset?: number;
 }
+
+export const USER_PAGE_SIZE = 50;
 
 export function useAdminUsers(filters: UserFilters = {}) {
   return useQuery({
     queryKey: [...keys.users, filters],
-    queryFn: () => adminApi<Page<PlatformUser>>(`/users${query({ ...filters, limit: 200 })}`),
+    queryFn: () =>
+      adminApi<Page<PlatformUser>>(`/users${query({ ...filters, limit: USER_PAGE_SIZE })}`),
     placeholderData: keepPreviousData,
+  });
+}
+
+export function useUpdateUser(id: number) {
+  const refresh = useRefreshAll();
+  return useMutation({
+    mutationFn: (body: PlatformUserUpdate) =>
+      adminApi<PlatformUser>(`/users/${id}`, { method: "PATCH", body: json(body) }),
+    onSuccess: () => refresh(),
+  });
+}
+
+/** Fetched each time the panel (or the remove dialog) opens, never served from earlier. */
+export function useUserSessions(id: number) {
+  return useQuery({
+    queryKey: [...keys.users, id, "sessions"],
+    queryFn: () => adminApi<UserSession[]>(`/users/${id}/sessions`),
+    staleTime: 0,
+    gcTime: 0,
+  });
+}
+
+export function useRevokeSession(userId: number) {
+  const refresh = useRefreshAll();
+  return useMutation({
+    mutationFn: (sessionId: string) =>
+      adminApi<undefined>(`/users/${userId}/sessions/${sessionId}`, { method: "DELETE" }),
+    onSuccess: () => refresh(),
+  });
+}
+
+export function useRemoveUser(id: number) {
+  const refresh = useRefreshAll();
+  return useMutation({
+    mutationFn: (body: { confirm_username: string; reason: string }) =>
+      adminApi<PlatformUser>(`/users/${id}/remove`, { method: "POST", body: json(body) }),
+    onSuccess: () => refresh(),
   });
 }
 

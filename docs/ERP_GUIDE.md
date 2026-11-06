@@ -664,6 +664,13 @@ screen opens.
 `role`: `owner`, `counter`, `accountant`. Counter users need at least one location.
 Switch someone off with `PATCH /users/{id}` `{ "is_active": false }`.
 
+**Duolink can help with users.** If someone is locked out, Duolink can reset their password. They
+then see only "Choose a new password" until they have chosen their own. If someone has left,
+Duolink can remove their access when you ask: they can no longer sign in and they no longer appear
+in this list, but the bills and entries they made keep their name. A removed person cannot be
+switched back on; add them again with a new username if they return. Whatever Duolink changes
+shows in the audit log as done by "Duolink: <name>".
+
 ### 11.4 Owner approval PIN (owner) — `POST /auth/pin`
 
 ```json

@@ -178,6 +178,10 @@ class AppUser(Base, TenantMixin, TimestampMixin, ActorMixin, Audited):
     must_change_password: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default=expression.false()
     )
+    mobile: Mapped[str | None] = mapped_column(String(20))
+    # Set when Duolink support removes the account (Milestone 19). The row stays, because every
+    # document names its maker; the account is inactive and hidden from the company's user list.
+    removed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     failed_login_count: Mapped[int] = mapped_column(Integer, default=0)
     locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

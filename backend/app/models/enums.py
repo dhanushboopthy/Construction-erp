@@ -60,6 +60,9 @@ class PlatformAction(StrEnum):
     TENANT_SELLER_UPDATE = "tenant_seller_update"
     TENANT_LOGO_SET = "tenant_logo_set"
     TENANT_LOGO_REMOVE = "tenant_logo_remove"
+    USER_UPDATE = "user_update"
+    USER_SESSION_REVOKE = "user_session_revoke"
+    USER_REMOVE = "user_remove"
 
 
 class LocationKind(StrEnum):

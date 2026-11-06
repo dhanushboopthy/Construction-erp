@@ -43,16 +43,23 @@ def _hash_token(token: str) -> str:
 
 
 def _issue(
-    db: Session, user: AppUser, ip: str | None, user_agent: str | None
+    db: Session,
+    user: AppUser,
+    ip: str | None,
+    user_agent: str | None,
+    signed_in_at: datetime | None = None,
 ) -> tuple[IssuedTokens, AuthSession]:
     settings = get_settings()
     refresh_token = secrets.token_urlsafe(48)
+    now = _now()
     session = AuthSession(
         id=uuid.uuid4(),
         tenant_id=user.tenant_id,
         user_id=user.id,
         token_hash=_hash_token(refresh_token),
-        expires_at=_now() + timedelta(hours=settings.refresh_token_hours),
+        created_at=now,
+        signed_in_at=signed_in_at or now,
+        expires_at=now + timedelta(hours=settings.refresh_token_hours),
         ip=ip,
         user_agent=(user_agent or "")[:255] or None,
     )
@@ -114,6 +121,11 @@ def refresh(
     if session is None or session.tenant_id != current_tenant_id(db):
         raise AuthenticationError("Sign in to continue")
 
+    if session.revoked_at is not None and session.replaced_by is None:
+        # Ended by a sign-out or by Duolink support (Milestone 19): that device is out, and
+        # the user's other sessions stay.
+        raise AuthenticationError("Your session ended. Sign in again.")
+
     if session.revoked_at is not None:
         # A rotated token was used again: likely stolen. End every session of this user.
         revoke_all(db, session.user_id)
@@ -129,7 +141,9 @@ def refresh(
         db.commit()
         raise AuthenticationError("Your session has expired. Sign in again.")
 
-    tokens, new_session = _issue(db, user, ip, user_agent)
+    tokens, new_session = _issue(
+        db, user, ip, user_agent, signed_in_at=session.signed_in_at or session.created_at
+    )
     session.revoked_at = _now()
     session.replaced_by = new_session.id
     db.commit()

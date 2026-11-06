@@ -7,16 +7,19 @@ import { formatDateTime } from "@/lib/format";
 import { useAdminActions, useSignIns } from "../api";
 import { Badge } from "../Badge";
 import { ACTION, SIGN_IN } from "../labels";
+import { SupportSessions } from "../SupportSessions";
 import type { AuditFilters } from "../types";
 
 const VIEWS = [
   { value: "sign-ins", label: "Sign-ins at companies" },
   { value: "admin", label: "What Duolink admins did" },
+  { value: "access", label: "Company access" },
 ] as const;
 
 export function ActivityPage() {
   const [params, setParams] = useSearchParams();
-  const view = params.get("view") === "admin" ? "admin" : "sign-ins";
+  const requested = params.get("view");
+  const view = requested === "admin" || requested === "access" ? requested : "sign-ins";
   const action = params.get("action") ?? "";
 
   return (
@@ -41,6 +44,8 @@ export function ActivityPage() {
       </nav>
       {view === "admin" ? (
         <AdminActions />
+      ) : view === "access" ? (
+        <SupportSessions />
       ) : (
         <>
           <div className={styles.filters}>

@@ -92,178 +92,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/backups": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List Backups
-         * @description Every backup, newest first: nightly, manual, safety copies and uploads.
-         */
-        get: operations["list_backups_api_v1_admin_backups_get"];
-        put?: never;
-        /**
-         * Create Backup
-         * @description Back up the whole platform (`kind: platform`) or one company (`kind: company`,
-         *     `company_id`). Answers a job to poll. 409 BACKUP_TOOLS_MISSING, BACKUP_FOLDER_UNAVAILABLE,
-         *     BACKUP_JOB_RUNNING, COMPANY_REQUIRED.
-         */
-        post: operations["create_backup_api_v1_admin_backups_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/backups/summary": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Summary
-         * @description Last backup, how many are verified, space used, the next scheduled run, and whether the
-         *     folder and the tools (`pg_dump`, `pg_restore`, `tar`) are there.
-         */
-        get: operations["summary_api_v1_admin_backups_summary_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/backups/schedule": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Schedule */
-        get: operations["get_schedule_api_v1_admin_backups_schedule_get"];
-        /**
-         * Set Schedule
-         * @description The nightly time (shop time, HH:MM) and how many daily, weekly and monthly copies to keep
-         *     (Super Admin). 409 BAD_TIME, BAD_RETENTION. Audited.
-         */
-        put: operations["set_schedule_api_v1_admin_backups_schedule_put"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/backups/jobs/{job_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Job */
-        get: operations["get_job_api_v1_admin_backups_jobs__job_id__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/backups/upload": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Upload
-         * @description Keep a company archive for a later restore. `.tar.gz` only, 200 MB at most, and its
-         *     manifest must name a company here and this schema revision. 409 BACKUP_INVALID,
-         *     BACKUP_WRONG_COMPANY, BACKUP_SCHEMA_MISMATCH.
-         */
-        post: operations["upload_api_v1_admin_backups_upload_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/backups/{backup_id}/download": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Download
-         * @description Stream the backup file (`part=files` for a platform backup's files archive). Audited.
-         */
-        get: operations["download_api_v1_admin_backups__backup_id__download_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/backups/{backup_id}/restore": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Restore
-         * @description Replace one company's data with a company archive. `confirm` must be `RESTORE`. A safety
-         *     backup is taken first and kept; the company answers 403 TENANT_RESTORING meanwhile; any
-         *     failure rolls everything back. 409 BACKUP_WRONG_COMPANY, BACKUP_SCHEMA_MISMATCH,
-         *     BACKUP_NOT_VERIFIED, BACKUP_FILE_MISSING, BACKUP_JOB_RUNNING.
-         */
-        post: operations["restore_api_v1_admin_backups__backup_id__restore_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/backups/{backup_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /**
-         * Delete
-         * @description Delete an unprotected backup and its files. `confirm` must be `DELETE`.
-         *     409 BACKUP_PROTECTED, BACKUP_RUNNING.
-         */
-        delete: operations["delete_api_v1_admin_backups__backup_id__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/admin/billing/plans": {
         parameters: {
             query?: never;
@@ -541,7 +369,6 @@ export interface paths {
         /**
          * Sign Ins
          * @description Sign-ins, failed sign-ins and reused tokens across every company, newest first.
-         *     409 DATE_RANGE when `date_to` is before `date_from`.
          */
         get: operations["sign_ins_api_v1_admin_activity_get"];
         put?: never;
@@ -561,8 +388,7 @@ export interface paths {
         };
         /**
          * Admin Actions
-         * @description What Duolink's admins did, newest first, filtered by company, admin, action and dates.
-         *     409 DATE_RANGE when `date_to` is before `date_from`.
+         * @description What Duolink's admins did, newest first.
          */
         get: operations["admin_actions_api_v1_admin_audit_get"];
         put?: never;
@@ -573,7 +399,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/audit/export": {
+    "/api/v1/admin/audit/support-sessions": {
         parameters: {
             query?: never;
             header?: never;
@@ -581,11 +407,11 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Export Admin Actions
-         * @description The same rows as `GET /audit` with the same filters, as CSV, up to 50,000 (Super Admin).
-         *     The export is itself audited (`audit_export`).
+         * Support Sessions
+         * @description Company access (M23): every support session at every company, newest first, with its
+         *     request count. `stale` counts sessions never ended whose token has expired.
          */
-        get: operations["export_admin_actions_api_v1_admin_audit_export_get"];
+        get: operations["support_sessions_api_v1_admin_audit_support_sessions_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -750,91 +576,6 @@ export interface paths {
          *     message on a closed ticket (send a status to reopen it).
          */
         post: operations["reply_api_v1_admin_support_tickets__ticket_id__reply_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/system/health": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Health
-         * @description API uptime and version, database round trip, size and connections, free disk space,
-         *     the last backup and off-site copy, and counters across every company. No secret and no
-         *     connection string is ever in it.
-         */
-        get: operations["health_api_v1_admin_system_health_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/notifications": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Notifications
-         * @description The bell: what needs attention, most serious first. Worked out on every read.
-         */
-        get: operations["notifications_api_v1_admin_notifications_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/system/maintenance": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Maintenance */
-        get: operations["get_maintenance_api_v1_admin_system_maintenance_get"];
-        put?: never;
-        /**
-         * Set Maintenance
-         * @description Close the platform to companies (`enabled: true`, with an optional message) or open it
-         *     again (Super Admin). Kept across restarts until turned off. Audited. 409 MESSAGE_TOO_LONG.
-         */
-        post: operations["set_maintenance_api_v1_admin_system_maintenance_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/system/settings": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Platform Settings
-         * @description How the platform is configured, from the environment (never a secret), and the numbers
-         *     behind the subscription lifecycle.
-         */
-        get: operations["platform_settings_api_v1_admin_system_settings_get"];
-        put?: never;
-        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1006,6 +747,50 @@ export interface paths {
          * @description Undo a suspension. Reopening a cancelled company needs a reason (409 REASON_REQUIRED).
          */
         post: operations["reactivate_api_v1_admin_tenants__tenant_id__reactivate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/tenants/{tenant_id}/support-access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Support Access Status
+         * @description Whether the company's owner has granted Duolink support access now, until when, and how
+         *     many support sessions are open. Statuses and times only.
+         */
+        get: operations["support_access_status_api_v1_admin_tenants__tenant_id__support_access_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/tenants/{tenant_id}/support-session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Enter Company
+         * @description Enter the company read-only, with its owner's live grant (Super Admin only). 409
+         *     NO_SUPPORT_GRANT without one; 409 TENANT_NOT_OPEN for a suspended or cancelled company. The
+         *     token lasts two hours at most and never past the grant; open `entry_url` in a new tab: the
+         *     token travels in the fragment, so no server log ever holds it.
+         */
+        post: operations["enter_company_api_v1_admin_tenants__tenant_id__support_session_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1227,23 +1012,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/health/live": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Liveness: the process is up (same as /health) */
-        get: operations["live_api_v1_health_live_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/health/ready": {
         parameters: {
             query?: never;
@@ -1253,27 +1021,6 @@ export interface paths {
         };
         /** Readiness: the database answers */
         get: operations["ready_api_v1_health_ready_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/maintenance": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Notice
-         * @description Is the platform closed for maintenance, and Duolink's message (Milestone 24). Open to
-         *     anyone and never closed itself: the company's "Back soon" screen asks it every 30 seconds.
-         */
-        get: operations["notice_api_v1_maintenance_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1458,6 +1205,147 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/support-access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Overview
+         * @description The live grant (or none), with the time left, and the last few grants.
+         */
+        get: operations["overview_api_v1_support_access_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/support-access/grants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Grant
+         * @description Let Duolink in, read-only, for 1, 4, 24 or 72 hours. A live grant is replaced: it is
+         *     recorded as revoked and any Duolink session under it ends. 404 TICKET_NOT_FOUND.
+         */
+        post: operations["grant_api_v1_support_access_grants_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/support-access/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Revoke
+         * @description End the live grant now. Duolink's next request answers 401. 409 NO_LIVE_GRANT.
+         */
+        post: operations["revoke_api_v1_support_access_revoke_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/support-access/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * History
+         * @description Who from Duolink entered, when, for how long, and how many requests they made.
+         */
+        get: operations["history_api_v1_support_access_sessions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/support-access/sessions/{support_session_id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Events
+         * @description Every request of one visit: method and path, and whether it was a refused write.
+         */
+        get: operations["events_api_v1_support_access_sessions__support_session_id__events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/support-session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Session Status
+         * @description The support session this token belongs to: company, admin, when it ends.
+         */
+        get: operations["session_status_api_v1_support_session_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/support-session/exit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Exit Session
+         * @description Leave the company. The token answers 401 from the next request on.
+         */
+        post: operations["exit_session_api_v1_support_session_exit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/login": {
         parameters: {
             query?: never;
@@ -1519,7 +1407,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Me */
+        /**
+         * Me
+         * @description The signed-in user. Inside a Duolink support session (M23) this is the support viewer,
+         *     not any company user: id 0, the owner's role (for reads), every location.
+         */
         get: operations["me_api_v1_auth_me_get"];
         put?: never;
         post?: never;
@@ -4003,6 +3895,14 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AccessOverview */
+        AccessOverview: {
+            live: components["schemas"]["GrantOut"] | null;
+            /** Recent */
+            recent: components["schemas"]["GrantOut"][];
+            /** Durations */
+            durations: number[];
+        };
         /** AccountOut */
         AccountOut: {
             account: components["schemas"]["LedgerAccount"];
@@ -4170,6 +4070,29 @@ export interface components {
          * @enum {string}
          */
         AdjustmentReason: "weighbridge_gain" | "weighbridge_loss" | "breakage" | "damage" | "theft" | "free_sample" | "count_correction";
+        /** AdminAccessStatus */
+        AdminAccessStatus: {
+            /** Live */
+            live: boolean;
+            /** Grant Id */
+            grant_id: number | null;
+            /** Starts At */
+            starts_at: string | null;
+            /** Ends At */
+            ends_at: string | null;
+            /** Seconds Left */
+            seconds_left: number;
+            /** Owner Only Figures */
+            owner_only_figures: boolean;
+            /** Reason */
+            reason: string | null;
+            /** Ticket Number */
+            ticket_number: string | null;
+            /** Granted By Name */
+            granted_by_name: string | null;
+            /** Open Sessions */
+            open_sessions: number;
+        };
         /** AdminChangePassword */
         AdminChangePassword: {
             /** Current Password */
@@ -4208,6 +4131,60 @@ export interface components {
             /** Body */
             body?: string | null;
             status?: components["schemas"]["SupportStatus"] | null;
+        };
+        /** AdminSessionPage */
+        AdminSessionPage: {
+            /** Items */
+            items: components["schemas"]["AdminSessionRow"][];
+            /** Total */
+            total: number;
+            /** Open */
+            open: number;
+            /** Stale */
+            stale: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+        };
+        /** AdminSessionRow */
+        AdminSessionRow: {
+            /** Id */
+            id: number;
+            /** Tenant Id */
+            tenant_id: number;
+            /** Tenant Slug */
+            tenant_slug: string;
+            /** Tenant Name */
+            tenant_name: string;
+            /** Admin Id */
+            admin_id: number;
+            /** Admin Name */
+            admin_name: string;
+            /** Reason */
+            reason: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "open" | "ended" | "stale";
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Ended At */
+            ended_at: string | null;
+            end_reason: components["schemas"]["SupportSessionEnd"] | null;
+            /** Request Count */
+            request_count: number;
+            /** Owner Only Figures */
+            owner_only_figures: boolean;
         };
         /** AdminTicketDetail */
         AdminTicketDetail: {
@@ -4352,24 +4329,6 @@ export interface components {
             /** Amount */
             amount: string;
         };
-        /** ApiHealth */
-        ApiHealth: {
-            /**
-             * Started At
-             * Format: date-time
-             */
-            started_at: string;
-            /** Uptime Seconds */
-            uptime_seconds: number;
-            /** Version */
-            version: string;
-            /** Changelog Version */
-            changelog_version: string | null;
-            /** Python Version */
-            python_version: string;
-            /** Environment */
-            environment: string;
-        };
         /**
          * ApprovalAction
          * @description What an owner PIN can approve at the counter (G18).
@@ -4438,7 +4397,7 @@ export interface components {
          * AuditAction
          * @enum {string}
          */
-        AuditAction: "insert" | "update" | "delete" | "login" | "login_failed" | "logout" | "token_reuse" | "override" | "export";
+        AuditAction: "insert" | "update" | "delete" | "login" | "login_failed" | "logout" | "token_reuse" | "override" | "export" | "support_enter" | "support_exit";
         /** AuditLogOut */
         AuditLogOut: {
             /** Id */
@@ -4517,130 +4476,6 @@ export interface components {
             cgst: string;
             /** Sgst */
             sgst: string;
-        };
-        /** BackupCompany */
-        BackupCompany: {
-            /** Id */
-            id: number;
-            /** Slug */
-            slug: string;
-            /** Name */
-            name: string;
-        };
-        /** BackupCreate */
-        BackupCreate: {
-            kind: components["schemas"]["BackupKind"];
-            /** Company Id */
-            company_id?: number | null;
-            /** Note */
-            note?: string | null;
-        };
-        /** BackupHealth */
-        BackupHealth: {
-            check: components["schemas"]["Check"];
-            /** Last Success At */
-            last_success_at: string | null;
-            /** Age Hours */
-            age_hours: number | null;
-            /** Stale */
-            stale: boolean;
-            /** Offsite Synced At */
-            offsite_synced_at: string | null;
-        };
-        /**
-         * BackupJobKind
-         * @enum {string}
-         */
-        BackupJobKind: "backup_platform" | "backup_company" | "restore_company";
-        /**
-         * BackupJobStatus
-         * @enum {string}
-         */
-        BackupJobStatus: "queued" | "running" | "succeeded" | "failed";
-        /**
-         * BackupKind
-         * @enum {string}
-         */
-        BackupKind: "platform" | "company";
-        /** BackupList */
-        BackupList: {
-            /** Items */
-            items: components["schemas"]["BackupOut"][];
-        };
-        /** BackupOut */
-        BackupOut: {
-            /** Id */
-            id: number;
-            kind: components["schemas"]["BackupKind"];
-            source: components["schemas"]["BackupSource"];
-            company: components["schemas"]["BackupCompany"] | null;
-            /** File Name */
-            file_name: string;
-            /** Files Name */
-            files_name: string | null;
-            /** Size Bytes */
-            size_bytes: number | null;
-            /** Sha256 */
-            sha256: string | null;
-            /** Schema Revision */
-            schema_revision: string | null;
-            status: components["schemas"]["BackupStatus"];
-            /**
-             * Started At
-             * Format: date-time
-             */
-            started_at: string;
-            /** Completed At */
-            completed_at: string | null;
-            /** Protected */
-            protected: boolean;
-            /** Note */
-            note: string | null;
-            /** Error */
-            error: string | null;
-            /** Created By */
-            created_by: string | null;
-            /** File Present */
-            file_present: boolean;
-            /** Restore Command */
-            restore_command: string | null;
-        };
-        /**
-         * BackupSource
-         * @description Why a backup exists. Only `scheduled` ones are ever pruned (Milestone 25).
-         * @enum {string}
-         */
-        BackupSource: "scheduled" | "manual" | "safety" | "uploaded";
-        /**
-         * BackupStatus
-         * @enum {string}
-         */
-        BackupStatus: "running" | "verified" | "failed";
-        /** BackupSummary */
-        BackupSummary: {
-            /** Last Backup At */
-            last_backup_at: string | null;
-            /** Verified Count */
-            verified_count: number;
-            /** Failed Count */
-            failed_count: number;
-            /** Storage Bytes */
-            storage_bytes: number;
-            /**
-             * Next Scheduled At
-             * Format: date-time
-             */
-            next_scheduled_at: string;
-            /** Running Jobs */
-            running_jobs: number;
-            /** Folder Ready */
-            folder_ready: boolean;
-            /** Folder Problem */
-            folder_problem: string | null;
-            /** Tools */
-            tools: components["schemas"]["ToolOut"][];
-            /** Restore Command Example */
-            restore_command_example: string;
         };
         /** BankAccountCreate */
         BankAccountCreate: {
@@ -4800,11 +4635,6 @@ export interface components {
         };
         /** Body_put_logo_api_v1_tenant_logo_put */
         Body_put_logo_api_v1_tenant_logo_put: {
-            /** File */
-            file: string;
-        };
-        /** Body_upload_api_v1_admin_backups_upload_post */
-        Body_upload_api_v1_admin_backups_upload_post: {
             /** File */
             file: string;
         };
@@ -5617,20 +5447,6 @@ export interface components {
             /** Short By */
             short_by: string | null;
         };
-        /** DatabaseHealth */
-        DatabaseHealth: {
-            /** Up */
-            up: boolean;
-            /** Round Trip Ms */
-            round_trip_ms: string;
-            /** Size Bytes */
-            size_bytes: number;
-            /** Connections In Use */
-            connections_in_use: number;
-            /** Server Version */
-            server_version: string;
-            migrations: components["schemas"]["Check"];
-        };
         /** DebitNoteCreate */
         DebitNoteCreate: {
             /** Purchase Id */
@@ -5746,34 +5562,11 @@ export interface components {
             /** Supplier Bill No */
             supplier_bill_no: string;
         };
-        /** DeleteIn */
-        DeleteIn: {
-            /**
-             * Confirm
-             * @default
-             */
-            confirm: string;
-        };
         /**
          * Direction
          * @enum {string}
          */
         Direction: "in" | "out";
-        /** DiskHealth */
-        DiskHealth: {
-            /** Name */
-            name: string;
-            /** Watched */
-            watched: boolean;
-            /** Total Bytes */
-            total_bytes: number | null;
-            /** Free Bytes */
-            free_bytes: number | null;
-            /** Free Percent */
-            free_percent: string | null;
-            /** Low */
-            low: boolean;
-        };
         /** DocRow */
         DocRow: {
             /** Nature */
@@ -5904,6 +5697,11 @@ export interface components {
             /** Required */
             required: boolean;
             einvoice: components["schemas"]["EInvoiceOut"] | null;
+        };
+        /** EnterRequest */
+        EnterRequest: {
+            /** Reason */
+            reason: string;
         };
         /** ErrorResponse */
         ErrorResponse: {
@@ -6232,6 +6030,59 @@ export interface components {
          * @enum {string}
          */
         FulfilmentSource: "shop" | "godown" | "direct";
+        /** GrantCreate */
+        GrantCreate: {
+            /**
+             * Duration Hours
+             * @enum {integer}
+             */
+            duration_hours: 1 | 4 | 24 | 72;
+            /**
+             * Include Costs
+             * @default false
+             */
+            include_costs: boolean;
+            /** Reason */
+            reason: string;
+            /** Ticket Id */
+            ticket_id?: number | null;
+        };
+        /** GrantOut */
+        GrantOut: {
+            /** Id */
+            id: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "live" | "revoked" | "ended";
+            /**
+             * Starts At
+             * Format: date-time
+             */
+            starts_at: string;
+            /**
+             * Ends At
+             * Format: date-time
+             */
+            ends_at: string;
+            /** Seconds Left */
+            seconds_left: number;
+            /** Include Costs */
+            include_costs: boolean;
+            /** Reason */
+            reason: string;
+            /** Ticket Id */
+            ticket_id: number | null;
+            /** Ticket Number */
+            ticket_number: string | null;
+            /** Granted By Name */
+            granted_by_name: string;
+            /** Revoked At */
+            revoked_at: string | null;
+            /** Revoked By Name */
+            revoked_by_name: string | null;
+        };
         /** Gstr1 */
         Gstr1: {
             /** Period */
@@ -6298,21 +6149,6 @@ export interface components {
             cgst: string;
             /** Sgst */
             sgst: string;
-        };
-        /** HealthCounters */
-        HealthCounters: {
-            /** Companies */
-            companies: number;
-            /** Active Users */
-            active_users: number;
-            /** Open Sessions */
-            open_sessions: number;
-            /** Audit Events Today */
-            audit_events_today: number;
-            /** Admin Actions Today */
-            admin_actions_today: number;
-            /** Open Tickets */
-            open_tickets: number;
         };
         /** HistoryPoint */
         HistoryPoint: {
@@ -7152,33 +6988,6 @@ export interface components {
             /** Is Active */
             is_active?: boolean | null;
         };
-        /** JobOut */
-        JobOut: {
-            /** Id */
-            id: number;
-            kind: components["schemas"]["BackupJobKind"];
-            status: components["schemas"]["BackupJobStatus"];
-            company: components["schemas"]["BackupCompany"] | null;
-            /** Backup Id */
-            backup_id: number | null;
-            /** Safety Backup Id */
-            safety_backup_id: number | null;
-            /** Step */
-            step: string | null;
-            /** Error Code */
-            error_code: string | null;
-            /** Error Message */
-            error_message: string | null;
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /** Started At */
-            started_at: string | null;
-            /** Finished At */
-            finished_at: string | null;
-        };
         /** KpiDefinitionOut */
         KpiDefinitionOut: {
             /** Code */
@@ -7229,32 +7038,6 @@ export interface components {
             running_balance: string;
             /** Narration */
             narration: string | null;
-        };
-        /**
-         * Level
-         * @enum {string}
-         */
-        Level: "critical" | "warning" | "info";
-        /** LifecycleSettings */
-        LifecycleSettings: {
-            /** Trial Days */
-            trial_days: number;
-            /** Max Trial Days */
-            max_trial_days: number;
-            /** Banner Days */
-            banner_days: number;
-            /** Ending Soon Days */
-            ending_soon_days: number;
-            /** Notice Days */
-            notice_days: number;
-            /** Backup Stale Hours */
-            backup_stale_hours: number;
-            /** Disk Low Free Percent */
-            disk_low_free_percent: number;
-            /** Failed Admin Sign Ins Limit */
-            failed_admin_sign_ins_limit: number;
-            /** Maintenance Cache Seconds */
-            maintenance_cache_seconds: number;
         };
         /** LinkCreate */
         LinkCreate: {
@@ -7456,44 +7239,6 @@ export interface components {
             /** Quantity */
             quantity: string;
         };
-        /** MaintenanceIn */
-        MaintenanceIn: {
-            /** Enabled */
-            enabled: boolean;
-            /** Message */
-            message?: string | null;
-        };
-        /**
-         * MaintenanceNotice
-         * @description What a company's screen needs: is it closed, and Duolink's message.
-         */
-        MaintenanceNotice: {
-            /** Enabled */
-            enabled: boolean;
-            /** Message */
-            message: string | null;
-        };
-        /** MaintenanceOut */
-        MaintenanceOut: {
-            /** Enabled */
-            enabled: boolean;
-            /** Message */
-            message: string | null;
-            /** Cause */
-            cause: ("operator" | "restore") | null;
-            /** Operator Enabled */
-            operator_enabled: boolean;
-            /** Operator Message */
-            operator_message: string | null;
-            /** Changed By */
-            changed_by: string | null;
-            /** Enabled At */
-            enabled_at: string | null;
-            /** Updated At */
-            updated_at: string | null;
-            /** Restoring */
-            restoring: boolean;
-        };
         /** MarginOut */
         MarginOut: {
             /** Item Id */
@@ -7648,25 +7393,6 @@ export interface components {
             sgst: string;
             /** Rates */
             rates: components["schemas"]["RateRow"][];
-        };
-        /** NotificationOut */
-        NotificationOut: {
-            /** Id */
-            id: string;
-            level: components["schemas"]["Level"];
-            /** Title */
-            title: string;
-            /** Body */
-            body: string;
-            /** Link */
-            link: string;
-        };
-        /** NotificationsOut */
-        NotificationsOut: {
-            /** Count */
-            count: number;
-            /** Items */
-            items: components["schemas"]["NotificationOut"][];
         };
         /** NrvReportOut */
         NrvReportOut: {
@@ -8734,7 +8460,7 @@ export interface components {
          * @description What a Duolink admin did (platform_audit_log, Milestones 16 and 17).
          * @enum {string}
          */
-        PlatformAction: "login" | "login_failed" | "logout" | "token_reuse" | "tenant_create" | "tenant_update" | "tenant_suspend" | "tenant_reactivate" | "user_activate" | "user_deactivate" | "user_unlock" | "user_reset_password" | "user_sign_out" | "staff_create" | "staff_update" | "staff_reset_password" | "staff_unlock" | "staff_sign_out" | "password_change" | "tenant_cancel" | "tenant_seller_update" | "tenant_logo_set" | "tenant_logo_remove" | "user_update" | "user_session_revoke" | "user_remove" | "plan_create" | "plan_update" | "plan_duplicate" | "plan_archive" | "plan_delete" | "subscription_renew" | "subscription_cancel" | "payment_reverse" | "support_reply" | "support_update" | "maintenance_on" | "maintenance_off" | "audit_export" | "backup_create" | "backup_download" | "backup_upload" | "backup_delete" | "backup_restore" | "backup_restore_failed" | "backup_schedule_update";
+        PlatformAction: "login" | "login_failed" | "logout" | "token_reuse" | "tenant_create" | "tenant_update" | "tenant_suspend" | "tenant_reactivate" | "user_activate" | "user_deactivate" | "user_unlock" | "user_reset_password" | "user_sign_out" | "staff_create" | "staff_update" | "staff_reset_password" | "staff_unlock" | "staff_sign_out" | "password_change" | "tenant_cancel" | "tenant_seller_update" | "tenant_logo_set" | "tenant_logo_remove" | "user_update" | "user_session_revoke" | "user_remove" | "plan_create" | "plan_update" | "plan_duplicate" | "plan_archive" | "plan_delete" | "subscription_renew" | "subscription_cancel" | "payment_reverse" | "support_reply" | "support_update" | "support_session_start" | "support_session_end";
         /** PlatformAuditRow */
         PlatformAuditRow: {
             /** Id */
@@ -8766,11 +8492,6 @@ export interface components {
          * @enum {string}
          */
         PlatformRole: "super_admin" | "support";
-        /** PlatformSettingsOut */
-        PlatformSettingsOut: {
-            security: components["schemas"]["SecuritySettings"];
-            lifecycle: components["schemas"]["LifecycleSettings"];
-        };
         /** PlatformUserRow */
         PlatformUserRow: {
             /** Id */
@@ -9872,20 +9593,6 @@ export interface components {
             base_unit: string;
             source: components["schemas"]["RateSource"];
         };
-        /**
-         * RestoreIn
-         * @description `confirm` must be `RESTORE`, typed exactly. `company_id` is the company to restore onto.
-         */
-        RestoreIn: {
-            /** Company Id */
-            company_id: number;
-            /**
-             * Confirm
-             * @description RESTORE
-             * @default
-             */
-            confirm: string;
-        };
         /** ReturnLineIn */
         ReturnLineIn: {
             /** Line Id */
@@ -9903,35 +9610,6 @@ export interface components {
          * @enum {string}
          */
         Role: "owner" | "counter" | "accountant";
-        /** ScheduleIn */
-        ScheduleIn: {
-            /** Daily Time */
-            daily_time: string;
-            /** Keep Daily */
-            keep_daily: number;
-            /** Keep Weekly */
-            keep_weekly: number;
-            /** Keep Monthly */
-            keep_monthly: number;
-        };
-        /** ScheduleOut */
-        ScheduleOut: {
-            /** Daily Time */
-            daily_time: string;
-            /** Keep Daily */
-            keep_daily: number;
-            /** Keep Weekly */
-            keep_weekly: number;
-            /** Keep Monthly */
-            keep_monthly: number;
-            /** Updated At */
-            updated_at: string | null;
-            /**
-             * Next Scheduled At
-             * Format: date-time
-             */
-            next_scheduled_at: string;
-        };
         /** SchemeCreate */
         SchemeCreate: {
             /** Party Id */
@@ -10017,45 +9695,6 @@ export interface components {
             /** Is Active */
             is_active?: boolean | null;
         };
-        /** SecuritySettings */
-        SecuritySettings: {
-            /** Environment */
-            environment: string;
-            /** Base Domain */
-            base_domain: string;
-            /** Admin Subdomain */
-            admin_subdomain: string;
-            /** Default Company */
-            default_company: string | null;
-            /** Api Docs Enabled */
-            api_docs_enabled: boolean;
-            /** Cookie Secure */
-            cookie_secure: boolean;
-            /** Insecure Cookies Allowed */
-            insecure_cookies_allowed: boolean;
-            /** Row Level Security Role Set */
-            row_level_security_role_set: boolean;
-            /** Jwt Algorithm */
-            jwt_algorithm: string;
-            /** Access Token Minutes */
-            access_token_minutes: number;
-            /** Refresh Token Hours */
-            refresh_token_hours: number;
-            /** Login Max Attempts */
-            login_max_attempts: number;
-            /** Login Lock Minutes */
-            login_lock_minutes: number;
-            /** Cors Origins */
-            cors_origins: string[];
-            /** Storage Provider */
-            storage_provider: string;
-            /** Gsp Provider */
-            gsp_provider: string;
-            /** Backups Watched */
-            backups_watched: boolean;
-            /** Max Upload Mb */
-            max_upload_mb: number;
-        };
         /** SegmentMonth */
         SegmentMonth: {
             /** Month */
@@ -10120,6 +9759,51 @@ export interface components {
             state_code?: string | null;
             /** Reason */
             reason: string;
+        };
+        /** SessionEventOut */
+        SessionEventOut: {
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Method */
+            method: string;
+            /** Path */
+            path: string;
+            /** Refused */
+            refused: boolean;
+        };
+        /**
+         * SessionRow
+         * @description One visit by Duolink, as the owner's history shows it.
+         */
+        SessionRow: {
+            /** Id */
+            id: number;
+            /** Grant Id */
+            grant_id: number;
+            /** Admin Name */
+            admin_name: string;
+            /** Reason */
+            reason: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "open" | "ended" | "stale";
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Ended At */
+            ended_at: string | null;
+            end_reason: components["schemas"]["SupportSessionEnd"] | null;
+            /** Request Count */
+            request_count: number;
+            /** Include Costs */
+            include_costs: boolean;
         };
         /** ShopSettingsOut */
         ShopSettingsOut: {
@@ -10951,6 +10635,61 @@ export interface components {
          */
         SupportPriority: "low" | "normal" | "high" | "urgent";
         /**
+         * SupportSessionEnd
+         * @description Why a support session ended (Milestone 23).
+         * @enum {string}
+         */
+        SupportSessionEnd: "exited" | "revoked" | "grant_ended" | "replaced" | "admin_not_allowed";
+        /** SupportSessionStarted */
+        SupportSessionStarted: {
+            /** Session Id */
+            session_id: number;
+            /** Token */
+            token: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Entry Url */
+            entry_url: string;
+        };
+        /**
+         * SupportSessionStatus
+         * @description What the banner shows to the Duolink admin inside the company.
+         */
+        SupportSessionStatus: {
+            /** Session Id */
+            session_id: number;
+            /** Company Name */
+            company_name: string;
+            /** Admin Name */
+            admin_name: string;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Grant Ends At
+             * Format: date-time
+             */
+            grant_ends_at: string;
+            /** Include Costs */
+            include_costs: boolean;
+            /**
+             * Read Only
+             * @default true
+             * @constant
+             */
+            read_only: true;
+        };
+        /**
          * SupportStatus
          * @enum {string}
          */
@@ -10959,22 +10698,6 @@ export interface components {
         SuspendRequest: {
             /** Reason */
             reason: string;
-        };
-        /** SystemHealth */
-        SystemHealth: {
-            /**
-             * As Of
-             * Format: date-time
-             */
-            as_of: string;
-            api: components["schemas"]["ApiHealth"];
-            database: components["schemas"]["DatabaseHealth"];
-            /** Disks */
-            disks: components["schemas"]["DiskHealth"][];
-            backup: components["schemas"]["BackupHealth"];
-            gsp: components["schemas"]["Check"];
-            counters: components["schemas"]["HealthCounters"];
-            maintenance: components["schemas"]["MaintenanceNotice"];
         };
         /** TallyCheckOut */
         TallyCheckOut: {
@@ -11545,13 +11268,6 @@ export interface components {
             /** Expires In */
             expires_in: number;
             user: components["schemas"]["UserOut"];
-        };
-        /** ToolOut */
-        ToolOut: {
-            /** Name */
-            name: string;
-            /** Found */
-            found: boolean;
         };
         /** TopItem */
         TopItem: {
@@ -12401,760 +12117,6 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AdminChangePassword"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_backups_api_v1_admin_backups_get: {
-        parameters: {
-            query?: {
-                kind?: components["schemas"]["BackupKind"] | null;
-                company_id?: number | null;
-                limit?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BackupList"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_backup_api_v1_admin_backups_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["BackupCreate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["JobOut"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    summary_api_v1_admin_backups_summary_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BackupSummary"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    get_schedule_api_v1_admin_backups_schedule_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ScheduleOut"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    set_schedule_api_v1_admin_backups_schedule_put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ScheduleIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ScheduleOut"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_job_api_v1_admin_backups_jobs__job_id__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                job_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["JobOut"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    upload_api_v1_admin_backups_upload_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "multipart/form-data": components["schemas"]["Body_upload_api_v1_admin_backups_upload_post"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BackupOut"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    download_api_v1_admin_backups__backup_id__download_get: {
-        parameters: {
-            query?: {
-                part?: "dump" | "files";
-            };
-            header?: never;
-            path: {
-                backup_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    restore_api_v1_admin_backups__backup_id__restore_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                backup_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RestoreIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["JobOut"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    delete_api_v1_admin_backups__backup_id__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                backup_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["DeleteIn"];
             };
         };
         responses: {
@@ -14370,10 +13332,6 @@ export interface operations {
             query?: {
                 tenant_id?: number | null;
                 action?: components["schemas"]["AuditAction"] | null;
-                /** @description first day, India time, included */
-                date_from?: string | null;
-                /** @description last day, India time, included */
-                date_to?: string | null;
                 limit?: number;
                 offset?: number;
             };
@@ -14452,12 +13410,7 @@ export interface operations {
         parameters: {
             query?: {
                 tenant_id?: number | null;
-                admin_id?: number | null;
                 action?: components["schemas"]["PlatformAction"] | null;
-                /** @description first day, India time, included */
-                date_from?: string | null;
-                /** @description last day, India time, included */
-                date_to?: string | null;
                 limit?: number;
                 offset?: number;
             };
@@ -14532,16 +13485,13 @@ export interface operations {
             };
         };
     };
-    export_admin_actions_api_v1_admin_audit_export_get: {
+    support_sessions_api_v1_admin_audit_support_sessions_get: {
         parameters: {
             query?: {
                 tenant_id?: number | null;
                 admin_id?: number | null;
-                action?: components["schemas"]["PlatformAction"] | null;
-                /** @description first day, India time, included */
-                date_from?: string | null;
-                /** @description last day, India time, included */
-                date_to?: string | null;
+                limit?: number;
+                offset?: number;
             };
             header?: never;
             path?: never;
@@ -14549,13 +13499,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description The filtered rows as CSV */
+            /** @description Successful Response */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "text/csv": unknown;
+                    "application/json": components["schemas"]["AdminSessionPage"];
                 };
             };
             /** @description Bad Request */
@@ -15380,344 +14330,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    health_api_v1_admin_system_health_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SystemHealth"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    notifications_api_v1_admin_notifications_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["NotificationsOut"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    get_maintenance_api_v1_admin_system_maintenance_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MaintenanceOut"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    set_maintenance_api_v1_admin_system_maintenance_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["MaintenanceIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MaintenanceOut"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    platform_settings_api_v1_admin_system_settings_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PlatformSettingsOut"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -16670,6 +15282,162 @@ export interface operations {
             };
         };
     };
+    support_access_status_api_v1_admin_tenants__tenant_id__support_access_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminAccessStatus"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    enter_company_api_v1_admin_tenants__tenant_id__support_session_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EnterRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportSessionStarted"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_users_api_v1_admin_users_get: {
         parameters: {
             query?: {
@@ -17513,73 +16281,6 @@ export interface operations {
             };
         };
     };
-    live_api_v1_health_live_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: string;
-                    };
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
     ready_api_v1_health_ready_get: {
         parameters: {
             query?: never;
@@ -17598,71 +16299,6 @@ export interface operations {
                     "application/json": {
                         [key: string]: string;
                     };
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    notice_api_v1_maintenance_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MaintenanceNotice"];
                 };
             };
             /** @description Bad Request */
@@ -18495,6 +17131,483 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    overview_api_v1_support_access_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessOverview"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    grant_api_v1_support_access_grants_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GrantCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GrantOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_api_v1_support_access_revoke_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GrantOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    history_api_v1_support_access_sessions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionRow"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    events_api_v1_support_access_sessions__support_session_id__events_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                support_session_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionEventOut"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    session_status_api_v1_support_session_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportSessionStatus"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    exit_session_api_v1_support_session_exit_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };

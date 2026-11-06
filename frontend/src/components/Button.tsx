@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes } from "react";
 
-import { READ_ONLY_REASON, useReadOnly } from "@/auth/ReadOnlyContext";
+import { useReadOnly, useReadOnlyReason } from "@/auth/ReadOnlyContext";
 
 import styles from "./Button.module.css";
 
@@ -25,13 +25,14 @@ export function Button({
   allowWhenReadOnly?: boolean;
 }) {
   const readOnly = useReadOnly();
+  const reason = useReadOnlyReason();
   const blocked = readOnly && !allowWhenReadOnly && (type === "submit" || variant === "primary");
   return (
     <button
       type={type}
       className={[styles.button, styles[variant], className].filter(Boolean).join(" ")}
       disabled={disabled || blocked}
-      title={blocked ? READ_ONLY_REASON : title}
+      title={blocked ? reason : title}
       {...rest}
     />
   );

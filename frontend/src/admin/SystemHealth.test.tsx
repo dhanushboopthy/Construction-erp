@@ -366,10 +366,17 @@ describe("AdminApp Audit log page (M24)", () => {
     expect(screen.queryByRole("button", { name: "Export CSV" })).not.toBeInTheDocument();
   });
 
-  it("says company access is not switched on yet", async () => {
-    stubApi(base);
+  it("lists the support sessions on the Company access tab", async () => {
+    stubApi([
+      ...base,
+      [
+        /\/admin\/audit\/support-sessions/,
+        () => ({ items: [], total: 0, open: 0, stale: 0, limit: 100, offset: 0 }),
+      ],
+    ]);
     renderAt("/admin/audit?tab=access");
-    expect(await screen.findByText(/not switched on yet/)).toBeInTheDocument();
+    expect(await screen.findByRole("columnheader", { name: "Entered" })).toBeInTheDocument();
+    expect(screen.queryByText(/not switched on yet/)).not.toBeInTheDocument();
   });
 });
 

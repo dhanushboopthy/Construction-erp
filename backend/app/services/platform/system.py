@@ -28,6 +28,7 @@ from app.models.enums import PlatformAction
 from app.models.platform import PlatformAdmin, PlatformAuditLog
 from app.models.setup import AppUser
 from app.models.support import SupportTicket
+from app.models.support_access import SupportSession
 from app.models.tenancy import Tenant
 from app.schemas.platform_system import (
     ApiHealth,
@@ -223,10 +224,14 @@ def _failed_admin_sign_ins(db: Session, now: datetime) -> int:
 
 
 def open_support_sessions(db: Session, now: datetime) -> int:
-    """Support sessions still open after their token expired. Owner-granted support access is
-    Milestone 23, built on a parallel branch: until it is merged there are no sessions to count,
-    and the merge wires its `support_session` table in here."""
-    return 0
+    """Support sessions never ended whose token has expired (Milestone 23's `support_session`)."""
+    return int(
+        db.execute(
+            select(func.count())
+            .select_from(SupportSession)
+            .where(SupportSession.ended_at.is_(None), SupportSession.expires_at <= now)
+        ).scalar_one()
+    )
 
 
 def signals(db: Session, now: datetime) -> rules.Signals:

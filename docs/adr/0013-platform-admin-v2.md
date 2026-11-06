@@ -90,6 +90,30 @@ inside a company.
 - Existing admins become Super Admins when migration 0030 runs, because before it every admin
   could change everything. Add Support accounts for read-only staff.
 
+## Update, 2026-11-05 (Milestone 23): owner-granted support access
+
+- **The only way Duolink sees a company's books.** There is no access without a live grant from
+  the company's owner: consent, a fixed duration (1, 4, 24 or 72 hours), revocable at any moment,
+  cost and margin hidden unless the owner ticks "show cost and margin".
+- **Read-only, enforced on the server.** A third token type, `support`, is accepted only on its
+  own company's address. Every non-GET answers 403 `SUPPORT_READ_ONLY` (the one exception is
+  leaving the session), and the database session is read-only for the request, so a GET with a
+  side effect is refused too. Passwords, users and the grant itself cannot be changed, and the
+  grant cannot even be read from inside.
+- **Checked on every request, not only at issue.** The session, the grant and the admin's role are
+  read each time, so a revoke, a demotion or the grant's end takes effect on the next request (401).
+  The token lasts at most two hours and never past the grant.
+- **Audited both ways.** `support_session_start` and `support_session_end` in the platform log,
+  `support_enter` and `support_exit` in the company's log, and every request's method and path (never
+  a body) in an append-only table kept for a year.
+- **The admin API stays closed to company books.** Duolink's own answers about access carry
+  statuses, times and counts; the money-field test is unchanged and walks the new admin reads.
+- **Guarded by** `test_every_write_under_a_support_token_answers_403` (every company write route),
+  `test_every_read_under_a_support_token_answers_without_writing`,
+  `test_the_owner_revokes_and_the_admins_next_request_answers_401`,
+  `test_a_support_token_for_one_company_answers_401_at_another` and
+  `test_a_support_token_answers_401_on_the_admin_api`.
+
 ## Update, 2026-11-05 (Milestone 24): health, the bell, maintenance mode, audit log
 
 - **Counts and statuses only, still.** Health, the bell and the settings page answer counts,

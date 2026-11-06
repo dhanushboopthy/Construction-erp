@@ -18,21 +18,25 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.core.db import get_db
 from app.core.errors import AuthenticationError, NotFoundError, PermissionDeniedError
-from app.core.security import decode_access_token, decode_platform_token
+from app.core.security import decode_access_token, decode_platform_token, decode_support_token
 from app.core.tenancy import TENANT_KEY, clear_platform, set_platform, set_tenant
+from app.domain.support_access import EXIT_PATH
 from app.domain.tenancy import slug_from_host
 from app.models.enums import PlatformRole, Role
 from app.models.platform import PlatformAdmin
 from app.models.setup import AppUser
 from app.models.tenancy import Tenant
-from app.services import maintenance, subscription_access
+from app.services import maintenance, subscription_access, support_access
 from app.services import tenants as tenant_service
 from app.services.audit import set_actor, set_actor_label
 from app.services.maintenance import MaintenanceSwitch
+from app.services.support_access import SupportContext
 
 _bearer = HTTPBearer(auto_error=False)
 
 DbSession = Annotated[Session, Depends(get_db)]
+
+SUPPORT_USER_ID = 0  # a support principal is no company user: no row has this id
 
 
 @dataclass(frozen=True)
@@ -44,14 +48,24 @@ class Principal:
     location_ids: frozenset[int]
     session_id: str
     must_change_password: bool = False
+    # Set when a Duolink Super Admin is inside the company with its owner's grant (M23): the
+    # principal reads as an owner, writes nothing, and sees cost only if the owner allowed it.
+    support: SupportContext | None = None
 
     @property
     def is_owner(self) -> bool:
         return self.role is Role.OWNER
 
     @property
+    def is_support(self) -> bool:
+        return self.support is not None
+
+    @property
     def sees_cost(self) -> bool:
-        """Cost, margin and profit are owner-only. Strip them from responses otherwise."""
+        """Cost, margin and profit are owner-only. Strip them from responses otherwise. A
+        support session sees them only when the owner ticked "show cost and margin"."""
+        if self.support is not None:
+            return self.support.include_costs
         return self.role is Role.OWNER
 
     def can_access_location(self, location_id: int) -> bool:
@@ -83,13 +97,43 @@ def get_tenant(request: Request, db: DbSession) -> Tenant:
 
     Every company request passes here, so this is where maintenance mode answers 503 (M24)."""
     clear_platform(db)
+    support_access.clear_read_only(db)
     set_actor_label(db, None)
     maintenance.enforce(maintenance_switch(request), db, request.method, request.url.path)
     tenant = tenant_service.for_host(db, request_host(request))
     set_tenant(db, tenant.id)
     request.state.tenant_id = tenant.id
+    _support_gate(request, db, tenant)
     subscription_access.enforce(db, tenant, request.method, request.url.path)
     return tenant
+
+
+def _bearer_token(request: Request) -> str | None:
+    scheme, _, token = request.headers.get("authorization", "").partition(" ")
+    if scheme.lower() != "bearer" or not token.strip():
+        return None
+    return token.strip()
+
+
+def _support_gate(request: Request, db: Session, tenant: Tenant) -> None:
+    """Every company route passes here, signed in or not (Milestone 23). A request carrying a
+    valid support token is checked against its session and grant, logged, refused if it writes
+    (403 SUPPORT_READ_ONLY), and its database session made read-only."""
+    request.state.support = None
+    token = _bearer_token(request)
+    if token is None:
+        return
+    try:
+        claims = decode_support_token(token)
+    except jwt.InvalidTokenError:
+        return  # not a support token: the principal check decides
+    ctx = support_access.authenticate(db, tenant, claims, request.method, request.url.path)
+    set_actor(db, None)
+    set_actor_label(db, f"Duolink support: {ctx.admin_name}")
+    request.state.support = ctx
+    request.state.user_id = f"support:{ctx.admin_id}"
+    if request.url.path != EXIT_PATH:
+        support_access.make_read_only(db)
 
 
 CurrentTenant = Annotated[Tenant, Depends(get_tenant)]
@@ -123,6 +167,19 @@ def get_principal_any_state(
 ) -> Principal:
     if credentials is None:
         raise AuthenticationError("Sign in to continue")
+    support: SupportContext | None = getattr(request.state, "support", None)
+    if support is not None:
+        # A Duolink Super Admin under the owner's grant: an owner for reads (every screen
+        # opens), no company user (user id 0), and no activity stamp: it is not the company's.
+        return Principal(
+            user_id=SUPPORT_USER_ID,
+            tenant_id=tenant.id,
+            username="duolink-support",
+            role=Role.OWNER,
+            location_ids=frozenset(),
+            session_id=f"support:{support.session_id}",
+            support=support,
+        )
     try:
         claims = decode_access_token(credentials.credentials)
     except jwt.InvalidTokenError as exc:
@@ -177,6 +234,30 @@ def require_roles(*roles: Role) -> Callable[[Principal], Principal]:
 
 
 OwnerOnly = Annotated[Principal, Depends(require_roles(Role.OWNER))]
+
+
+def require_owner_in_person(owner: OwnerOnly) -> Principal:
+    """The real owner, never a Duolink support session reading as one (Milestone 23): the
+    support access settings cannot be read or changed from inside the session they govern."""
+    if owner.is_support:
+        raise PermissionDeniedError(
+            "A Duolink support session cannot see or change support access.",
+            code="SUPPORT_READ_ONLY",
+        )
+    return owner
+
+
+OwnerInPerson = Annotated[Principal, Depends(require_owner_in_person)]
+
+
+def require_support_session(principal: CurrentPrincipal) -> Principal:
+    """A request under a support token (the banner's status, and Exit)."""
+    if not principal.is_support:
+        raise PermissionDeniedError("This is only for a Duolink support session.")
+    return principal
+
+
+SupportPrincipal = Annotated[Principal, Depends(require_support_session)]
 OwnerOrAccountant = Annotated[Principal, Depends(require_roles(Role.OWNER, Role.ACCOUNTANT))]
 OwnerOrCounter = Annotated[Principal, Depends(require_roles(Role.OWNER, Role.COUNTER))]
 

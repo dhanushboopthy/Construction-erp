@@ -75,9 +75,21 @@ class PlatformAction(StrEnum):
     PAYMENT_REVERSE = "payment_reverse"
     SUPPORT_REPLY = "support_reply"
     SUPPORT_UPDATE = "support_update"
+    SUPPORT_SESSION_START = "support_session_start"  # entered a company, with its owner's grant
+    SUPPORT_SESSION_END = "support_session_end"
     MAINTENANCE_ON = "maintenance_on"
     MAINTENANCE_OFF = "maintenance_off"
     AUDIT_EXPORT = "audit_export"
+
+
+class SupportSessionEnd(StrEnum):
+    """Why a support session ended (Milestone 23)."""
+
+    EXITED = "exited"  # the admin pressed Exit
+    REVOKED = "revoked"  # the owner revoked the grant, or replaced it with a new one
+    GRANT_ENDED = "grant_ended"  # the grant's time ran out
+    REPLACED = "replaced"  # the same admin entered the company again
+    ADMIN_NOT_ALLOWED = "admin_not_allowed"  # the admin was deactivated or is no Super Admin
 
 
 class SupportCategory(StrEnum):
@@ -301,6 +313,8 @@ class AuditAction(StrEnum):
     TOKEN_REUSE = "token_reuse"  # noqa: S105 - an audit action name, not a secret
     OVERRIDE = "override"
     EXPORT = "export"  # the books were exported, for example to Tally (FM4)
+    SUPPORT_ENTER = "support_enter"  # Duolink opened a support session here (M23)
+    SUPPORT_EXIT = "support_exit"  # ...and it ended: left, revoked or the grant ran out
 
 
 class DocType(StrEnum):

@@ -326,8 +326,8 @@ def test_the_bell_rings_after_more_than_ten_failed_admin_sign_ins_in_a_day(clien
     assert item["link"] == "/admin/audit?tab=admin&action=login_failed"
 
 
-def test_support_sessions_are_not_counted_until_owner_granted_access_is_merged(seeded):
-    # Milestone 23 (a parallel branch) adds the support_session table; the merge wires it here.
+def test_no_support_session_left_open_counts_as_zero(seeded):
+    # Wired to M23's `support_session` table: never-ended sessions with an expired token count.
     assert system_service.open_support_sessions(seeded, datetime.now(UTC)) == 0
 
 

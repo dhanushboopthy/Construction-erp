@@ -47,6 +47,9 @@ class Viewer:
 
     user_id: int
     is_counter: bool
+    # False inside a read-only Duolink support session (M23): Duolink reading a ticket from
+    # inside the company does not mark its answers as read by the company.
+    marks_seen: bool = True
 
 
 def _refuse(exc: rules.SupportRuleError) -> BusinessRuleError | PermissionDeniedError:
@@ -253,8 +256,9 @@ def create(db: Session, viewer: Viewer, data: TicketCreate) -> TicketDetail:
 def get(db: Session, viewer: Viewer, ticket_id: int) -> TicketDetail:
     """Opening a ticket marks Duolink's replies as read."""
     ticket = _load(db, viewer, ticket_id)
-    ticket.company_seen_at = _now()
-    db.commit()
+    if viewer.marks_seen:
+        ticket.company_seen_at = _now()
+        db.commit()
     return _detail(db, viewer, ticket)
 
 

@@ -269,8 +269,11 @@ OwnerOrCounter = Annotated[Principal, Depends(require_roles(Role.OWNER, Role.COU
 
 
 def require_admin_host(request: Request) -> None:
-    """The admin API answers only at admin.<BASE_DOMAIN>; anywhere else it does not exist."""
+    """The admin API answers only at admin.<BASE_DOMAIN>; anywhere else it does not exist, unless
+    ADMIN_ON_MAIN_HOST is set (a one-domain install)."""
     settings = get_settings()
+    if settings.admin_on_main_host:
+        return
     if slug_from_host(request_host(request), settings.base_domain) != settings.admin_subdomain:
         raise NotFoundError("Not found")
 

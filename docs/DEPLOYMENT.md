@@ -44,6 +44,10 @@ Passwords cross the network, so serve over HTTPS:
 - **The Duolink admin** lives at `admin.duolink.app/admin` (`ADMIN_SUBDOMAIN`). The wildcard
   record and certificate cover it. Create the first admin as in [RUNBOOK](RUNBOOK.md). New
   companies are added there. `app.scripts.seed --tenant acme` still works on the server.
+- **One domain, no `admin.` record:** set `ADMIN_ON_MAIN_HOST=true`. The Duolink admin then signs
+  in on the company's own sign-in page (an email in the username box opens the console at
+  `/admin`) and the admin API answers on the company's address. It is off by default because
+  ADR 0012 keeps the console on its own host; prefer the `admin.` record when you can add one.
 - A single-shop install needs none of this. Leave `DEFAULT_TENANT_SLUG=main`, and every address
   reaches that company.
 

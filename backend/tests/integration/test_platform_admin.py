@@ -73,6 +73,23 @@ def test_the_admin_api_exists_only_at_the_admin_address(client, admin):
     assert client.get("/api/v1/admin/overview", headers=admin).status_code == 200
 
 
+def test_admin_on_main_host_switch_lets_the_admin_in_at_the_company_address(
+    client, admin, monkeypatch
+):
+    from app.core.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "admin_on_main_host", True)
+    login_body = {"email": ADMIN_LOGIN[0], "password": ADMIN_LOGIN[1]}
+    for host in ({}, {"host": ACME}):
+        signed_in = client.post("/api/v1/admin/auth/login", json=login_body, headers=host)
+        assert signed_in.status_code == 200
+        token = {"authorization": f"Bearer {signed_in.json()['access_token']}", **host}
+        assert client.get("/api/v1/admin/overview", headers=token).status_code == 200
+    # A company user's token is still refused by the admin API.
+    owner = login(client, *OWNER)
+    assert client.get("/api/v1/admin/overview", headers=owner).status_code == 401
+
+
 def test_company_and_admin_tokens_never_cross(client, admin):
     owner = login(client, *OWNER)
     as_admin = {"Authorization": owner["Authorization"], "host": ADMIN}

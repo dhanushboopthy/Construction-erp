@@ -96,6 +96,12 @@ class PlatformAction(StrEnum):
     INTEGRATION_DISCONNECT = "integration_disconnect"
     INTEGRATION_LIMITS = "integration_limits"
     GSTIN_LOOKUP = "gstin_lookup"
+    BILL_TEMPLATE_UPLOAD = "bill_template_upload"
+    BILL_TEMPLATE_ACTIVATE = "bill_template_activate"
+    BILL_TEMPLATE_DEACTIVATE = "bill_template_deactivate"
+    BILL_TEMPLATE_DELETE = "bill_template_delete"
+    SECONDARY_LOGO_SET = "secondary_logo_set"
+    SECONDARY_LOGO_REMOVE = "secondary_logo_remove"
 
 
 class SequenceChange(StrEnum):
@@ -175,6 +181,16 @@ class IntegrationOutcome(StrEnum):
     FAILED = "failed"
     CACHED = "cached"
     BLOCKED = "blocked"
+
+
+class BillSlot(StrEnum):
+    """Which kind of document a bill template designs (Milestone 28)."""
+
+    TAX_INVOICE = "tax_invoice"
+    PROFORMA = "proforma"
+    QUOTATION = "quotation"
+    CREDIT_NOTE = "credit_note"
+    DEBIT_NOTE = "debit_note"
 
 
 class SupportCategory(StrEnum):

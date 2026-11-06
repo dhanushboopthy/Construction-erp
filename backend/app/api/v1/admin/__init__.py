@@ -6,6 +6,7 @@ from app.api.deps import require_admin_host
 from app.api.v1.admin import (
     auth,
     backups,
+    bill_templates,
     billing,
     company_data,
     integrations,
@@ -20,6 +21,7 @@ from app.api.v1.admin import (
 router = APIRouter(prefix="/admin", dependencies=[Depends(require_admin_host)])
 router.include_router(auth.router)
 router.include_router(backups.router)
+router.include_router(bill_templates.router)
 router.include_router(billing.router)
 router.include_router(company_data.router)
 router.include_router(integrations.router)

@@ -106,6 +106,24 @@ whoever looks after the server. Commands run in the project folder on the server
 - **Companies that were active before this version** got an expiry one year out, shown as "needs
   review". Open each, compare with what they have really paid, and record a renewal (it sets the real
   end date and clears the flag). Until then they run normally and nothing is read-only before that date.
+- **Give a company its own bill design:** open the company, the Bill design tab. Upload the HTML
+  (and the images it uses, named as the HTML names them) for the kind of document. Read the
+  checks beside it: removed scripts and links, and the placeholders that print blank. Preview it,
+  then Activate. New documents of that kind use it from then on; documents already issued keep
+  what they were issued with. The upload is refused (409 `TEMPLATE_MISSING_FIELDS`) if it leaves
+  out a required GST field, and the answer lists which.
+- **Change a design:** upload the changed file as the next version and activate it. A version a
+  bill was issued with is never edited or deleted. To stop using a design, Deactivate: new
+  documents return to the standard layout. Delete only a design nothing was issued with.
+- **Fill the placeholders:** the Bill design tab lists every placeholder with a sample (for
+  example `{{invoice.number}}`, `{{customer.gstin}}`, `{{totals.grandTotal|symbol}}`). Put the
+  `{{item.*}}` fields in one table row and it repeats per item. Use `<img src="{{company.logo}}">`
+  for logos.
+- **Second logo:** Choose second logo on the same tab. It reaches designs no bill was issued with
+  yet; to change what a printed bill shows, issue a new design version.
+- **A design prints wrongly:** Preview it, then Check. If the stored file is lost from storage
+  the bill prints on the standard layout and the server logs `bill design ... could not be read`;
+  restore the storage object (keys under `bill-template/<company id>/`).
 - **Answer a ticket:** Support (Alt 9) lists every company's tickets; the tiles show open, urgent
   and unassigned counts. Open one, read the thread, type your reply and send. A reply alone makes
   the ticket "waiting on company"; the company's own reply puts it back to open. Any admin,

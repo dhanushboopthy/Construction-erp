@@ -168,3 +168,19 @@ inside a company.
   carries a payment or revenue figure; `test_no_admin_answer_carries_money` keeps its list of
   allowed billing paths. A payment row is Duolink's receipt record; Duolink's GST tax invoice for
   the subscription is raised in Duolink's own books, outside this ERP.
+
+## Update, 2026-11-10 (Milestone 28): bill templates
+
+- **Uploaded HTML is data, never a template.** A small placeholder grammar replaces `{{key}}` from
+  a registry of known fields; anything else prints blank. Nothing is evaluated, no file or
+  network address is read while drawing (the renderer's fetcher serves only the design's own
+  images), and the hostile-input tests in `tests/unit/test_bill_html.py` and
+  `tests/integration/test_bill_templates.py` guard this.
+- **A document pins its design.** `bill_template_id` is set at insert on bills, quotations,
+  proformas, credit notes and debit notes; a reprint uses it, and a null pin is the built-in
+  layout. A design some document uses can never be deleted or changed: a change is a new version.
+- **GST fields cannot be dropped.** A tax invoice, credit note or debit note design is refused
+  when it omits a field the rules require, so a design can restyle a bill but never make it less
+  than a full GST tax invoice.
+- **Support may preview.** A preview reads nothing of the company's, so it is the second explicit
+  Support write exception, listed in the Support-403 test.

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import { AccessTab } from "./pages/company/AccessTab";
 import { ActivityTab } from "./pages/company/ActivityTab";
+import { BillDesignTab } from "./pages/company/BillDesignTab";
 import { DataTab } from "./pages/company/DataTab";
 import { NumberingTab } from "./pages/company/NumberingTab";
 import { OverviewTab } from "./pages/company/OverviewTab";
@@ -40,4 +41,5 @@ export const COMPANY_TABS: CompanyTab[] = [
     render: (t) => <NumberingTab tenant={t} />,
   },
   { key: "data", label: "Data", superAdminOnly: true, render: (t) => <DataTab tenant={t} /> },
+  { key: "bill-design", label: "Bill design", render: (t) => <BillDesignTab tenant={t} /> },
 ];

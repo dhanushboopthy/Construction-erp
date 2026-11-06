@@ -133,6 +133,15 @@ Duolink cannot see your company unless you allow it. Open **Settings, Duolink su
   they opened. It is also in the Audit log.
 - Only the owner can do this, and it works even when your plan has ended.
 
+### Your own bill design
+
+Duolink can set up your own design for the tax invoice, proforma invoice, quotation, credit note
+and debit note, and a second logo. Ask Duolink through Help. The figures, numbers and GST on a
+bill are the same as on the standard layout, and a design cannot leave out what a GST document must
+show. A bill keeps the design it was issued with: printing it again later, even after Duolink
+changes your design, gives the same bill. Bills issued before a design was set up print on the
+standard layout.
+
 ### Help: asking Duolink a question
 
 Open your name in the top corner and choose **Help**. You see the tickets your company has raised.

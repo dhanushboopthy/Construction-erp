@@ -16,6 +16,11 @@ import type {
   Notifications,
   PlatformSettings,
   SystemHealth,
+  BillDiagnostics,
+  BillRegistry,
+  BillTemplate,
+  BillTemplateList,
+  BillUpload,
   AdminTicketDetail,
   AdminTicketFilters,
   AdminTicketPage,
@@ -704,6 +709,95 @@ export function useStaff(enabled = true) {
     queryFn: () => adminApi<StaffMember[]>("/staff"),
     enabled,
   });
+}
+
+// ------------------------------------------------------------------ bill designs (M28)
+
+const designs = (tenantId: number) => `/tenants/${tenantId}/bill-templates`;
+const designKeys = (tenantId: number) => ["admin", "bill-templates", tenantId] as const;
+
+export function useBillDesigns(tenantId: number) {
+  return useQuery({
+    queryKey: [...designKeys(tenantId), "list"],
+    queryFn: () => adminApi<BillTemplateList>(designs(tenantId)),
+  });
+}
+
+export function useBillRegistry(tenantId: number, enabled: boolean) {
+  return useQuery({
+    queryKey: [...designKeys(tenantId), "registry"],
+    queryFn: () => adminApi<BillRegistry>(`${designs(tenantId)}/field-registry`),
+    enabled,
+  });
+}
+
+export function useBillDiagnostics(tenantId: number, templateId: number | null) {
+  return useQuery({
+    queryKey: [...designKeys(tenantId), "diagnostics", templateId],
+    queryFn: () => adminApi<BillDiagnostics>(`${designs(tenantId)}/${templateId}/diagnostics`),
+    enabled: templateId !== null,
+  });
+}
+
+/** The design drawn with sample figures. Fetched with the access token (an iframe cannot send
+ * one), and fresh every time. */
+export function previewBillDesign(tenantId: number, templateId: number): Promise<Blob> {
+  return adminClient.fetchFile(`${designs(tenantId)}/${templateId}/preview`, { method: "POST" });
+}
+
+export interface DesignUpload {
+  slot: string;
+  name: string;
+  html: File;
+  images: File[];
+}
+
+function useDesignChange<T, V>(tenantId: number, run: (v: V) => Promise<T>) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: run,
+    onSuccess: () => client.invalidateQueries({ queryKey: designKeys(tenantId) }),
+  });
+}
+
+export function useUploadBillDesign(tenantId: number) {
+  return useDesignChange(tenantId, (v: DesignUpload) => {
+    const form = new FormData();
+    form.append("slot", v.slot);
+    form.append("name", v.name);
+    form.append("html", v.html);
+    for (const image of v.images) form.append("images", image);
+    return adminApi<BillUpload>(designs(tenantId), { method: "POST", body: form });
+  });
+}
+
+export function useChangeBillDesign(tenantId: number) {
+  return useDesignChange(tenantId, (v: { id: number; action: "activate" | "deactivate" }) =>
+    adminApi<BillTemplate>(`${designs(tenantId)}/${v.id}/${v.action}`, { method: "POST" }),
+  );
+}
+
+export function useDeleteBillDesign(tenantId: number) {
+  return useDesignChange(tenantId, (id: number) =>
+    adminApi<undefined>(`${designs(tenantId)}/${id}`, { method: "DELETE" }),
+  );
+}
+
+export function useSetSecondaryLogo(tenantId: number) {
+  return useDesignChange(tenantId, (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return adminApi<BillTemplateList>(`${designs(tenantId)}/secondary-logo`, {
+      method: "PUT",
+      body: form,
+    });
+  });
+}
+
+export function useRemoveSecondaryLogo(tenantId: number) {
+  return useDesignChange(tenantId, () =>
+    adminApi<BillTemplateList>(`${designs(tenantId)}/secondary-logo`, { method: "DELETE" }),
+  );
 }
 
 export const TICKET_PAGE_SIZE = 25;

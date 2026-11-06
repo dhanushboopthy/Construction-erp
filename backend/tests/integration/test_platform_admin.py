@@ -12,6 +12,7 @@ from sqlalchemy.exc import DBAPIError
 
 from app.main import app
 from app.services.platform import auth as platform_auth
+from tests.bill_samples import design as bill_design
 from tests.conftest import login
 
 pytestmark = pytest.mark.integration
@@ -353,6 +354,12 @@ def test_no_admin_answer_carries_money(client, admin, acme, seeded):
         headers=owner,
         json={"subject": "A question", "category": "other", "body": "Hello"},
     ).json()["id"]
+    design = client.post(
+        f"/api/v1/admin/tenants/{acme['id']}/bill-templates",
+        headers=admin,
+        data={"slot": "tax_invoice", "name": "Plain"},
+        files=[("html", ("b.html", bill_design("tax_invoice").encode(), "text/html"))],
+    ).json()["id"]
     for path in gets:
         url = (
             path.replace("{tenant_id}", str(acme["id"]))
@@ -361,6 +368,7 @@ def test_no_admin_answer_carries_money(client, admin, acme, seeded):
             .replace("{job_id}", str(job.id))
             .replace("{key}", "sales")
             .replace("{kind}", "gsp")
+            .replace("{template_id}", str(design))
         )
         response = client.get(url, headers=admin)
         assert response.status_code == 200, f"{path}: {response.text}"

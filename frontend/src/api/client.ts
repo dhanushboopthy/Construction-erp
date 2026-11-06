@@ -51,7 +51,7 @@ export interface ApiClient<Session extends { access_token: string }> {
   refreshSession: () => Promise<Session | null>;
   api: <T>(path: string, init?: RequestInit, retry?: boolean) => Promise<T>;
   /** The fetch for files: with the access token, failures as ApiError. */
-  fetchFile: (path: string) => Promise<Blob>;
+  fetchFile: (path: string, init?: RequestInit) => Promise<Blob>;
 }
 
 /** `base` is prefixed to every path; `authPrefix` marks the sign-in routes, which are never
@@ -123,10 +123,10 @@ export function createClient<Session extends { access_token: string }>({
     return (await response.json()) as T;
   }
 
-  async function fetchFile(path: string): Promise<Blob> {
+  async function fetchFile(path: string, init: RequestInit = {}): Promise<Blob> {
     const headers = new Headers();
     if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
-    const response = await fetch(`${base}${path}`, { headers, credentials: "include" });
+    const response = await fetch(`${base}${path}`, { ...init, headers, credentials: "include" });
     if (!response.ok) throw await parseError(response);
     return response.blob();
   }

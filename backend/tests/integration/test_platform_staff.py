@@ -16,6 +16,7 @@ from app.main import app
 from app.models.enums import PlatformRole
 from app.scripts import create_platform_admin as script
 from app.services.platform import auth as platform_auth
+from tests.bill_samples import design
 from tests.conftest import login
 
 pytestmark = pytest.mark.integration
@@ -50,6 +51,8 @@ NOT_ADMIN_WRITES = {
 SUPPORT_MAY_WRITE = {
     ("POST", "/api/v1/admin/support/tickets/{ticket_id}/reply"),
     ("PATCH", "/api/v1/admin/support/tickets/{ticket_id}"),
+    # A preview only draws a PDF from sample figures: it changes nothing (Milestone 28).
+    ("POST", "/api/v1/admin/tenants/{tenant_id}/bill-templates/{template_id}/preview"),
 }
 
 
@@ -151,8 +154,22 @@ def _fill(path, ids):
 # ------------------------------------------------------------------ roles
 
 
-def test_the_only_writes_support_may_do_are_the_ticket_replies(client, helper, acme):
+def test_the_only_writes_support_may_do_are_the_ticket_replies_and_previews(
+    client, boss, helper, acme
+):
     assert set(_admin_routes()) >= SUPPORT_MAY_WRITE  # the names above are real routes
+    made = client.post(
+        f"/api/v1/admin/tenants/{acme['id']}/bill-templates",
+        headers=boss,
+        data={"slot": "tax_invoice", "name": "Plain"},
+        files=[("html", ("b.html", design("tax_invoice").encode(), "text/html"))],
+    )
+    assert made.status_code == 201, made.text
+    preview = client.post(
+        f"/api/v1/admin/tenants/{acme['id']}/bill-templates/{made.json()['id']}/preview",
+        headers=helper,
+    )
+    assert preview.status_code == 200 and preview.content.startswith(b"%PDF")
     owner = login(client, "ravi", "ravi-pass-123", host="acme.localhost")
     ticket = client.post(
         "/api/v1/support/tickets",
@@ -184,6 +201,7 @@ def test_support_gets_403_on_every_write_route(client, helper, acme, method, pat
         "job_id": 1,
         "key": "quotes",
         "kind": "gsp",
+        "template_id": 1,
     }
     response = client.request(method, _fill(path, ids), headers=helper, json={})
     assert response.status_code == 403, f"{method} {path}: {response.status_code}"
@@ -191,7 +209,7 @@ def test_support_gets_403_on_every_write_route(client, helper, acme, method, pat
 
 
 @pytest.mark.parametrize(("method", "path"), READS, ids=[f"{m} {p}" for m, p in READS])
-def test_support_gets_200_on_every_read_route(client, helper, acme, seeded, method, path):
+def test_support_gets_200_on_every_read_route(client, boss, helper, acme, seeded, method, path):
     from app.models.enums import BackupJobKind, BackupJobStatus
     from app.models.platform import PlatformBackupJob
 
@@ -200,6 +218,12 @@ def test_support_gets_200_on_every_read_route(client, helper, acme, seeded, meth
     )
     seeded.add(some_job)
     seeded.flush()
+    some_design = client.post(
+        f"/api/v1/admin/tenants/{acme['id']}/bill-templates",
+        headers=boss,
+        data={"slot": "tax_invoice", "name": "Plain"},
+        files=[("html", ("b.html", design("tax_invoice").encode(), "text/html"))],
+    ).json()["id"]
     some_user = client.get("/api/v1/admin/users", headers=helper).json()["items"][0]["id"]
     some_plan = client.get("/api/v1/admin/billing/plans", headers=helper).json()[0]["id"]
     owner = login(client, "ravi", "ravi-pass-123", host="acme.localhost")
@@ -218,6 +242,7 @@ def test_support_gets_200_on_every_read_route(client, helper, acme, seeded, meth
         "job_id": some_job.id,
         "key": "quotes",
         "kind": "gsp",
+        "template_id": some_design,
     }
     response = client.get(_fill(path, ids), headers=helper)
     if (method, path) in SUPER_ONLY_READS:

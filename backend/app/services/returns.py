@@ -19,6 +19,7 @@ from app.domain.money import ZERO, qty
 from app.domain.stock_valuation import NegativeStockError, ensure_available
 from app.models.enums import (
     ApprovalAction,
+    BillSlot,
     DocType,
     LedgerAccount,
     PartyRef,
@@ -42,6 +43,7 @@ from app.schemas.returns import (
     ReturnLineIn,
 )
 from app.services import approvals as approval_service
+from app.services import bill_templates as bill_template_service
 from app.services import closing as closing_service
 from app.services import compliance as compliance_service
 from app.services import ledgers
@@ -172,6 +174,7 @@ def create_credit_note(
         grand_total=totals.grand_total,
         approved_by=approver if approver is not None else (actor_id if is_owner else None),
         cancels_invoice=cancels_invoice,
+        bill_template_id=bill_template_service.pin_for(db, BillSlot.CREDIT_NOTE),
         lines=[
             CreditNoteLine(
                 tenant_id=current_tenant_id(db),
@@ -434,6 +437,7 @@ def create_debit_note(db: Session, data: DebitNoteCreate, *, actor_id: int) -> D
         igst=totals.igst,
         round_off=totals.round_off,
         grand_total=totals.grand_total,
+        bill_template_id=bill_template_service.pin_for(db, BillSlot.DEBIT_NOTE),
         lines=[
             DebitNoteLine(
                 tenant_id=current_tenant_id(db),

@@ -522,6 +522,7 @@ describe("AdminApp company page (M18)", () => {
       "access",
       "numbering",
       "data",
+      "bill-design",
     ]);
     stubApi(COMPANY_ROUTES);
     const user = userEvent.setup();
@@ -541,6 +542,7 @@ describe("AdminApp company page (M18)", () => {
       "Access",
       "Numbering",
       "Data",
+      "Bill design",
     ]);
     await user.click(within(tabs).getByRole("link", { name: "Usage" }));
     expect(window.location.search).toBe("?tab=usage");

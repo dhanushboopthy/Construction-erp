@@ -18,13 +18,14 @@ export type PasswordReset = Schemas["PasswordReset"];
 /** Registry details for a GSTIN (Milestone 27). */
 export type GstinDetails = Schemas["GstinLookupOut"];
 export type ShopSettings = Schemas["ShopSettingsOut"];
-/** M21 adds the subscription fields; written by hand until `make gen-api` runs. */
-export type Tenant = Schemas["TenantOut"] & {
-  access_state?: "full" | "read_only";
-  subscription_status?: "trial" | "active" | "expired" | "cancelled";
-  expires_at?: string | null;
-  days_left?: number | null;
-};
+export type Tenant = Schemas["TenantOut"];
+// Milestone 23: Duolink support access, the owner's side and the session banner.
+export type SupportSessionStatus = Schemas["SupportSessionStatus"];
+export type AccessOverview = Schemas["AccessOverview"];
+export type AccessGrant = Schemas["GrantOut"];
+export type GrantCreate = Schemas["GrantCreate"];
+export type SupportVisit = Schemas["SessionRow"];
+export type SupportVisitEvent = Schemas["SessionEventOut"];
 export type ShopSettingsUpdate = Schemas["ShopSettingsUpdate"];
 export type TokenResponse = Schemas["TokenResponse"];
 export type TenantPlanUsage = Schemas["TenantPlanOut"];
@@ -65,7 +66,7 @@ export type Purchase = Schemas["PurchaseOut"];
 export type PurchaseOwner = Schemas["PurchaseOwnerOut"];
 export type PurchasePreview = Schemas["PurchasePreview"];
 export type PaymentCreate = Schemas["PaymentCreate"];
-export type PaymentOut = Schemas["PaymentOut"];
+export type PaymentOut = Schemas["app__schemas__purchases__PaymentOut"];
 export type PaymentMode = Schemas["PaymentMode"];
 export type Transfer = Schemas["TransferOut"];
 export type TransferCreate = Schemas["TransferCreate"];

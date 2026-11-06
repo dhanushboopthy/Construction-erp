@@ -18,7 +18,11 @@ router = APIRouter(prefix="/support", tags=["support"])
 
 
 def _viewer(principal: Principal) -> Viewer:
-    return Viewer(user_id=principal.user_id, is_counter=principal.role is Role.COUNTER)
+    return Viewer(
+        user_id=principal.user_id,
+        is_counter=principal.role is Role.COUNTER,
+        marks_seen=not principal.is_support,
+    )
 
 
 @router.get("/tickets", response_model=Page[TicketRow])

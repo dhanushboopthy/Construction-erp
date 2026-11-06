@@ -1,7 +1,7 @@
 """gsp and gstin lookup admin
 
 Revision ID: 0040
-Revises: 0035
+Revises: 0036
 Create Date: 2026-11-09 09:00:00.000000+00:00
 
 M27: Duolink's shared GSP account and the GSTIN lookup are configured, tested, limited and
@@ -63,6 +63,8 @@ ACTIONS_OLD = (
     "payment_reverse",
     "support_reply",
     "support_update",
+    "support_session_start",
+    "support_session_end",
 )
 ACTIONS_NEW = ACTIONS_OLD + (
     "integration_connect",
@@ -84,7 +86,7 @@ def _enum(name: str, *values: str) -> sa.Enum:
 
 
 revision: str = "0040"
-down_revision: str | None = "0035"
+down_revision: str | None = "0036"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

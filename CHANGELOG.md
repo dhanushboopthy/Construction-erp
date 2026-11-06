@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.17.0 (M27): GSP and GSTIN-lookup admin
+## 1.21.0 (M27): GSP and GSTIN-lookup admin
 
 For companies:
 
@@ -21,6 +21,37 @@ For Duolink staff:
   are saved and it is missing.
 - **Fetch details on the onboarding form** fills the seller details without a company limit.
 - New dependency: `cryptography`.
+
+## 1.17.0 (M23): owner-granted support access
+
+For companies (owner only):
+
+- **Settings, Duolink support access.** Duolink cannot look inside your company unless you let it.
+  Give access for 1, 4, 24 or 72 hours, say why, optionally link one of your tickets, and choose
+  whether Duolink may also see cost and margin (off by default: Duolink then sees what a counter
+  user sees). The screen shows the live grant with the time left and a **Turn off now** button.
+  Turning it off, or giving a new grant, ends any Duolink visit at once: the next thing Duolink
+  does is refused.
+- **Who came in.** A history lists each Duolink visit: who, when they entered and left, why, and
+  how many pages they opened. Every visit is also in your audit log.
+- **Read-only, always.** Inside, Duolink sees the screens you see but cannot save anything,
+  change a user or a password, or change this setting.
+
+For Duolink staff:
+
+- **Company page, Access tab.** Shows whether the owner has granted access and until when. A Super
+  Admin gives a reason and presses **Enter company (read-only)**; the company opens in a new tab
+  under an amber "Super Admin Mode" bar: "Duolink support, read-only, viewing the company, ends
+  16:40, Exit". Every save button is off ("Read-only support session"). Support accounts see the
+  status but cannot enter.
+- **Entering needs a live grant.** Without one the admin is told to ask the owner (409). The link
+  lasts two hours at most and never longer than the grant. It works only at that company's address
+  and opens for that visit only: closing the tab or reloading ends it, and the admin enters again.
+- **Activity, Company access.** Every visit at every company with its request count. A visit that
+  was never ended and whose window has closed is marked.
+- Entering and leaving are in the admin audit log and in the company's own audit log.
+
+Not in this version: the notifications bell for a visit left open (M24).
 
 ## 1.16.0 (M22): support tickets
 

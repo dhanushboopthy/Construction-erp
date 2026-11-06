@@ -34,6 +34,11 @@ export type TenantCreated = Schemas["TenantCreated"];
 export type SellerDetails = Schemas["SellerDetails"];
 export type SellerDetailsUpdate = Schemas["SellerDetailsUpdate"];
 export type TenantUsage = Schemas["TenantUsage"];
+// Milestone 23: owner-granted support access, as Duolink sees it.
+export type AccessStatus = Schemas["AdminAccessStatus"];
+export type SupportSessionStarted = Schemas["SupportSessionStarted"];
+export type SupportSessionRow = Schemas["AdminSessionRow"];
+export type SupportSessionPage = Schemas["AdminSessionPage"];
 
 // Milestone 27 (GSP and GSTIN lookup).
 export type Integration = Schemas["IntegrationOut"];

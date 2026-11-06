@@ -21,6 +21,7 @@ import { Button } from "@/components/Button";
 import { SelectField, TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
 import { formatMoney, trimDecimal } from "@/lib/format";
+import { newUuid } from "@/lib/uuid";
 import { ItemEditor } from "@/pages/items/ItemEditor";
 import { unitNames } from "@/pages/items/itemLabels";
 import { PartyEditor } from "@/pages/parties/PartyEditor";
@@ -138,7 +139,7 @@ export function BillEntryPage() {
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [focusLine, setFocusLine] = useState<number | null>(null);
-  const [key, setKey] = useState(() => crypto.randomUUID());
+  const [key, setKey] = useState(() => newUuid());
   const [side, setSide] = useState<Side>({ kind: "totals" });
   // A bill being keyed is never lost to an app update (Milestone 29).
   useUnsavedChanges(partyId !== "" || lines.some((l) => l.itemId !== "" || l.quantity !== ""));
@@ -317,7 +318,7 @@ export function BillEntryPage() {
         return;
       }
       const saved = await create.mutateAsync({ body, key });
-      setKey(crypto.randomUUID());
+      setKey(newUuid());
       void navigate(`/sales?open=${saved.id}`);
     } catch (err) {
       const e = toFormError(err);

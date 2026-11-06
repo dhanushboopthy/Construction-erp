@@ -139,7 +139,9 @@ control-border grey). Change them together with the tokens.
 ## Principles
 
 1. **Keyboard first.** Every flow works without a mouse: Alt+1–9 and Alt+0 modules, Enter to add a line,
-   F-keys documented on screen. Visible focus rings always.
+   F-keys documented on screen. Visible focus rings always. These are defaults: each user can
+   change their own at Ctrl+Shift+Alt+1 (SPEC §9), so a screen reads its key from
+   `useComboFor(...)` / `useShortcut("new", ...)`, never from a hard-coded `Alt+N`.
 2. **Figures are the hero.** Totals large and tabular; the bill total sits on the navy card.
 3. **Colour means something.** Orange marks what to do or where you are; status colours always
    come with a word. Cards carry content, never other cards.

@@ -5,6 +5,7 @@ import { actionsFor } from "@/actions";
 import type { Role, User } from "@/api/types";
 import type { Alerts } from "@/hooks/useAlerts";
 import { formatMoney } from "@/lib/format";
+import { InstallButton } from "@/pwa/InstallButton";
 
 import { CommandSearch } from "./CommandSearch";
 import styles from "./TopBar.module.css";
@@ -29,6 +30,7 @@ export function TopBar({ user, where, onSignOut, alerts, alertsMenu }: Props) {
           <span className={styles.live} aria-hidden="true" />
           {where}
         </span>
+        <InstallButton />
         <AlertsBell alerts={alerts} menu={alertsMenu} />
         <QuickActions role={user.role} />
         <span className={styles.divider} aria-hidden="true" />

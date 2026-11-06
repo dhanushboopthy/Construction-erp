@@ -55,6 +55,10 @@ class Settings(BaseSettings):
     base_domain: str = "localhost"
     default_tenant_slug: str = "main"
     admin_subdomain: str = "admin"
+    # A small install with one domain and no admin.<domain> record: let the Duolink admin sign in
+    # on the company's own address (the sign-in page sends an email to the admin API, and the
+    # console lives at /admin). Off by default: ADR 0012 keeps the console on its own host.
+    admin_on_main_host: bool = False
 
     jwt_secret: str = _DEV_SECRET
     jwt_algorithm: str = "HS256"

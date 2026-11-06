@@ -1476,3 +1476,25 @@ decimal string; dates are ISO; times are stored in UTC and shown in Asia/Kolkata
 - Stock with value, dues list (weekly), aging, profit by item/customer/site.
 - Sales by customer segment (retail / contractor / bulk) as a monthly bar chart, empty until
   data arrives (owner interview Q2).
+
+## 9. Keyboard shortcuts (per user)
+
+Every user of the company app can change their own shortcuts. **Ctrl+Shift+Alt+1**, from any
+screen, opens *Keyboard shortcuts* (also in the account menu), a list of every action with its
+current key, where each can be changed, put back to its default, or all restored at once.
+
+- **What can be set:** the jump to each screen the role can open (default `Alt+<key>` as in the
+  left menu) and the page's **New record** (default `Alt+N`: new bill, item, party, user,
+  location). The list is in `frontend/src/shortcuts/registry.ts`.
+- **Allowed keys:** Alt, optionally Shift, and one letter or digit (`Alt+N`, `Alt+Shift+7`).
+  Never Ctrl or Meta, so typing in a field and the browser's own shortcuts are untouched and
+  the editor's own key can never be taken. `Alt+D`, `Alt+F` and `Alt+E` are refused (the
+  browser takes them). One key runs one action; the editor says which action has it.
+- **Stored on the server, per user** (`user_shortcut`, `GET/PUT/DELETE /me/shortcuts`, any role,
+  own rows only), so they follow the user to any device. Only changes are stored; actions the user
+  never changed keep their default, including defaults added later. Both ends check the rules
+  (`app/domain/shortcuts.py`, `frontend/src/shortcuts/combo.ts`). Removing a user removes their
+  shortcuts. The Duolink admin console keeps fixed keys.
+- **Table.** `user_shortcut` (`user_id`, `action_id`, `combo`), company-owned with both policies
+  (migration 0044); one row per action the user changed, unique per user on both `action_id`
+  and `combo`. It is in the preserved list of the company-data catalogue.

@@ -12,7 +12,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
 import { TableToolbar } from "@/components/TableToolbar";
 import styles from "@/components/Ledger.module.css";
-import { useAltKey } from "@/hooks/useKeys";
+import { useShortcut } from "@/shortcuts/ShortcutsContext";
 import { useTableFilters } from "@/hooks/useTableFilters";
 import { includesText } from "@/lib/filters";
 import { formatMoney, plural, trimDecimal } from "@/lib/format";
@@ -29,7 +29,7 @@ export function PurchasesPage() {
   const query = usePurchases();
   const alerts = useSchemes(true, user?.role !== "counter");
   const [openId, setOpenId] = useState<number | null>(null);
-  useAltKey("n", () => void navigate("/purchases/new"));
+  useShortcut("new", () => void navigate("/purchases/new"));
   const filters = useTableFilters();
   const all = query.data?.items ?? [];
   const rows = all.filter(

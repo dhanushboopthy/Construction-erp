@@ -5,7 +5,8 @@ import { useCreateLocation, useLocations, useUpdateLocation } from "@/api/setup"
 import type { Location, LocationKind } from "@/api/types";
 import { Button } from "@/components/Button";
 import { CheckField, SelectField, TextAreaField, TextField } from "@/components/Field";
-import { moveRowFocus, useAltKey } from "@/hooks/useKeys";
+import { moveRowFocus } from "@/hooks/useKeys";
+import { useShortcut } from "@/shortcuts/ShortcutsContext";
 import { GST_STATES, stateName } from "@/lib/gstStates";
 
 import styles from "@/components/Ledger.module.css";
@@ -42,7 +43,7 @@ export function LocationsPage() {
     setNotice(null);
     setMode({ kind: "new" });
   }, []);
-  useAltKey("n", openNew);
+  useShortcut("new", openNew);
 
   const close = useCallback(() => {
     const id = mode.kind === "edit" ? mode.id : null;

@@ -11,9 +11,10 @@ import {
   SUPPORT_READ_ONLY_REASON,
 } from "@/auth/ReadOnlyContext";
 import { useAlerts } from "@/hooks/useAlerts";
-import { useModuleShortcuts } from "@/hooks/useModuleShortcuts";
 import { modulesFor, type ModuleLink } from "@/modules";
 import { ForcedUpdateWatch } from "@/pwa/AppUpdates";
+import { goId } from "@/shortcuts/registry";
+import { useComboFor } from "@/shortcuts/ShortcutsContext";
 import { SupportBanner } from "@/supportAccess/SupportBanner";
 
 import styles from "./AppShell.module.css";
@@ -25,18 +26,21 @@ import { usePopover } from "./usePopover";
 
 function NavItem({ module: m }: { module: ModuleLink }) {
   const Icon = iconFor(m.path);
+  // The user's own shortcut for this screen, else the default ("Alt+2").
+  const combo = useComboFor(goId(m.path)) ?? `Alt+${m.shortcut.toUpperCase()}`;
+  const spoken = combo.replaceAll("+", " ");
   return (
     <li>
       <NavLink
         to={m.path}
         end={m.path === "/"}
-        title={`${m.label} (Alt ${m.shortcut.toUpperCase()})`}
+        title={`${m.label} (${spoken})`}
         className={({ isActive }) => (isActive ? styles.active : undefined)}
       >
         <Icon className={styles.icon} size={20} strokeWidth={1.9} aria-hidden="true" />
         <span className={styles.label}>{m.label}</span>
-        <kbd className={styles.kbd} aria-label={`Alt ${m.shortcut}`}>
-          Alt {m.shortcut.toUpperCase()}
+        <kbd className={styles.kbd} aria-label={spoken}>
+          {spoken}
         </kbd>
       </NavLink>
     </li>
@@ -46,7 +50,6 @@ function NavItem({ module: m }: { module: ModuleLink }) {
 export function AppShell() {
   const { user, signOut, support, exitSupport } = useAuth();
   const modules = user ? modulesFor(user.role) : [];
-  useModuleShortcuts(modules);
   const tenant = useTenant();
   const alertsNav = useRef<HTMLButtonElement>(null);
   const alertsMenu = usePopover([alertsNav]);

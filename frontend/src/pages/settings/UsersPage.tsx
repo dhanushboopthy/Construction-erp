@@ -13,7 +13,8 @@ import type { Location, Role, User } from "@/api/types";
 import { useAuth } from "@/auth/AuthContext";
 import { Button } from "@/components/Button";
 import { CheckField, TextField } from "@/components/Field";
-import { moveRowFocus, useAltKey } from "@/hooks/useKeys";
+import { moveRowFocus } from "@/hooks/useKeys";
+import { useShortcut } from "@/shortcuts/ShortcutsContext";
 import { formatDateTime } from "@/lib/format";
 
 import styles from "@/components/Ledger.module.css";
@@ -68,7 +69,7 @@ export function UsersPage() {
     setNotice(null);
     setMode({ kind: "new" });
   }, []);
-  useAltKey("n", openNew);
+  useShortcut("new", openNew);
 
   const close = useCallback(() => {
     const id = mode.kind === "edit" ? mode.id : null;

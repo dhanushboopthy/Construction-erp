@@ -8,6 +8,7 @@ import { useAuth } from "@/auth/AuthContext";
 import { Button } from "@/components/Button";
 import { SelectField, TextField } from "@/components/Field";
 import styles from "@/components/Ledger.module.css";
+import { newUuid } from "@/lib/uuid";
 
 function todayISO(): string {
   const d = new Date();
@@ -25,7 +26,7 @@ export function SupplierPayment({ party }: { party: Party }) {
   const [reference, setReference] = useState("");
   const [date, setDate] = useState(todayISO());
   const [locationId, setLocationId] = useState("");
-  const [key, setKey] = useState(() => crypto.randomUUID());
+  const [key, setKey] = useState(() => newUuid());
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
 
@@ -56,7 +57,7 @@ export function SupplierPayment({ party }: { party: Party }) {
       );
       setAmount("");
       setReference("");
-      setKey(crypto.randomUUID());
+      setKey(newUuid());
     } catch (err) {
       setError(toFormError(err).message);
     }

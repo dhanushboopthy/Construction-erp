@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router";
 
-import { ApiError } from "@/api/client";
+import { adminApi } from "@/admin/client";
+import { ApiError, json } from "@/api/client";
 import { useTenant } from "@/api/tenant";
 import { useAuth } from "@/auth/AuthContext";
 import { BrandMark } from "@/components/BrandMark";
@@ -35,6 +36,17 @@ export function LoginPage() {
     setBusy(true);
     setError(null);
     try {
+      // A company username never has an "@" (letters, digits and . _ - only), so an email is a
+      // Duolink admin: sign in to the admin API and open the console (ADMIN_ON_MAIN_HOST).
+      if (username.includes("@")) {
+        await adminApi("/auth/login", {
+          method: "POST",
+          body: json({ email: username.trim(), password }),
+        });
+        // The admin's refresh cookie is set; the console starts from it on a fresh page load.
+        window.location.assign("/admin");
+        return;
+      }
       await signIn(username, password);
       void navigate(from, { replace: true });
     } catch (err) {

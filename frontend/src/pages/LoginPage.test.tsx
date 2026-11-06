@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import { createQueryClient } from "@/api/queryClient";
 import { App } from "@/App";
@@ -55,5 +55,39 @@ describe("LoginPage", () => {
     expect(await screen.findByText(/account is suspended/)).toHaveAttribute("role", "alert");
     expect(screen.getByRole("button", { name: "Sign in" })).toBeDisabled();
     expect(screen.getByLabelText("Username")).toBeDisabled();
+  });
+
+  it("sends an email to the Duolink admin sign-in and opens the console", async () => {
+    const calls: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = typeof input === "string" ? input : input.toString();
+        calls.push(url);
+        if (url.endsWith("/api/v1/admin/auth/login")) {
+          return new Response(JSON.stringify({ access_token: "t", admin: {} }), { status: 200 });
+        }
+        return new Response(JSON.stringify({ code: "NOT_AUTHENTICATED" }), { status: 401 });
+      }),
+    );
+    const assign = vi.fn();
+    const original = window.location;
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: { ...original, assign },
+    });
+    try {
+      renderApp();
+      fireEvent.change(await screen.findByLabelText("Username"), {
+        target: { value: "admin@duolink.in" },
+      });
+      fireEvent.change(screen.getByLabelText("Password"), { target: { value: "secret-pass" } });
+      fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+      await waitFor(() => expect(assign).toHaveBeenCalledWith("/admin"));
+      expect(calls.some((u) => u.endsWith("/api/v1/admin/auth/login"))).toBe(true);
+      expect(calls.some((u) => u.endsWith("/api/v1/auth/login"))).toBe(false);
+    } finally {
+      Object.defineProperty(window, "location", { configurable: true, value: original });
+    }
   });
 });

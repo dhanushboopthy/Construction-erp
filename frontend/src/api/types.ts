@@ -234,3 +234,6 @@ export type OrderMatchRow = Schemas["OrderMatchRow"];
 export type LostSale = Schemas["LostSaleOut"] | Schemas["LostSaleOwnerOut"];
 export type LostSaleCreate = Schemas["LostSaleCreate"];
 export type FillRateReport = Schemas["FillRateReport"];
+/** A user's own keyboard shortcuts: only what they changed (Ctrl+Shift+Alt+1 edits them). */
+export type ShortcutItem = Schemas["ShortcutItem"];
+export type ShortcutsOut = Schemas["ShortcutsOut"];

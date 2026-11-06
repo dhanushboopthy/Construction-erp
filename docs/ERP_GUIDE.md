@@ -90,6 +90,11 @@ Five promises the system keeps:
 
 ### Screens per role (left menu, Alt + key)
 
+These are the starting keys. You can give any screen, and the "new" button on a page, a key of
+your own: press **Ctrl + Shift + Alt + 1** (or open your name menu, *Keyboard shortcuts*), click
+*Change* beside the action, press the new combination (Alt plus a letter or a digit), then
+*Save*. They are saved for you only and follow you to any computer.
+
 | Screen | Key | Owner | Counter | Accountant |
 | --- | --- | --- | --- | --- |
 | Today | Alt+1 | ✓ | ✓ (own shop sales) | ✓ |

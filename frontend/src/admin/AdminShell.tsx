@@ -22,6 +22,7 @@ import { NavLink, Outlet, useNavigate } from "react-router";
 
 import styles from "@/components/AppShell.module.css";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { InstallButton } from "@/pwa/InstallButton";
 
 import adminStyles from "./Admin.module.css";
 import { useAdminAuth } from "./AdminAuthContext";
@@ -130,6 +131,7 @@ export function AdminShell() {
       </aside>
       <div className={styles.main}>
         <div className={adminStyles.topRow}>
+          <InstallButton />
           <NotificationBell />
           <ThemeToggle />
         </div>

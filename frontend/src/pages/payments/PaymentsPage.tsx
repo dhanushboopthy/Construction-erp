@@ -17,6 +17,7 @@ import { useTableFilters } from "@/hooks/useTableFilters";
 import { includesText } from "@/lib/filters";
 import { purposeOf } from "@/modules";
 import { formatMoney, plural } from "@/lib/format";
+import { newUuid } from "@/lib/uuid";
 
 function todayISO(): string {
   const d = new Date();
@@ -44,7 +45,7 @@ export function PaymentsPage() {
   const [reference, setReference] = useState("");
   const [date, setDate] = useState(todayISO());
   const [picked, setPicked] = useState<Record<string, string>>({});
-  const [key, setKey] = useState(() => crypto.randomUUID());
+  const [key, setKey] = useState(() => newUuid());
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<PaymentOut | null>(null);
 
@@ -89,7 +90,7 @@ export function PaymentsPage() {
       setAmount("");
       setReference("");
       setPicked({});
-      setKey(crypto.randomUUID());
+      setKey(newUuid());
     } catch (err) {
       setError(toFormError(err).message);
     }

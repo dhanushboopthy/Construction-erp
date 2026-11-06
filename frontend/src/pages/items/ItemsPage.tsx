@@ -10,7 +10,7 @@ import { StatusPill } from "@/components/StatusPill";
 import { TableToolbar } from "@/components/TableToolbar";
 import styles from "@/components/Ledger.module.css";
 import { plural } from "@/lib/format";
-import { useAltKey } from "@/hooks/useKeys";
+import { useShortcut } from "@/shortcuts/ShortcutsContext";
 import { useTableFilters } from "@/hooks/useTableFilters";
 
 import { ItemDetail, ItemEditor } from "./ItemEditor";
@@ -56,7 +56,7 @@ export function ItemsPage() {
     setNotice(null);
     setMode({ kind: "new" });
   }, [isOwner]);
-  useAltKey("n", openNew);
+  useShortcut("new", openNew);
 
   const close = useCallback(() => {
     const id = mode.kind === "edit" ? mode.id : null;

@@ -1,4 +1,4 @@
-import { ChevronDown, LifeBuoy, LogOut, Moon, Sun } from "lucide-react";
+import { ChevronDown, Keyboard, LifeBuoy, LogOut, Moon, Sun } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 
@@ -72,6 +72,10 @@ export function UserMenu({ user, onSignOut }: { user: User; onSignOut: () => voi
                 </span>
               </>
             ) : null}
+          </Link>
+          <Link to="/shortcuts" className={styles.item} onClick={() => menu.close()}>
+            <Keyboard size={18} strokeWidth={2} aria-hidden="true" />
+            Keyboard shortcuts
           </Link>
           <button type="button" className={styles.item} onClick={onSignOut}>
             <LogOut size={18} strokeWidth={2} aria-hidden="true" />

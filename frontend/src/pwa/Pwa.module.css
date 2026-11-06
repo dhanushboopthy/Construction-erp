@@ -58,7 +58,78 @@
   white-space: nowrap;
 }
 
+.installRoot {
+  position: relative;
+  flex: none;
+}
+
+.installHelp {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: 0;
+  z-index: 40;
+  display: grid;
+  gap: var(--space-2);
+  width: min(320px, 80vw);
+  padding: var(--space-4);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-separator);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-raised);
+  font-size: var(--text-sm);
+}
+
+.installTitle {
+  margin: 0;
+  font-weight: 700;
+}
+
+.installText {
+  margin: 0;
+  color: var(--color-secondary);
+}
+
+/* "Install app" in the top bar: a pill the height of the other top-bar buttons. */
+.install {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+  height: 44px;
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  box-shadow: var(--shadow-card);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) var(--ease),
+    box-shadow var(--duration-fast) var(--ease);
+}
+
+.install:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-raised);
+}
+
+.install:active {
+  transform: scale(0.97);
+}
+
 @media (max-width: 600px) {
+  .install {
+    width: 44px;
+    padding: 0;
+    justify-content: center;
+    font-size: 0; /* icon only on a phone; the title still says what it does */
+    gap: 0;
+  }
+
   .toast {
     right: var(--space-3);
     bottom: var(--space-3);

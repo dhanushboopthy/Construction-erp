@@ -153,7 +153,7 @@ describe("AdminApp Integrations page (M27)", () => {
       ["Calls today", "3"],
       ["This month", "22"],
       ["Failed (month)", "2"],
-    ]) {
+    ] as [string, string][]) {
       const tile = within(tiles).getByText(label).closest("div");
       expect(tile).not.toBeNull();
       expect(within(tile as HTMLElement).getByText(value)).toBeInTheDocument();

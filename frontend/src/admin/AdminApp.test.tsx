@@ -568,7 +568,7 @@ describe("AdminApp company page (M18)", () => {
       expect(screen.queryByRole("button", { name })).not.toBeInTheDocument();
     }
     const tabs = screen.getByRole("navigation", { name: "Company sections" });
-    expect(within(tabs).getAllByRole("link")).toHaveLength(7);
+    expect(within(tabs).getAllByRole("link")).toHaveLength(8); // Numbering and Data are Super Admin only
   });
 
   it("filters the Activity tab to this company", async () => {

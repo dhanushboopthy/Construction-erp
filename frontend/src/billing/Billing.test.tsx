@@ -187,7 +187,13 @@ describe("Plan & billing", () => {
 });
 
 describe("SubscriptionBanner with online renewal", () => {
-  const base = { slug: "acme", status: "active" as const, name: "Acme", tagline: "t" };
+  const base = {
+    slug: "acme",
+    status: "active" as const,
+    name: "Acme",
+    tagline: "t",
+    app_generation: 0,
+  };
 
   it("links to the Plan & billing page once Duolink has set it up", () => {
     render(

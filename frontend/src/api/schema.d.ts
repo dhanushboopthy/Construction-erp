@@ -4,6 +4,49 @@
  */
 
 export interface paths {
+    "/api/v1/admin/system/app-update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * App Update Status
+         * @description The release generation every open browser compares with, when it was last forced and by
+         *     whom, and the backend's version and build.
+         */
+        get: operations["app_update_status_api_v1_admin_system_app_update_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/system/force-update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Force Update
+         * @description Ask every open browser to look for a new build now (Super Admin). Adds one to the
+         *     generation and nothing else: nobody is reloaded, and a new build waits for the person to
+         *     press "Update now".
+         */
+        post: operations["force_update_api_v1_admin_system_force_update_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/auth/login": {
         parameters: {
             query?: never;
@@ -86,6 +129,352 @@ export interface paths {
          * @description Changing the password signs the admin out everywhere, including this browser.
          */
         post: operations["change_password_api_v1_admin_auth_change_password_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/backups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Backups
+         * @description Every backup, newest first: nightly, manual, safety copies and uploads.
+         */
+        get: operations["list_backups_api_v1_admin_backups_get"];
+        put?: never;
+        /**
+         * Create Backup
+         * @description Back up the whole platform (`kind: platform`) or one company (`kind: company`,
+         *     `company_id`). Answers a job to poll. 409 BACKUP_TOOLS_MISSING, BACKUP_FOLDER_UNAVAILABLE,
+         *     BACKUP_JOB_RUNNING, COMPANY_REQUIRED.
+         */
+        post: operations["create_backup_api_v1_admin_backups_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/backups/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Summary
+         * @description Last backup, how many are verified, space used, the next scheduled run, and whether the
+         *     folder and the tools (`pg_dump`, `pg_restore`, `tar`) are there.
+         */
+        get: operations["summary_api_v1_admin_backups_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/backups/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Schedule */
+        get: operations["get_schedule_api_v1_admin_backups_schedule_get"];
+        /**
+         * Set Schedule
+         * @description The nightly time (shop time, HH:MM) and how many daily, weekly and monthly copies to keep
+         *     (Super Admin). 409 BAD_TIME, BAD_RETENTION. Audited.
+         */
+        put: operations["set_schedule_api_v1_admin_backups_schedule_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/backups/jobs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Job */
+        get: operations["get_job_api_v1_admin_backups_jobs__job_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/backups/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload
+         * @description Keep a company archive for a later restore. `.tar.gz` only, 200 MB at most, and its
+         *     manifest must name a company here and this schema revision. 409 BACKUP_INVALID,
+         *     BACKUP_WRONG_COMPANY, BACKUP_SCHEMA_MISMATCH.
+         */
+        post: operations["upload_api_v1_admin_backups_upload_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/backups/{backup_id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download
+         * @description Stream the backup file (`part=files` for a platform backup's files archive). Audited.
+         */
+        get: operations["download_api_v1_admin_backups__backup_id__download_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/backups/{backup_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restore
+         * @description Replace one company's data with a company archive. `confirm` must be `RESTORE`. A safety
+         *     backup is taken first and kept; the company answers 403 TENANT_RESTORING meanwhile; any
+         *     failure rolls everything back. 409 BACKUP_WRONG_COMPANY, BACKUP_SCHEMA_MISMATCH,
+         *     BACKUP_NOT_VERIFIED, BACKUP_FILE_MISSING, BACKUP_JOB_RUNNING.
+         */
+        post: operations["restore_api_v1_admin_backups__backup_id__restore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/backups/{backup_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete
+         * @description Delete an unprotected backup and its files. `confirm` must be `DELETE`.
+         *     409 BACKUP_PROTECTED, BACKUP_RUNNING.
+         */
+        delete: operations["delete_api_v1_admin_backups__backup_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/tenants/{tenant_id}/bill-templates/field-registry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Field Registry
+         * @description Every placeholder a design may use, with a description and a sample, and what each kind
+         *     of document may not leave out.
+         */
+        get: operations["field_registry_api_v1_admin_tenants__tenant_id__bill_templates_field_registry_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/tenants/{tenant_id}/bill-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Templates
+         * @description The company's designs, newest version first within each slot, and its second logo.
+         */
+        get: operations["list_templates_api_v1_admin_tenants__tenant_id__bill_templates_get"];
+        put?: never;
+        /**
+         * Upload Template
+         * @description The next version of the slot's design, not yet active. The HTML is cleaned (what the
+         *     answer's `removed` lists is gone) and refused when it leaves out a field the GST rules
+         *     require (422 TEMPLATE_MISSING_FIELDS), or when it is too large (HTML 500 KB, 2 MB an image,
+         *     20 images).
+         */
+        post: operations["upload_template_api_v1_admin_tenants__tenant_id__bill_templates_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/tenants/{tenant_id}/bill-templates/secondary-logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put Secondary Logo
+         * @description The company's second logo (PNG or JPEG, up to 2 MB). Designs no issued document uses
+         *     follow it; the others keep the logo they were issued with.
+         */
+        put: operations["put_secondary_logo_api_v1_admin_tenants__tenant_id__bill_templates_secondary_logo_put"];
+        post?: never;
+        /** Delete Secondary Logo */
+        delete: operations["delete_secondary_logo_api_v1_admin_tenants__tenant_id__bill_templates_secondary_logo_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/tenants/{tenant_id}/bill-templates/{template_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Template */
+        get: operations["get_template_api_v1_admin_tenants__tenant_id__bill_templates__template_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Template
+         * @description 409 TEMPLATE_IN_USE when an issued document points at it, 409 TEMPLATE_ACTIVE when it
+         *     is active.
+         */
+        delete: operations["delete_template_api_v1_admin_tenants__tenant_id__bill_templates__template_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/tenants/{tenant_id}/bill-templates/{template_id}/diagnostics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Diagnostics
+         * @description What will print blank, what the upload lost, the page size and the images used.
+         */
+        get: operations["get_diagnostics_api_v1_admin_tenants__tenant_id__bill_templates__template_id__diagnostics_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/tenants/{tenant_id}/bill-templates/{template_id}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview Template
+         * @description A PDF of the design with sample figures, drawn by the renderer real bills use. A read, so
+         *     Support may ask for it.
+         */
+        post: operations["preview_template_api_v1_admin_tenants__tenant_id__bill_templates__template_id__preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/tenants/{tenant_id}/bill-templates/{template_id}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Activate
+         * @description New documents of this slot use this design; the slot's previous design is stood down.
+         *     Documents already issued keep the design they were issued with.
+         */
+        post: operations["activate_api_v1_admin_tenants__tenant_id__bill_templates__template_id__activate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/tenants/{tenant_id}/bill-templates/{template_id}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Deactivate
+         * @description New documents of this slot go back to the built-in layout.
+         */
+        post: operations["deactivate_api_v1_admin_tenants__tenant_id__bill_templates__template_id__deactivate_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -342,6 +731,322 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/tenants/{tenant_id}/data": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Inventory
+         * @description Every kind of business data with its row count and what blocks its deletion (the real
+         *     foreign-key graph, for example "Parties: blocked by 120 Sales bills").
+         */
+        get: operations["inventory_api_v1_admin_tenants__tenant_id__data_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/tenants/{tenant_id}/data/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Preview
+         * @description What a deletion of these kinds (default `all`) would remove, per table, with the files
+         *     and the blockers. Fetched when a dialog opens. 422 UNKNOWN_DATA_KIND.
+         */
+        get: operations["preview_api_v1_admin_tenants__tenant_id__data_preview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/tenants/{tenant_id}/data/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * View
+         * @description The latest 25 rows of one kind as four identifying columns (never an amount).
+         *     422 UNKNOWN_DATA_KIND.
+         */
+        get: operations["view_api_v1_admin_tenants__tenant_id__data__key__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/tenants/{tenant_id}/data/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Delete Selected
+         * @description Delete the chosen kinds. `confirm` must be `DELETE`. A protected safety backup is taken
+         *     first. 409 DATA_BLOCKED (a kind that is not chosen still points at one that is),
+         *     SAFETY_BACKUP_FAILED; 422 CONFIRMATION_MISMATCH, UNKNOWN_DATA_KIND; 500 DATA_DELETE_FAILED
+         *     (nothing was removed). Audited.
+         */
+        post: operations["delete_selected_api_v1_admin_tenants__tenant_id__data_delete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/tenants/{tenant_id}/data/delete-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Delete All
+         * @description Delete every kind. `confirm` must be `DELETE`, `company_name` the company's exact name
+         *     and `acknowledged` true. Counters of the emptied series go back to 1. 422
+         *     CONFIRMATION_MISMATCH, COMPANY_NAME_MISMATCH, ACKNOWLEDGEMENT_REQUIRED.
+         */
+        post: operations["delete_all_api_v1_admin_tenants__tenant_id__data_delete_all_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/tenants/{tenant_id}/numbering": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Numbering
+         * @description One row per shop, document type and financial year: the highest existing number (read
+         *     from the documents), the configured next number and the next document written out.
+         */
+        get: operations["get_numbering_api_v1_admin_tenants__tenant_id__numbering_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Set Numbering
+         * @description Set a series' next number. It must be at least the highest existing number plus one
+         *     (409 NUMBER_TOO_LOW); a reason is required. Audited with the old and new values.
+         */
+        patch: operations["set_numbering_api_v1_admin_tenants__tenant_id__numbering_patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/integrations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Status
+         * @description The GSP and the GSTIN lookup: connected or not, which settings are in force (saved
+         *     here, the GSP account's, or the environment's) and the last success and failure.
+         */
+        get: operations["status_api_v1_admin_integrations_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/integrations/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Usage
+         * @description Calls today, this week and this month by outcome (ok, failed, cached, blocked).
+         */
+        get: operations["usage_api_v1_admin_integrations_usage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/integrations/gstin-lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Lookup
+         * @description Fill the onboarding form from the registry. No company limit applies. 502 when the
+         *     provider fails.
+         */
+        post: operations["lookup_api_v1_admin_integrations_gstin_lookup_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/integrations/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Connect
+         * @description Connect or update. A credential left blank keeps the saved one. 409 for a missing or
+         *     wrong INTEGRATION_SECRET_KEY, the pretend provider in production, or incomplete
+         *     credentials.
+         */
+        put: operations["connect_api_v1_admin_integrations__kind__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/integrations/{kind}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Test Connection
+         * @description One live call with the settings in force. A failure is a 200 with `ok: false`.
+         */
+        post: operations["test_connection_api_v1_admin_integrations__kind__test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/integrations/{kind}/disconnect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Disconnect
+         * @description Forget the saved credentials; the environment becomes the fallback again.
+         */
+        post: operations["disconnect_api_v1_admin_integrations__kind__disconnect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/integrations/{kind}/limits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Limits
+         * @description Per company: calls a day and a month, when to warn, and the GSTIN cache hours. Only the
+         *     GSTIN lookup refuses a company over its limit; a bill is never held back by the GSP limit.
+         */
+        patch: operations["update_limits_api_v1_admin_integrations__kind__limits_patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/integrations/{kind}/companies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Company Usage */
+        get: operations["company_usage_api_v1_admin_integrations__kind__companies_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/integrations/{kind}/failures": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Recent Failures
+         * @description The last failed calls: operation, error code, company. No bodies.
+         */
+        get: operations["recent_failures_api_v1_admin_integrations__kind__failures_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/overview": {
         parameters: {
             query?: never;
@@ -369,6 +1074,7 @@ export interface paths {
         /**
          * Sign Ins
          * @description Sign-ins, failed sign-ins and reused tokens across every company, newest first.
+         *     409 DATE_RANGE when `date_to` is before `date_from`.
          */
         get: operations["sign_ins_api_v1_admin_activity_get"];
         put?: never;
@@ -388,7 +1094,8 @@ export interface paths {
         };
         /**
          * Admin Actions
-         * @description What Duolink's admins did, newest first.
+         * @description What Duolink's admins did, newest first, filtered by company, admin, action and dates.
+         *     409 DATE_RANGE when `date_to` is before `date_from`.
          */
         get: operations["admin_actions_api_v1_admin_audit_get"];
         put?: never;
@@ -412,6 +1119,27 @@ export interface paths {
          *     request count. `stale` counts sessions never ended whose token has expired.
          */
         get: operations["support_sessions_api_v1_admin_audit_support_sessions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/audit/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Admin Actions
+         * @description The same rows as `GET /audit` with the same filters, as CSV, up to 50,000 (Super Admin).
+         *     The export is itself audited (`audit_export`).
+         */
+        get: operations["export_admin_actions_api_v1_admin_audit_export_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -576,6 +1304,91 @@ export interface paths {
          *     message on a closed ticket (send a status to reopen it).
          */
         post: operations["reply_api_v1_admin_support_tickets__ticket_id__reply_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/system/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Health
+         * @description API uptime and version, database round trip, size and connections, free disk space,
+         *     the last backup and off-site copy, and counters across every company. No secret and no
+         *     connection string is ever in it.
+         */
+        get: operations["health_api_v1_admin_system_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Notifications
+         * @description The bell: what needs attention, most serious first. Worked out on every read.
+         */
+        get: operations["notifications_api_v1_admin_notifications_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/system/maintenance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Maintenance */
+        get: operations["get_maintenance_api_v1_admin_system_maintenance_get"];
+        put?: never;
+        /**
+         * Set Maintenance
+         * @description Close the platform to companies (`enabled: true`, with an optional message) or open it
+         *     again (Super Admin). Kept across restarts until turned off. Audited. 409 MESSAGE_TOO_LONG.
+         */
+        post: operations["set_maintenance_api_v1_admin_system_maintenance_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/system/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Platform Settings
+         * @description How the platform is configured, from the environment (never a secret), and the numbers
+         *     behind the subscription lifecycle.
+         */
+        get: operations["platform_settings_api_v1_admin_system_settings_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1012,6 +1825,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/health/live": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Liveness: the process is up (same as /health) */
+        get: operations["live_api_v1_health_live_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/health/ready": {
         parameters: {
             query?: never;
@@ -1021,6 +1851,27 @@ export interface paths {
         };
         /** Readiness: the database answers */
         get: operations["ready_api_v1_health_ready_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Notice
+         * @description Is the platform closed for maintenance, and Duolink's message (Milestone 24). Open to
+         *     anyone and never closed itself: the company's "Back soon" screen asks it every 30 seconds.
+         */
+        get: operations["notice_api_v1_maintenance_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1045,6 +1896,28 @@ export interface paths {
          *     TENANT_SUSPENDED or TENANT_CANCELLED for a closed account.
          */
         get: operations["get_tenant_api_v1_tenant_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenant/manifest.webmanifest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Manifest
+         * @description The web app manifest (Milestone 29): the company's name and logo, so the ERP installs on
+         *     the shop's PC or phone as that shop's app. Open, like the name: the browser fetches it
+         *     without signing in. Never cached by the service worker (nothing under /api is).
+         */
+        get: operations["get_manifest_api_v1_tenant_manifest_webmanifest_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1340,6 +2213,91 @@ export interface paths {
          * @description Leave the company. The token answers 401 from the next request on.
          */
         post: operations["exit_session_api_v1_support_session_exit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/subscription": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Overview
+         * @description The plan, when it ends, and the Duolink prices that can be paid online now, each with
+         *     the date the plan would then run to.
+         */
+        get: operations["overview_api_v1_subscription_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/subscription/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Order
+         * @description A Razorpay order for one price. The amount is the plan's price on the server. 404
+         *     PRICE_NOT_FOUND; 409 PRICE_NOT_OFFERED or ONLINE_RENEWAL_OFF; 502 RAZORPAY_ERROR.
+         */
+        post: operations["create_order_api_v1_subscription_orders_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/subscription/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Verify
+         * @description Checkout's answer. 400 SIGNATURE_INVALID records nothing; 404 ORDER_NOT_FOUND. The same
+         *     payment twice (or after the webhook) answers 200 with `applied: false`.
+         */
+        post: operations["verify_api_v1_subscription_verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/subscription/webhook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Webhook
+         * @description Razorpay's `payment.captured`, signed in `X-Razorpay-Signature` with the webhook secret.
+         *     No sign-in and any address. 400 SIGNATURE_INVALID or BAD_PAYLOAD; 404 while no webhook
+         *     secret is set; 200 for a duplicate or any other event.
+         */
+        post: operations["webhook_api_v1_subscription_webhook_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1672,6 +2630,28 @@ export interface paths {
         put?: never;
         /** Create Party */
         post: operations["create_party_api_v1_parties_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/parties/gstin-lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Lookup Gstin
+         * @description The "Fetch details" button next to a GSTIN: the registry's name, address and state, to
+         *     fill the form. A fresh earlier answer is reused. 429 GSTIN_LOOKUP_LIMIT over the company's
+         *     limit, 502 when the provider fails.
+         */
+        post: operations["lookup_gstin_api_v1_parties_gstin_lookup_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4329,6 +5309,41 @@ export interface components {
             /** Amount */
             amount: string;
         };
+        /** ApiHealth */
+        ApiHealth: {
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Uptime Seconds */
+            uptime_seconds: number;
+            /** Version */
+            version: string;
+            /** Changelog Version */
+            changelog_version: string | null;
+            /** Python Version */
+            python_version: string;
+            /** Environment */
+            environment: string;
+        };
+        /**
+         * AppUpdateOut
+         * @description Where the platform's release generation stands, and which backend build is running.
+         *     Counts and names only: no company's data.
+         */
+        AppUpdateOut: {
+            /** Generation */
+            generation: number;
+            /** Forced At */
+            forced_at: string | null;
+            /** Forced By */
+            forced_by: string | null;
+            /** Backend Version */
+            backend_version: string;
+            /** Backend Build */
+            backend_build: string;
+        };
         /**
          * ApprovalAction
          * @description What an owner PIN can approve at the counter (G18).
@@ -4477,6 +5492,130 @@ export interface components {
             /** Sgst */
             sgst: string;
         };
+        /** BackupCompany */
+        BackupCompany: {
+            /** Id */
+            id: number;
+            /** Slug */
+            slug: string;
+            /** Name */
+            name: string;
+        };
+        /** BackupCreate */
+        BackupCreate: {
+            kind: components["schemas"]["BackupKind"];
+            /** Company Id */
+            company_id?: number | null;
+            /** Note */
+            note?: string | null;
+        };
+        /** BackupHealth */
+        BackupHealth: {
+            check: components["schemas"]["Check"];
+            /** Last Success At */
+            last_success_at: string | null;
+            /** Age Hours */
+            age_hours: number | null;
+            /** Stale */
+            stale: boolean;
+            /** Offsite Synced At */
+            offsite_synced_at: string | null;
+        };
+        /**
+         * BackupJobKind
+         * @enum {string}
+         */
+        BackupJobKind: "backup_platform" | "backup_company" | "restore_company";
+        /**
+         * BackupJobStatus
+         * @enum {string}
+         */
+        BackupJobStatus: "queued" | "running" | "succeeded" | "failed";
+        /**
+         * BackupKind
+         * @enum {string}
+         */
+        BackupKind: "platform" | "company";
+        /** BackupList */
+        BackupList: {
+            /** Items */
+            items: components["schemas"]["BackupOut"][];
+        };
+        /** BackupOut */
+        BackupOut: {
+            /** Id */
+            id: number;
+            kind: components["schemas"]["BackupKind"];
+            source: components["schemas"]["BackupSource"];
+            company: components["schemas"]["BackupCompany"] | null;
+            /** File Name */
+            file_name: string;
+            /** Files Name */
+            files_name: string | null;
+            /** Size Bytes */
+            size_bytes: number | null;
+            /** Sha256 */
+            sha256: string | null;
+            /** Schema Revision */
+            schema_revision: string | null;
+            status: components["schemas"]["BackupStatus"];
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Completed At */
+            completed_at: string | null;
+            /** Protected */
+            protected: boolean;
+            /** Note */
+            note: string | null;
+            /** Error */
+            error: string | null;
+            /** Created By */
+            created_by: string | null;
+            /** File Present */
+            file_present: boolean;
+            /** Restore Command */
+            restore_command: string | null;
+        };
+        /**
+         * BackupSource
+         * @description Why a backup exists. Only `scheduled` ones are ever pruned (Milestone 25).
+         * @enum {string}
+         */
+        BackupSource: "scheduled" | "manual" | "safety" | "uploaded";
+        /**
+         * BackupStatus
+         * @enum {string}
+         */
+        BackupStatus: "running" | "verified" | "failed";
+        /** BackupSummary */
+        BackupSummary: {
+            /** Last Backup At */
+            last_backup_at: string | null;
+            /** Verified Count */
+            verified_count: number;
+            /** Failed Count */
+            failed_count: number;
+            /** Storage Bytes */
+            storage_bytes: number;
+            /**
+             * Next Scheduled At
+             * Format: date-time
+             */
+            next_scheduled_at: string;
+            /** Running Jobs */
+            running_jobs: number;
+            /** Folder Ready */
+            folder_ready: boolean;
+            /** Folder Problem */
+            folder_problem: string | null;
+            /** Tools */
+            tools: components["schemas"]["ToolOut"][];
+            /** Restore Command Example */
+            restore_command_example: string;
+        };
         /** BankAccountCreate */
         BankAccountCreate: {
             /** Name */
@@ -4587,6 +5726,12 @@ export interface components {
              */
             bill_date: string;
         };
+        /**
+         * BillSlot
+         * @description Which kind of document a bill template designs (Milestone 28).
+         * @enum {string}
+         */
+        BillSlot: "tax_invoice" | "proforma" | "quotation" | "credit_note" | "debit_note";
         /** BillingDashboard */
         BillingDashboard: {
             companies_by_status: components["schemas"]["CompaniesByStatus"];
@@ -4608,6 +5753,24 @@ export interface components {
             plan_breakdown: components["schemas"]["PlanShare"][];
             /** Expiring Soon */
             expiring_soon: components["schemas"]["ExpiringSoon"][];
+        };
+        /** BlockedOut */
+        BlockedOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Blocked By */
+            blocked_by: components["schemas"]["BlockerOut"][];
+        };
+        /** BlockerOut */
+        BlockerOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Count */
+            count: number;
         };
         /** Body_import_gstr2b_api_v1_gst_gstr2b_post */
         Body_import_gstr2b_api_v1_gst_gstr2b_post: {
@@ -4638,6 +5801,16 @@ export interface components {
             /** File */
             file: string;
         };
+        /** Body_put_secondary_logo_api_v1_admin_tenants__tenant_id__bill_templates_secondary_logo_put */
+        Body_put_secondary_logo_api_v1_admin_tenants__tenant_id__bill_templates_secondary_logo_put: {
+            /** File */
+            file: string;
+        };
+        /** Body_upload_api_v1_admin_backups_upload_post */
+        Body_upload_api_v1_admin_backups_upload_post: {
+            /** File */
+            file: string;
+        };
         /** Body_upload_file_api_v1_attachments_post */
         Body_upload_file_api_v1_attachments_post: {
             ref_type: components["schemas"]["AttachmentRef"];
@@ -4648,6 +5821,17 @@ export interface components {
             file: string;
             /** Note */
             note?: string | null;
+        };
+        /** Body_upload_template_api_v1_admin_tenants__tenant_id__bill_templates_post */
+        Body_upload_template_api_v1_admin_tenants__tenant_id__bill_templates_post: {
+            /** Slot */
+            slot: string;
+            /** Name */
+            name: string;
+            /** Html */
+            html: string;
+            /** Images */
+            images?: string[] | null;
         };
         /** BookEntryOut */
         BookEntryOut: {
@@ -5003,6 +6187,32 @@ export interface components {
             suspended: number;
             /** Cancelled */
             cancelled: number;
+        };
+        /**
+         * CompanyUsageRow
+         * @description Provider calls (ok and failed) count toward the limits; cached and blocked do not.
+         */
+        CompanyUsageRow: {
+            /** Tenant Id */
+            tenant_id: number;
+            /** Slug */
+            slug: string;
+            /** Name */
+            name: string;
+            /** Calls Today */
+            calls_today: number;
+            /** Calls Month */
+            calls_month: number;
+            /** Cached Month */
+            cached_month: number;
+            /** Blocked Month */
+            blocked_month: number;
+            /** Failed Month */
+            failed_month: number;
+            /** Near Limit */
+            near_limit: boolean;
+            /** Over Limit */
+            over_limit: boolean;
         };
         /**
          * ComplianceStatus
@@ -5447,6 +6657,74 @@ export interface components {
             /** Short By */
             short_by: string | null;
         };
+        /** DataInventory */
+        DataInventory: {
+            /** Company Name */
+            company_name: string;
+            /** Items */
+            items: components["schemas"]["DataKindOut"][];
+            /** Total */
+            total: number;
+        };
+        /** DataKindOut */
+        DataKindOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Count */
+            count: number;
+            /** Tables */
+            tables: components["schemas"]["TableCountOut"][];
+            /** Blocked By */
+            blocked_by: components["schemas"]["BlockerOut"][];
+            /** Can Delete */
+            can_delete: boolean;
+        };
+        /** DataPreviewOut */
+        DataPreviewOut: {
+            /** Everything */
+            everything: boolean;
+            /** Kinds */
+            kinds: components["schemas"]["DataKindOut"][];
+            /** Tables */
+            tables: components["schemas"]["TableCountOut"][];
+            /** Total */
+            total: number;
+            /** Files */
+            files: number;
+            /** Blocked */
+            blocked: components["schemas"]["BlockedOut"][];
+            /** Message */
+            message: string | null;
+        };
+        /** DataViewOut */
+        DataViewOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Columns */
+            columns: string[];
+            /** Rows */
+            rows: string[][];
+            /** Total */
+            total: number;
+        };
+        /** DatabaseHealth */
+        DatabaseHealth: {
+            /** Up */
+            up: boolean;
+            /** Round Trip Ms */
+            round_trip_ms: string;
+            /** Size Bytes */
+            size_bytes: number;
+            /** Connections In Use */
+            connections_in_use: number;
+            /** Server Version */
+            server_version: string;
+            migrations: components["schemas"]["Check"];
+        };
         /** DebitNoteCreate */
         DebitNoteCreate: {
             /** Purchase Id */
@@ -5562,11 +6840,99 @@ export interface components {
             /** Supplier Bill No */
             supplier_bill_no: string;
         };
+        /** DeleteAllIn */
+        DeleteAllIn: {
+            /** Confirm */
+            confirm: string;
+            /** Company Name */
+            company_name: string;
+            /** Acknowledged */
+            acknowledged: boolean;
+        };
+        /** DeleteIn */
+        DeleteIn: {
+            /**
+             * Confirm
+             * @default
+             */
+            confirm: string;
+        };
+        /** DeleteOut */
+        DeleteOut: {
+            /**
+             * Operation
+             * @enum {string}
+             */
+            operation: "selected" | "all";
+            /** Kinds */
+            kinds: string[];
+            /** Tables */
+            tables: components["schemas"]["TableCountOut"][];
+            /** Total */
+            total: number;
+            /** Backup Id */
+            backup_id: number;
+            /** Series Reset */
+            series_reset: components["schemas"]["SeriesMoveOut"][];
+            /** Files Removed */
+            files_removed: number;
+        };
+        /** DeleteSelectedIn */
+        DeleteSelectedIn: {
+            /** Keys */
+            keys: string[];
+            /** Confirm */
+            confirm: string;
+        };
+        /** Diagnostics */
+        Diagnostics: {
+            /** Unknown */
+            unknown: string[];
+            /** Other Slot */
+            other_slot: string[];
+            /** Outside Rows */
+            outside_rows: string[];
+            /** In Styles */
+            in_styles: string[];
+            /** Item Rows */
+            item_rows: number;
+            /** Hsn Rows */
+            hsn_rows: number;
+            /** Images */
+            images: string[];
+            /** Missing Images */
+            missing_images: string[];
+            /** Unused Images */
+            unused_images: string[];
+            /** Page Size */
+            page_size: string | null;
+            /** Removed */
+            removed: string[];
+            /** Missing Fields */
+            missing_fields: string[];
+            /** Warnings */
+            warnings: string[];
+        };
         /**
          * Direction
          * @enum {string}
          */
         Direction: "in" | "out";
+        /** DiskHealth */
+        DiskHealth: {
+            /** Name */
+            name: string;
+            /** Watched */
+            watched: boolean;
+            /** Total Bytes */
+            total_bytes: number | null;
+            /** Free Bytes */
+            free_bytes: number | null;
+            /** Free Percent */
+            free_percent: string | null;
+            /** Low */
+            low: boolean;
+        };
         /** DocRow */
         DocRow: {
             /** Nature */
@@ -5582,6 +6948,12 @@ export interface components {
             /** Gaps */
             gaps: number[];
         };
+        /**
+         * DocType
+         * @description Each document type has its own gapless series per location per financial year.
+         * @enum {string}
+         */
+        DocType: "sales_invoice" | "credit_note" | "debit_note" | "delivery_challan" | "purchase_entry" | "payment_receipt" | "cash_voucher" | "stock_adjustment" | "bad_debt_writeoff" | "stock_writedown" | "purchase_order" | "goods_receipt" | "quotation" | "proforma";
         /** DropShipReport */
         DropShipReport: {
             /** Rows */
@@ -5934,6 +7306,21 @@ export interface components {
             /** Days Left */
             days_left: number;
         };
+        /** FieldOut */
+        FieldOut: {
+            /** Key */
+            key: string;
+            /** Group */
+            group: string;
+            /** Description */
+            description: string;
+            /** Sample */
+            sample: string;
+            /** Slots */
+            slots: components["schemas"]["BillSlot"][];
+            /** Image */
+            image: boolean;
+        };
         /** FifoAgeOut */
         FifoAgeOut: {
             /**
@@ -6025,6 +7412,11 @@ export interface components {
             /** Lost Value */
             lost_value?: string | null;
         };
+        /** ForceUpdateIn */
+        ForceUpdateIn: {
+            /** Reason */
+            reason?: string | null;
+        };
         /**
          * FulfilmentSource
          * @enum {string}
@@ -6082,6 +7474,46 @@ export interface components {
             revoked_at: string | null;
             /** Revoked By Name */
             revoked_by_name: string | null;
+        };
+        /** GstinLookupIn */
+        GstinLookupIn: {
+            /**
+             * Gstin
+             * @description 15 characters, check digit verified
+             */
+            gstin: string;
+        };
+        /**
+         * GstinLookupOut
+         * @description Public registry data about a GSTIN, to fill a party or a company form.
+         */
+        GstinLookupOut: {
+            /** Gstin */
+            gstin: string;
+            /** Legal Name */
+            legal_name: string;
+            /** Trade Name */
+            trade_name: string;
+            /** Address */
+            address: string;
+            /** State Code */
+            state_code: string;
+            /** Status */
+            status: string;
+            /**
+             * Fetched At
+             * Format: date-time
+             */
+            fetched_at: string;
+            /** Cached */
+            cached: boolean;
+            /** Lookups Left Today */
+            lookups_left_today?: number | null;
+            /**
+             * Near Limit
+             * @default false
+             */
+            near_limit: boolean;
         };
         /** Gstr1 */
         Gstr1: {
@@ -6150,6 +7582,21 @@ export interface components {
             /** Sgst */
             sgst: string;
         };
+        /** HealthCounters */
+        HealthCounters: {
+            /** Companies */
+            companies: number;
+            /** Active Users */
+            active_users: number;
+            /** Open Sessions */
+            open_sessions: number;
+            /** Audit Events Today */
+            audit_events_today: number;
+            /** Admin Actions Today */
+            admin_actions_today: number;
+            /** Open Tickets */
+            open_tickets: number;
+        };
         /** HistoryPoint */
         HistoryPoint: {
             /**
@@ -6217,6 +7664,134 @@ export interface components {
             field: string | null;
             /** Message */
             message: string;
+        };
+        /**
+         * IntegrationConnect
+         * @description Connect or update. A credential left blank keeps the saved one, so a key never has to
+         *     be read back to change another setting.
+         */
+        IntegrationConnect: {
+            provider: components["schemas"]["IntegrationProvider"];
+            /**
+             * Base Url
+             * @default
+             */
+            base_url: string;
+            /** Client Id */
+            client_id?: string | null;
+            /** Client Secret */
+            client_secret?: string | null;
+            /** Username */
+            username?: string | null;
+            /** Password */
+            password?: string | null;
+            /** Api Key */
+            api_key?: string | null;
+        };
+        /**
+         * IntegrationFailureRow
+         * @description A failed call: what was tried and the error code. Never a request or response body.
+         */
+        IntegrationFailureRow: {
+            /** Id */
+            id: number;
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Tenant Id */
+            tenant_id: number | null;
+            /** Tenant Name */
+            tenant_name: string | null;
+            /** Operation */
+            operation: string;
+            /** Error Code */
+            error_code: string | null;
+            /** Latency Ms */
+            latency_ms: number | null;
+        };
+        /**
+         * IntegrationKind
+         * @description A shared integration Duolink runs for every company (Milestone 27).
+         * @enum {string}
+         */
+        IntegrationKind: "gsp" | "gstin_lookup";
+        /** IntegrationLimitsIn */
+        IntegrationLimitsIn: {
+            /** Daily Limit */
+            daily_limit: number;
+            /** Monthly Limit */
+            monthly_limit: number;
+            /** Warn At Percent */
+            warn_at_percent: number;
+            /** Cache Hours */
+            cache_hours: number;
+        };
+        /** IntegrationOut */
+        IntegrationOut: {
+            kind: components["schemas"]["IntegrationKind"];
+            provider: components["schemas"]["IntegrationProvider"] | null;
+            /** Base Url */
+            base_url: string;
+            /** Key Last4 */
+            key_last4: string | null;
+            status: components["schemas"]["IntegrationStatus"];
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "database" | "gsp_account" | "environment" | "none";
+            effective_provider: components["schemas"]["IntegrationProvider"] | null;
+            /** Credential Fields */
+            credential_fields: string[];
+            /** Connected At */
+            connected_at: string | null;
+            /** Last Success At */
+            last_success_at: string | null;
+            /** Last Failure At */
+            last_failure_at: string | null;
+            /** Last Failure Message */
+            last_failure_message: string | null;
+            /** Daily Limit */
+            daily_limit: number;
+            /** Monthly Limit */
+            monthly_limit: number;
+            /** Warn At Percent */
+            warn_at_percent: number;
+            /** Cache Hours */
+            cache_hours: number;
+            /** Secret Key Set */
+            secret_key_set: boolean;
+        };
+        /**
+         * IntegrationProvider
+         * @enum {string}
+         */
+        IntegrationProvider: "fake" | "sandbox" | "live";
+        /**
+         * IntegrationStatus
+         * @enum {string}
+         */
+        IntegrationStatus: "not_connected" | "connected" | "failing";
+        /** IntegrationTestOut */
+        IntegrationTestOut: {
+            /** Ok */
+            ok: boolean;
+            /** Latency Ms */
+            latency_ms: number | null;
+            /** Error Code */
+            error_code: string | null;
+            /** Message */
+            message: string | null;
+            integration: components["schemas"]["IntegrationOut"];
+        };
+        /** IntegrationUsage */
+        IntegrationUsage: {
+            kind: components["schemas"]["IntegrationKind"];
+            today: components["schemas"]["OutcomeCounts"];
+            week: components["schemas"]["OutcomeCounts"];
+            month: components["schemas"]["OutcomeCounts"];
         };
         /** InventoryAnalyticsOut */
         InventoryAnalyticsOut: {
@@ -6988,6 +8563,33 @@ export interface components {
             /** Is Active */
             is_active?: boolean | null;
         };
+        /** JobOut */
+        JobOut: {
+            /** Id */
+            id: number;
+            kind: components["schemas"]["BackupJobKind"];
+            status: components["schemas"]["BackupJobStatus"];
+            company: components["schemas"]["BackupCompany"] | null;
+            /** Backup Id */
+            backup_id: number | null;
+            /** Safety Backup Id */
+            safety_backup_id: number | null;
+            /** Step */
+            step: string | null;
+            /** Error Code */
+            error_code: string | null;
+            /** Error Message */
+            error_message: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Started At */
+            started_at: string | null;
+            /** Finished At */
+            finished_at: string | null;
+        };
         /** KpiDefinitionOut */
         KpiDefinitionOut: {
             /** Code */
@@ -7038,6 +8640,41 @@ export interface components {
             running_balance: string;
             /** Narration */
             narration: string | null;
+        };
+        /**
+         * Level
+         * @enum {string}
+         */
+        Level: "critical" | "warning" | "info";
+        /** LifecycleSettings */
+        LifecycleSettings: {
+            /** Trial Days */
+            trial_days: number;
+            /** Max Trial Days */
+            max_trial_days: number;
+            /** Banner Days */
+            banner_days: number;
+            /** Ending Soon Days */
+            ending_soon_days: number;
+            /** Notice Days */
+            notice_days: number;
+            /** Backup Stale Hours */
+            backup_stale_hours: number;
+            /** Disk Low Free Percent */
+            disk_low_free_percent: number;
+            /** Failed Admin Sign Ins Limit */
+            failed_admin_sign_ins_limit: number;
+            /** Maintenance Cache Seconds */
+            maintenance_cache_seconds: number;
+        };
+        /** LimitsOut */
+        LimitsOut: {
+            /** Html Bytes */
+            html_bytes: number;
+            /** Image Bytes */
+            image_bytes: number;
+            /** Images */
+            images: number;
         };
         /** LinkCreate */
         LinkCreate: {
@@ -7239,6 +8876,44 @@ export interface components {
             /** Quantity */
             quantity: string;
         };
+        /** MaintenanceIn */
+        MaintenanceIn: {
+            /** Enabled */
+            enabled: boolean;
+            /** Message */
+            message?: string | null;
+        };
+        /**
+         * MaintenanceNotice
+         * @description What a company's screen needs: is it closed, and Duolink's message.
+         */
+        MaintenanceNotice: {
+            /** Enabled */
+            enabled: boolean;
+            /** Message */
+            message: string | null;
+        };
+        /** MaintenanceOut */
+        MaintenanceOut: {
+            /** Enabled */
+            enabled: boolean;
+            /** Message */
+            message: string | null;
+            /** Cause */
+            cause: ("operator" | "restore") | null;
+            /** Operator Enabled */
+            operator_enabled: boolean;
+            /** Operator Message */
+            operator_message: string | null;
+            /** Changed By */
+            changed_by: string | null;
+            /** Enabled At */
+            enabled_at: string | null;
+            /** Updated At */
+            updated_at: string | null;
+            /** Restoring */
+            restoring: boolean;
+        };
         /** MarginOut */
         MarginOut: {
             /** Item Id */
@@ -7394,6 +9069,25 @@ export interface components {
             /** Rates */
             rates: components["schemas"]["RateRow"][];
         };
+        /** NotificationOut */
+        NotificationOut: {
+            /** Id */
+            id: string;
+            level: components["schemas"]["Level"];
+            /** Title */
+            title: string;
+            /** Body */
+            body: string;
+            /** Link */
+            link: string;
+        };
+        /** NotificationsOut */
+        NotificationsOut: {
+            /** Count */
+            count: number;
+            /** Items */
+            items: components["schemas"]["NotificationOut"][];
+        };
         /** NrvReportOut */
         NrvReportOut: {
             /**
@@ -7440,6 +9134,51 @@ export interface components {
             replacement_cost: string | null;
             /** Holding Gain Loss */
             holding_gain_loss: string | null;
+        };
+        /** NumberingOut */
+        NumberingOut: {
+            /** Items */
+            items: components["schemas"]["NumberingRow"][];
+        };
+        /** NumberingRow */
+        NumberingRow: {
+            /** Location Id */
+            location_id: number;
+            /** Location Code */
+            location_code: string;
+            doc_type: components["schemas"]["DocType"];
+            /** Doc Label */
+            doc_label: string;
+            /** Financial Year */
+            financial_year: string;
+            /** Prefix */
+            prefix: string;
+            /** Highest Existing */
+            highest_existing: number | null;
+            /** Highest Number */
+            highest_number: string | null;
+            /** Configured Next */
+            configured_next: number;
+            /** Minimum Next */
+            minimum_next: number;
+            /** Next Document */
+            next_document: string;
+            /** Ahead Of Documents */
+            ahead_of_documents: boolean;
+            /** Suggested Next */
+            suggested_next: number | null;
+        };
+        /** NumberingSetIn */
+        NumberingSetIn: {
+            /** Location Id */
+            location_id: number;
+            doc_type: components["schemas"]["DocType"];
+            /** Financial Year */
+            financial_year: string;
+            /** Next Number */
+            next_number: number;
+            /** Reason */
+            reason: string;
         };
         /** OpenBillOut */
         OpenBillOut: {
@@ -7778,6 +9517,34 @@ export interface components {
             bills: components["schemas"]["BillRef"][];
             /** Value */
             value: string;
+        };
+        /** OutcomeCounts */
+        OutcomeCounts: {
+            /**
+             * Ok
+             * @default 0
+             */
+            ok: number;
+            /**
+             * Failed
+             * @default 0
+             */
+            failed: number;
+            /**
+             * Cached
+             * @default 0
+             */
+            cached: number;
+            /**
+             * Blocked
+             * @default 0
+             */
+            blocked: number;
+            /**
+             * Total
+             * @default 0
+             */
+            total: number;
         };
         /**
          * OverrideLineOut
@@ -8460,7 +10227,7 @@ export interface components {
          * @description What a Duolink admin did (platform_audit_log, Milestones 16 and 17).
          * @enum {string}
          */
-        PlatformAction: "login" | "login_failed" | "logout" | "token_reuse" | "tenant_create" | "tenant_update" | "tenant_suspend" | "tenant_reactivate" | "user_activate" | "user_deactivate" | "user_unlock" | "user_reset_password" | "user_sign_out" | "staff_create" | "staff_update" | "staff_reset_password" | "staff_unlock" | "staff_sign_out" | "password_change" | "tenant_cancel" | "tenant_seller_update" | "tenant_logo_set" | "tenant_logo_remove" | "user_update" | "user_session_revoke" | "user_remove" | "plan_create" | "plan_update" | "plan_duplicate" | "plan_archive" | "plan_delete" | "subscription_renew" | "subscription_cancel" | "payment_reverse" | "support_reply" | "support_update" | "support_session_start" | "support_session_end";
+        PlatformAction: "login" | "login_failed" | "logout" | "token_reuse" | "tenant_create" | "tenant_update" | "tenant_suspend" | "tenant_reactivate" | "user_activate" | "user_deactivate" | "user_unlock" | "user_reset_password" | "user_sign_out" | "staff_create" | "staff_update" | "staff_reset_password" | "staff_unlock" | "staff_sign_out" | "password_change" | "tenant_cancel" | "tenant_seller_update" | "tenant_logo_set" | "tenant_logo_remove" | "user_update" | "user_session_revoke" | "user_remove" | "plan_create" | "plan_update" | "plan_duplicate" | "plan_archive" | "plan_delete" | "subscription_renew" | "subscription_cancel" | "payment_reverse" | "support_reply" | "support_update" | "support_session_start" | "support_session_end" | "maintenance_on" | "maintenance_off" | "audit_export" | "backup_create" | "backup_download" | "backup_upload" | "backup_delete" | "backup_restore" | "backup_restore_failed" | "backup_schedule_update" | "numbering_set" | "company_data_deleted" | "company_data_deleted_all" | "company_data_delete_failed" | "integration_connect" | "integration_test" | "integration_disconnect" | "integration_limits" | "gstin_lookup" | "bill_template_upload" | "bill_template_activate" | "bill_template_deactivate" | "bill_template_delete" | "secondary_logo_set" | "secondary_logo_remove" | "app_update_force" | "subscription_pay_online";
         /** PlatformAuditRow */
         PlatformAuditRow: {
             /** Id */
@@ -8492,6 +10259,11 @@ export interface components {
          * @enum {string}
          */
         PlatformRole: "super_admin" | "support";
+        /** PlatformSettingsOut */
+        PlatformSettingsOut: {
+            security: components["schemas"]["SecuritySettings"];
+            lifecycle: components["schemas"]["LifecycleSettings"];
+        };
         /** PlatformUserRow */
         PlatformUserRow: {
             /** Id */
@@ -9539,6 +11311,20 @@ export interface components {
             /** Last Balance Date */
             last_balance_date: string | null;
         };
+        /** RegistryOut */
+        RegistryOut: {
+            /** Fields */
+            fields: components["schemas"]["FieldOut"][];
+            /** Formats */
+            formats: string[];
+            /** Slots */
+            slots: components["schemas"]["BillSlot"][];
+            /** Required */
+            required: {
+                [key: string]: string[];
+            };
+            limits: components["schemas"]["LimitsOut"];
+        };
         /**
          * RemoveUserRequest
          * @description `confirm_username` must be the user's username, typed exactly.
@@ -9571,6 +11357,112 @@ export interface components {
             /** Paid At */
             paid_at?: string | null;
         };
+        /** RenewalOption */
+        RenewalOption: {
+            /** Price Id */
+            price_id: number;
+            /** Plan Id */
+            plan_id: number;
+            /** Plan Code */
+            plan_code: string;
+            /** Plan Name */
+            plan_name: string;
+            /** Plan Description */
+            plan_description: string;
+            /** Duration Value */
+            duration_value: number;
+            /** Duration Unit */
+            duration_unit: string;
+            /** Price */
+            price: string;
+            /** Currency */
+            currency: string;
+            /** Is Current Plan */
+            is_current_plan: boolean;
+            /**
+             * Would Run Until
+             * Format: date-time
+             */
+            would_run_until: string;
+        };
+        /**
+         * RenewalOrderCreate
+         * @description Which of the plan prices to pay for. Nothing else is read: the amount comes from it.
+         */
+        RenewalOrderCreate: {
+            /** Price Id */
+            price_id: number;
+        };
+        /**
+         * RenewalOrderOut
+         * @description What Razorpay Checkout is opened with.
+         */
+        RenewalOrderOut: {
+            /** Id */
+            id: number;
+            /** Razorpay Order Id */
+            razorpay_order_id: string;
+            /** Key Id */
+            key_id: string;
+            /** Amount */
+            amount: string;
+            /** Amount Paise */
+            amount_paise: number;
+            /** Currency */
+            currency: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description: string;
+            /** Company Name */
+            company_name: string;
+        };
+        /** RenewalOverview */
+        RenewalOverview: {
+            /** Online Renewal */
+            online_renewal: boolean;
+            /** Plan Code */
+            plan_code: string;
+            /** Plan Name */
+            plan_name: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "trial" | "active" | "expired" | "cancelled";
+            /**
+             * Access State
+             * @enum {string}
+             */
+            access_state: "full" | "read_only";
+            /** Expires At */
+            expires_at: string | null;
+            /** Days Left */
+            days_left: number | null;
+            /** Options */
+            options: components["schemas"]["RenewalOption"][];
+        };
+        /** RenewalResult */
+        RenewalResult: {
+            /** Applied */
+            applied: boolean;
+            /** Plan Name */
+            plan_name: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "trial" | "active" | "expired" | "cancelled";
+            /**
+             * Access State
+             * @enum {string}
+             */
+            access_state: "full" | "read_only";
+            /** Expires At */
+            expires_at: string | null;
+            /** Days Left */
+            days_left: number | null;
+        };
         /** ReopenIn */
         ReopenIn: {
             /** Reason */
@@ -9593,6 +11485,20 @@ export interface components {
             base_unit: string;
             source: components["schemas"]["RateSource"];
         };
+        /**
+         * RestoreIn
+         * @description `confirm` must be `RESTORE`, typed exactly. `company_id` is the company to restore onto.
+         */
+        RestoreIn: {
+            /** Company Id */
+            company_id: number;
+            /**
+             * Confirm
+             * @description RESTORE
+             * @default
+             */
+            confirm: string;
+        };
         /** ReturnLineIn */
         ReturnLineIn: {
             /** Line Id */
@@ -9610,6 +11516,35 @@ export interface components {
          * @enum {string}
          */
         Role: "owner" | "counter" | "accountant";
+        /** ScheduleIn */
+        ScheduleIn: {
+            /** Daily Time */
+            daily_time: string;
+            /** Keep Daily */
+            keep_daily: number;
+            /** Keep Weekly */
+            keep_weekly: number;
+            /** Keep Monthly */
+            keep_monthly: number;
+        };
+        /** ScheduleOut */
+        ScheduleOut: {
+            /** Daily Time */
+            daily_time: string;
+            /** Keep Daily */
+            keep_daily: number;
+            /** Keep Weekly */
+            keep_weekly: number;
+            /** Keep Monthly */
+            keep_monthly: number;
+            /** Updated At */
+            updated_at: string | null;
+            /**
+             * Next Scheduled At
+             * Format: date-time
+             */
+            next_scheduled_at: string;
+        };
         /** SchemeCreate */
         SchemeCreate: {
             /** Party Id */
@@ -9695,6 +11630,52 @@ export interface components {
             /** Is Active */
             is_active?: boolean | null;
         };
+        /** SecondaryLogoOut */
+        SecondaryLogoOut: {
+            /** Content Type */
+            content_type: string;
+            /** Sha256 */
+            sha256: string;
+        };
+        /** SecuritySettings */
+        SecuritySettings: {
+            /** Environment */
+            environment: string;
+            /** Base Domain */
+            base_domain: string;
+            /** Admin Subdomain */
+            admin_subdomain: string;
+            /** Default Company */
+            default_company: string | null;
+            /** Api Docs Enabled */
+            api_docs_enabled: boolean;
+            /** Cookie Secure */
+            cookie_secure: boolean;
+            /** Insecure Cookies Allowed */
+            insecure_cookies_allowed: boolean;
+            /** Row Level Security Role Set */
+            row_level_security_role_set: boolean;
+            /** Jwt Algorithm */
+            jwt_algorithm: string;
+            /** Access Token Minutes */
+            access_token_minutes: number;
+            /** Refresh Token Hours */
+            refresh_token_hours: number;
+            /** Login Max Attempts */
+            login_max_attempts: number;
+            /** Login Lock Minutes */
+            login_lock_minutes: number;
+            /** Cors Origins */
+            cors_origins: string[];
+            /** Storage Provider */
+            storage_provider: string;
+            /** Gsp Provider */
+            gsp_provider: string;
+            /** Backups Watched */
+            backups_watched: boolean;
+            /** Max Upload Mb */
+            max_upload_mb: number;
+        };
         /** SegmentMonth */
         SegmentMonth: {
             /** Month */
@@ -9759,6 +11740,15 @@ export interface components {
             state_code?: string | null;
             /** Reason */
             reason: string;
+        };
+        /** SeriesMoveOut */
+        SeriesMoveOut: {
+            /** Series */
+            series: string;
+            /** From Number */
+            from_number: number;
+            /** To Number */
+            to_number: number;
         };
         /** SessionEventOut */
         SessionEventOut: {
@@ -10699,6 +12689,29 @@ export interface components {
             /** Reason */
             reason: string;
         };
+        /** SystemHealth */
+        SystemHealth: {
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            api: components["schemas"]["ApiHealth"];
+            database: components["schemas"]["DatabaseHealth"];
+            /** Disks */
+            disks: components["schemas"]["DiskHealth"][];
+            backup: components["schemas"]["BackupHealth"];
+            gsp: components["schemas"]["Check"];
+            counters: components["schemas"]["HealthCounters"];
+            maintenance: components["schemas"]["MaintenanceNotice"];
+        };
+        /** TableCountOut */
+        TableCountOut: {
+            /** Table */
+            table: string;
+            /** Count */
+            count: number;
+        };
         /** TallyCheckOut */
         TallyCheckOut: {
             /** Code */
@@ -10781,6 +12794,41 @@ export interface components {
             gst_checked: boolean;
             /** Note */
             note: string | null;
+        };
+        /** TemplateList */
+        TemplateList: {
+            /** Templates */
+            templates: components["schemas"]["TemplateOut"][];
+            secondary_logo: components["schemas"]["SecondaryLogoOut"] | null;
+        };
+        /** TemplateOut */
+        TemplateOut: {
+            /** Id */
+            id: number;
+            slot: components["schemas"]["BillSlot"];
+            /** Name */
+            name: string;
+            /** Version */
+            version: number;
+            /** Is Active */
+            is_active: boolean;
+            /** Used */
+            used: boolean;
+            /** Html Bytes */
+            html_bytes: number;
+            /** Images */
+            images: string[];
+            /** Removed */
+            removed: string[];
+            /** Uploaded By Name */
+            uploaded_by_name: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Activated At */
+            activated_at: string | null;
         };
         /**
          * TemporaryPassword
@@ -11017,6 +13065,16 @@ export interface components {
             expires_at?: string | null;
             /** Days Left */
             days_left?: number | null;
+            /**
+             * App Generation
+             * @default 0
+             */
+            app_generation: number;
+            /**
+             * Online Renewal
+             * @default false
+             */
+            online_renewal: boolean;
         };
         /** TenantPlanOut */
         TenantPlanOut: {
@@ -11269,6 +13327,13 @@ export interface components {
             expires_in: number;
             user: components["schemas"]["UserOut"];
         };
+        /** ToolOut */
+        ToolOut: {
+            /** Name */
+            name: string;
+            /** Found */
+            found: boolean;
+        };
         /** TopItem */
         TopItem: {
             /** Description */
@@ -11444,6 +13509,36 @@ export interface components {
             /** Unread */
             unread: number;
         };
+        /** UploadOut */
+        UploadOut: {
+            /** Id */
+            id: number;
+            slot: components["schemas"]["BillSlot"];
+            /** Name */
+            name: string;
+            /** Version */
+            version: number;
+            /** Is Active */
+            is_active: boolean;
+            /** Used */
+            used: boolean;
+            /** Html Bytes */
+            html_bytes: number;
+            /** Images */
+            images: string[];
+            /** Removed */
+            removed: string[];
+            /** Uploaded By Name */
+            uploaded_by_name: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Activated At */
+            activated_at: string | null;
+            diagnostics: components["schemas"]["Diagnostics"];
+        };
         /** UserCreate */
         UserCreate: {
             /**
@@ -11579,6 +13674,26 @@ export interface components {
             ok: boolean;
             /** Checks */
             checks: components["schemas"]["Check"][];
+        };
+        /**
+         * VerifyRequest
+         * @description What Razorpay Checkout hands back after a payment.
+         */
+        VerifyRequest: {
+            /** Razorpay Order Id */
+            razorpay_order_id: string;
+            /** Razorpay Payment Id */
+            razorpay_payment_id: string;
+            /** Razorpay Signature */
+            razorpay_signature: string;
+        };
+        /** WebhookAnswer */
+        WebhookAnswer: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "applied" | "duplicate" | "ignored";
         };
         /**
          * WorkingCapitalOut
@@ -11836,6 +13951,149 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    app_update_status_api_v1_admin_system_app_update_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppUpdateOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    force_update_api_v1_admin_system_force_update_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ForceUpdateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppUpdateOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     login_api_v1_admin_auth_login_post: {
         parameters: {
             query?: never;
@@ -12126,6 +14384,1606 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_backups_api_v1_admin_backups_get: {
+        parameters: {
+            query?: {
+                kind?: components["schemas"]["BackupKind"] | null;
+                company_id?: number | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BackupList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_backup_api_v1_admin_backups_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BackupCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    summary_api_v1_admin_backups_summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BackupSummary"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_schedule_api_v1_admin_backups_schedule_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    set_schedule_api_v1_admin_backups_schedule_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScheduleIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_job_api_v1_admin_backups_jobs__job_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_api_v1_admin_backups_upload_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_api_v1_admin_backups_upload_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BackupOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_api_v1_admin_backups__backup_id__download_get: {
+        parameters: {
+            query?: {
+                part?: "dump" | "files";
+            };
+            header?: never;
+            path: {
+                backup_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restore_api_v1_admin_backups__backup_id__restore_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                backup_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RestoreIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_api_v1_admin_backups__backup_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                backup_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    field_registry_api_v1_admin_tenants__tenant_id__bill_templates_field_registry_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistryOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_templates_api_v1_admin_tenants__tenant_id__bill_templates_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_template_api_v1_admin_tenants__tenant_id__bill_templates_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_template_api_v1_admin_tenants__tenant_id__bill_templates_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_secondary_logo_api_v1_admin_tenants__tenant_id__bill_templates_secondary_logo_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_put_secondary_logo_api_v1_admin_tenants__tenant_id__bill_templates_secondary_logo_put"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_secondary_logo_api_v1_admin_tenants__tenant_id__bill_templates_secondary_logo_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_template_api_v1_admin_tenants__tenant_id__bill_templates__template_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+                template_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_template_api_v1_admin_tenants__tenant_id__bill_templates__template_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+                template_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_diagnostics_api_v1_admin_tenants__tenant_id__bill_templates__template_id__diagnostics_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+                template_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Diagnostics"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_template_api_v1_admin_tenants__tenant_id__bill_templates__template_id__preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+                template_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    activate_api_v1_admin_tenants__tenant_id__bill_templates__template_id__activate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+                template_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    deactivate_api_v1_admin_tenants__tenant_id__bill_templates__template_id__deactivate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+                template_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateOut"];
+                };
             };
             /** @description Bad Request */
             400: {
@@ -13262,6 +17120,1226 @@ export interface operations {
             };
         };
     };
+    inventory_api_v1_admin_tenants__tenant_id__data_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataInventory"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_api_v1_admin_tenants__tenant_id__data_preview_get: {
+        parameters: {
+            query?: {
+                /** @description kinds, or 'all' */
+                keys?: string[] | null;
+            };
+            header?: never;
+            path: {
+                tenant_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataPreviewOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    view_api_v1_admin_tenants__tenant_id__data__key__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataViewOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_selected_api_v1_admin_tenants__tenant_id__data_delete_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteSelectedIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeleteOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_all_api_v1_admin_tenants__tenant_id__data_delete_all_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteAllIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeleteOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_numbering_api_v1_admin_tenants__tenant_id__numbering_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NumberingOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_numbering_api_v1_admin_tenants__tenant_id__numbering_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NumberingSetIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NumberingRow"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    status_api_v1_admin_integrations_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntegrationOut"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    usage_api_v1_admin_integrations_usage_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntegrationUsage"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    lookup_api_v1_admin_integrations_gstin_lookup_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GstinLookupIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GstinLookupOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    connect_api_v1_admin_integrations__kind__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: components["schemas"]["IntegrationKind"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IntegrationConnect"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntegrationOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    test_connection_api_v1_admin_integrations__kind__test_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: components["schemas"]["IntegrationKind"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntegrationTestOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    disconnect_api_v1_admin_integrations__kind__disconnect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: components["schemas"]["IntegrationKind"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntegrationOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_limits_api_v1_admin_integrations__kind__limits_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: components["schemas"]["IntegrationKind"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IntegrationLimitsIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntegrationOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    company_usage_api_v1_admin_integrations__kind__companies_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: components["schemas"]["IntegrationKind"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyUsageRow"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    recent_failures_api_v1_admin_integrations__kind__failures_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: components["schemas"]["IntegrationKind"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntegrationFailureRow"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     overview_api_v1_admin_overview_get: {
         parameters: {
             query?: never;
@@ -13332,6 +18410,10 @@ export interface operations {
             query?: {
                 tenant_id?: number | null;
                 action?: components["schemas"]["AuditAction"] | null;
+                /** @description first day, India time, included */
+                date_from?: string | null;
+                /** @description last day, India time, included */
+                date_to?: string | null;
                 limit?: number;
                 offset?: number;
             };
@@ -13410,7 +18492,12 @@ export interface operations {
         parameters: {
             query?: {
                 tenant_id?: number | null;
+                admin_id?: number | null;
                 action?: components["schemas"]["PlatformAction"] | null;
+                /** @description first day, India time, included */
+                date_from?: string | null;
+                /** @description last day, India time, included */
+                date_to?: string | null;
                 limit?: number;
                 offset?: number;
             };
@@ -13506,6 +18593,88 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AdminSessionPage"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_admin_actions_api_v1_admin_audit_export_get: {
+        parameters: {
+            query?: {
+                tenant_id?: number | null;
+                admin_id?: number | null;
+                action?: components["schemas"]["PlatformAction"] | null;
+                /** @description first day, India time, included */
+                date_from?: string | null;
+                /** @description last day, India time, included */
+                date_to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The filtered rows as CSV */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": unknown;
                 };
             };
             /** @description Bad Request */
@@ -14330,6 +19499,344 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    health_api_v1_admin_system_health_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SystemHealth"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    notifications_api_v1_admin_notifications_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationsOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_maintenance_api_v1_admin_system_maintenance_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    set_maintenance_api_v1_admin_system_maintenance_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MaintenanceIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    platform_settings_api_v1_admin_system_settings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformSettingsOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -16281,6 +21788,73 @@ export interface operations {
             };
         };
     };
+    live_api_v1_health_live_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     ready_api_v1_health_ready_get: {
         parameters: {
             query?: never;
@@ -16348,6 +21922,71 @@ export interface operations {
             };
         };
     };
+    notice_api_v1_maintenance_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceNotice"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     get_tenant_api_v1_tenant_get: {
         parameters: {
             query?: never;
@@ -16364,6 +22003,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TenantOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_manifest_api_v1_tenant_manifest_webmanifest_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                    "application/manifest+json": unknown;
                 };
             };
             /** @description Bad Request */
@@ -17564,6 +23269,292 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    overview_api_v1_subscription_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RenewalOverview"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_order_api_v1_subscription_orders_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RenewalOrderCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RenewalOrderOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verify_api_v1_subscription_verify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RenewalResult"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    webhook_api_v1_subscription_webhook_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookAnswer"];
+                };
             };
             /** @description Bad Request */
             400: {
@@ -19446,6 +25437,84 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PartyOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    lookup_gstin_api_v1_parties_gstin_lookup_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GstinLookupIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GstinLookupOut"];
                 };
             };
             /** @description Bad Request */

@@ -160,6 +160,12 @@ export const ACTION: Record<AdminActionKind, string> = {
   integration_disconnect: "Disconnected an integration",
   integration_limits: "Changed integration limits",
   gstin_lookup: "Looked up a GSTIN",
+  bill_template_upload: "Uploaded a bill design",
+  bill_template_activate: "Activated a bill design",
+  bill_template_deactivate: "Deactivated a bill design",
+  bill_template_delete: "Deleted a bill design",
+  secondary_logo_set: "Set a second logo",
+  secondary_logo_remove: "Removed the second logo",
   app_update_force: "Forced an app update",
   subscription_pay_online: "Company renewed online",
 };

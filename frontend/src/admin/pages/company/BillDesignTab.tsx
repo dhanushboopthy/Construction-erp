@@ -505,7 +505,7 @@ function Registry({ tenantId }: { tenantId: number }) {
             </table>
           </div>
           <p className={styles.note}>
-            Required on a tax invoice: {registry.data.required.tax_invoice.join("; ")}.
+            Required on a tax invoice: {(registry.data.required.tax_invoice ?? []).join("; ")}.
           </p>
         </>
       ) : null}

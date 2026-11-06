@@ -14,7 +14,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
 import { TableToolbar } from "@/components/TableToolbar";
 import styles from "@/components/Ledger.module.css";
-import { useAltKey } from "@/hooks/useKeys";
+import { useShortcut } from "@/shortcuts/ShortcutsContext";
 import { useTableFilters } from "@/hooks/useTableFilters";
 import { formatMoney, plural, trimDecimal } from "@/lib/format";
 
@@ -37,7 +37,7 @@ export function SalesPage() {
   const pending = usePendingEway();
   const [pdfError, setPdfError] = useState<string | null>(null);
   const canBill = user?.role === "owner" || user?.role === "counter";
-  useAltKey("n", () => canBill && void navigate("/sales/new"));
+  useShortcut("new", () => canBill && void navigate("/sales/new"));
   // Opening a bill keeps the search and the status filter in the URL.
   const setOpen = (id: number | null) =>
     setParams((prev) => {

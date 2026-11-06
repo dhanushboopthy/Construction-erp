@@ -207,6 +207,17 @@ New platform audit actions: `numbering_set`, `company_data_deleted`, `company_da
 
 The service worker never caches anything under `/api`.
 
+## Endpoints (keyboard shortcuts, per user)
+
+Any signed-in company role, for themselves only. Only changes are stored; the defaults live in the
+app (SPEC §9).
+
+| Method | Path | What |
+| --- | --- | --- |
+| GET | `/me/shortcuts` | `{items: [{action_id, combo}]}`: what the user changed, e.g. `go:/items` → `Alt+I`, `new` → `Alt+N` |
+| PUT | `/me/shortcuts {items}` | Replaces the user's changes. `combo` is Alt (+ Shift) + one letter or digit, in any case and order (stored as `Alt+Shift+N`). 422 `INVALID_SHORTCUT` with `field` = the action id for a bad key, `Alt+D`/`Alt+F`/`Alt+E`, a repeated action or one key used twice; nothing is saved. An empty list restores every default |
+| DELETE | `/me/shortcuts` | 204. Restores every default |
+
 ## Endpoints (Milestone 30: Razorpay online renewal)
 
 Company side, `/subscription`. **Owner only** (403 otherwise). Orders and verify work while the

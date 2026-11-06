@@ -10,7 +10,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
 import { TableToolbar } from "@/components/TableToolbar";
 import styles from "@/components/Ledger.module.css";
-import { useAltKey } from "@/hooks/useKeys";
+import { useShortcut } from "@/shortcuts/ShortcutsContext";
 import { useTableFilters } from "@/hooks/useTableFilters";
 import { formatMoney, plural } from "@/lib/format";
 
@@ -66,7 +66,7 @@ export function PartiesPage() {
       setMode({ kind: "new" });
     }
   }, [canWrite]);
-  useAltKey("n", openNew);
+  useShortcut("new", openNew);
 
   const close = useCallback(() => {
     const id = mode.kind === "edit" ? mode.id : null;

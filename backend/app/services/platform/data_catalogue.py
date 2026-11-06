@@ -485,5 +485,7 @@ PRESERVED: frozenset[str] = frozenset(
         "bill_template",
         "bill_template_asset",
         "subscription_order",
+        # A user's own keyboard shortcuts: settings of the user, kept with the user.
+        "user_shortcut",
     }
 )

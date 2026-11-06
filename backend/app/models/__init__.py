@@ -42,6 +42,7 @@ from app.models.returns import CreditNote, CreditNoteLine, DebitNote, DebitNoteL
 from app.models.sales import SalesInvoice, SalesLine, SalesQuote, SalesQuoteLine
 from app.models.schemes import SupplierScheme
 from app.models.setup import AppUser, Location, ShopSettings, UserLocation
+from app.models.shortcuts import UserShortcut
 from app.models.stock_ops import (
     StockAdjustment,
     StockAdjustmentLine,
@@ -146,5 +147,6 @@ __all__ = [
     "Tenant",
     "Trip",
     "UserLocation",
+    "UserShortcut",
     "Vehicle",
 ]

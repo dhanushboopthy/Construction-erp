@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { AccessTab } from "./pages/company/AccessTab";
 import { ActivityTab } from "./pages/company/ActivityTab";
 import { BillDesignTab } from "./pages/company/BillDesignTab";
 import { OverviewTab } from "./pages/company/OverviewTab";
@@ -30,5 +31,6 @@ export const COMPANY_TABS: CompanyTab[] = [
   { key: "usage", label: "Usage", render: (t) => <UsageTab tenant={t} /> },
   { key: "activity", label: "Activity", render: (t) => <ActivityTab tenant={t} /> },
   { key: "support", label: "Support", render: (t) => <SupportTab tenant={t} /> },
+  { key: "access", label: "Access", render: (t) => <AccessTab tenant={t} /> },
   { key: "bill-design", label: "Bill design", render: (t) => <BillDesignTab tenant={t} /> },
 ];

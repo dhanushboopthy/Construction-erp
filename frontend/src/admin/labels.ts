@@ -130,6 +130,13 @@ export const ACTION: Record<AdminActionKind, string> = {
   plan_duplicate: "Copied a plan",
   plan_archive: "Archived a plan",
   plan_delete: "Deleted a plan",
+  subscription_renew: "Renewed a subscription",
+  subscription_cancel: "Cancelled a subscription",
+  payment_reverse: "Reversed a payment",
+  support_reply: "Replied to a ticket",
+  support_update: "Changed a ticket",
+  support_session_start: "Entered a company (read-only)",
+  support_session_end: "Left a company",
 };
 
 /** Duolink staff roles: what each may do, in words (ADR 0013). */

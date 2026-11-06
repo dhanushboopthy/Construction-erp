@@ -519,6 +519,7 @@ describe("AdminApp company page (M18)", () => {
       "usage",
       "activity",
       "support",
+      "access",
       "bill-design",
     ]);
     stubApi(COMPANY_ROUTES);
@@ -529,7 +530,16 @@ describe("AdminApp company page (M18)", () => {
       within(tabs)
         .getAllByRole("link")
         .map((l) => l.textContent),
-    ).toEqual(["Overview", "Users", "Subscription", "Usage", "Activity", "Support", "Bill design"]);
+    ).toEqual([
+      "Overview",
+      "Users",
+      "Subscription",
+      "Usage",
+      "Activity",
+      "Support",
+      "Access",
+      "Bill design",
+    ]);
     await user.click(within(tabs).getByRole("link", { name: "Usage" }));
     expect(window.location.search).toBe("?tab=usage");
     expect(await screen.findByText("Bills, last 90 days")).toBeInTheDocument();
@@ -554,7 +564,7 @@ describe("AdminApp company page (M18)", () => {
       expect(screen.queryByRole("button", { name })).not.toBeInTheDocument();
     }
     const tabs = screen.getByRole("navigation", { name: "Company sections" });
-    expect(within(tabs).getAllByRole("link")).toHaveLength(7);
+    expect(within(tabs).getAllByRole("link")).toHaveLength(8);
   });
 
   it("filters the Activity tab to this company", async () => {

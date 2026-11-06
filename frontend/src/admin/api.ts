@@ -4,6 +4,7 @@ import { json } from "@/api/client";
 
 import { adminApi, adminClient } from "./client";
 import type {
+  AccessStatus,
   AdminAction,
   BillDiagnostics,
   BillRegistry,
@@ -35,6 +36,8 @@ import type {
   StaffCreate,
   StaffMember,
   StaffUpdate,
+  SupportSessionPage,
+  SupportSessionStarted,
   SellerDetails,
   SellerDetailsUpdate,
   TenantCreate,
@@ -450,6 +453,41 @@ export function useAdminActions(filters: { tenant_id?: number } = {}) {
   return useQuery({
     queryKey: [...keys.audit, filters],
     queryFn: () => adminApi<Page<AdminAction>>(`/audit${query({ ...filters, limit: 100 })}`),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export const ACCESS_POLL_MS = 30_000;
+
+/** Whether the company's owner has let Duolink in now, and until when (M23). */
+export function useAccessStatus(tenantId: number) {
+  return useQuery({
+    queryKey: [...keys.tenant(tenantId), "support-access"],
+    queryFn: () => adminApi<AccessStatus>(`/tenants/${tenantId}/support-access`),
+    refetchInterval: ACCESS_POLL_MS,
+  });
+}
+
+/** Enter the company read-only. The answer holds the address to open: its token is in the
+ * fragment, so no server log ever sees it. */
+export function useEnterCompany(tenantId: number) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (reason: string) =>
+      adminApi<SupportSessionStarted>(`/tenants/${tenantId}/support-session`, {
+        method: "POST",
+        body: json({ reason }),
+      }),
+    onSuccess: () => client.invalidateQueries({ queryKey: ["admin"] }),
+  });
+}
+
+/** Every support session at every company (or one), newest first: Activity, Company access. */
+export function useSupportSessions(filters: { tenant_id?: number } = {}) {
+  return useQuery({
+    queryKey: [...keys.audit, "support-sessions", filters],
+    queryFn: () =>
+      adminApi<SupportSessionPage>(`/audit/support-sessions${query({ ...filters, limit: 100 })}`),
     placeholderData: keepPreviousData,
   });
 }

@@ -1,7 +1,7 @@
 """bill templates per company
 
 Revision ID: 0041
-Revises: 0035
+Revises: 0036
 Create Date: 2026-11-10 09:00:00.000000+00:00
 
 Parallel branch: before merging, set `down_revision` to the head of the branch merged before it,
@@ -65,6 +65,8 @@ ACTIONS_OLD = (
     "payment_reverse",
     "support_reply",
     "support_update",
+    "support_session_start",
+    "support_session_end",
 )
 ACTIONS_NEW = ACTIONS_OLD + (
     "bill_template_upload",
@@ -84,7 +86,7 @@ def _in_list(values: tuple[str, ...]) -> str:
 
 
 revision: str = "0041"
-down_revision: str | None = "0035"
+down_revision: str | None = "0036"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

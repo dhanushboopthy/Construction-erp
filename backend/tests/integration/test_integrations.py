@@ -145,7 +145,13 @@ def test_a_saved_key_shows_only_its_last_four_characters_and_no_endpoint_returns
             for name, value in ids.items():
                 url = url.replace("{" + name + "}", str(value))
             if "{" not in url:
-                responses.append(client.get(url, headers=boss).json())
+                answer = client.get(url, headers=boss)
+                # The audit CSV export (M24) is text, not JSON: check its text too.
+                responses.append(
+                    answer.json()
+                    if answer.headers["content-type"].startswith("application/json")
+                    else answer.text
+                )
     audit = client.get("/api/v1/admin/audit", headers=boss).text
     everything = json.dumps(responses) + audit
     for secret in secrets:

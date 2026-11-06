@@ -15,9 +15,6 @@ access for a fixed time; a Super Admin may then open a read-only support session
 - The CHECKs on `audit_log.action` (two new company events) and `platform_audit_log.action` (two
   new admin actions) are widened by hand; the downgrade narrows them with NOT VALID because both
   logs keep their rows (see 0030).
-
-Parallel branch: before merging, set `down_revision` to the head of the branch merged before it,
-and make `ACTIONS_OLD` in this migration equal that head's `ACTIONS_NEW`.
 """
 
 from collections.abc import Sequence

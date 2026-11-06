@@ -107,7 +107,12 @@ def test_maintenance_closes_company_writes_but_not_the_admin_or_the_health_check
 
 def test_every_company_route_answers_503_while_maintenance_is_on(client, boss):
     _switch(client, boss, True)
-    open_routes = {("GET", "/api/v1/tenant"), ("GET", "/api/v1/tenant/logo")}
+    open_routes = {
+        ("GET", "/api/v1/tenant"),
+        ("GET", "/api/v1/tenant/logo"),
+        # Razorpay's webhook (M30) takes no company from the address and is no company route.
+        ("POST", "/api/v1/subscription/webhook"),
+    }
     checked = 0
     for path, methods in app.openapi()["paths"].items():
         if path.startswith(("/api/v1/admin", "/api/v1/health", "/api/v1/maintenance")):

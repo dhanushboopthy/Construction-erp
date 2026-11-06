@@ -475,5 +475,15 @@ PRESERVED: frozenset[str] = frozenset(
         "support_message",
         "audit_log",
         "platform_audit_log",
+        # Duolink's other records about the company (M23, M27, M28, M30): the owner's support
+        # grants and Duolink's visits (append-only), the GSP/lookup call counts, the bill designs
+        # Duolink set up (issued documents point at them) and the online renewal orders.
+        "support_access_grant",
+        "support_session",
+        "support_session_event",
+        "integration_call",
+        "bill_template",
+        "bill_template_asset",
+        "subscription_order",
     }
 )

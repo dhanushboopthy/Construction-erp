@@ -76,6 +76,8 @@ def test_tenant_is_open_to_everyone_without_signing_in(client):
             "subscription_status",
             "expires_at",
             "days_left",
+            "app_generation",
+            "online_renewal",
         }
 
 

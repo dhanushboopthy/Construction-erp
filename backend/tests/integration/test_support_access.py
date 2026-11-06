@@ -238,8 +238,15 @@ def _company_routes():
     ]
 
 
+# Razorpay's webhook (M30) is no company route: it takes no company from the address, carries no
+# user and answers 404 unless a webhook secret is set. Its own tests are in test_online_renewal.py.
+NOT_COMPANY_ROUTES = {("POST", "/api/v1/subscription/webhook")}
 COMPANY_WRITES = [
-    r for r in _company_routes() if r[0] in {"POST", "PUT", "PATCH", "DELETE"} and r[1] != EXIT_PATH
+    r
+    for r in _company_routes()
+    if r[0] in {"POST", "PUT", "PATCH", "DELETE"}
+    and r[1] != EXIT_PATH
+    and r not in NOT_COMPANY_ROUTES
 ]
 COMPANY_READS = [r for r in _company_routes() if r[0] == "GET"]
 

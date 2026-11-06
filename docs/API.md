@@ -164,6 +164,41 @@ only admin writes Support may do).
 list (M21). Reply and update are audited as `support_reply` and `support_update` (ticket number,
 status change, whether a message was sent; never the text).
 
+## Endpoints (Milestone 23: owner-granted support access)
+
+No amount in any answer. Three token types exist: a company user's `access`, a Duolink admin's
+`platform`, and the new `support` token. Each API refuses the other two (401).
+
+**Company side.** `/support-access` is the **owner in person**: a counter or accountant gets 403
+`PERMISSION_DENIED`, and a support session gets 403 `SUPPORT_READ_ONLY`.
+
+| Method | Path | What |
+| --- | --- | --- |
+| GET | `/support-access` | `{live, recent[], durations}`. A grant: `id`, `status` (`live`, `revoked`, `ended`), `starts_at`, `ends_at`, `seconds_left`, `include_costs`, `reason`, `ticket_id`, `ticket_number`, `granted_by_name`, `revoked_at`, `revoked_by_name` |
+| POST | `/support-access/grants {duration_hours (1, 4, 24 or 72), include_costs = false, reason (3-300), ticket_id?}` | 201. Replaces a live grant (recorded revoked, its sessions end). 422 for another duration; 404 `TICKET_NOT_FOUND`. Open while the company is read-only |
+| POST | `/support-access/revoke` | Ends the live grant now. 409 `NO_LIVE_GRANT`. Open while the company is read-only |
+| GET | `/support-access/sessions` | The visits, newest first: `id`, `admin_name`, `reason`, `status` (`open`, `ended`, `stale`), `started_at`, `ended_at`, `end_reason`, `request_count`, `include_costs` |
+| GET | `/support-access/sessions/{id}/events` | Method, path and `refused` of each request of one visit, oldest first |
+| GET | `/support-session` | Under a support token only: `{session_id, company_name, admin_name, started_at, expires_at, grant_ends_at, include_costs, read_only}` (the banner) |
+| POST | `/support-session/exit` | Under a support token only; the one write a support session may make. 204; the token answers 401 afterwards |
+
+**Under a support token** every company route answers as for an owner, except: any POST, PUT,
+PATCH or DELETE (and any GET that would write) answers 403 `SUPPORT_READ_ONLY`; a token for another
+company's address, an ended or revoked session, an ended grant or a demoted admin answers 401
+(`SUPPORT_SESSION_ENDED`). Cost and margin are absent unless the grant has `include_costs`.
+`GET /auth/me` answers a support viewer (id 0, role `owner`, name "Duolink support: ...").
+
+**Duolink side.**
+
+| Method | Path | Role | What |
+| --- | --- | --- | --- |
+| GET | `/admin/tenants/{id}/support-access` | any admin | `{live, grant_id, starts_at, ends_at, seconds_left, owner_only_figures, reason, ticket_number, granted_by_name, open_sessions}` |
+| POST | `/admin/tenants/{id}/support-session {reason (3-300)}` | Super Admin | 201 `{session_id, token, expires_at, entry_url}`. 409 `NO_SUPPORT_GRANT`; 409 `TENANT_NOT_OPEN`. The token lasts the earlier of 2 hours and the grant |
+| GET | `/admin/audit/support-sessions?tenant_id&admin_id&limit&offset` | any admin | `{items[], total, open, stale, limit, offset}`: the Company access tab. A row: `tenant_slug`, `admin_name`, `reason`, `status`, `started_at`, `expires_at`, `ended_at`, `end_reason`, `request_count`, `owner_only_figures` |
+
+Audit: `support_session_start` and `support_session_end` (platform), `support_enter` and
+`support_exit` (company), never carrying the token.
+
 ## Endpoints (Milestone 19: user support tools)
 
 Same address and token as Milestone 16. Writes need a **Super Admin**; Support reads (403

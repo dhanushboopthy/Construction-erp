@@ -113,6 +113,10 @@ export function createClient<Session extends { access_token: string }>({
       if (error.status === 503 && error.body.code === "MAINTENANCE") {
         window.dispatchEvent(new Event("erp:maintenance"));
       }
+      // Duolink is restoring this company from a backup (Milestone 25): show the same screen.
+      if (error.status === 403 && error.body.code === "TENANT_RESTORING") {
+        window.dispatchEvent(new Event("erp:restoring"));
+      }
       throw error;
     }
     if (response.status === 204) return undefined as T;

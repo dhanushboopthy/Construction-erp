@@ -30,7 +30,17 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import expression
 
 from app.models.base import Base, IntPK, TimestampMixin
-from app.models.enums import DurationUnit, PlatformAction, PlatformRole, str_enum
+from app.models.enums import (
+    BackupJobKind,
+    BackupJobStatus,
+    BackupKind,
+    BackupSource,
+    BackupStatus,
+    DurationUnit,
+    PlatformAction,
+    PlatformRole,
+    str_enum,
+)
 
 
 class PlatformAdmin(Base, TimestampMixin):
@@ -170,9 +180,89 @@ class PlatformMaintenance(Base):
     )
 
 
+class PlatformBackup(Base):
+    """One backup file Duolink holds (Milestone 25): a whole-platform dump or one company's
+    archive. Platform-only: the company is named by `company_id`, not `tenant_id`, because no
+    company owns the row and a company session must never read it."""
+
+    __tablename__ = "platform_backup"
+    __table_args__ = (
+        CheckConstraint("kind = 'platform' OR company_id IS NOT NULL", name="company_named"),
+        Index("ix_platform_backup_started_at", "started_at"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    kind: Mapped[BackupKind] = mapped_column(str_enum(BackupKind, "backup_kind"))
+    source: Mapped[BackupSource] = mapped_column(str_enum(BackupSource, "backup_source"))
+    company_id: Mapped[int | None] = mapped_column(ForeignKey("tenant.id"), index=True)
+    file_name: Mapped[str] = mapped_column(String(200), unique=True)
+    # A platform backup also has a files archive beside the dump (erp-files-<stamp>.tar.gz).
+    files_name: Mapped[str | None] = mapped_column(String(200))
+    size_bytes: Mapped[int | None] = mapped_column(BigInteger)
+    sha256: Mapped[str | None] = mapped_column(String(64))
+    schema_revision: Mapped[str | None] = mapped_column(String(32))
+    status: Mapped[BackupStatus] = mapped_column(
+        str_enum(BackupStatus, "backup_status"), default=BackupStatus.RUNNING
+    )
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_by_admin_id: Mapped[int | None] = mapped_column(ForeignKey("platform_admin.id"))
+    protected: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=expression.false()
+    )
+    note: Mapped[str | None] = mapped_column(Text)
+    error: Mapped[str | None] = mapped_column(Text)
+
+
+class PlatformBackupJob(Base):
+    """A long backup or restore, so the page can poll it (Milestone 25)."""
+
+    __tablename__ = "platform_backup_job"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    kind: Mapped[BackupJobKind] = mapped_column(str_enum(BackupJobKind, "backup_job_kind"))
+    status: Mapped[BackupJobStatus] = mapped_column(
+        str_enum(BackupJobStatus, "backup_job_status"), default=BackupJobStatus.QUEUED
+    )
+    company_id: Mapped[int | None] = mapped_column(ForeignKey("tenant.id"), index=True)
+    # The archive a restore reads, or the backup a backup job made.
+    backup_id: Mapped[int | None] = mapped_column(ForeignKey("platform_backup.id"))
+    # The protected copy a restore took first.
+    safety_backup_id: Mapped[int | None] = mapped_column(ForeignKey("platform_backup.id"))
+    requested_by_admin_id: Mapped[int | None] = mapped_column(ForeignKey("platform_admin.id"))
+    step: Mapped[str | None] = mapped_column(String(100))
+    note: Mapped[str | None] = mapped_column(Text)
+    error_code: Mapped[str | None] = mapped_column(String(50))
+    error_message: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class PlatformBackupSchedule(Base):
+    """When the nightly backup runs and how many copies are kept: one row, read by
+    scripts/backup-loop.sh through `python -m app.scripts.backup_schedule`."""
+
+    __tablename__ = "platform_backup_schedule"
+    __table_args__ = (CheckConstraint("id = 1", name="singleton"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False, default=1)
+    daily_time: Mapped[str] = mapped_column(String(5), default="02:30", server_default="02:30")
+    keep_daily: Mapped[int] = mapped_column(Integer, default=30, server_default="30")
+    keep_weekly: Mapped[int] = mapped_column(Integer, default=8, server_default="8")
+    keep_monthly: Mapped[int] = mapped_column(Integer, default=12, server_default="12")
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+    updated_by_admin_id: Mapped[int | None] = mapped_column(ForeignKey("platform_admin.id"))
+
+
 __all__ = [
     "PlatformAdmin",
     "PlatformAuditLog",
+    "PlatformBackup",
+    "PlatformBackupJob",
+    "PlatformBackupSchedule",
     "PlatformMaintenance",
     "PlatformPlan",
     "PlatformPlanPrice",

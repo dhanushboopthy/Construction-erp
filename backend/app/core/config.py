@@ -87,6 +87,9 @@ class Settings(BaseSettings):
 
     # Where the nightly backups land (the backup container's folder, mounted read-only here).
     backup_dir: str = ""
+    # Where pg_dump and pg_restore live when they are not in a system folder (Milestone 25).
+    pg_bin_dir: str = ""
+    backup_tool_timeout_seconds: int = 1800
     app_version: str = "1.0.0"
 
     log_level: str = "INFO"

@@ -53,7 +53,10 @@ the behaviour reference; its code is not copied (`docs/reference/WA_SUPER_ADMIN.
    archive of that company's rows and files, restored in one transaction). **Restoring the whole
    platform stays a command-line runbook** (`scripts/restore.sh`): replacing the database from a
    web request that runs on that database is not safe. The admin shows the command and does not
-   run it.
+   run it. (Decided and built in M25. A company restore takes a protected safety backup first, runs
+   in one transaction behind the purge switch of point 5, closes only that company with 403
+   `TENANT_RESTORING`, and rolls back on any failure or failed integrity check. Duolink's own rows
+   for the company, such as subscription payments, are neither exported nor overwritten.)
 7. **Integrations (M27).** Duolink's GSP and GSTIN-lookup credentials are encrypted at rest, never
    returned (only their last four characters), and usage is counted per company without request
    or response bodies.

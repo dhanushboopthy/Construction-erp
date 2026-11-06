@@ -101,6 +101,9 @@ def get_tenant(request: Request, db: DbSession) -> Tenant:
     set_actor_label(db, None)
     maintenance.enforce(maintenance_switch(request), db, request.method, request.url.path)
     tenant = tenant_service.for_host(db, request_host(request))
+    maintenance.enforce_tenant(
+        maintenance_switch(request), db, tenant.id, request.method, request.url.path
+    )
     set_tenant(db, tenant.id)
     request.state.tenant_id = tenant.id
     _support_gate(request, db, tenant)

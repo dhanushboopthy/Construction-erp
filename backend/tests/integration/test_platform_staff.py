@@ -119,7 +119,11 @@ WRITES = [
 ]
 # The one read only a Super Admin has (the audit CSV, Milestone 24); Support gets 403, tested in
 # test_system_health.py.
-SUPER_ADMIN_READS = {("GET", "/api/v1/admin/audit/export")}
+SUPER_ADMIN_READS = {
+    ("GET", "/api/v1/admin/audit/export"),
+    # A backup file is Duolink's whole data: only a Super Admin downloads it (M25).
+    ("GET", "/api/v1/admin/backups/{backup_id}/download"),
+}
 READS = [r for r in _admin_routes() if r[0] == "GET" and r not in SUPER_ADMIN_READS]
 
 
@@ -164,6 +168,8 @@ def test_support_gets_403_on_every_write_route(client, helper, acme, method, pat
         "subscription_id": 1,
         "payment_id": 1,
         "ticket_id": 1,
+        "backup_id": 1,
+        "job_id": 1,
     }
     response = client.request(method, _fill(path, ids), headers=helper, json={})
     assert response.status_code == 403, f"{method} {path}: {response.status_code}"
@@ -171,7 +177,15 @@ def test_support_gets_403_on_every_write_route(client, helper, acme, method, pat
 
 
 @pytest.mark.parametrize(("method", "path"), READS, ids=[f"{m} {p}" for m, p in READS])
-def test_support_gets_200_on_every_read_route(client, helper, acme, method, path):
+def test_support_gets_200_on_every_read_route(client, helper, acme, seeded, method, path):
+    from app.models.enums import BackupJobKind, BackupJobStatus
+    from app.models.platform import PlatformBackupJob
+
+    some_job = PlatformBackupJob(
+        kind=BackupJobKind.BACKUP_PLATFORM, status=BackupJobStatus.SUCCEEDED
+    )
+    seeded.add(some_job)
+    seeded.flush()
     some_user = client.get("/api/v1/admin/users", headers=helper).json()["items"][0]["id"]
     some_plan = client.get("/api/v1/admin/billing/plans", headers=helper).json()[0]["id"]
     owner = login(client, "ravi", "ravi-pass-123", host="acme.localhost")
@@ -187,6 +201,7 @@ def test_support_gets_200_on_every_read_route(client, helper, acme, method, path
         "session_id": SESSION_ID,
         "plan_id": some_plan,
         "ticket_id": some_ticket,
+        "job_id": some_job.id,
     }
     response = client.get(_fill(path, ids), headers=helper)
     assert response.status_code == 200, f"{path}: {response.text}"

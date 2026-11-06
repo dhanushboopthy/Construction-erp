@@ -236,6 +236,11 @@ def test_every_table_belongs_to_a_company(seeded):
         "platform_plan_price",
         # Duolink's own maintenance switch (M24): one row, read before any company is known.
         "platform_maintenance",
+        # Duolink's backups, their jobs and the schedule (M25): the company a backup belongs to
+        # is `company_id`, and no company session ever reads these.
+        "platform_backup",
+        "platform_backup_job",
+        "platform_backup_schedule",
     }
     missing = seeded.execute(
         text(

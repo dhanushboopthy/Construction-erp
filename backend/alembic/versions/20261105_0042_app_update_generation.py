@@ -1,7 +1,7 @@
 """app update generation
 
 Revision ID: 0042
-Revises: 0035
+Revises: 0036
 Create Date: 2026-11-05 09:00:00.000000+00:00
 
 M29: the ERP installs as an app, and Duolink can ask every open browser to look for a new build.
@@ -61,6 +61,8 @@ ACTIONS_OLD = (
     "payment_reverse",
     "support_reply",
     "support_update",
+    "support_session_start",
+    "support_session_end",
 )
 ACTIONS_NEW = ACTIONS_OLD + ("app_update_force",)
 CHECK_NAME = "ck_platform_audit_log_platform_action"
@@ -71,7 +73,7 @@ def _in_list(values: tuple[str, ...]) -> str:
 
 
 revision: str = "0042"
-down_revision: str | None = "0035"
+down_revision: str | None = "0036"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

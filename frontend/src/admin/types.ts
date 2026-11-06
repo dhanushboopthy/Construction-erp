@@ -37,6 +37,12 @@ export type TenantUsage = Schemas["TenantUsage"];
 export type AppUpdate = Schemas["AppUpdateOut"];
 export type ForceUpdateBody = Schemas["ForceUpdateIn"];
 
+// Milestone 23: owner-granted support access, as Duolink sees it.
+export type AccessStatus = Schemas["AdminAccessStatus"];
+export type SupportSessionStarted = Schemas["SupportSessionStarted"];
+export type SupportSessionRow = Schemas["AdminSessionRow"];
+export type SupportSessionPage = Schemas["AdminSessionPage"];
+
 // Milestone 22 (support tickets): written by hand in src/support/types.ts, shared with the company app.
 export type {
   AdminTicketDetail,

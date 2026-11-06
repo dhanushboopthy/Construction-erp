@@ -4,49 +4,6 @@
  */
 
 export interface paths {
-    "/api/v1/admin/system/app-update": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * App Update Status
-         * @description The release generation every open browser compares with, when it was last forced and by
-         *     whom, and the backend's version and build.
-         */
-        get: operations["app_update_status_api_v1_admin_system_app_update_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/system/force-update": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Force Update
-         * @description Ask every open browser to look for a new build now (Super Admin). Adds one to the
-         *     generation and nothing else: nobody is reloaded, and a new build waits for the person to
-         *     press "Update now".
-         */
-        post: operations["force_update_api_v1_admin_system_force_update_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/admin/auth/login": {
         parameters: {
             query?: never;
@@ -442,6 +399,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/audit/support-sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Support Sessions
+         * @description Company access (M23): every support session at every company, newest first, with its
+         *     request count. `stale` counts sessions never ended whose token has expired.
+         */
+        get: operations["support_sessions_api_v1_admin_audit_support_sessions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/staff": {
         parameters: {
             query?: never;
@@ -775,6 +753,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/tenants/{tenant_id}/support-access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Support Access Status
+         * @description Whether the company's owner has granted Duolink support access now, until when, and how
+         *     many support sessions are open. Statuses and times only.
+         */
+        get: operations["support_access_status_api_v1_admin_tenants__tenant_id__support_access_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/tenants/{tenant_id}/support-session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Enter Company
+         * @description Enter the company read-only, with its owner's live grant (Super Admin only). 409
+         *     NO_SUPPORT_GRANT without one; 409 TENANT_NOT_OPEN for a suspended or cancelled company. The
+         *     token lasts two hours at most and never past the grant; open `entry_url` in a new tab: the
+         *     token travels in the fragment, so no server log ever holds it.
+         */
+        post: operations["enter_company_api_v1_admin_tenants__tenant_id__support_session_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/users": {
         parameters: {
             query?: never;
@@ -1031,28 +1053,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/tenant/manifest.webmanifest": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Manifest
-         * @description The web app manifest (Milestone 29): the company's name and logo, so the ERP installs on
-         *     the shop's PC or phone as that shop's app. Open, like the name: the browser fetches it
-         *     without signing in. Never cached by the service worker (nothing under /api is).
-         */
-        get: operations["get_manifest_api_v1_tenant_manifest_webmanifest_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/tenant/plan": {
         parameters: {
             query?: never;
@@ -1205,6 +1205,147 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/support-access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Overview
+         * @description The live grant (or none), with the time left, and the last few grants.
+         */
+        get: operations["overview_api_v1_support_access_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/support-access/grants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Grant
+         * @description Let Duolink in, read-only, for 1, 4, 24 or 72 hours. A live grant is replaced: it is
+         *     recorded as revoked and any Duolink session under it ends. 404 TICKET_NOT_FOUND.
+         */
+        post: operations["grant_api_v1_support_access_grants_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/support-access/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Revoke
+         * @description End the live grant now. Duolink's next request answers 401. 409 NO_LIVE_GRANT.
+         */
+        post: operations["revoke_api_v1_support_access_revoke_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/support-access/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * History
+         * @description Who from Duolink entered, when, for how long, and how many requests they made.
+         */
+        get: operations["history_api_v1_support_access_sessions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/support-access/sessions/{support_session_id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Events
+         * @description Every request of one visit: method and path, and whether it was a refused write.
+         */
+        get: operations["events_api_v1_support_access_sessions__support_session_id__events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/support-session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Session Status
+         * @description The support session this token belongs to: company, admin, when it ends.
+         */
+        get: operations["session_status_api_v1_support_session_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/support-session/exit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Exit Session
+         * @description Leave the company. The token answers 401 from the next request on.
+         */
+        post: operations["exit_session_api_v1_support_session_exit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/login": {
         parameters: {
             query?: never;
@@ -1266,7 +1407,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Me */
+        /**
+         * Me
+         * @description The signed-in user. Inside a Duolink support session (M23) this is the support viewer,
+         *     not any company user: id 0, the owner's role (for reads), every location.
+         */
         get: operations["me_api_v1_auth_me_get"];
         put?: never;
         post?: never;
@@ -3750,6 +3895,14 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AccessOverview */
+        AccessOverview: {
+            live: components["schemas"]["GrantOut"] | null;
+            /** Recent */
+            recent: components["schemas"]["GrantOut"][];
+            /** Durations */
+            durations: number[];
+        };
         /** AccountOut */
         AccountOut: {
             account: components["schemas"]["LedgerAccount"];
@@ -3917,6 +4070,29 @@ export interface components {
          * @enum {string}
          */
         AdjustmentReason: "weighbridge_gain" | "weighbridge_loss" | "breakage" | "damage" | "theft" | "free_sample" | "count_correction";
+        /** AdminAccessStatus */
+        AdminAccessStatus: {
+            /** Live */
+            live: boolean;
+            /** Grant Id */
+            grant_id: number | null;
+            /** Starts At */
+            starts_at: string | null;
+            /** Ends At */
+            ends_at: string | null;
+            /** Seconds Left */
+            seconds_left: number;
+            /** Owner Only Figures */
+            owner_only_figures: boolean;
+            /** Reason */
+            reason: string | null;
+            /** Ticket Number */
+            ticket_number: string | null;
+            /** Granted By Name */
+            granted_by_name: string | null;
+            /** Open Sessions */
+            open_sessions: number;
+        };
         /** AdminChangePassword */
         AdminChangePassword: {
             /** Current Password */
@@ -3955,6 +4131,60 @@ export interface components {
             /** Body */
             body?: string | null;
             status?: components["schemas"]["SupportStatus"] | null;
+        };
+        /** AdminSessionPage */
+        AdminSessionPage: {
+            /** Items */
+            items: components["schemas"]["AdminSessionRow"][];
+            /** Total */
+            total: number;
+            /** Open */
+            open: number;
+            /** Stale */
+            stale: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+        };
+        /** AdminSessionRow */
+        AdminSessionRow: {
+            /** Id */
+            id: number;
+            /** Tenant Id */
+            tenant_id: number;
+            /** Tenant Slug */
+            tenant_slug: string;
+            /** Tenant Name */
+            tenant_name: string;
+            /** Admin Id */
+            admin_id: number;
+            /** Admin Name */
+            admin_name: string;
+            /** Reason */
+            reason: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "open" | "ended" | "stale";
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Ended At */
+            ended_at: string | null;
+            end_reason: components["schemas"]["SupportSessionEnd"] | null;
+            /** Request Count */
+            request_count: number;
+            /** Owner Only Figures */
+            owner_only_figures: boolean;
         };
         /** AdminTicketDetail */
         AdminTicketDetail: {
@@ -4100,23 +4330,6 @@ export interface components {
             amount: string;
         };
         /**
-         * AppUpdateOut
-         * @description Where the platform's release generation stands, and which backend build is running.
-         *     Counts and names only: no company's data.
-         */
-        AppUpdateOut: {
-            /** Generation */
-            generation: number;
-            /** Forced At */
-            forced_at: string | null;
-            /** Forced By */
-            forced_by: string | null;
-            /** Backend Version */
-            backend_version: string;
-            /** Backend Build */
-            backend_build: string;
-        };
-        /**
          * ApprovalAction
          * @description What an owner PIN can approve at the counter (G18).
          * @enum {string}
@@ -4184,7 +4397,7 @@ export interface components {
          * AuditAction
          * @enum {string}
          */
-        AuditAction: "insert" | "update" | "delete" | "login" | "login_failed" | "logout" | "token_reuse" | "override" | "export";
+        AuditAction: "insert" | "update" | "delete" | "login" | "login_failed" | "logout" | "token_reuse" | "override" | "export" | "support_enter" | "support_exit";
         /** AuditLogOut */
         AuditLogOut: {
             /** Id */
@@ -5485,6 +5698,11 @@ export interface components {
             required: boolean;
             einvoice: components["schemas"]["EInvoiceOut"] | null;
         };
+        /** EnterRequest */
+        EnterRequest: {
+            /** Reason */
+            reason: string;
+        };
         /** ErrorResponse */
         ErrorResponse: {
             /** Code */
@@ -5807,16 +6025,64 @@ export interface components {
             /** Lost Value */
             lost_value?: string | null;
         };
-        /** ForceUpdateIn */
-        ForceUpdateIn: {
-            /** Reason */
-            reason?: string | null;
-        };
         /**
          * FulfilmentSource
          * @enum {string}
          */
         FulfilmentSource: "shop" | "godown" | "direct";
+        /** GrantCreate */
+        GrantCreate: {
+            /**
+             * Duration Hours
+             * @enum {integer}
+             */
+            duration_hours: 1 | 4 | 24 | 72;
+            /**
+             * Include Costs
+             * @default false
+             */
+            include_costs: boolean;
+            /** Reason */
+            reason: string;
+            /** Ticket Id */
+            ticket_id?: number | null;
+        };
+        /** GrantOut */
+        GrantOut: {
+            /** Id */
+            id: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "live" | "revoked" | "ended";
+            /**
+             * Starts At
+             * Format: date-time
+             */
+            starts_at: string;
+            /**
+             * Ends At
+             * Format: date-time
+             */
+            ends_at: string;
+            /** Seconds Left */
+            seconds_left: number;
+            /** Include Costs */
+            include_costs: boolean;
+            /** Reason */
+            reason: string;
+            /** Ticket Id */
+            ticket_id: number | null;
+            /** Ticket Number */
+            ticket_number: string | null;
+            /** Granted By Name */
+            granted_by_name: string;
+            /** Revoked At */
+            revoked_at: string | null;
+            /** Revoked By Name */
+            revoked_by_name: string | null;
+        };
         /** Gstr1 */
         Gstr1: {
             /** Period */
@@ -8194,7 +8460,7 @@ export interface components {
          * @description What a Duolink admin did (platform_audit_log, Milestones 16 and 17).
          * @enum {string}
          */
-        PlatformAction: "login" | "login_failed" | "logout" | "token_reuse" | "tenant_create" | "tenant_update" | "tenant_suspend" | "tenant_reactivate" | "user_activate" | "user_deactivate" | "user_unlock" | "user_reset_password" | "user_sign_out" | "staff_create" | "staff_update" | "staff_reset_password" | "staff_unlock" | "staff_sign_out" | "password_change" | "tenant_cancel" | "tenant_seller_update" | "tenant_logo_set" | "tenant_logo_remove" | "user_update" | "user_session_revoke" | "user_remove" | "plan_create" | "plan_update" | "plan_duplicate" | "plan_archive" | "plan_delete" | "subscription_renew" | "subscription_cancel" | "payment_reverse" | "support_reply" | "support_update" | "app_update_force";
+        PlatformAction: "login" | "login_failed" | "logout" | "token_reuse" | "tenant_create" | "tenant_update" | "tenant_suspend" | "tenant_reactivate" | "user_activate" | "user_deactivate" | "user_unlock" | "user_reset_password" | "user_sign_out" | "staff_create" | "staff_update" | "staff_reset_password" | "staff_unlock" | "staff_sign_out" | "password_change" | "tenant_cancel" | "tenant_seller_update" | "tenant_logo_set" | "tenant_logo_remove" | "user_update" | "user_session_revoke" | "user_remove" | "plan_create" | "plan_update" | "plan_duplicate" | "plan_archive" | "plan_delete" | "subscription_renew" | "subscription_cancel" | "payment_reverse" | "support_reply" | "support_update" | "support_session_start" | "support_session_end";
         /** PlatformAuditRow */
         PlatformAuditRow: {
             /** Id */
@@ -9494,6 +9760,51 @@ export interface components {
             /** Reason */
             reason: string;
         };
+        /** SessionEventOut */
+        SessionEventOut: {
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Method */
+            method: string;
+            /** Path */
+            path: string;
+            /** Refused */
+            refused: boolean;
+        };
+        /**
+         * SessionRow
+         * @description One visit by Duolink, as the owner's history shows it.
+         */
+        SessionRow: {
+            /** Id */
+            id: number;
+            /** Grant Id */
+            grant_id: number;
+            /** Admin Name */
+            admin_name: string;
+            /** Reason */
+            reason: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "open" | "ended" | "stale";
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Ended At */
+            ended_at: string | null;
+            end_reason: components["schemas"]["SupportSessionEnd"] | null;
+            /** Request Count */
+            request_count: number;
+            /** Include Costs */
+            include_costs: boolean;
+        };
         /** ShopSettingsOut */
         ShopSettingsOut: {
             /** Legal Name */
@@ -10324,6 +10635,61 @@ export interface components {
          */
         SupportPriority: "low" | "normal" | "high" | "urgent";
         /**
+         * SupportSessionEnd
+         * @description Why a support session ended (Milestone 23).
+         * @enum {string}
+         */
+        SupportSessionEnd: "exited" | "revoked" | "grant_ended" | "replaced" | "admin_not_allowed";
+        /** SupportSessionStarted */
+        SupportSessionStarted: {
+            /** Session Id */
+            session_id: number;
+            /** Token */
+            token: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Entry Url */
+            entry_url: string;
+        };
+        /**
+         * SupportSessionStatus
+         * @description What the banner shows to the Duolink admin inside the company.
+         */
+        SupportSessionStatus: {
+            /** Session Id */
+            session_id: number;
+            /** Company Name */
+            company_name: string;
+            /** Admin Name */
+            admin_name: string;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Grant Ends At
+             * Format: date-time
+             */
+            grant_ends_at: string;
+            /** Include Costs */
+            include_costs: boolean;
+            /**
+             * Read Only
+             * @default true
+             * @constant
+             */
+            read_only: true;
+        };
+        /**
          * SupportStatus
          * @enum {string}
          */
@@ -10651,11 +11017,6 @@ export interface components {
             expires_at?: string | null;
             /** Days Left */
             days_left?: number | null;
-            /**
-             * App Generation
-             * @default 0
-             */
-            app_generation: number;
         };
         /** TenantPlanOut */
         TenantPlanOut: {
@@ -11475,149 +11836,6 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    app_update_status_api_v1_admin_system_app_update_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AppUpdateOut"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    force_update_api_v1_admin_system_force_update_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ForceUpdateIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AppUpdateOut"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     login_api_v1_admin_auth_login_post: {
         parameters: {
             query?: never;
@@ -13209,6 +13427,85 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Page_PlatformAuditRow_"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    support_sessions_api_v1_admin_audit_support_sessions_get: {
+        parameters: {
+            query?: {
+                tenant_id?: number | null;
+                admin_id?: number | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminSessionPage"];
                 };
             };
             /** @description Bad Request */
@@ -14985,6 +15282,162 @@ export interface operations {
             };
         };
     };
+    support_access_status_api_v1_admin_tenants__tenant_id__support_access_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminAccessStatus"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    enter_company_api_v1_admin_tenants__tenant_id__support_session_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EnterRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportSessionStarted"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_users_api_v1_admin_users_get: {
         parameters: {
             query?: {
@@ -15960,72 +16413,6 @@ export interface operations {
             };
         };
     };
-    get_manifest_api_v1_tenant_manifest_webmanifest_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                    "application/manifest+json": unknown;
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
     plan_api_v1_tenant_plan_get: {
         parameters: {
             query?: never;
@@ -16744,6 +17131,483 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    overview_api_v1_support_access_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessOverview"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    grant_api_v1_support_access_grants_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GrantCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GrantOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_api_v1_support_access_revoke_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GrantOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    history_api_v1_support_access_sessions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionRow"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    events_api_v1_support_access_sessions__support_session_id__events_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                support_session_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionEventOut"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    session_status_api_v1_support_session_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportSessionStatus"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    exit_session_api_v1_support_session_exit_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };

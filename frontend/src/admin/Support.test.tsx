@@ -132,7 +132,7 @@ describe("AdminApp Support page (M22)", () => {
     renderAt("/admin/support");
     await screen.findByRole("link", { name: "Cannot print the bill" });
     const counts = screen.getByLabelText("Ticket counts");
-    for (const [label, value] of [
+    for (const [label = "", value] of [
       ["Open", "4"],
       ["In progress", "2"],
       ["Waiting on company", "1"],

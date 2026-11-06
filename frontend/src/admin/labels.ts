@@ -134,7 +134,7 @@ export const ACTION: Record<AdminActionKind, string> = {
   plan_duplicate: "Copied a plan",
   plan_archive: "Archived a plan",
   plan_delete: "Deleted a plan",
-  subscription_renew: "Renewed a subscription",
+  subscription_renew: "Recorded a renewal",
   subscription_cancel: "Cancelled a subscription",
   payment_reverse: "Reversed a payment",
   support_reply: "Replied to a ticket",
@@ -161,6 +161,7 @@ export const ACTION: Record<AdminActionKind, string> = {
   integration_limits: "Changed integration limits",
   gstin_lookup: "Looked up a GSTIN",
   app_update_force: "Forced an app update",
+  subscription_pay_online: "Company renewed online",
 };
 
 /** How serious a bell item is, in words as well as colour (Milestone 24). */

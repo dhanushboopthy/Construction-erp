@@ -73,6 +73,7 @@ def test_each_address_names_its_company(client, beta):
         "expires_at": None,
         "days_left": None,
         "app_generation": 0,  # the platform's release generation (M29), the same for all
+        "online_renewal": False,  # no Razorpay keys here (Milestone 30)
     }
 
 

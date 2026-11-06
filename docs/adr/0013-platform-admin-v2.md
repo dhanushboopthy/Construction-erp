@@ -196,3 +196,17 @@ inside a company.
   than a full GST tax invoice.
 - **Support may preview.** A preview reads nothing of the company's, so it is the second explicit
   Support write exception, listed in the Support-403 test.
+
+## Update (Milestone 30): online renewal
+
+- **Optional and off by default.** Razorpay keys in the environment switch it on; without them a
+  read-only company is told to contact Duolink, as before. Keys are `SecretStr` settings, never
+  stored or returned.
+- **The server decides the amount** from the plan catalogue; the browser names a price only.
+  Checkout's answer and the webhook are verified with HMAC-SHA256 in constant time.
+- **One payment per Razorpay payment id**, enforced by a unique index and by locking the order
+  row, so the browser callback and the webhook can arrive in either order.
+- **Read-only does not stop renewal.** The order and verify routes are on the exception list.
+- **The company sees its own bill.** The owner sees Duolink's plan prices on Plan & billing. That
+  is the company's own account with Duolink, not an admin answer, so `/admin` still answers no
+  amount outside `/admin/billing`.

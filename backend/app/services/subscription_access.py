@@ -33,6 +33,9 @@ READ_ONLY_EXCEPTIONS: tuple[tuple[str, re.Pattern[str]], ...] = (
     # support session (read-only in any case) can always leave.
     ("POST", re.compile(r"^/api/v1/support-access/(grants|revoke)$")),
     ("POST", re.compile(r"^/api/v1/support-session/exit$")),
+    # Milestone 30: an expired company's owner can renew online, and the payment lands. (The
+    # webhook takes no company from the address, so it never reaches this check.)
+    ("POST", re.compile(r"^/api/v1/subscription/(orders|verify)$")),
 )
 
 

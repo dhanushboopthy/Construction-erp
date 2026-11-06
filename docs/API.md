@@ -207,6 +207,26 @@ New platform audit actions: `numbering_set`, `company_data_deleted`, `company_da
 
 The service worker never caches anything under `/api`.
 
+## Endpoints (Milestone 30: Razorpay online renewal)
+
+Company side, `/subscription`. **Owner only** (403 otherwise). Orders and verify work while the
+company is read-only (the exception list, M21). Nothing here carries a secret: `key_id` is
+Razorpay's public key id. Money is a decimal string; the amount is always the server's.
+
+| Method | Path | Role | What |
+| --- | --- | --- | --- |
+| GET | `/subscription` | Owner | `{online_renewal, plan_code, plan_name, status, access_state, expires_at, days_left, options[]}`. `options` (empty while `online_renewal` is false): `price_id`, `plan_*`, `duration_value`, `duration_unit`, `price`, `currency`, `is_current_plan`, `would_run_until` |
+| POST | `/subscription/orders {price_id}` | Owner | 201 `{id, razorpay_order_id, key_id, amount, amount_paise, currency, name, description, company_name}`. 404 `PRICE_NOT_FOUND`; 409 `PRICE_NOT_OFFERED` (archived plan, inactive price, trial plan, under one rupee), `ONLINE_RENEWAL_OFF`, `NO_SUBSCRIPTION`; 502 `RAZORPAY_ERROR` |
+| POST | `/subscription/verify {razorpay_order_id, razorpay_payment_id, razorpay_signature}` | Owner | `{applied, plan_name, status, access_state, expires_at, days_left}`. `applied: false` when the payment was already recorded (by the webhook, or a repeat). 400 `SIGNATURE_INVALID` (nothing recorded); 404 `ORDER_NOT_FOUND` (also another company's order); 409 `ONLINE_RENEWAL_OFF` |
+| POST | `/subscription/webhook` | none (signed) | Razorpay's `payment.captured`, signed with `RAZORPAY_WEBHOOK_SECRET` in `X-Razorpay-Signature`. 200 `{status: applied \| duplicate \| ignored}`; 400 `SIGNATURE_INVALID` or `BAD_PAYLOAD`; 404 while no webhook secret is set |
+
+`GET /tenant` gains `online_renewal` (the banner links to Plan & billing when true). Online
+payments appear in `GET /admin/billing/payments` with `method: "razorpay"`, the Razorpay payment
+id as `reference` and `recorded_by: "Online (Razorpay)"`; a Super Admin can reverse one like any
+other. Recording a Razorpay payment by hand with a reference that is already recorded answers 409
+`PAYMENT_REFERENCE_TAKEN`. Point the Razorpay webhook (`payment.captured`) at
+`https://<api-host>/api/v1/subscription/webhook`.
+
 ## Endpoints (Milestone 22: support tickets)
 
 Two sets. Neither carries an amount. Ticket numbers read `T-000012`. Categories: `sign_in`,

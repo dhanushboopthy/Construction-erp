@@ -25,3 +25,5 @@ class TenantOut(BaseModel):
     # The platform's release generation (Milestone 29). When it changes, the open app asks its
     # service worker to look for a new build now; it never reloads by itself.
     app_generation: int = 0
+    # The owner can renew online with Razorpay (Milestone 30); otherwise "Contact Duolink".
+    online_renewal: bool = False

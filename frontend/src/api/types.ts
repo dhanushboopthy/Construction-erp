@@ -18,7 +18,18 @@ export type PasswordReset = Schemas["PasswordReset"];
 /** Registry details for a GSTIN (Milestone 27). */
 export type GstinDetails = Schemas["GstinLookupOut"];
 export type ShopSettings = Schemas["ShopSettingsOut"];
-export type Tenant = Schemas["TenantOut"];
+/** The subscription fields (M21) and `online_renewal` (M30) are optional here: a screen or test
+ * that only knows the company's name need not supply them. */
+export type Tenant = Omit<
+  Schemas["TenantOut"],
+  "access_state" | "subscription_status" | "expires_at" | "days_left" | "online_renewal"
+> &
+  Partial<
+    Pick<
+      Schemas["TenantOut"],
+      "access_state" | "subscription_status" | "expires_at" | "days_left" | "online_renewal"
+    >
+  >;
 // Milestone 23: Duolink support access, the owner's side and the session banner.
 export type SupportSessionStatus = Schemas["SupportSessionStatus"];
 export type AccessOverview = Schemas["AccessOverview"];

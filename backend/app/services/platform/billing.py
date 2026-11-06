@@ -182,6 +182,32 @@ def _load(db: Session, subscription_id: int) -> tuple[Subscription, Tenant, Plat
     return row[0], row[1], row[2]
 
 
+def start_paid_period(
+    sub: Subscription,
+    tenant: Tenant,
+    plan: PlatformPlan,
+    period: rules.Period,
+    *,
+    duration: tuple[int, str],
+    price: Decimal | None,
+) -> None:
+    """Move the subscription onto the paid period a renewal bought, by hand (here) or online
+    (`services/online_renewal.py`). Paying ends a trial and lifts a cancellation."""
+    sub.plan_id = plan.id
+    sub.duration_value, sub.duration_unit = duration
+    sub.price = price
+    sub.status = SubscriptionStatus.ACTIVE
+    sub.starts_at = period.starts_at
+    sub.expires_at = period.expires_at
+    sub.needs_review = False
+    sub.cancelled_at = None
+    sub.cancel_reason = None
+    tenant.plan = plan
+    if tenant.status is TenantStatus.TRIAL and not plan_rules.is_trial_plan(plan.code):
+        tenant.status = TenantStatus.ACTIVE  # paying ends the trial
+        tenant.trial_ends_at = None
+
+
 def renew(db: Session, subscription_id: int, data: RenewRequest, admin_id: int) -> SubscriptionRow:
     """Record a payment Duolink received and move the subscription's end date. Access is checked
     on every request, so the company can save again at once, with no sign-out."""
@@ -228,19 +254,14 @@ def renew(db: Session, subscription_id: int, data: RenewRequest, admin_id: int) 
         raise _refuse(exc, "amount" if exc.code.startswith("PAYMENT") else "custom_days") from exc
 
     was = rules.effective_status(sub.status.value, sub.expires_at, now)
-    sub.plan_id = plan.id
-    sub.duration_value, sub.duration_unit = value, unit
-    sub.price = option.price if option else None
-    sub.status = SubscriptionStatus.ACTIVE
-    sub.starts_at = period.starts_at
-    sub.expires_at = period.expires_at
-    sub.needs_review = False
-    sub.cancelled_at = None
-    sub.cancel_reason = None
-    tenant.plan = plan
-    if tenant.status is TenantStatus.TRIAL and not plan_rules.is_trial_plan(plan.code):
-        tenant.status = TenantStatus.ACTIVE  # paying ends the trial
-        tenant.trial_ends_at = None
+    start_paid_period(
+        sub,
+        tenant,
+        plan,
+        period,
+        duration=(value, unit),
+        price=option.price if option else None,
+    )
 
     db.add(
         SubscriptionPayment(
@@ -272,7 +293,15 @@ def renew(db: Session, subscription_id: int, data: RenewRequest, admin_id: int) 
             "period_ends_at": period.expires_at,
         },
     )
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError as exc:  # a Razorpay payment id is recorded once (Milestone 30)
+        db.rollback()
+        raise BusinessRuleError(
+            "That Razorpay payment is already recorded. Check Payments before recording it again.",
+            code="PAYMENT_REFERENCE_TAKEN",
+            field="reference",
+        ) from exc
     return _row(sub, tenant, plan, now)
 
 
@@ -305,11 +334,14 @@ def cancel(
 # ---------------------------------------------------------------- payments
 
 
+ONLINE_RECORDER = "Online (Razorpay)"  # who "recorded" a payment the company made online
+
+
 def _payment_out(
     pay: SubscriptionPayment,
     tenant: Tenant,
     plan: PlatformPlan,
-    admin: PlatformAdmin,
+    admin: PlatformAdmin | None,
     reversed_ids: set[int],
 ) -> PaymentOut:
     return PaymentOut(
@@ -328,7 +360,7 @@ def _payment_out(
         period_ends_at=pay.period_ends_at,
         reverses_id=pay.reverses_id,
         reversed=pay.id in reversed_ids,
-        recorded_by=admin.full_name,
+        recorded_by=admin.full_name if admin else ONLINE_RECORDER,
     )
 
 
@@ -383,7 +415,7 @@ def list_payments(
         select(SubscriptionPayment, Tenant, PlatformPlan, PlatformAdmin)
         .join(Tenant, Tenant.id == SubscriptionPayment.tenant_id)
         .join(PlatformPlan, PlatformPlan.id == SubscriptionPayment.plan_id)
-        .join(PlatformAdmin, PlatformAdmin.id == SubscriptionPayment.recorded_by_admin_id)
+        .outerjoin(PlatformAdmin, PlatformAdmin.id == SubscriptionPayment.recorded_by_admin_id)
         .where(*filters)
         .order_by(SubscriptionPayment.paid_at.desc(), SubscriptionPayment.id.desc())
         .limit(limit)
@@ -412,7 +444,7 @@ def reverse_payment(
         select(SubscriptionPayment, Tenant, PlatformPlan, PlatformAdmin)
         .join(Tenant, Tenant.id == SubscriptionPayment.tenant_id)
         .join(PlatformPlan, PlatformPlan.id == SubscriptionPayment.plan_id)
-        .join(PlatformAdmin, PlatformAdmin.id == SubscriptionPayment.recorded_by_admin_id)
+        .outerjoin(PlatformAdmin, PlatformAdmin.id == SubscriptionPayment.recorded_by_admin_id)
         .where(SubscriptionPayment.id == payment_id)
     ).first()
     if row is None:

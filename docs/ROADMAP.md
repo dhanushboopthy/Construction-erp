@@ -64,7 +64,7 @@ section 8; migrations chain from 0030).
 | 27 | GSP and GSTIN-lookup API admin | The saved key shows only its last 4 characters anywhere; database settings win over the environment; over the daily limit answers 429 | **Done** (`feat/m27-gsp-admin`; migration 0040, based on the unmerged M22 branch; re-chained after 0039 on the integration branch) |
 | 28 | Bill templates per company | A hostile template runs no script; a bill issued under v1 reprints identically after v2 is active; company A's template never prints for B | **Done** (`feat/m28-bill-templates`; migration 0041, based on the unmerged M22 branch; re-chained after 0040 on the integration branch) |
 | 29 | PWA shell and "force update" | The app installs; offline shows "No connection" and saves nothing; forcing an update shows the toast without reloading an open bill | **Done** (`feat/m29-pwa-force-update`; migration 0042, based on the unmerged M22 branch; re-chained after 0041 on the integration branch) |
-| 30 | Razorpay online renewal (optional, last) | A forged signature answers 400; verify and webhook in either order give one payment; an expired company can pay and is writable at once | Planned |
+| 30 | Razorpay online renewal (optional, last) | A forged signature answers 400; verify and webhook in either order give one payment; an expired company can pay and is writable at once | **Done** (`feat/m30-razorpay-renewal`; migration 0043, based on the unmerged M22 branch; re-chained after 0042 on the integration branch) |
 
 ## Owner requests (October 2026)
 

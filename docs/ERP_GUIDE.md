@@ -154,6 +154,11 @@ standard layout.
   cannot save a bill, payment or any other change until the network is back. Nothing is saved on
   the computer to send later, because the server gives every bill its number.
 
+If Duolink has switched on online renewal, the banner says "Renew online" and the owner can pay
+under **Settings, Plan & billing**: choose how long to renew for, then Pay with Razorpay. The plan
+is renewed as soon as the payment goes through, and the page works even after the plan has ended.
+Other roles see "Ask your owner to renew".
+
 ### Help: asking Duolink a question
 
 Open your name in the top corner and choose **Help**. You see the tickets your company has raised.

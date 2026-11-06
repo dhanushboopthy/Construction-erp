@@ -103,6 +103,8 @@ class PlatformAction(StrEnum):
     SECONDARY_LOGO_SET = "secondary_logo_set"
     SECONDARY_LOGO_REMOVE = "secondary_logo_remove"
     APP_UPDATE_FORCE = "app_update_force"
+    # Milestone 30: a company owner paid online. No admin acted, so admin_id is empty.
+    SUBSCRIPTION_PAY_ONLINE = "subscription_pay_online"
 
 
 class SequenceChange(StrEnum):
@@ -246,6 +248,13 @@ class PaymentMethod(StrEnum):
     UPI = "upi"
     CHEQUE = "cheque"
     RAZORPAY = "razorpay"
+
+
+class SubscriptionOrderStatus(StrEnum):
+    """A Razorpay order for an online renewal (Milestone 30): asked for, then paid once."""
+
+    CREATED = "created"
+    PAID = "paid"
 
 
 class LocationKind(StrEnum):

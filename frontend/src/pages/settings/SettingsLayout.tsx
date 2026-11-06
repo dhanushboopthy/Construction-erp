@@ -17,6 +17,7 @@ const TABS = [
   { to: "/settings/audit", label: "Audit log", end: false },
   { to: "/settings/system", label: "System", end: false },
   { to: "/settings/support-access", label: "Duolink support access", end: false },
+  { to: "/settings/plan", label: "Plan & billing", end: false },
 ];
 
 /** Settings: the sections in a column on the left from 1100 px, a scrolling strip above that. */

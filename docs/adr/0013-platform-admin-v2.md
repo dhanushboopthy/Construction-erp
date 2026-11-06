@@ -114,6 +114,21 @@ inside a company.
   `test_a_support_token_for_one_company_answers_401_at_another` and
   `test_a_support_token_answers_401_on_the_admin_api`.
 
+## Update, 2026-11-05 (Milestone 24): health, the bell, maintenance mode, audit log
+
+- **Counts and statuses only, still.** Health, the bell and the settings page answer counts,
+  sizes, times and configuration. No amount, secret, key or connection string; tests check the
+  keys and the values.
+- **Maintenance mode closes companies, never the admin.** One persisted row, so it survives a
+  restart; each process re-reads it every 5 seconds. It is enforced where every company request
+  already passes (`get_tenant`), so a new route cannot forget it; a test walks every company route.
+  The admin API, the health checks and the company's name stay open. A restore's switch is
+  separate and in memory (a dead process must not stay closed).
+- **Super Admin switches it, any admin reads it.** The switch and the audit CSV are Super Admin
+  only; the Support-403 test covers the switch and a Super-Admin-only list covers the export.
+- **Audit CSV is spreadsheet-safe and audited.** Cells that would run as formulas are prefixed; the
+  export records its filters and row count as `audit_export`.
+
 ## Update, 2026-11-04 (Milestone 22): support tickets
 
 - **The admin may read ticket subjects and messages.** The company writes them to Duolink on

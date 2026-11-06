@@ -31,6 +31,44 @@ For Duolink staff:
 
 Not in this version: the notifications bell for a visit left open (M24).
 
+## 1.18.0 (M24): system health, notifications, maintenance mode, audit log
+
+For companies:
+
+- **"Back soon" screen.** When Duolink closes the platform for maintenance, every screen is
+  replaced by "Back soon" with Duolink's message (for example "Back at 9 pm"). The page checks
+  again every 30 seconds and returns to your work by itself. Nothing you saved is lost; saves
+  made during maintenance are refused, not half done.
+
+For Duolink staff (admin):
+
+- **System health** (new System item, Alt 0): API uptime, version and Python, the database's
+  answer time, size and connections, free space on the backups and files disks, the last good
+  backup and the last off-site copy, and counters across every company (companies, active users,
+  open sessions, audit events today, open tickets). Every admin role can read it. It never shows a
+  secret or a connection string.
+- **Notifications bell** in the top bar with a count. It rings for subscriptions ending within 7
+  days, expired companies, trials ending, new and urgent tickets, a backup older than 26 hours, a
+  disk under 20% free, and more than 10 failed admin sign-ins in 24 hours. Each item says how
+  serious it is in words, and links to the screen that fixes it. It is worked out on every read.
+- **Maintenance mode.** A Super Admin turns it on from System, with an optional message and a
+  confirmation. While on, every company request answers 503 `MAINTENANCE`; the admin, the health
+  checks and the company's name keep working. It stays on across a restart until turned off, and
+  a change reaches every API process within 5 seconds. Turning it on or off is audited. A restore
+  (a later milestone) has its own separate in-memory switch.
+- **Audit log** (new page): three tabs, Admin actions, Company access (empty until owner-granted
+  access is switched on) and Sign-ins; filters by dates, admin, company and action. A Super Admin
+  exports the filtered admin actions as CSV with the same rows as the screen; each export is
+  itself audited.
+- **Platform settings** (read-only): the security configuration from the environment (never
+  secrets), the plan lifecycle explained in plain words, and links to each control.
+- **Off-site sync marker.** `scripts/offsite-sync.sh` now writes `backups/.offsite-success` after a
+  verified copy, so System health can show when the last off-site copy happened.
+
+Technical: migration 0037 (`platform_maintenance`, a one-row table with no company; three new
+platform audit actions). Parallel branch: before merging, set `down_revision` to the head of the
+branch merged before it.
+
 ## 1.16.0 (M22): support tickets
 
 For companies:

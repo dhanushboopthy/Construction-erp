@@ -151,9 +151,29 @@ class PlatformPlanPrice(Base):
     plan: Mapped[PlatformPlan] = relationship(back_populates="prices")
 
 
+class PlatformMaintenance(Base):
+    """The operator's maintenance switch (Milestone 24): one row, kept across restarts until a
+    Super Admin turns it off. Platform-only: no tenant_id. A restore's own switch (M25) lives in
+    memory instead, so a process that dies mid-restore comes back serving."""
+
+    __tablename__ = "platform_maintenance"
+    __table_args__ = (CheckConstraint("id = 1", name="singleton"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False, default=1)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=False, server_default=expression.false())
+    message: Mapped[str | None] = mapped_column(Text)
+    # Who last changed it: a name, not a foreign key, as in WA's PlatformMaintenance.
+    changed_by: Mapped[str | None] = mapped_column(String(200))
+    enabled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
 __all__ = [
     "PlatformAdmin",
     "PlatformAuditLog",
+    "PlatformMaintenance",
     "PlatformPlan",
     "PlatformPlanPrice",
     "PlatformSession",

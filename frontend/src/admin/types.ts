@@ -40,6 +40,21 @@ export type SupportSessionStarted = Schemas["SupportSessionStarted"];
 export type SupportSessionRow = Schemas["AdminSessionRow"];
 export type SupportSessionPage = Schemas["AdminSessionPage"];
 
+// Milestone 24: system health, the bell, maintenance mode, platform settings.
+export type SystemHealth = Schemas["SystemHealth"];
+export type DiskHealth = Schemas["DiskHealth"];
+export type AdminNotification = Schemas["NotificationOut"];
+export type Notifications = Schemas["NotificationsOut"];
+export type Maintenance = Schemas["MaintenanceOut"];
+export type PlatformSettings = Schemas["PlatformSettingsOut"];
+export interface AuditFilters {
+  admin_id?: number;
+  tenant_id?: number;
+  action?: string;
+  date_from?: string;
+  date_to?: string;
+}
+
 // Milestone 22 (support tickets): written by hand in src/support/types.ts, shared with the company app.
 export type {
   AdminTicketDetail,

@@ -330,7 +330,14 @@ def test_no_admin_answer_carries_money(client, admin, acme):
         if "get" in app.openapi()["paths"][p] and p.startswith(MONEY_ALLOWED_PREFIX)
     }
     assert billing_gets == MONEY_ALLOWED_PATHS  # nothing is allowed by accident
-    gets = [p for p in paths if "get" in app.openapi()["paths"][p] and p not in billing_gets]
+    # The audit CSV (Milestone 24) is not JSON; its rows are the audit rows checked at /audit.
+    gets = [
+        p
+        for p in paths
+        if "get" in app.openapi()["paths"][p]
+        and p not in billing_gets
+        and p != "/api/v1/admin/audit/export"
+    ]
     checked = 0
     ravi = _user_id(client, admin, "acme", "ravi")
     owner = login(client, "ravi", "ravi-pass-123", host="acme.localhost")

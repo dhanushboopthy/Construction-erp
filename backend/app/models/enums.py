@@ -77,6 +77,9 @@ class PlatformAction(StrEnum):
     SUPPORT_UPDATE = "support_update"
     SUPPORT_SESSION_START = "support_session_start"  # entered a company, with its owner's grant
     SUPPORT_SESSION_END = "support_session_end"
+    MAINTENANCE_ON = "maintenance_on"
+    MAINTENANCE_OFF = "maintenance_off"
+    AUDIT_EXPORT = "audit_export"
 
 
 class SupportSessionEnd(StrEnum):

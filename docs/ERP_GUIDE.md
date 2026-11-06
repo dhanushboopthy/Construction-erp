@@ -151,6 +151,14 @@ Open your name in the top corner and choose **Help**. You see the tickets your c
 - **Even when your plan has ended**, you can raise tickets, reply and close them, so you can ask
   Duolink about renewing.
 
+### "Back soon": when Duolink is doing maintenance
+
+Now and then Duolink may close the ERP for a short while to update or move it. Every screen is
+then replaced by **Back soon** with Duolink's note, for example "Back at 9 pm". You do not need to
+do anything: the page asks again every 30 seconds and shows your work as soon as it is over. Do not
+re-enter a bill you were saving; if it was refused it was not saved, so check Sales when you are
+back.
+
 ---
 
 ## 3. What is what: the building blocks

@@ -8,6 +8,7 @@ import { useAdminActions, useSignIns } from "../api";
 import { Badge } from "../Badge";
 import { ACTION, SIGN_IN } from "../labels";
 import { SupportSessions } from "../SupportSessions";
+import type { AuditFilters } from "../types";
 
 const VIEWS = [
   { value: "sign-ins", label: "Sign-ins at companies" },
@@ -74,8 +75,23 @@ export function ActivityPage() {
 }
 
 /** Sign-ins at every company, or at one when `tenantId` is given (the company page's tab). */
-export function SignIns({ action = "", tenantId }: { action?: string; tenantId?: number }) {
-  const events = useSignIns({ action: action || undefined, tenant_id: tenantId });
+export function SignIns({
+  action = "",
+  tenantId,
+  dateFrom,
+  dateTo,
+}: {
+  action?: string;
+  tenantId?: number;
+  dateFrom?: string;
+  dateTo?: string;
+}) {
+  const events = useSignIns({
+    action: action || undefined,
+    tenant_id: tenantId,
+    date_from: dateFrom || undefined,
+    date_to: dateTo || undefined,
+  });
   if (events.isPending) return <p role="status">Loading sign-ins…</p>;
   if (events.isError) return <p className={styles.formError}>Sign-ins could not be loaded.</p>;
   return (
@@ -132,8 +148,14 @@ function describe(details: Record<string, unknown> | null): string {
 }
 
 /** What admins did, everywhere or at one company. */
-export function AdminActions({ tenantId }: { tenantId?: number }) {
-  const entries = useAdminActions({ tenant_id: tenantId });
+export function AdminActions({
+  tenantId,
+  filters = {},
+}: {
+  tenantId?: number;
+  filters?: AuditFilters;
+}) {
+  const entries = useAdminActions({ ...filters, tenant_id: tenantId ?? filters.tenant_id });
   if (entries.isPending) return <p role="status">Loading admin actions…</p>;
   if (entries.isError) {
     return <p className={styles.formError}>Admin actions could not be loaded.</p>;

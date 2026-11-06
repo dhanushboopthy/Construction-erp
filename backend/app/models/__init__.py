@@ -24,6 +24,7 @@ from app.models.orders import (
 from app.models.platform import (
     PlatformAdmin,
     PlatformAuditLog,
+    PlatformMaintenance,
     PlatformPlan,
     PlatformPlanPrice,
     PlatformSession,
@@ -91,6 +92,7 @@ __all__ = [
     "Payment",
     "PlatformAdmin",
     "PlatformAuditLog",
+    "PlatformMaintenance",
     "PlatformPlan",
     "PlatformPlanPrice",
     "PlatformSession",

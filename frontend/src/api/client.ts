@@ -107,7 +107,14 @@ export function createClient<Session extends { access_token: string }>({
       accessToken = null;
       onSessionEnded?.();
     }
-    if (!response.ok) throw await parseError(response);
+    if (!response.ok) {
+      const error = await parseError(response);
+      // Duolink has closed the platform for maintenance: tell the "Back soon" gate at once.
+      if (error.status === 503 && error.body.code === "MAINTENANCE") {
+        window.dispatchEvent(new Event("erp:maintenance"));
+      }
+      throw error;
+    }
     if (response.status === 204) return undefined as T;
     return (await response.json()) as T;
   }

@@ -2,10 +2,15 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 
 import { json } from "@/api/client";
 
-import { adminApi } from "./client";
+import { adminApi, adminClient } from "./client";
 import type {
   AccessStatus,
   AdminAction,
+  AuditFilters,
+  Maintenance,
+  Notifications,
+  PlatformSettings,
+  SystemHealth,
   AdminTicketDetail,
   AdminTicketFilters,
   AdminTicketPage,
@@ -436,7 +441,9 @@ export function useResetUserPassword() {
   });
 }
 
-export function useSignIns(filters: { tenant_id?: number; action?: string } = {}) {
+export function useSignIns(
+  filters: { tenant_id?: number; action?: string; date_from?: string; date_to?: string } = {},
+) {
   return useQuery({
     queryKey: [...keys.activity, filters],
     queryFn: () => adminApi<Page<SignInEvent>>(`/activity${query({ ...filters, limit: 100 })}`),
@@ -444,7 +451,7 @@ export function useSignIns(filters: { tenant_id?: number; action?: string } = {}
   });
 }
 
-export function useAdminActions(filters: { tenant_id?: number } = {}) {
+export function useAdminActions(filters: AuditFilters = {}) {
   return useQuery({
     queryKey: [...keys.audit, filters],
     queryFn: () => adminApi<Page<AdminAction>>(`/audit${query({ ...filters, limit: 100 })}`),
@@ -484,6 +491,67 @@ export function useSupportSessions(filters: { tenant_id?: number } = {}) {
     queryFn: () =>
       adminApi<SupportSessionPage>(`/audit/support-sessions${query({ ...filters, limit: 100 })}`),
     placeholderData: keepPreviousData,
+  });
+}
+
+/** The audit CSV for the same filters as the screen (Super Admin). Saved through the browser. */
+export async function downloadAuditCsv(filters: AuditFilters): Promise<void> {
+  const blob = await adminClient.fetchFile(`/audit/export${query({ ...filters })}`);
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "duolink-audit.csv";
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
+// ------------------------------------------------------------------ Milestone 24
+
+const NOTIFICATION_REFRESH_MS = 60_000;
+
+/** The bell: worked out by the server on every read, asked again each minute. */
+export function useNotifications() {
+  return useQuery({
+    queryKey: ["admin", "notifications"],
+    queryFn: () => adminApi<Notifications>("/notifications"),
+    refetchInterval: NOTIFICATION_REFRESH_MS,
+    retry: false,
+  });
+}
+
+export function useSystemHealth() {
+  return useQuery({
+    queryKey: ["admin", "system-health"],
+    queryFn: () => adminApi<SystemHealth>("/system/health"),
+    refetchInterval: NOTIFICATION_REFRESH_MS,
+  });
+}
+
+export function useMaintenance() {
+  return useQuery({
+    queryKey: ["admin", "maintenance"],
+    queryFn: () => adminApi<Maintenance>("/system/maintenance"),
+  });
+}
+
+export function useSetMaintenance() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { enabled: boolean; message: string | null }) =>
+      adminApi<Maintenance>("/system/maintenance", { method: "POST", body: json(body) }),
+    onSuccess: (data) => {
+      client.setQueryData(["admin", "maintenance"], data);
+      void client.invalidateQueries({ queryKey: ["admin", "system-health"] });
+      void client.invalidateQueries({ queryKey: keys.audit });
+    },
+  });
+}
+
+export function usePlatformSettings() {
+  return useQuery({
+    queryKey: ["admin", "platform-settings"],
+    queryFn: () => adminApi<PlatformSettings>("/system/settings"),
+    staleTime: 5 * 60_000,
   });
 }
 

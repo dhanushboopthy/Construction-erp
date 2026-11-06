@@ -34,6 +34,7 @@ from app.api.v1 import (
     stock_ops,
     subscription,
     support,
+    support_access,
     system,
     tally,
     tenant,
@@ -46,6 +47,7 @@ api_router.include_router(admin.router)
 api_router.include_router(health.router)
 api_router.include_router(tenant.router)
 api_router.include_router(support.router)
+api_router.include_router(support_access.router)
 api_router.include_router(subscription.router)
 api_router.include_router(auth.router)
 api_router.include_router(users.router)

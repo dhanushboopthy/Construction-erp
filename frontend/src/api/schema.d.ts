@@ -399,6 +399,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/audit/support-sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Support Sessions
+         * @description Company access (M23): every support session at every company, newest first, with its
+         *     request count. `stale` counts sessions never ended whose token has expired.
+         */
+        get: operations["support_sessions_api_v1_admin_audit_support_sessions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/staff": {
         parameters: {
             query?: never;
@@ -726,6 +747,50 @@ export interface paths {
          * @description Undo a suspension. Reopening a cancelled company needs a reason (409 REASON_REQUIRED).
          */
         post: operations["reactivate_api_v1_admin_tenants__tenant_id__reactivate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/tenants/{tenant_id}/support-access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Support Access Status
+         * @description Whether the company's owner has granted Duolink support access now, until when, and how
+         *     many support sessions are open. Statuses and times only.
+         */
+        get: operations["support_access_status_api_v1_admin_tenants__tenant_id__support_access_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/tenants/{tenant_id}/support-session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Enter Company
+         * @description Enter the company read-only, with its owner's live grant (Super Admin only). 409
+         *     NO_SUPPORT_GRANT without one; 409 TENANT_NOT_OPEN for a suspended or cancelled company. The
+         *     token lasts two hours at most and never past the grant; open `entry_url` in a new tab: the
+         *     token travels in the fragment, so no server log ever holds it.
+         */
+        post: operations["enter_company_api_v1_admin_tenants__tenant_id__support_session_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1140,7 +1205,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/subscription": {
+    "/api/v1/support-access": {
         parameters: {
             query?: never;
             header?: never;
@@ -1149,10 +1214,9 @@ export interface paths {
         };
         /**
          * Overview
-         * @description The plan, when it ends, and the Duolink prices that can be paid online now, each with
-         *     the date the plan would then run to.
+         * @description The live grant (or none), with the time left, and the last few grants.
          */
-        get: operations["overview_api_v1_subscription_get"];
+        get: operations["overview_api_v1_support_access_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1161,7 +1225,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/subscription/orders": {
+    "/api/v1/support-access/grants": {
         parameters: {
             query?: never;
             header?: never;
@@ -1171,18 +1235,18 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Create Order
-         * @description A Razorpay order for one price. The amount is the plan's price on the server. 404
-         *     PRICE_NOT_FOUND; 409 PRICE_NOT_OFFERED or ONLINE_RENEWAL_OFF; 502 RAZORPAY_ERROR.
+         * Grant
+         * @description Let Duolink in, read-only, for 1, 4, 24 or 72 hours. A live grant is replaced: it is
+         *     recorded as revoked and any Duolink session under it ends. 404 TICKET_NOT_FOUND.
          */
-        post: operations["create_order_api_v1_subscription_orders_post"];
+        post: operations["grant_api_v1_support_access_grants_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/subscription/verify": {
+    "/api/v1/support-access/revoke": {
         parameters: {
             query?: never;
             header?: never;
@@ -1192,18 +1256,77 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Verify
-         * @description Checkout's answer. 400 SIGNATURE_INVALID records nothing; 404 ORDER_NOT_FOUND. The same
-         *     payment twice (or after the webhook) answers 200 with `applied: false`.
+         * Revoke
+         * @description End the live grant now. Duolink's next request answers 401. 409 NO_LIVE_GRANT.
          */
-        post: operations["verify_api_v1_subscription_verify_post"];
+        post: operations["revoke_api_v1_support_access_revoke_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/subscription/webhook": {
+    "/api/v1/support-access/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * History
+         * @description Who from Duolink entered, when, for how long, and how many requests they made.
+         */
+        get: operations["history_api_v1_support_access_sessions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/support-access/sessions/{support_session_id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Events
+         * @description Every request of one visit: method and path, and whether it was a refused write.
+         */
+        get: operations["events_api_v1_support_access_sessions__support_session_id__events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/support-session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Session Status
+         * @description The support session this token belongs to: company, admin, when it ends.
+         */
+        get: operations["session_status_api_v1_support_session_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/support-session/exit": {
         parameters: {
             query?: never;
             header?: never;
@@ -1213,12 +1336,10 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Webhook
-         * @description Razorpay's `payment.captured`, signed in `X-Razorpay-Signature` with the webhook secret.
-         *     No sign-in and any address. 400 SIGNATURE_INVALID or BAD_PAYLOAD; 404 while no webhook
-         *     secret is set; 200 for a duplicate or any other event.
+         * Exit Session
+         * @description Leave the company. The token answers 401 from the next request on.
          */
-        post: operations["webhook_api_v1_subscription_webhook_post"];
+        post: operations["exit_session_api_v1_support_session_exit_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1286,7 +1407,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Me */
+        /**
+         * Me
+         * @description The signed-in user. Inside a Duolink support session (M23) this is the support viewer,
+         *     not any company user: id 0, the owner's role (for reads), every location.
+         */
         get: operations["me_api_v1_auth_me_get"];
         put?: never;
         post?: never;
@@ -3770,6 +3895,14 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AccessOverview */
+        AccessOverview: {
+            live: components["schemas"]["GrantOut"] | null;
+            /** Recent */
+            recent: components["schemas"]["GrantOut"][];
+            /** Durations */
+            durations: number[];
+        };
         /** AccountOut */
         AccountOut: {
             account: components["schemas"]["LedgerAccount"];
@@ -3937,6 +4070,29 @@ export interface components {
          * @enum {string}
          */
         AdjustmentReason: "weighbridge_gain" | "weighbridge_loss" | "breakage" | "damage" | "theft" | "free_sample" | "count_correction";
+        /** AdminAccessStatus */
+        AdminAccessStatus: {
+            /** Live */
+            live: boolean;
+            /** Grant Id */
+            grant_id: number | null;
+            /** Starts At */
+            starts_at: string | null;
+            /** Ends At */
+            ends_at: string | null;
+            /** Seconds Left */
+            seconds_left: number;
+            /** Owner Only Figures */
+            owner_only_figures: boolean;
+            /** Reason */
+            reason: string | null;
+            /** Ticket Number */
+            ticket_number: string | null;
+            /** Granted By Name */
+            granted_by_name: string | null;
+            /** Open Sessions */
+            open_sessions: number;
+        };
         /** AdminChangePassword */
         AdminChangePassword: {
             /** Current Password */
@@ -3975,6 +4131,60 @@ export interface components {
             /** Body */
             body?: string | null;
             status?: components["schemas"]["SupportStatus"] | null;
+        };
+        /** AdminSessionPage */
+        AdminSessionPage: {
+            /** Items */
+            items: components["schemas"]["AdminSessionRow"][];
+            /** Total */
+            total: number;
+            /** Open */
+            open: number;
+            /** Stale */
+            stale: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+        };
+        /** AdminSessionRow */
+        AdminSessionRow: {
+            /** Id */
+            id: number;
+            /** Tenant Id */
+            tenant_id: number;
+            /** Tenant Slug */
+            tenant_slug: string;
+            /** Tenant Name */
+            tenant_name: string;
+            /** Admin Id */
+            admin_id: number;
+            /** Admin Name */
+            admin_name: string;
+            /** Reason */
+            reason: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "open" | "ended" | "stale";
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Ended At */
+            ended_at: string | null;
+            end_reason: components["schemas"]["SupportSessionEnd"] | null;
+            /** Request Count */
+            request_count: number;
+            /** Owner Only Figures */
+            owner_only_figures: boolean;
         };
         /** AdminTicketDetail */
         AdminTicketDetail: {
@@ -4187,7 +4397,7 @@ export interface components {
          * AuditAction
          * @enum {string}
          */
-        AuditAction: "insert" | "update" | "delete" | "login" | "login_failed" | "logout" | "token_reuse" | "override" | "export";
+        AuditAction: "insert" | "update" | "delete" | "login" | "login_failed" | "logout" | "token_reuse" | "override" | "export" | "support_enter" | "support_exit";
         /** AuditLogOut */
         AuditLogOut: {
             /** Id */
@@ -5488,6 +5698,11 @@ export interface components {
             required: boolean;
             einvoice: components["schemas"]["EInvoiceOut"] | null;
         };
+        /** EnterRequest */
+        EnterRequest: {
+            /** Reason */
+            reason: string;
+        };
         /** ErrorResponse */
         ErrorResponse: {
             /** Code */
@@ -5815,6 +6030,59 @@ export interface components {
          * @enum {string}
          */
         FulfilmentSource: "shop" | "godown" | "direct";
+        /** GrantCreate */
+        GrantCreate: {
+            /**
+             * Duration Hours
+             * @enum {integer}
+             */
+            duration_hours: 1 | 4 | 24 | 72;
+            /**
+             * Include Costs
+             * @default false
+             */
+            include_costs: boolean;
+            /** Reason */
+            reason: string;
+            /** Ticket Id */
+            ticket_id?: number | null;
+        };
+        /** GrantOut */
+        GrantOut: {
+            /** Id */
+            id: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "live" | "revoked" | "ended";
+            /**
+             * Starts At
+             * Format: date-time
+             */
+            starts_at: string;
+            /**
+             * Ends At
+             * Format: date-time
+             */
+            ends_at: string;
+            /** Seconds Left */
+            seconds_left: number;
+            /** Include Costs */
+            include_costs: boolean;
+            /** Reason */
+            reason: string;
+            /** Ticket Id */
+            ticket_id: number | null;
+            /** Ticket Number */
+            ticket_number: string | null;
+            /** Granted By Name */
+            granted_by_name: string;
+            /** Revoked At */
+            revoked_at: string | null;
+            /** Revoked By Name */
+            revoked_by_name: string | null;
+        };
         /** Gstr1 */
         Gstr1: {
             /** Period */
@@ -8192,7 +8460,7 @@ export interface components {
          * @description What a Duolink admin did (platform_audit_log, Milestones 16 and 17).
          * @enum {string}
          */
-        PlatformAction: "login" | "login_failed" | "logout" | "token_reuse" | "tenant_create" | "tenant_update" | "tenant_suspend" | "tenant_reactivate" | "user_activate" | "user_deactivate" | "user_unlock" | "user_reset_password" | "user_sign_out" | "staff_create" | "staff_update" | "staff_reset_password" | "staff_unlock" | "staff_sign_out" | "password_change" | "tenant_cancel" | "tenant_seller_update" | "tenant_logo_set" | "tenant_logo_remove" | "user_update" | "user_session_revoke" | "user_remove" | "plan_create" | "plan_update" | "plan_duplicate" | "plan_archive" | "plan_delete" | "subscription_renew" | "subscription_cancel" | "payment_reverse" | "support_reply" | "support_update" | "subscription_pay_online";
+        PlatformAction: "login" | "login_failed" | "logout" | "token_reuse" | "tenant_create" | "tenant_update" | "tenant_suspend" | "tenant_reactivate" | "user_activate" | "user_deactivate" | "user_unlock" | "user_reset_password" | "user_sign_out" | "staff_create" | "staff_update" | "staff_reset_password" | "staff_unlock" | "staff_sign_out" | "password_change" | "tenant_cancel" | "tenant_seller_update" | "tenant_logo_set" | "tenant_logo_remove" | "user_update" | "user_session_revoke" | "user_remove" | "plan_create" | "plan_update" | "plan_duplicate" | "plan_archive" | "plan_delete" | "subscription_renew" | "subscription_cancel" | "payment_reverse" | "support_reply" | "support_update" | "support_session_start" | "support_session_end";
         /** PlatformAuditRow */
         PlatformAuditRow: {
             /** Id */
@@ -9303,112 +9571,6 @@ export interface components {
             /** Paid At */
             paid_at?: string | null;
         };
-        /** RenewalOption */
-        RenewalOption: {
-            /** Price Id */
-            price_id: number;
-            /** Plan Id */
-            plan_id: number;
-            /** Plan Code */
-            plan_code: string;
-            /** Plan Name */
-            plan_name: string;
-            /** Plan Description */
-            plan_description: string;
-            /** Duration Value */
-            duration_value: number;
-            /** Duration Unit */
-            duration_unit: string;
-            /** Price */
-            price: string;
-            /** Currency */
-            currency: string;
-            /** Is Current Plan */
-            is_current_plan: boolean;
-            /**
-             * Would Run Until
-             * Format: date-time
-             */
-            would_run_until: string;
-        };
-        /**
-         * RenewalOrderCreate
-         * @description Which of the plan prices to pay for. Nothing else is read: the amount comes from it.
-         */
-        RenewalOrderCreate: {
-            /** Price Id */
-            price_id: number;
-        };
-        /**
-         * RenewalOrderOut
-         * @description What Razorpay Checkout is opened with.
-         */
-        RenewalOrderOut: {
-            /** Id */
-            id: number;
-            /** Razorpay Order Id */
-            razorpay_order_id: string;
-            /** Key Id */
-            key_id: string;
-            /** Amount */
-            amount: string;
-            /** Amount Paise */
-            amount_paise: number;
-            /** Currency */
-            currency: string;
-            /** Name */
-            name: string;
-            /** Description */
-            description: string;
-            /** Company Name */
-            company_name: string;
-        };
-        /** RenewalOverview */
-        RenewalOverview: {
-            /** Online Renewal */
-            online_renewal: boolean;
-            /** Plan Code */
-            plan_code: string;
-            /** Plan Name */
-            plan_name: string;
-            /**
-             * Status
-             * @enum {string}
-             */
-            status: "trial" | "active" | "expired" | "cancelled";
-            /**
-             * Access State
-             * @enum {string}
-             */
-            access_state: "full" | "read_only";
-            /** Expires At */
-            expires_at: string | null;
-            /** Days Left */
-            days_left: number | null;
-            /** Options */
-            options: components["schemas"]["RenewalOption"][];
-        };
-        /** RenewalResult */
-        RenewalResult: {
-            /** Applied */
-            applied: boolean;
-            /** Plan Name */
-            plan_name: string;
-            /**
-             * Status
-             * @enum {string}
-             */
-            status: "trial" | "active" | "expired" | "cancelled";
-            /**
-             * Access State
-             * @enum {string}
-             */
-            access_state: "full" | "read_only";
-            /** Expires At */
-            expires_at: string | null;
-            /** Days Left */
-            days_left: number | null;
-        };
         /** ReopenIn */
         ReopenIn: {
             /** Reason */
@@ -9597,6 +9759,51 @@ export interface components {
             state_code?: string | null;
             /** Reason */
             reason: string;
+        };
+        /** SessionEventOut */
+        SessionEventOut: {
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Method */
+            method: string;
+            /** Path */
+            path: string;
+            /** Refused */
+            refused: boolean;
+        };
+        /**
+         * SessionRow
+         * @description One visit by Duolink, as the owner's history shows it.
+         */
+        SessionRow: {
+            /** Id */
+            id: number;
+            /** Grant Id */
+            grant_id: number;
+            /** Admin Name */
+            admin_name: string;
+            /** Reason */
+            reason: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "open" | "ended" | "stale";
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Ended At */
+            ended_at: string | null;
+            end_reason: components["schemas"]["SupportSessionEnd"] | null;
+            /** Request Count */
+            request_count: number;
+            /** Include Costs */
+            include_costs: boolean;
         };
         /** ShopSettingsOut */
         ShopSettingsOut: {
@@ -10428,6 +10635,61 @@ export interface components {
          */
         SupportPriority: "low" | "normal" | "high" | "urgent";
         /**
+         * SupportSessionEnd
+         * @description Why a support session ended (Milestone 23).
+         * @enum {string}
+         */
+        SupportSessionEnd: "exited" | "revoked" | "grant_ended" | "replaced" | "admin_not_allowed";
+        /** SupportSessionStarted */
+        SupportSessionStarted: {
+            /** Session Id */
+            session_id: number;
+            /** Token */
+            token: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Entry Url */
+            entry_url: string;
+        };
+        /**
+         * SupportSessionStatus
+         * @description What the banner shows to the Duolink admin inside the company.
+         */
+        SupportSessionStatus: {
+            /** Session Id */
+            session_id: number;
+            /** Company Name */
+            company_name: string;
+            /** Admin Name */
+            admin_name: string;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Grant Ends At
+             * Format: date-time
+             */
+            grant_ends_at: string;
+            /** Include Costs */
+            include_costs: boolean;
+            /**
+             * Read Only
+             * @default true
+             * @constant
+             */
+            read_only: true;
+        };
+        /**
          * SupportStatus
          * @enum {string}
          */
@@ -10755,11 +11017,6 @@ export interface components {
             expires_at?: string | null;
             /** Days Left */
             days_left?: number | null;
-            /**
-             * Online Renewal
-             * @default false
-             */
-            online_renewal: boolean;
         };
         /** TenantPlanOut */
         TenantPlanOut: {
@@ -11322,26 +11579,6 @@ export interface components {
             ok: boolean;
             /** Checks */
             checks: components["schemas"]["Check"][];
-        };
-        /**
-         * VerifyRequest
-         * @description What Razorpay Checkout hands back after a payment.
-         */
-        VerifyRequest: {
-            /** Razorpay Order Id */
-            razorpay_order_id: string;
-            /** Razorpay Payment Id */
-            razorpay_payment_id: string;
-            /** Razorpay Signature */
-            razorpay_signature: string;
-        };
-        /** WebhookAnswer */
-        WebhookAnswer: {
-            /**
-             * Status
-             * @enum {string}
-             */
-            status: "applied" | "duplicate" | "ignored";
         };
         /**
          * WorkingCapitalOut
@@ -13248,6 +13485,85 @@ export interface operations {
             };
         };
     };
+    support_sessions_api_v1_admin_audit_support_sessions_get: {
+        parameters: {
+            query?: {
+                tenant_id?: number | null;
+                admin_id?: number | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminSessionPage"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_staff_api_v1_admin_staff_get: {
         parameters: {
             query?: never;
@@ -14908,6 +15224,162 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TenantDetail"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    support_access_status_api_v1_admin_tenants__tenant_id__support_access_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminAccessStatus"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    enter_company_api_v1_admin_tenants__tenant_id__support_session_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EnterRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportSessionStarted"];
                 };
             };
             /** @description Bad Request */
@@ -16663,7 +17135,7 @@ export interface operations {
             };
         };
     };
-    overview_api_v1_subscription_get: {
+    overview_api_v1_support_access_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -16678,7 +17150,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RenewalOverview"];
+                    "application/json": components["schemas"]["AccessOverview"];
                 };
             };
             /** @description Bad Request */
@@ -16728,7 +17200,7 @@ export interface operations {
             };
         };
     };
-    create_order_api_v1_subscription_orders_post: {
+    grant_api_v1_support_access_grants_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -16737,7 +17209,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RenewalOrderCreate"];
+                "application/json": components["schemas"]["GrantCreate"];
             };
         };
         responses: {
@@ -16747,7 +17219,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RenewalOrderOut"];
+                    "application/json": components["schemas"]["GrantOut"];
                 };
             };
             /** @description Bad Request */
@@ -16806,85 +17278,7 @@ export interface operations {
             };
         };
     };
-    verify_api_v1_subscription_verify_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["VerifyRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RenewalResult"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    webhook_api_v1_subscription_webhook_post: {
+    revoke_api_v1_support_access_revoke_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -16899,8 +17293,277 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["WebhookAnswer"];
+                    "application/json": components["schemas"]["GrantOut"];
                 };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    history_api_v1_support_access_sessions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionRow"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    events_api_v1_support_access_sessions__support_session_id__events_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                support_session_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionEventOut"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    session_status_api_v1_support_session_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportSessionStatus"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    exit_session_api_v1_support_session_exit_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Bad Request */
             400: {

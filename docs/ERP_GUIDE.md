@@ -122,6 +122,22 @@ under **Settings, Plan & billing**: choose how long to renew for, then Pay with 
 is renewed as soon as the payment goes through, and the page works even after the plan has ended.
 Other roles see "Ask your owner to renew".
 
+### Letting Duolink look at your company (owner only)
+
+Duolink cannot see your company unless you allow it. Open **Settings, Duolink support access**.
+
+- **Give access:** pick how long (1, 4, 24 or 72 hours), say what you want help with, optionally
+  link a ticket, and decide whether Duolink may also see **cost and margin** (off unless you tick
+  it). Press Give access.
+- **While it is on,** one Duolink Super Admin can open your company and see the same screens you
+  do, **read-only**. They cannot save a bill, change a user or password, or change this setting.
+  Their screen shows an amber bar saying so.
+- **Turn it off any time:** press Turn off now. Their very next click is refused. Giving a new
+  access also replaces the old one.
+- **See who came in:** the list on the same page shows each visit: who, when, why and how many pages
+  they opened. It is also in the Audit log.
+- Only the owner can do this, and it works even when your plan has ended.
+
 ### Help: asking Duolink a question
 
 Open your name in the top corner and choose **Help**. You see the tickets your company has raised.

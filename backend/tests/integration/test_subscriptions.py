@@ -124,6 +124,8 @@ def test_the_exceptions_to_read_only_are_listed_in_one_place_and_work(client, bo
         ("POST", r"^/api/v1/auth/change-password$"),
         ("POST", r"^/api/v1/support/tickets$"),
         ("POST", r"^/api/v1/support/tickets/\d+/(reply|close)$"),
+        ("POST", r"^/api/v1/support-access/(grants|revoke)$"),
+        ("POST", r"^/api/v1/support-session/exit$"),
         ("POST", r"^/api/v1/subscription/(orders|verify)$"),
     }
     assert is_excepted("GET", "/api/v1/anything")

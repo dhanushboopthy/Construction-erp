@@ -427,6 +427,64 @@ and Duolink answers it from the admin.
 - **Not built.** The notifications bell for new and urgent tickets (M24), attachments on tickets,
   and email notifications.
 
+**Built (M23: owner-granted support access, migration 0036):** with the owner's consent a Duolink
+Super Admin enters a company read-only, for a set time, under a banner, with everything audited.
+
+- **Tables** (company-owned: `tenant_id`, row-level security, `tenant_isolation` and
+  `platform_admin` policies).
+  - `support_access_grant`: `granted_by_user_id` (an owner), `starts_at`, `ends_at`,
+    `include_costs` (default false), `reason`, optional `ticket_id`, `revoked_at`,
+    `revoked_by_user_id`. Audited. At most one grant is live: a new grant revokes the live one
+    (and ends its sessions) under a per-company advisory lock.
+  - `support_session`: `grant_id`, `admin_id`, `reason`, `started_at`, `expires_at` (the token's
+    expiry), `ended_at`, `end_reason` (`exited`, `revoked`, `grant_ended`, `replaced`,
+    `admin_not_allowed`), `request_count`.
+  - `support_session_event`: `session_id`, `at`, `method`, `path`, `refused`. **Append-only**
+    (`forbid_ledger_change`). Method and path only: never a body or a query string. Kept at least
+    a year (`domain.support_access.EVENT_RETENTION_DAYS`; nothing prunes yet).
+- **Rules** (`domain/support_access.py`, unit tested, 100% covered). Durations are 1, 4, 24 or 72
+  hours (422 otherwise). The token lasts the earlier of 2 hours and the grant's end. A support
+  session may only read, plus `POST /api/v1/support-session/exit`. `refusal()` decides, in order:
+  wrong company, session missing, session ended, grant revoked, grant ended or not started, admin
+  no longer an active Super Admin.
+- **Owner API** (`/support-access`, the owner in person: counter and accountant get 403, and a
+  support session reading as owner gets 403 `SUPPORT_READ_ONLY`, so it cannot see or touch the
+  grant that governs it). Grant and revoke are on the read-only exception list: an expired
+  company can still grant and always revoke.
+- **Entering** (`POST /admin/tenants/{id}/support-session {reason}`, Super Admin only). 409
+  `NO_SUPPORT_GRANT` without a live grant; 409 `TENANT_NOT_OPEN` for a suspended or cancelled
+  company. The admin's earlier open session at that company ends (`replaced`). The answer holds
+  `entry_url`: `https://<slug>.<domain>/support-entry#token=...`, a fragment, so no server log
+  holds it.
+- **The third token type.** `typ = support`, carrying admin id, tenant id, grant id and session id
+  (`core/security.py`). The platform API and company user checks each refuse the other types.
+- **The gate** (`api/deps._support_gate`, runs for every company request, signed in or not). A
+  support token must be for this company's address (else 401), and its session open, grant live
+  and admin still an active Super Admin, checked **on every request** (else 401
+  `SUPPORT_SESSION_ENDED`, and the session is closed in the database). Then the request is logged
+  and counted in its own transaction, a non-GET answers 403 `SUPPORT_READ_ONLY`, and the database
+  session is marked read-only for the request: any INSERT, UPDATE or DELETE through it raises
+  the same 403, so a GET that would write on the side (the Tally export records an export event)
+  is refused too.
+- **The support principal.** Role `owner` for reads, user id 0 (no company user), username
+  `duolink-support`. `sees_cost` equals the grant's `include_costs`, so without it the same
+  response models as a counter user are chosen. It writes no company audit row under a user id;
+  its acts show as "Duolink support: <admin>". Reading a ticket from inside does not mark it read
+  for the company.
+- **Audit.** Entering and exiting write `support_session_start` and `support_session_end` to
+  `platform_audit_log` (session, grant, reason, expiry, whether cost was allowed, never the token),
+  and `support_enter` and `support_exit` to the company's `audit_log` (new `AuditAction` values).
+  `GET /admin/audit/support-sessions` is the "Company access" tab: every session with its
+  request count, plus how many are open and how many are `stale` (never ended, token expired; the
+  M24 bell will use it).
+- **UI.** Company: Settings, Duolink support access (grant form, live grant with countdown, Turn
+  off now, history); `/support-entry` reads the token from the fragment, removes it from the
+  address bar and keeps it in memory only (no refresh cookie is ever tried in a support visit); the
+  amber banner on every screen; every save button off with "Read-only support session". Admin:
+  an Access tab on the company page, and a Company access view on Activity.
+- **Not built.** The bell entry for an open session after its token expired (M24 reads
+  `stale`), pruning of events older than a year, and a per-session event viewer in the admin.
+
 **Built (Milestone 1):** `shop_settings` (with `logo_key`, `logo_type`, `logo_sha256`, all set or
 all empty, for the shop's logo: UI refresh T10), `location`, `app_user`, `user_location`,
 `auth_session`, `audit_log`, `document_sequence`. A GSTIN is checked for format and check

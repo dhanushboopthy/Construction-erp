@@ -8,6 +8,8 @@ import { RequireAuth } from "@/components/RequireAuth";
 import { RequireRole } from "@/components/RequireRole";
 import { MODULES } from "@/modules";
 import { PlanBillingPage } from "@/billing/PlanBillingPage";
+import { SupportAccessPage } from "@/supportAccess/SupportAccessPage";
+import { SupportEntryPage } from "@/supportAccess/SupportEntryPage";
 import { HelpPage } from "@/support/HelpPage";
 import { TicketThreadPage } from "@/support/TicketThreadPage";
 import { ComingSoonPage } from "@/pages/ComingSoonPage";
@@ -94,6 +96,7 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/change-password" element={<ChangePasswordPage />} />
+            <Route path="/support-entry" element={<SupportEntryPage />} />
             <Route
               element={
                 <RequireAuth>
@@ -130,6 +133,7 @@ export function App({ client = queryClient }: { client?: QueryClient }) {
                 <Route path="lock" element={<PeriodLockPage />} />
                 <Route path="audit" element={<AuditLogPage />} />
                 <Route path="system" element={<SystemPage />} />
+                <Route path="support-access" element={<SupportAccessPage />} />
                 <Route path="plan" element={<PlanBillingPage />} />
               </Route>
               <Route

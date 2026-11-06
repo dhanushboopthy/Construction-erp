@@ -29,6 +29,10 @@ READ_ONLY_EXCEPTIONS: tuple[tuple[str, re.Pattern[str]], ...] = (
     # Milestone 22: a company that cannot save can still ask Duolink for help.
     ("POST", re.compile(r"^/api/v1/support/tickets$")),
     ("POST", re.compile(r"^/api/v1/support/tickets/\d+/(reply|close)$")),
+    # Milestone 23: the owner can always let Duolink in, and always shut it out; and a Duolink
+    # support session (read-only in any case) can always leave.
+    ("POST", re.compile(r"^/api/v1/support-access/(grants|revoke)$")),
+    ("POST", re.compile(r"^/api/v1/support-session/exit$")),
     # Milestone 30: an expired company's owner can renew online, and the payment lands. (The
     # webhook takes no company from the address, so it never reaches this check.)
     ("POST", re.compile(r"^/api/v1/subscription/(orders|verify)$")),

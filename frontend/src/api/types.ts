@@ -28,6 +28,13 @@ export type Tenant = Omit<
       "access_state" | "subscription_status" | "expires_at" | "days_left" | "online_renewal"
     >
   >;
+// Milestone 23: Duolink support access, the owner's side and the session banner.
+export type SupportSessionStatus = Schemas["SupportSessionStatus"];
+export type AccessOverview = Schemas["AccessOverview"];
+export type AccessGrant = Schemas["GrantOut"];
+export type GrantCreate = Schemas["GrantCreate"];
+export type SupportVisit = Schemas["SessionRow"];
+export type SupportVisitEvent = Schemas["SessionEventOut"];
 export type ShopSettingsUpdate = Schemas["ShopSettingsUpdate"];
 export type TokenResponse = Schemas["TokenResponse"];
 export type TenantPlanUsage = Schemas["TenantPlanOut"];

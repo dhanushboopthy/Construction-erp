@@ -135,6 +135,8 @@ export const ACTION: Record<AdminActionKind, string> = {
   payment_reverse: "Reversed a payment",
   support_reply: "Replied to a ticket",
   support_update: "Changed a ticket",
+  support_session_start: "Entered a company (read-only)",
+  support_session_end: "Left a company",
   subscription_pay_online: "Company renewed online",
 };
 

@@ -46,6 +46,7 @@ from app.models.stock_ops import (
     StockWritedownLine,
 )
 from app.models.support import SupportMessage, SupportTicket
+from app.models.support_access import SupportAccessGrant, SupportSession, SupportSessionEvent
 from app.models.tally import TallyLedger
 from app.models.tenancy import Tenant
 from app.models.transport import DropShipLink, Trip, Vehicle
@@ -118,7 +119,10 @@ __all__ = [
     "SubscriptionOrder",
     "SubscriptionPayment",
     "SupplierScheme",
+    "SupportAccessGrant",
     "SupportMessage",
+    "SupportSession",
+    "SupportSessionEvent",
     "SupportTicket",
     "TallyLedger",
     "Tenant",

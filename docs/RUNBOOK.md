@@ -137,6 +137,17 @@ whoever looks after the server. Commands run in the project folder on the server
   name), a dot on Help until they open it, and the status. The owner and accountant see all the
   company's tickets, counter staff only their own. A company whose plan has ended can still raise
   and reply to tickets. The audit log records each reply and change but not the message text.
+- **Look inside a company (with the owner's consent):** you cannot enter a company unless its
+  owner has turned on Settings, Duolink support access. Ask them to give access for the time you
+  need and to say why. Then open the company, Access tab, write why you are entering, and press
+  Enter company (read-only) (Super Admin only). It opens in a new tab under an amber bar; you see
+  what the owner sees, nothing can be saved, and the owner can switch you out at any moment (your
+  next click then shows "This support link has ended"). The link lasts two hours at most and
+  never past the owner's grant; Exit in the bar ends it at once. Reloading the tab also ends it:
+  enter again. Without "show cost and margin" you see what a counter user sees.
+- **Who entered a company:** Activity, Company access lists every visit with its request count,
+  and the company's Access tab lists its own. A visit marked "Never left: window closed" was left
+  open past its time. Both audit logs record entering and leaving.
 - **A company does not pay:** open the company, write the reason, then Suspend company and
   confirm. Everyone there is signed out. Reactivate company undoes it. Nothing is deleted.
 - **Trials:** the overview lists trials ending this week. Change the plan, or move the trial end, on

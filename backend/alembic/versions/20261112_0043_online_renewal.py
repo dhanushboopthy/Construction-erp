@@ -1,7 +1,7 @@
 """online renewal through Razorpay
 
 Revision ID: 0043
-Revises: 0035
+Revises: 0036
 Create Date: 2026-11-12 09:00:00.000000+00:00
 
 M30: a company owner renews online and the payment lands as a subscription payment by itself.
@@ -64,6 +64,8 @@ ACTIONS_OLD = (
     "payment_reverse",
     "support_reply",
     "support_update",
+    "support_session_start",
+    "support_session_end",
 )
 ACTIONS_NEW = ACTIONS_OLD + ("subscription_pay_online",)
 CHECK_NAME = "ck_platform_audit_log_platform_action"
@@ -77,7 +79,7 @@ def _in_list(values: tuple[str, ...]) -> str:
 
 
 revision: str = "0043"
-down_revision: str | None = "0035"
+down_revision: str | None = "0036"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

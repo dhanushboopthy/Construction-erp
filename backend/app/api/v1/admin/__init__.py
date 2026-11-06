@@ -7,6 +7,7 @@ from app.api.v1.admin import (
     auth,
     backups,
     billing,
+    company_data,
     monitoring,
     staff,
     support,
@@ -19,6 +20,7 @@ router = APIRouter(prefix="/admin", dependencies=[Depends(require_admin_host)])
 router.include_router(auth.router)
 router.include_router(backups.router)
 router.include_router(billing.router)
+router.include_router(company_data.router)
 router.include_router(monitoring.router)
 router.include_router(staff.router)
 router.include_router(support.router)

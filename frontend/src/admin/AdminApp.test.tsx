@@ -520,6 +520,8 @@ describe("AdminApp company page (M18)", () => {
       "activity",
       "support",
       "access",
+      "numbering",
+      "data",
     ]);
     stubApi(COMPANY_ROUTES);
     const user = userEvent.setup();
@@ -529,7 +531,17 @@ describe("AdminApp company page (M18)", () => {
       within(tabs)
         .getAllByRole("link")
         .map((l) => l.textContent),
-    ).toEqual(["Overview", "Users", "Subscription", "Usage", "Activity", "Support", "Access"]);
+    ).toEqual([
+      "Overview",
+      "Users",
+      "Subscription",
+      "Usage",
+      "Activity",
+      "Support",
+      "Access",
+      "Numbering",
+      "Data",
+    ]);
     await user.click(within(tabs).getByRole("link", { name: "Usage" }));
     expect(window.location.search).toBe("?tab=usage");
     expect(await screen.findByText("Bills, last 90 days")).toBeInTheDocument();

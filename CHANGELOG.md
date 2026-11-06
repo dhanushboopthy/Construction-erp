@@ -105,6 +105,37 @@ For Duolink staff (admin):
 Technical: migration 0038 (`platform_backup`, `platform_backup_job`, `platform_backup_schedule`,
 the redefined trigger functions, seven new platform audit actions).
 
+## 1.20.0 (M26): document numbering and company data management
+
+For companies:
+
+- **No change on screen.** After Duolink deletes a company's data at its request, the number
+  series of what was emptied start again from 1.
+
+For Duolink staff (admin, Super Admin only; Support never sees either tab and gets 403 on every
+route, reads included):
+
+- **Numbering tab** on the company page: one row per shop, document type and financial year, with
+  the highest number that exists (read from the documents: a cancelled bill counts, a deleted one
+  does not), the configured next number and the next document written out (`S1/26-27/00025`). A
+  value below the highest existing plus one is refused (409 `NUMBER_TOO_LOW`: "Bill S1/26-27/00007
+  already exists. The next number must be 8 or higher."); with no documents left, 1 is accepted. A
+  reason is required and the change is audited with the old and new values. A counter that is ahead
+  of its documents says so and offers the value that closes the gap.
+- **Data tab** on the company page: every kind of business data with its row count and what blocks
+  its deletion (the real foreign keys), View (latest 25 rows, four identifying columns, never an
+  amount), Delete (type `DELETE`) and a separate Danger zone to delete everything (`DELETE`, the
+  company's exact name and a tick-box). Both dialogs read a fresh preview when they open. A protected
+  safety backup is taken first (and the deletion is refused if it fails); the deletion is one
+  transaction in catalogue order with one DELETE per table; files leave storage after the commit;
+  any failure rolls back, is audited (`company_data_delete_failed`) and says nothing was removed.
+- **Integrity check** accepts the gap an audited numbering change explains and a series a deletion
+  reset (`document_sequence_event`, append-only).
+- New audit actions: `numbering_set`, `company_data_deleted`, `company_data_deleted_all`,
+  `company_data_delete_failed`.
+- Migration 0039. This is the one named exception to "issued documents are never deleted" and
+  "ledgers are append-only" (ADR 0013), through the purge switch of migration 0038.
+
 ## 1.16.0 (M22): support tickets
 
 For companies:

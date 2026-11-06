@@ -22,6 +22,13 @@ import type {
   AdminTicketPatch,
   AdminTicketReply,
   BillingDashboard,
+  DataDeleteResult,
+  DataInventory,
+  DataPreview,
+  DataView,
+  NumberingList,
+  NumberingRow,
+  NumberingSet,
   Overview,
   Page,
   Payment,
@@ -779,5 +786,92 @@ export function useResetStaffPassword() {
         method: "POST",
       }),
     onSuccess: () => refresh(),
+  });
+}
+
+// ------------------------------------------------------------- Milestone 26: data and numbering
+
+const dataKeys = {
+  inventory: (id: number) => ["admin", "company-data", id] as const,
+  numbering: (id: number) => ["admin", "company-numbering", id] as const,
+};
+
+export function useCompanyData(id: number) {
+  return useQuery({
+    queryKey: dataKeys.inventory(id),
+    queryFn: () => adminApi<DataInventory>(`/tenants/${id}/data`),
+  });
+}
+
+export function useCompanyDataView(id: number, key: string | null) {
+  return useQuery({
+    queryKey: ["admin", "company-data-view", id, key],
+    enabled: key !== null,
+    gcTime: 0,
+    queryFn: () => adminApi<DataView>(`/tenants/${id}/data/${key}`),
+  });
+}
+
+/** Read again every time a dialog opens (never carried over from the tab): `gcTime: 0` and no
+ * stale time, so a dialog opened twice asks twice. `keys` null means everything. */
+export function useDataPreview(id: number, keys: string[] | null, enabled: boolean) {
+  const search = keys ? keys.map((k) => `keys=${encodeURIComponent(k)}`).join("&") : "";
+  return useQuery({
+    queryKey: ["admin", "company-data-preview", id, search],
+    enabled,
+    gcTime: 0,
+    staleTime: 0,
+    queryFn: () =>
+      adminApi<DataPreview>(`/tenants/${id}/data/preview${search ? `?${search}` : ""}`),
+  });
+}
+
+function useRefreshData(id: number) {
+  const client = useQueryClient();
+  return () => {
+    void client.invalidateQueries({ queryKey: dataKeys.inventory(id) });
+    void client.invalidateQueries({ queryKey: dataKeys.numbering(id) });
+    void client.invalidateQueries({ queryKey: ["admin", "company-data-view", id] });
+    void client.invalidateQueries({ queryKey: keys.audit });
+  };
+}
+
+export function useDeleteCompanyData(id: number) {
+  const refresh = useRefreshData(id);
+  return useMutation({
+    mutationFn: (body: { keys: string[]; confirm: string }) =>
+      adminApi<DataDeleteResult>(`/tenants/${id}/data/delete`, {
+        method: "POST",
+        body: json(body),
+      }),
+    onSuccess: refresh,
+  });
+}
+
+export function useDeleteAllCompanyData(id: number) {
+  const refresh = useRefreshData(id);
+  return useMutation({
+    mutationFn: (body: { confirm: string; company_name: string; acknowledged: boolean }) =>
+      adminApi<DataDeleteResult>(`/tenants/${id}/data/delete-all`, {
+        method: "POST",
+        body: json(body),
+      }),
+    onSuccess: refresh,
+  });
+}
+
+export function useNumbering(id: number) {
+  return useQuery({
+    queryKey: dataKeys.numbering(id),
+    queryFn: () => adminApi<NumberingList>(`/tenants/${id}/numbering`),
+  });
+}
+
+export function useSetNumbering(id: number) {
+  const refresh = useRefreshData(id);
+  return useMutation({
+    mutationFn: (body: NumberingSet) =>
+      adminApi<NumberingRow>(`/tenants/${id}/numbering`, { method: "PATCH", body: json(body) }),
+    onSuccess: refresh,
   });
 }

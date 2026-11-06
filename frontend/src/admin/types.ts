@@ -53,6 +53,15 @@ export type BackupSummary = Schemas["BackupSummary"];
 export type BackupJob = Schemas["JobOut"];
 export type BackupSchedule = Schemas["ScheduleOut"];
 export type BackupScheduleIn = Schemas["ScheduleIn"];
+// Milestone 26: a company's data and number series.
+export type DataInventory = Schemas["DataInventory"];
+export type DataKind = Schemas["DataKindOut"];
+export type DataView = Schemas["DataViewOut"];
+export type DataPreview = Schemas["DataPreviewOut"];
+export type DataDeleteResult = Schemas["DeleteOut"];
+export type NumberingRow = Schemas["NumberingRow"];
+export type NumberingList = Schemas["NumberingOut"];
+export type NumberingSet = Schemas["NumberingSetIn"];
 export interface AuditFilters {
   admin_id?: number;
   tenant_id?: number;

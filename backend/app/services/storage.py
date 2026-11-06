@@ -26,6 +26,8 @@ class Storage(Protocol):
 
     def exists(self, key: str) -> bool: ...
 
+    def delete(self, key: str) -> None: ...
+
 
 class LocalStorage:
     """Files in a folder. Keys are made by us (never from user input), and any key that would
@@ -63,6 +65,9 @@ class LocalStorage:
 
     def exists(self, key: str) -> bool:
         return self._path(key).is_file()
+
+    def delete(self, key: str) -> None:
+        self._path(key).unlink(missing_ok=True)
 
 
 class S3Storage:
@@ -106,6 +111,12 @@ class S3Storage:
                 return False
             raise StorageError("The cloud storage could not be read") from exc
         return True
+
+    def delete(self, key: str) -> None:
+        try:
+            self._client.delete_object(Bucket=self._bucket, Key=self._key(key))
+        except (BotoCoreError, ClientError) as exc:
+            raise StorageError("The cloud storage did not remove the file") from exc
 
 
 def build_s3(settings: Settings) -> S3Storage:
